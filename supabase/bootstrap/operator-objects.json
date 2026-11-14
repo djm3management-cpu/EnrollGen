@@ -1,0 +1,1391 @@
+{
+  "sql_routines": [
+    {
+      "schema": "pii_vault",
+      "name": "blind_index_key",
+      "arguments": ""
+    },
+    {
+      "schema": "pii_vault",
+      "name": "get_active_key",
+      "arguments": ""
+    },
+    {
+      "schema": "pii_vault",
+      "name": "get_key",
+      "arguments": "p_key_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "add_contact_tag",
+      "arguments": "p_tenant_id uuid, p_contact_id uuid, p_requesting_agent_id uuid, p_name text"
+    },
+    {
+      "schema": "public",
+      "name": "advance_contact_connection",
+      "arguments": "p_contact_id uuid, p_tenant_id uuid, p_agent_id text, p_connected_at timestamp with time zone, p_direction text"
+    },
+    {
+      "schema": "public",
+      "name": "agent_customer_routable",
+      "arguments": "p_agent_id text, p_status text, p_available boolean, p_active_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "agent_inbound_routable",
+      "arguments": "p_agent_id text, p_status text, p_available boolean, p_active_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "agent_phone_routable",
+      "arguments": "p_agent_id text"
+    },
+    {
+      "schema": "public",
+      "name": "append_transcription_gap",
+      "arguments": "p_attempt_id uuid, p_participant_id uuid, p_gap_id uuid, p_start_ms integer, p_end_ms integer"
+    },
+    {
+      "schema": "public",
+      "name": "apply_call_wrap_up",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "apply_transcript_wrap_up",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "authorize_paragon_report",
+      "arguments": "p_hash text, p_ip text"
+    },
+    {
+      "schema": "public",
+      "name": "availability_snapshot",
+      "arguments": "p_agent_id text"
+    },
+    {
+      "schema": "public",
+      "name": "begin_scoring_job",
+      "arguments": "p_call_id uuid, p_template_id uuid, p_transcript jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "begin_scoring_job_pre133",
+      "arguments": "p_call_id uuid, p_template_id uuid, p_transcript jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "bootstrap_vendor_source_name",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "claim_automatic_transcript_recovery",
+      "arguments": "p_call_id uuid, p_tenant_id uuid, p_recording_id uuid, p_ranges jsonb, p_mapping jsonb, p_cost numeric"
+    },
+    {
+      "schema": "public",
+      "name": "claim_call_agent",
+      "arguments": "p_call_sid text, p_exclude text[], p_agent_id text"
+    },
+    {
+      "schema": "public",
+      "name": "claim_call_agent",
+      "arguments": "p_call_sid text, p_exclude text[], p_agent_id text, p_preferred_agent_id text"
+    },
+    {
+      "schema": "public",
+      "name": "claim_call_agent_with_preference",
+      "arguments": "p_call_sid text, p_exclude text[], p_agent_id text, p_preferred_agent_id text, p_enforce_presence boolean"
+    },
+    {
+      "schema": "public",
+      "name": "claim_compliance_pass",
+      "arguments": "p_call_id uuid, p_tenant_id uuid, p_request_id uuid, p_mode text, p_requested_by text"
+    },
+    {
+      "schema": "public",
+      "name": "claim_compliance_upload",
+      "arguments": "p_provider text"
+    },
+    {
+      "schema": "public",
+      "name": "claim_conference_media",
+      "arguments": "p_participant_id uuid, p_call_sid text, p_generation integer, p_stream_sid text, p_owner uuid"
+    },
+    {
+      "schema": "public",
+      "name": "claim_conversely_run",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "claim_customer_call_agent",
+      "arguments": "p_call_sid text, p_exclude text[], p_preferred_agent_id text, p_direct boolean"
+    },
+    {
+      "schema": "public",
+      "name": "claim_integration_delivery",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "claim_ix_upload",
+      "arguments": "p_environment text"
+    },
+    {
+      "schema": "public",
+      "name": "claim_media_stream",
+      "arguments": "p_call_sid text, p_attempt_id uuid, p_agent_id text, p_tenant_id uuid, p_inbound_call_id uuid, p_direction text, p_stream_sid text, p_owner uuid"
+    },
+    {
+      "schema": "public",
+      "name": "claim_paragon_billing_jobs",
+      "arguments": "p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "claim_paragon_call",
+      "arguments": "p_call_sid text, p_phone text, p_call_id text, p_exclude text[], p_preferred_agent_id text, p_routing_enabled boolean"
+    },
+    {
+      "schema": "public",
+      "name": "claim_paragon_call_at",
+      "arguments": "p_call_sid text, p_phone text, p_call_id text, p_exclude text[], p_preferred_agent_id text, p_routing_enabled boolean, p_arrived_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "claim_paragon_report_email",
+      "arguments": "p_date date, p_call_count integer"
+    },
+    {
+      "schema": "public",
+      "name": "claim_paragon_residence_jobs",
+      "arguments": "p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "claim_post_call_webhook",
+      "arguments": "p_call_record_id uuid, p_tenant_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "claim_post_call_worker",
+      "arguments": "p_session_id uuid, p_worker_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "claim_provider_quota_alert",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "claim_recording_ingestion",
+      "arguments": "p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "claim_recording_reconciliation",
+      "arguments": "p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "combine_call_records",
+      "arguments": "p_tenant_id uuid, p_actor text, p_admin boolean, p_action text, p_first uuid, p_second uuid, p_confirm_different boolean, p_expected_primary uuid"
+    },
+    {
+      "schema": "public",
+      "name": "commit_rts_ingestion",
+      "arguments": "p_tenant_id uuid, p_uploaded_by uuid, p_source_filename text, p_source_type text, p_file_hash text, p_row_count integer, p_records_skipped integer, p_warnings jsonb, p_rows jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "complete_conference_agent_transfer",
+      "arguments": "p_call_id uuid, p_participant_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "compliance_call_excluded",
+      "arguments": "c call_records"
+    },
+    {
+      "schema": "public",
+      "name": "compliance_content_hash",
+      "arguments": "p_call call_records"
+    },
+    {
+      "schema": "public",
+      "name": "compliance_upload_trigger",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "conference_event",
+      "arguments": "p_call_id uuid, p_event text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "configure_deployment_vendor",
+      "arguments": "p_vendor jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "confirm_paragon_call_state",
+      "arguments": "p_call uuid, p_tenant uuid, p_agent text, p_zip text, p_state text"
+    },
+    {
+      "schema": "public",
+      "name": "contacts_normalize_phone",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "contacts_sync_pii_encrypted",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "conversely_run_results",
+      "arguments": "p_run uuid, p_tenant uuid"
+    },
+    {
+      "schema": "public",
+      "name": "conversely_week_candidates",
+      "arguments": "p_week date"
+    },
+    {
+      "schema": "public",
+      "name": "copy_recording_reference",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "create_workspace_record",
+      "arguments": "p_table text, p_fields jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "current_deployment_identity",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "decrypt_pii",
+      "arguments": "p_contact_id uuid, p_requesting_agent_id uuid, p_action text, p_ip_address text, p_user_agent text"
+    },
+    {
+      "schema": "public",
+      "name": "decrypt_pii_value",
+      "arguments": "p_encrypted jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "delete_opportunity",
+      "arguments": "p_opportunity_id uuid, p_requesting_agent_id uuid, p_expected_updated_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "delete_opportunity_stage",
+      "arguments": "p_stage_id uuid, p_requesting_agent_id uuid, p_move_to_stage_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_assert_roster",
+      "arguments": "p_agent uuid"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_can_access_contact",
+      "arguments": "p_contact uuid"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_can_read_agent",
+      "arguments": "p_tenant uuid, p_agent uuid"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_feature_enabled",
+      "arguments": "flag text"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_is_admin",
+      "arguments": "p_tenant uuid"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_log_owner",
+      "arguments": "r jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_require_member_write",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "deployment_row_visible",
+      "arguments": "p_table text, r jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_row_writable",
+      "arguments": "p_table text, r jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "deployment_tenant_id",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "deployment_timezone",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "deployment_vendor_name",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "detect_inbound_duplicate",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "duplicate_phone_key",
+      "arguments": "p_phone text"
+    },
+    {
+      "schema": "public",
+      "name": "encrypt_pii_value",
+      "arguments": "p_plaintext text"
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_availability_push",
+      "arguments": "p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_compliance_uploads",
+      "arguments": "p_call uuid"
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_conference_recording",
+      "arguments": "p_participant_id uuid, p_callback jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_daily_vendor_reports",
+      "arguments": "p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_disposition_postbacks",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_paragon_billing_event",
+      "arguments": "p_parent_sid text, p_event_key text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_paragon_sep_residence",
+      "arguments": "p_call uuid, p_tenant uuid, p_agent text, p_sid text, p_zip text, p_state text, p_county text"
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_post_call_request",
+      "arguments": "p_session_id uuid, p_tenant_id uuid, p_agent_id uuid, p_user_id text, p_org_id text, p_clerk_session_id text, p_request_key text, p_action text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "enqueue_recording",
+      "arguments": "p_callback jsonb, p_attempt_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "enrich_call_display_names",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "ensure_inbound_transcript_record",
+      "arguments": "p_attempt_id uuid, p_session_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "ensure_opportunities_pipeline",
+      "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "evidence_can_read_transcript",
+      "arguments": "p_transcript_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "evidence_owns_agent",
+      "arguments": "p_agent_id uuid, p_tenant_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "evidence_tenant_member",
+      "arguments": "p_tenant_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "expire_agent_phone_sessions",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "expire_post_call_worker",
+      "arguments": "p_session_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "fail_conversely_run",
+      "arguments": "p_id uuid, p_token uuid, p_error text, p_disabled boolean"
+    },
+    {
+      "schema": "public",
+      "name": "fail_paragon_residence_job",
+      "arguments": "p_call uuid, p_token uuid, p_error text"
+    },
+    {
+      "schema": "public",
+      "name": "fail_scoring_job",
+      "arguments": "p_job_id uuid, p_attempt_token uuid, p_error text"
+    },
+    {
+      "schema": "public",
+      "name": "fence_deployment_queue",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "finalize_conversely_runs",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "finalize_telephony_transcript",
+      "arguments": "p_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "find_duplicate_prior_call",
+      "arguments": "p_tenant uuid, p_source uuid, p_phone text, p_at timestamp with time zone, p_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "finish_automatic_transcript_recovery",
+      "arguments": "p_call_id uuid, p_tenant_id uuid, p_job_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "finish_call_conference",
+      "arguments": "p_call_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "finish_compliance_upload",
+      "arguments": "p_provider text, p_id uuid, p_token uuid, p_success boolean, p_error text, p_receipt text"
+    },
+    {
+      "schema": "public",
+      "name": "finish_inbound_call",
+      "arguments": "p_call_sid text, p_status text, p_ended_at timestamp with time zone, p_duration integer"
+    },
+    {
+      "schema": "public",
+      "name": "finish_integration_delivery",
+      "arguments": "p_id uuid, p_token uuid, p_status integer, p_result text, p_delay integer, p_error jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "finish_ix_upload",
+      "arguments": "p_id uuid, p_token uuid, p_outcome text, p_error text, p_message text, p_receipt jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "finish_paragon_report_email",
+      "arguments": "p_log_id bigint, p_status text, p_message_id text, p_error_code text"
+    },
+    {
+      "schema": "public",
+      "name": "finish_paragon_residence_job",
+      "arguments": "p_call uuid, p_token uuid, p_candidate jsonb, p_metadata jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "finish_post_call_request",
+      "arguments": "p_session_id uuid, p_worker_id uuid, p_request_key text, p_result jsonb, p_error_code text"
+    },
+    {
+      "schema": "public",
+      "name": "follow_up_access",
+      "arguments": "p_tenant_id uuid, p_agent_slug text"
+    },
+    {
+      "schema": "public",
+      "name": "follow_up_default_agent",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "get_availability_feed",
+      "arguments": "p_key_hash text, p_agent_id text"
+    },
+    {
+      "schema": "public",
+      "name": "get_available_seps",
+      "arguments": "input_zip text"
+    },
+    {
+      "schema": "public",
+      "name": "get_available_seps_before_fema_078",
+      "arguments": "input_zip text"
+    },
+    {
+      "schema": "public",
+      "name": "get_sale_compliance_dispatch",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "get_sale_compliance_dispatch_before_147",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "get_sale_compliance_dispatch_legacy_136",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "get_sale_compliance_dispatch_pre133",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "guard_call_parent",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "heartbeat_conversely_worker",
+      "arguments": "p_enabled boolean"
+    },
+    {
+      "schema": "public",
+      "name": "is_compliance_sale",
+      "arguments": "p_outcome text"
+    },
+    {
+      "schema": "public",
+      "name": "is_current_tenant",
+      "arguments": "check_tenant_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "is_org_admin",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "is_uhc_carrier",
+      "arguments": "value text"
+    },
+    {
+      "schema": "public",
+      "name": "link_billing_duplicate",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "link_recording_reference",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "link_telephony_call_record",
+      "arguments": "p_record_id uuid, p_tenant_id uuid, p_sid text, p_user_id text"
+    },
+    {
+      "schema": "public",
+      "name": "lock_call_conference",
+      "arguments": "p_call_id uuid, p_token uuid"
+    },
+    {
+      "schema": "public",
+      "name": "log_availability_change",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "log_pii_access",
+      "arguments": "p_contact_id uuid, p_requesting_agent_id uuid, p_action text, p_ip_address text, p_user_agent text"
+    },
+    {
+      "schema": "public",
+      "name": "mark_compliance_not_applicable",
+      "arguments": "p_call_id uuid, p_tenant_id uuid, p_reason text, p_rules_version text"
+    },
+    {
+      "schema": "public",
+      "name": "mark_manual_opportunity_stage",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "mark_sale_compliance_disposition",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "mark_scoring_incomplete",
+      "arguments": "p_job_id uuid, p_attempt_token uuid, p_reason text"
+    },
+    {
+      "schema": "public",
+      "name": "mark_transcript_recovery_blocked",
+      "arguments": "p_call_id uuid, p_tenant_id uuid, p_reason text"
+    },
+    {
+      "schema": "public",
+      "name": "match_cms_plans_py2027",
+      "arguments": "query_embedding vector, match_count integer"
+    },
+    {
+      "schema": "public",
+      "name": "match_cms_plans_py2027_area",
+      "arguments": "query_embedding vector, p_state text, p_county text, match_count integer"
+    },
+    {
+      "schema": "public",
+      "name": "match_contacts_by_phone",
+      "arguments": "p_phones text[], p_requesting_agent_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "media_attempt_active",
+      "arguments": "p_attempt_id uuid, p_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "merge_contacts_internal",
+      "arguments": "p_keep uuid, p_drop uuid"
+    },
+    {
+      "schema": "public",
+      "name": "merge_contacts_secure",
+      "arguments": "p_keep_id uuid, p_duplicate_id uuid, p_phone text, p_requesting_agent_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "messages_normalize_phone",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "messages_touch_contact",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "move_opportunity_stage",
+      "arguments": "p_opportunity_id uuid, p_to_stage_id uuid, p_requesting_agent_id uuid, p_expected_stage_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "next_post_call_request",
+      "arguments": "p_session_id uuid, p_worker_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "normalize_phone_e164",
+      "arguments": "raw text"
+    },
+    {
+      "schema": "public",
+      "name": "opportunities_assert_agent",
+      "arguments": "p_tenant_id uuid, p_agent_id uuid, p_admin boolean"
+    },
+    {
+      "schema": "public",
+      "name": "opportunities_is_tenant",
+      "arguments": "p_tenant_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "opportunities_move_internal",
+      "arguments": "p_id uuid, p_stage_id uuid, p_agent_id uuid, p_expected_stage_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "outbound_dnc_status",
+      "arguments": "p_phone text, p_requesting_agent_id uuid, p_tenant_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "paragon_agent_tier",
+      "arguments": "p_agent_id text, p_state text, p_source_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "paragon_daily_status",
+      "arguments": "p_tenant uuid, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "paragon_hours_open",
+      "arguments": "p_hours jsonb, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "paragon_new_ping_gate",
+      "arguments": "p_tenant uuid, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "paragon_ping",
+      "arguments": "p_key_hash text, p_state text, p_phone text, p_call_id text, p_routing_enabled boolean"
+    },
+    {
+      "schema": "public",
+      "name": "paragon_report_totals",
+      "arguments": "p_source uuid, p_start timestamp with time zone, p_end timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "paragon_vendor_report",
+      "arguments": "p_source_id uuid, p_start timestamp with time zone, p_end timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "paragon_weekly_reconciliation",
+      "arguments": "p_tenant_id uuid, p_start timestamp with time zone, p_end timestamp with time zone, p_rate numeric"
+    },
+    {
+      "schema": "public",
+      "name": "persist_conference_transcript",
+      "arguments": "p_participant_id uuid, p_segment_id uuid, p_speaker text, p_text text, p_captured_at timestamp with time zone, p_start_ms integer, p_end_ms integer"
+    },
+    {
+      "schema": "public",
+      "name": "persist_manual_gap_result",
+      "arguments": "p_job_id uuid, p_expected_transcript jsonb, p_lines jsonb, p_range_index integer, p_provider_id text"
+    },
+    {
+      "schema": "public",
+      "name": "persist_scoring_result",
+      "arguments": "p_job_id uuid, p_attempt_token uuid, p_result jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "persist_scoring_result_legacy_134",
+      "arguments": "p_job_id uuid, p_attempt_token uuid, p_result jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "persist_telephony_transcript",
+      "arguments": "p_attempt_id uuid, p_segment_id uuid, p_speaker text, p_text text, p_captured_at timestamp with time zone, p_start_ms integer, p_end_ms integer"
+    },
+    {
+      "schema": "public",
+      "name": "persist_tpmo_timing_repair",
+      "arguments": "p_call_id uuid, p_original_scorecard_id uuid, p_template_id uuid, p_transcript jsonb, p_result jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "pii_blind_index",
+      "arguments": "p_value text"
+    },
+    {
+      "schema": "public",
+      "name": "prepare_call_conference",
+      "arguments": "p_attempt_id uuid, p_customer_phone text"
+    },
+    {
+      "schema": "public",
+      "name": "protect_agent_call_reservation",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "protect_call_wrap_up",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "protect_compliance_tracking",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "protect_paragon_billing",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "provision_deployment_roster",
+      "arguments": "p_profile jsonb, p_agents jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "read_contact_details",
+      "arguments": "p_contact_ids uuid[], p_requesting_agent_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "read_contact_tags",
+      "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_contact_ids uuid[]"
+    },
+    {
+      "schema": "public",
+      "name": "read_opportunities",
+      "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_contact_id uuid, p_offset integer, p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "read_opportunity_sources",
+      "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_active_only boolean"
+    },
+    {
+      "schema": "public",
+      "name": "reconcile_paragon_serviceability",
+      "arguments": "p_call uuid, p_tenant uuid"
+    },
+    {
+      "schema": "public",
+      "name": "reconcile_recording_links",
+      "arguments": "p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "reconcile_recovered_checkpoint_status",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "reconcile_telephony_transcripts",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "record_llm_skipped_ticks",
+      "arguments": "p_tenant_id uuid, p_user_id text, p_engine text, p_session_id uuid, p_count integer"
+    },
+    {
+      "schema": "public",
+      "name": "record_paragon_billing_snapshot",
+      "arguments": "p_sid text, p_lease uuid, p_account text, p_arrived timestamp with time zone, p_ended timestamp with time zone, p_answered timestamp with time zone, p_talk integer, p_evidence jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "record_telephony_evidence",
+      "arguments": "p_attempt_id uuid, p_parent_sid text, p_agent_id text, p_child_sid text, p_source text, p_status text, p_answered_at timestamp with time zone, p_ended_at timestamp with time zone, p_talk_seconds integer"
+    },
+    {
+      "schema": "public",
+      "name": "record_transcription_incident",
+      "arguments": "p_attempt_id uuid, p_participant_id uuid, p_reason text, p_at_ms integer"
+    },
+    {
+      "schema": "public",
+      "name": "refresh_agent_wrap_up",
+      "arguments": "p_agent_slug text"
+    },
+    {
+      "schema": "public",
+      "name": "refresh_call_test_enrollment",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "refresh_sale_compliance_request",
+      "arguments": "p_call_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "refresh_sale_compliance_request_legacy_139",
+      "arguments": "p_call_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "refresh_sale_compliance_trigger",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "register_lead_ping",
+      "arguments": "p_key_hash text, p_phone text, p_publisher text, p_call_id text"
+    },
+    {
+      "schema": "public",
+      "name": "register_stt_stream",
+      "arguments": "p_tenant_id uuid, p_call_sid text, p_channel text"
+    },
+    {
+      "schema": "public",
+      "name": "release_call_agent",
+      "arguments": "p_call_sid text, p_agent_id text"
+    },
+    {
+      "schema": "public",
+      "name": "release_conference_media",
+      "arguments": "p_participant_id uuid, p_owner uuid"
+    },
+    {
+      "schema": "public",
+      "name": "release_media_stream",
+      "arguments": "p_call_sid text, p_owner uuid"
+    },
+    {
+      "schema": "public",
+      "name": "release_verified_stale_call_agent",
+      "arguments": "p_agent_id text, p_call_sid text, p_twilio_status text, p_verified_account_sid text, p_verified_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "remove_contact_tag",
+      "arguments": "p_tag_id uuid, p_requesting_agent_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "renew_conference_media",
+      "arguments": "p_participant_id uuid, p_owner uuid"
+    },
+    {
+      "schema": "public",
+      "name": "renew_media_stream",
+      "arguments": "p_call_sid text, p_owner uuid"
+    },
+    {
+      "schema": "public",
+      "name": "repair_telephony_record_links",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "request_conversely_run",
+      "arguments": "p_tenant uuid, p_actor text"
+    },
+    {
+      "schema": "public",
+      "name": "require_completed_enrollment_intake",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "require_uhc_confirmation",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "resend_disposition",
+      "arguments": "p_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "reserve_compliance_request",
+      "arguments": "p_pass_id uuid, p_request_id uuid, p_model text, p_tokens integer, p_daily_cap bigint, p_fallback boolean"
+    },
+    {
+      "schema": "public",
+      "name": "reserve_conference_agent",
+      "arguments": "p_call_sid text, p_agent_id text"
+    },
+    {
+      "schema": "public",
+      "name": "reserve_conversely_run",
+      "arguments": "p_id uuid, p_token uuid, p_decisions jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "reserve_conversely_week",
+      "arguments": "p_week date, p_samples integer, p_decisions jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "reserve_scoring_input_tokens",
+      "arguments": "p_job_id uuid, p_attempt_token uuid, p_tokens integer"
+    },
+    {
+      "schema": "public",
+      "name": "reserve_stt_reconnect",
+      "arguments": "p_tenant_id uuid, p_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "resolve_deployment_subject",
+      "arguments": "p_subject text, p_org text"
+    },
+    {
+      "schema": "public",
+      "name": "resolve_recent_paragon_ping",
+      "arguments": "p_phone text, p_call_id text, p_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "resolve_recent_paragon_ping_at",
+      "arguments": "p_phone text, p_call_id text, p_call_sid text, p_arrived_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "resolve_recording_attribution",
+      "arguments": "p_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "retry_failed_scoring",
+      "arguments": "p_call_id uuid, p_tenant_id uuid, p_request_id uuid, p_reason text, p_requested_by text, p_execute boolean"
+    },
+    {
+      "schema": "public",
+      "name": "retry_ix_upload",
+      "arguments": "p_id uuid, p_tenant uuid, p_actor text"
+    },
+    {
+      "schema": "public",
+      "name": "retry_post_call_recovery",
+      "arguments": "p_session_id uuid, p_request_key text"
+    },
+    {
+      "schema": "public",
+      "name": "retry_post_call_transcript",
+      "arguments": "p_session_id uuid, p_request_key text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "sale_compliance_transcript_ready",
+      "arguments": "p_call call_records"
+    },
+    {
+      "schema": "public",
+      "name": "save_agent_call_disposition",
+      "arguments": "p_tenant_id uuid, p_agent_id uuid, p_agent_slug text, p_call_sid text, p_outcome text, p_product text, p_automatic boolean"
+    },
+    {
+      "schema": "public",
+      "name": "save_call_wrap_up",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "save_compliance_version",
+      "arguments": "p_call_id uuid, p_tenant_id uuid, p_source_id uuid, p_request_id uuid, p_requested_by text, p_payload jsonb, p_decision jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "save_enrollment_intake",
+      "arguments": "p_id uuid, p_tenant uuid, p_call uuid, p_contact uuid, p_data jsonb, p_carrier text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "save_follow_up",
+      "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_contact_id uuid, p_due_at timestamp with time zone, p_reason text, p_agent_slug text"
+    },
+    {
+      "schema": "public",
+      "name": "save_opportunity",
+      "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_fields jsonb, p_opportunity_id uuid, p_expected_updated_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "save_opportunity_pipeline",
+      "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_pipeline_id uuid, p_name text, p_line_of_business text, p_stages jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "save_paragon_contact_zip",
+      "arguments": "p_contact uuid, p_tenant uuid, p_zip text, p_user text"
+    },
+    {
+      "schema": "public",
+      "name": "scoring_job_result",
+      "arguments": "p_job_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "scoring_transcript_snapshot",
+      "arguments": "p_call call_records"
+    },
+    {
+      "schema": "public",
+      "name": "search_contacts_secure",
+      "arguments": "p_query text, p_requesting_agent_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "search_transcript_chunks",
+      "arguments": "query_embedding vector, match_count integer, filter_product_line text, filter_carrier text, filter_disposition text, filter_topics text[], similarity_threshold double precision"
+    },
+    {
+      "schema": "public",
+      "name": "search_transcript_chunks",
+      "arguments": "query_embedding vector, similarity_threshold double precision, match_count integer"
+    },
+    {
+      "schema": "public",
+      "name": "seed_paragon_billing",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "seed_recording_reconciliation",
+      "arguments": "p_account_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "set_paragon_controls",
+      "arguments": "p_tenant uuid, p_hours jsonb, p_cap integer, p_mode text, p_rate numeric, p_actor text"
+    },
+    {
+      "schema": "public",
+      "name": "set_post_call_provider_status",
+      "arguments": "p_session_id uuid, p_stage text, p_error_code text, p_started_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "set_scoring_dispatch_readiness",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "set_updated_at",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "set_vendor_pause",
+      "arguments": "p_tenant_id uuid, p_paused boolean, p_actor text"
+    },
+    {
+      "schema": "public",
+      "name": "snapshot_billing_duplicate",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "start_attempt_session",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "start_telephony_session",
+      "arguments": "p_tenant_id uuid, p_agent_id uuid, p_call_sid text, p_flow text"
+    },
+    {
+      "schema": "public",
+      "name": "sunfire_codes",
+      "arguments": "value text"
+    },
+    {
+      "schema": "public",
+      "name": "sync_ma_disposition_opportunity",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "sync_post_call_record_status",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "sync_post_call_scoring_status",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "sync_session_product_fields",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "sync_user_preference_fields",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "tag_inbound_lead_source",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "touch_agent_availability",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "touch_vendor_eligibility",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "track_call_wrap_up",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "unlock_call_conference",
+      "arguments": "p_call_id uuid, p_token uuid"
+    },
+    {
+      "schema": "public",
+      "name": "unresolved_post_call_error",
+      "arguments": "p_session_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "update_agent_phone_session",
+      "arguments": "p_agent_id text, p_session_id uuid, p_ready boolean"
+    },
+    {
+      "schema": "public",
+      "name": "update_carrier_rts_timestamp",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "update_pii_field",
+      "arguments": "p_contact_id uuid, p_requesting_agent_id uuid, p_field text, p_value text"
+    },
+    {
+      "schema": "public",
+      "name": "validate_new_compliance_item",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "vendor_call_payload",
+      "arguments": "p_call_id uuid"
+    }
+  ],
+  "netlify_function_source_modules": [
+    "agent-status-log.js",
+    "backfill-analytics.js",
+    "backfill-deepgram-intelligence.js",
+    "backfill-followups.js",
+    "backfill-knowledge-updates.js",
+    "biblia.js",
+    "call-disposition.js",
+    "call-log.js",
+    "call-record-details.js",
+    "cms-plans.js",
+    "coach.js",
+    "combine-calls.js",
+    "compliance-review-background.js",
+    "compliance-review.js",
+    "compliance-uploads.js",
+    "compliance.js",
+    "contact-assignment.js",
+    "copilot-skip-counter.js",
+    "deepgram-token.js",
+    "deployment-features.js",
+    "deployment-roster.js",
+    "deployment-status.js",
+    "embeddings.js",
+    "enrollment-intakes.js",
+    "evidence-session.js",
+    "live-bulletins.js",
+    "nightly-analytics.js",
+    "paragon-daily-email.js",
+    "paragon-residence.js",
+    "paragon-vendor-report.js",
+    "paragon-zip-confirm.js",
+    "pipeline-settings.js",
+    "post-call-admin.js",
+    "post-call-background.js",
+    "post-call.js",
+    "recordings.js",
+    "rts-ingest.js",
+    "score-call-background.js",
+    "script-settings.js",
+    "seed-new-tenant.js",
+    "session-lock-events.js",
+    "set-availability.js",
+    "stripe-checkout.js",
+    "stripe-portal.js",
+    "stripe-webhook.js",
+    "stt-alert.js",
+    "stt-reconnect.js",
+    "stt-usage.js",
+    "sync-bulletins.js",
+    "sync-fema.js",
+    "tenant-settings.js",
+    "test-ghl-webhook.js",
+    "transcribe.js",
+    "transcript-gaps-background.js",
+    "transcript-import.js",
+    "trigger-knowledge-update.js",
+    "update-knowledge.js",
+    "vendor-pause.js",
+    "vendor-routing.js",
+    "weekly-coaching.js"
+  ],
+  "edge_functions": [
+    {
+      "name": "get-availability",
+      "verify_jwt": false,
+      "authentication": "hashed revocable consumer credentials"
+    }
+  ],
+  "private_buckets": [
+    "call-recordings",
+    "message-media"
+  ],
+  "optional_uncreated_private_buckets": [
+    "call-summaries",
+    "call-transcripts"
+  ],
+  "netlify_schedules": {
+    "nightly-analytics": "0 * * * *",
+    "weekly-coaching": "0 * * * *",
+    "sync-bulletins": "0 10 * * *",
+    "sync-fema": "0 9 * * *",
+    "paragon-daily-email": "0,15,30 * * * *"
+  },
+  "supabase_application_cron_jobs": [],
+  "audit_appendix_b_secret_classified_names": [
+    "AGENT_WS_SIGNING_SECRET",
+    "ANTHROPIC_API_KEY",
+    "BACKFILL_SECRET",
+    "BIBLIA_API_KEY",
+    "CLERK_SECRET_KEY",
+    "CONVERSELY_API_KEY",
+    "DB_PASSWORD",
+    "DEEPGRAM_API_KEY",
+    "ENROLLGEN_SUPABASE_SECRET_KEY",
+    "GHL_ENROLLMENT_WEBHOOK_URL",
+    "GIPHY_API_KEY",
+    "HUD_USER_TOKEN",
+    "INBOUND_VENDOR_API_KEY",
+    "IX_PASSWORD",
+    "KNOWLEDGE_UPDATE_SECRET",
+    "NEXTCLOUD_APP_TOKEN",
+    "OPENAI_API_KEY",
+    "RESEND_API_KEY",
+    "SCORE_CALL_JOB_SECRET",
+    "SCORING_DAILY_TOKEN_CAP",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "SUPABASE_DB_PASSWORD",
+    "SUPABASE_SECRET_KEY",
+    "SUPABASE_SECRET_KEYS",
+    "SUPABASE_SERVICE_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "TWILIO_API_KEY_SECRET",
+    "TWILIO_AUTH_TOKEN",
+    "VITE_CSG_API_KEY"
+  ]
+}

@@ -83,7 +83,7 @@ test('runtime sources contain none of the Appendix A deployment identifiers',()=
  const scan=d=>readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?(e.name==='fixtures'?[]:scan(path.join(d,e.name))):/\.(?:js|mjs|cjs|jsx|ts|tsx|html|sql|json|yml|py)$/.test(e.name)?[path.join(d,e.name)]:[]);
  const hits=[];
  for(const file of scan('supabase/seeds'))assert.doesNotMatch(readFileSync(file,'utf8'),/https?:\/\//,'Fresh seeds must not contain live URLs');
- for(const file of ['src','netlify','integrations','telephony/src','status-page','supabase/seeds','supabase/functions','scripts','telephony/scripts','infra'].flatMap(scan)){
+ for(const file of ['src','netlify','integrations','telephony/src','status-page','supabase/seeds','supabase/bootstrap','supabase/functions','scripts','telephony/scripts','infra'].flatMap(scan)){
   const content=readFileSync(file,'utf8').toLowerCase();for(const term of terms)if(content.includes(term.toLowerCase()))hits.push(`${file}: ${term}`);
  }
  assert.deepEqual(hits,[]);

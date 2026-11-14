@@ -1,9 +1,11 @@
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
-import {buildAccessDatabase,fixtureRoster,uuid,T,U,publicReferences,newMigrations,auditTables} from './helpers/databaseAccessSchema.js';
+import {buildAccessDatabase,fixtureRoster,uuid,T,U,publicReferences} from './helpers/databaseAccessSchema.js';
 let pg,realTables,agents;
+const actualTables=()=>[...realTables];
 const q=(s,args=[])=>pg.query(s,args).then(r=>r.rows);
 const A=fixtureRoster[0], B=fixtureRoster[1], M=fixtureRoster[2], D=fixtureRoster[3];
+const embedding='['+[1,...Array(1535).fill(0)].join(',')+']';
 const own=uuid(1), other=uuid(2), foreign=uuid(3), ca=uuid(11),cb=uuid(12),cf=uuid(13),sa=uuid(21),sb=uuid(22),sf=uuid(23);
 const as=async(sub,role='authenticated',extra={})=>{
  await pg.exec('RESET ROLE');
@@ -26,11 +28,12 @@ before(async()=>{
   if(tenant===U)await q("INSERT INTO enrolled_agents(id,tenant_id,clerk_user_id,name,is_active) VALUES($1,$2,'user_foreign','Foreign',true)",[agent,U]);
   await q("INSERT INTO sessions(id,tenant_id,agent_id,flow) VALUES($1,$2,$3,'ma')",[session,tenant,agent]);
   await q("INSERT INTO call_records(id,tenant_id,agent_id,session_id,contact_id,agent_name,call_direction,call_type,product_type,call_start,twilio_call_sid) VALUES($1,$2,$3,$4,$5,'Fixture','inbound','sales','MA',now(),$6)",[call,tenant,agent,session,contact,'CA'+call.replaceAll('-','').slice(0,32)]);
-  await q('INSERT INTO call_transcripts(id,tenant_id,session_id,owner_agent_id,transcript) VALUES($1,$2,$3,$4,$5)',[uuid(Number(call.slice(-3))+30),tenant,session,agent,'PRIVATE '+call]);
-  await q('INSERT INTO transcript_chunks(tenant_id,transcript_id,text) VALUES($1,$2,$3)',[tenant,uuid(Number(call.slice(-3))+30),'PRIVATE CHUNK']);
+  await q('INSERT INTO agents(id,name) VALUES($1,$2)',[agent,'Reference Agent']);
+  await q("INSERT INTO call_transcripts(id,tenant_id,session_id,owner_agent_id,transcript_text,call_date,product_line,phi_scrubbed,agent_id) VALUES($1,$2,$3,$4,$5,now(),'MA',true,$4)",[uuid(Number(call.slice(-3))+30),tenant,session,agent,'PRIVATE '+call]);
+  await q('INSERT INTO transcript_chunks(transcript_id,chunk_text,chunk_index,embedding) VALUES($1,$2,0,$3::vector)',[uuid(Number(call.slice(-3))+30),'PRIVATE CHUNK',embedding]);
   await q("INSERT INTO compliance_flags(session_id,section_label,level,message) VALUES($1,'Intro','warn','PRIVATE FLAG')",[session]);
   await q('INSERT INTO section_scores(session_id,section_number,section_label) VALUES($1,1,\'Intro\')',[session]);
-  await q('INSERT INTO enrollment_intakes(tenant_id,call_id,contact_id,data,pii_encrypted) VALUES($1,$2,$3,\'{}\',\'{}\')',[tenant,call,contact]);
+  await q('INSERT INTO enrollment_intakes(tenant_id,call_id,contact_id,data,pii_encrypted,carrier_key) VALUES($1,$2,$3,\'{}\',\'{}\',\'aetna\')',[tenant,call,contact]);
   await q("INSERT INTO contact_notes(tenant_id,contact_id,agent_id,body) VALUES($1,$2,$3,'PRIVATE NOTE')",[tenant,contact,tenant===T?(agent===eid(A)?A:B).agent_slug:'foreign']);
   await q("INSERT INTO messages(id,tenant_id,contact_id,body) VALUES($1,$2,$3,'PRIVATE MESSAGE')",[call,tenant,contact]);
   await q('INSERT INTO message_media(tenant_id,message_id,storage_path) VALUES($1,$2,$3)',[tenant,call,call+'.gif']);
@@ -54,7 +57,7 @@ after(async()=>{if(pg)await pg.close();});
 for(const [label,subject,claims] of [['unprovisioned','user_unknown',{}],['different org',A.clerk_user_id,{org_id:'org_foreign'}],['foreign tenant','user_foreign',{}],['anon',A.clerk_user_id,{role:'anon'}]]) {
  test(`${label}: direct REST projections, mutations and protected RPCs deny across the entire public catalog`,async()=>{
   await as(subject,claims.role||'authenticated',claims);
-  for(const name of auditTables.filter(n=>!n.includes('.')&&!publicReferences.includes(n)&&!['cms_plans_py2026','ghl_sync_log'].includes(n))) {
+  for(const name of actualTables().filter(n=>!n.includes('.')&&!publicReferences.includes(n)&&!['cms_plans_py2026','ghl_sync_log'].includes(n))) {
    await zero(name,name==='contacts'?'id':'*');
    await denied(q(`INSERT INTO ${name} DEFAULT VALUES`));
    await denied(q(`DELETE FROM ${name}`));
@@ -75,7 +78,7 @@ test('inactive roster, inactive enrolled mapping and removed subject independent
   await pg.exec('RESET ROLE');
   const mapping=(await q('SELECT * FROM availability_agent_subjects WHERE clerk_user_id=$1',[A.clerk_user_id]))[0];
   await pg.exec(change);await as(A.clerk_user_id);
-  for(const table of [...auditTables.filter(n=>!n.includes('.')&&!publicReferences.includes(n)&&!['cms_plans_py2026','ghl_sync_log'].includes(n)),'storage.objects'])await zero(table,table==='contacts'?'id':'*');
+  for(const table of [...actualTables().filter(n=>!n.includes('.')&&!publicReferences.includes(n)&&!['cms_plans_py2026','ghl_sync_log'].includes(n)),'storage.objects'])await zero(table,table==='contacts'?'id':'*');
   await denied(q("SELECT create_workspace_record('contacts','{}')"));
   await denied(q('SELECT deployment_timezone()'));
   await pg.exec('RESET ROLE');await q('UPDATE tenant_agents SET is_active=true WHERE id=$1',[A.id]);await q('UPDATE enrolled_agents SET is_active=true WHERE clerk_user_id=$1',[A.clerk_user_id]);
@@ -85,12 +88,13 @@ test('inactive roster, inactive enrolled mapping and removed subject independent
 test('ordinary active agent: own calls, evidence, notes and assigned CRM; no peer PII or intakes',async()=>{
  await as(A.clerk_user_id);
  assert.deepEqual((await q('SELECT id FROM call_records')).map(r=>r.id),[own]);
- assert.deepEqual((await q('SELECT id FROM v_daily_activity')).map(r=>r.id),[own]);
+ assert.deepEqual((await q('SELECT call_record_id AS id FROM v_daily_activity')).map(r=>r.id),[own]);
  for(const table of ['call_transcripts','transcript_chunks','compliance_flags','section_scores','contact_notes','messages','message_media'])assert.equal((await q('SELECT * FROM '+table)).length,1,table);
  assert.deepEqual((await q('SELECT id FROM contacts')).map(r=>r.id),[ca]);
  assert.equal((await q('SELECT * FROM training_completions')).length,1);
  assert.equal((await q('SELECT * FROM sales_log')).length,1);
- assert.equal((await q('SELECT * FROM search_transcript_chunks()')).length,1);
+ assert.equal((await q('SELECT * FROM search_transcript_chunks($1::vector,5,NULL,NULL,NULL,NULL,0.7)',[embedding])).length,1);
+ assert.equal((await q('SELECT * FROM search_transcript_chunks($1::vector,0.7::double precision,5)',[embedding])).length,1);
  await denied(q('SELECT first_name FROM contacts'));
  await denied(q('SELECT pii_encrypted FROM contacts'));
  assert.equal((await q('SELECT decrypt_pii($1,$2) result',[ca,A.id]))[0].result.first_name,'Private');
@@ -187,7 +191,7 @@ test('150/151 survive: service-only provisioning, payload roles cannot promote, 
  const before=(await q('SELECT role FROM enrolled_agents WHERE clerk_user_id=$1',[A.clerk_user_id]))[0].role;
  const {default:profile}=await import('./fixtures/deployment-profile.json',{with:{type:'json'}});
  await as(null,'service_role');
- await q('SELECT provision_deployment_roster($1,$2)',[JSON.stringify(profile),JSON.stringify(fixtureRoster.map(a=>({...a,role:'principal'})))]);
+ await q('SELECT provision_deployment_roster($1,$2)',[JSON.stringify({...profile,tenantId:T}),JSON.stringify(fixtureRoster.map(a=>({...a,role:'principal'})))]);
  assert.equal((await q('SELECT role FROM enrolled_agents WHERE clerk_user_id=$1',[A.clerk_user_id]))[0].role,before);
  await as(A.clerk_user_id);await denied(q("UPDATE tenant_agents SET name='hacked'"));
 });

@@ -23,7 +23,7 @@ const endpoint=(factory,identity)=>factory({authenticate:async()=>identity,getDb
 before(async()=>{
  process.env.PARAGON_ENABLED='true';
  ({pg}=await buildAccessDatabase());db=evidenceDb(pg);
- await pg.exec(`ALTER TABLE tenants ADD agency_npn text,ADD licensed_states jsonb,ADD compliance_config jsonb;
+ await pg.exec(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS agency_npn text,ADD COLUMN IF NOT EXISTS licensed_states jsonb,ADD COLUMN IF NOT EXISTS compliance_config jsonb;
  INSERT INTO vendor_controls(tenant_id) VALUES('${T}');`);
  await query("INSERT INTO tenants(id,name,clerk_org_id) VALUES($1,'Foreign','org_foreign')",[U]);
  await pg.exec('SET ROLE service_role');
@@ -97,7 +97,10 @@ test('script settings preserve the approved MA template and bind custom script w
 
 test('call-log filters by protected owner UUID before pagination, including when peer display names match',async()=>{
  const members=await query('SELECT id,clerk_user_id FROM enrolled_agents WHERE tenant_id=$1',[T]);
- for(const [n,roster] of [[910,A],[911,B]])await query("INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_direction,call_type,product_type,call_start) VALUES($1,$2,$3,'Same display label','inbound','sales','MA',now())",[uuid(n),T,members.find(m=>m.clerk_user_id===roster.clerk_user_id).id]);
+ for(const [n,roster] of [[910,A],[911,B]]){
+  await query('INSERT INTO contacts(id,tenant_id,assigned_agent_id) VALUES($1,$2,$3)',[uuid(n+10),T,roster.agent_slug]);
+  await query("INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_direction,call_type,product_type,call_start,contact_id) VALUES($1,$2,$3,'Same display label','inbound','sales','MA',now(),$4)",[uuid(n),T,members.find(m=>m.clerk_user_id===roster.clerk_user_id).id,uuid(n+10)]);
+ }
  const get=identity=>endpoint(createCallLogHandler,identity)(new Request('https://offline.example/api/call-log?limit=1&agent=Same%20display%20label'));
  const member=await get(auth());assert.equal(member.status,200,JSON.stringify(await member.clone().json()));
  const body=await member.json();assert.equal(body.count,1);assert.deepEqual(body.rows.map(r=>r.call_record_id),[uuid(910)]);

@@ -1,0 +1,996 @@
+{
+  "version": 1,
+  "purpose": "Empty separate deployment only; never a production migration replay",
+  "entries": [
+    {
+      "file": "sql/platform.sql",
+      "source": "Fresh-install baseline",
+      "sha256": "4c8006df40339810587b9933297447a97c8ce27e6558ea69fb4c411c3bdfeebc"
+    },
+    {
+      "file": "sql/base-transcripts.sql",
+      "source": "docs/supabaseschema (first SQL block; neutral identity; compatibility overload)",
+      "sha256": "f826329b8c4f05dcf8fbb291d2970c744eb793f364ed34fbcf1b9f8c8333ede5"
+    },
+    {
+      "file": "sql/base-missing.sql",
+      "source": "Fresh-install baseline",
+      "sha256": "5343f76669f67ebead3c196bf2ecabc7539e6ce47e3b172fa584e10c61b8e918"
+    },
+    {
+      "file": "sql/reference-sep.sql",
+      "source": "scripts/sep-data/schema.sql",
+      "sha256": "1d257e51346aeee588c7c38dc797243c72c40ae95db3a6ca97b5082304d47614"
+    },
+    {
+      "file": "sql/reference-bulletins.sql",
+      "source": "scripts/create_bulletins_table.sql",
+      "sha256": "73028569225b68a40d597ff5f81d2fef46b1c1f22c6fa2d1bd9a0a138847d108"
+    },
+    {
+      "file": "sql/m000.sql",
+      "source": "Historical migration 000 (schema and approved neutral seed statements only)",
+      "sha256": "634ef9acf0ad5dd311836c585dc02adddd08d7d233da1f3820c9404a15025c32"
+    },
+    {
+      "file": "sql/m001.sql",
+      "source": "Historical migration 001 (schema and approved neutral seed statements only)",
+      "sha256": "4feae892260323c255798a89b57f7594e1fcb2ed61d52801eb338a4bcc8c4e6f"
+    },
+    {
+      "file": "sql/m002.sql",
+      "source": "Historical migration 002 (schema and approved neutral seed statements only)",
+      "sha256": "f513949a37983ab3302d12e46dcde1b1f112925e822fe08a7158c7b3f1054356"
+    },
+    {
+      "file": "sql/m003.sql",
+      "source": "Historical migration 003 (schema and approved neutral seed statements only)",
+      "sha256": "5f1a63c82d2063bf17bd3e92bde37b5464c503da099d59373971de73de43fb29"
+    },
+    {
+      "file": "sql/m004.sql",
+      "source": "Historical migration 004 (schema and approved neutral seed statements only)",
+      "sha256": "e2d3786c506327122be0588d28f34ef5ebd72ee841d27596c8c21dd7888bb850"
+    },
+    {
+      "file": "sql/m005.sql",
+      "source": "Historical migration 005 (schema and approved neutral seed statements only)",
+      "sha256": "ddd643facf428043d70729745bdad08397b926d2d1dd807e780b64f505e7716f"
+    },
+    {
+      "file": "sql/m006.sql",
+      "source": "Historical migration 006 (schema and approved neutral seed statements only)",
+      "sha256": "6888e2bf4f48a0545382f3a6842cc596fe9971464e57123ac7e3a976bedd2a19"
+    },
+    {
+      "file": "sql/m007.sql",
+      "source": "Historical migration 007 (schema and approved neutral seed statements only)",
+      "sha256": "9c41bb80b6e5e73ed83816faa7c4aa4607dcf008bb25bdd20d0179062c795e7a"
+    },
+    {
+      "file": "sql/m008.sql",
+      "source": "Historical migration 008 (schema and approved neutral seed statements only)",
+      "sha256": "629bb31dfdd25be5cf35df99cbfd5985d770b29c133d0f6387ce66d31e7b0b38"
+    },
+    {
+      "file": "sql/m009.sql",
+      "source": "Historical migration 009 (schema and approved neutral seed statements only)",
+      "sha256": "75317bcd3da6e1d827d373e19e63372d32585b0ec0209c897cbe19ab905aed57"
+    },
+    {
+      "file": "sql/m010.sql",
+      "source": "Historical migration 010 (schema and approved neutral seed statements only)",
+      "sha256": "fdbf44b33cfc0325fb4e515c337a6eda513b24d9b0f1eea58b261235796a777b"
+    },
+    {
+      "file": "sql/m011.sql",
+      "source": "Historical migration 011 (schema and approved neutral seed statements only)",
+      "sha256": "0e59c91f85b1bc0609482cf2d113982b87ae4afac29453f4031383393a0c86d0"
+    },
+    {
+      "file": "sql/m012.sql",
+      "source": "Historical migration 012 (schema and approved neutral seed statements only)",
+      "sha256": "e144474c1c2ae33fe886e65076ede7ef13c37f6075674ff81676a98770373605"
+    },
+    {
+      "file": "sql/m013.sql",
+      "source": "Historical migration 013 (schema and approved neutral seed statements only)",
+      "sha256": "d340aa54888dcf33e95f4c98d1e6c8973bb4f5a5173e50c22457941f8dd29a86"
+    },
+    {
+      "file": "sql/m014.sql",
+      "source": "Historical migration 014 (schema and approved neutral seed statements only)",
+      "sha256": "25afb103296f0102ea2fb34b4f9ff815c24a8a1ac0d4a7feead9883d108c4715"
+    },
+    {
+      "file": "sql/m015.sql",
+      "source": "Historical migration 015 (schema and approved neutral seed statements only)",
+      "sha256": "8d145720112bc6690fddd80f5994fe6dcc2dc897ee4136a81493718da8fef1b1"
+    },
+    {
+      "file": "sql/m016.sql",
+      "source": "Historical migration 016 (schema and approved neutral seed statements only)",
+      "sha256": "99c57b94e117f362514d5dc6d67644daf1156ff32b3ce7cf31534e2edad24f91"
+    },
+    {
+      "file": "sql/m017.sql",
+      "source": "Historical migration 017 (schema and approved neutral seed statements only)",
+      "sha256": "ed0d6a66171d41d6b0614894c29f1792da4830e40d25a6b2762803e83b752352"
+    },
+    {
+      "file": "sql/m018.sql",
+      "source": "Historical migration 018 (schema and approved neutral seed statements only)",
+      "sha256": "c7aea5c9b07a2006659606d802aaf63487f97d34c841f0a8cb018c4688b02ce5"
+    },
+    {
+      "file": "sql/m019.sql",
+      "source": "Historical migration 019 (schema and approved neutral seed statements only)",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "file": "sql/m020.sql",
+      "source": "Historical migration 020 (schema and approved neutral seed statements only)",
+      "sha256": "ef5a870ed4467be5a9410887db257a4c5b195e4e3aab575827be2b772ce1494e"
+    },
+    {
+      "file": "sql/m021.sql",
+      "source": "Historical migration 021 (schema and approved neutral seed statements only)",
+      "sha256": "bb4486fe8b360c4ac2b39e7a29c3bd4b3710a40049da696658991c4455bd5477"
+    },
+    {
+      "file": "sql/m022.sql",
+      "source": "Historical migration 022 (schema and approved neutral seed statements only)",
+      "sha256": "46b28126b604d7dfc6ec8fb19b65f2f44cf2f7d4395e95e32c2f29e9846d3a83"
+    },
+    {
+      "file": "sql/m023.sql",
+      "source": "Historical migration 023 (schema and approved neutral seed statements only)",
+      "sha256": "3c4ed0dda2da64e6a0cd434917ca3d078d78e2d9729a9cc5a690b9341d29cbbe"
+    },
+    {
+      "file": "sql/m024.sql",
+      "source": "Historical migration 024 (schema and approved neutral seed statements only)",
+      "sha256": "4a88efd073e144dfa7378163b664e0d50b15c30d0b73166019e9d53d2beed245"
+    },
+    {
+      "file": "sql/m025.sql",
+      "source": "Historical migration 025 (schema and approved neutral seed statements only)",
+      "sha256": "b5d480bdf29664ec43f5381095a25e4adf452eebc50a4cb410299690c8cac7e3"
+    },
+    {
+      "file": "sql/m026.sql",
+      "source": "Historical migration 026 (schema and approved neutral seed statements only)",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "file": "sql/m027.sql",
+      "source": "Historical migration 027 (schema and approved neutral seed statements only)",
+      "sha256": "6125219581dc9bcb737242a2060b6e337d2f8e12e8d0cbbf60def8455fb4cc71"
+    },
+    {
+      "file": "sql/m028.sql",
+      "source": "Historical migration 028 (schema and approved neutral seed statements only)",
+      "sha256": "a0454adde6cafbb08a67a9542e7f434918fbeb3cb3194f80f4bc2412ee2cf2ce"
+    },
+    {
+      "file": "sql/m029.sql",
+      "source": "Historical migration 029 (schema and approved neutral seed statements only)",
+      "sha256": "2cf304569e79b2db30411d2c5dc4661c8269c2fe6fffacfdaf5d60b9d6159595"
+    },
+    {
+      "file": "sql/m030.sql",
+      "source": "Historical migration 030 (schema and approved neutral seed statements only)",
+      "sha256": "e85afb76bd3dc066dafafb484f61d2cd79b1f3a526ff1fcaa0371b9bff51509f"
+    },
+    {
+      "file": "sql/m031.sql",
+      "source": "Historical migration 031 (schema and approved neutral seed statements only)",
+      "sha256": "4ed662ae8e5dbde8e39f961d735516ba45f2d52d5c9403afa6e5ba240ec65c97"
+    },
+    {
+      "file": "sql/m032.sql",
+      "source": "Historical migration 032 (schema and approved neutral seed statements only)",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "file": "sql/m033.sql",
+      "source": "Historical migration 033 (schema and approved neutral seed statements only)",
+      "sha256": "94e9a6ca014a09d6da54563002b7733718bd96721544faec0898bd05c45311db"
+    },
+    {
+      "file": "sql/m034.sql",
+      "source": "Historical migration 034 (schema and approved neutral seed statements only)",
+      "sha256": "adbdfd28bde4aa0d08a2b87499bbb7eea5b99dd3b2ca7668d072a56ecfe670e6"
+    },
+    {
+      "file": "sql/m035.sql",
+      "source": "Historical migration 035 (schema and approved neutral seed statements only)",
+      "sha256": "5eddaa433c461b107a3ba745b0abdeaa15eafa4bd80217372f71e28f24a32b76"
+    },
+    {
+      "file": "sql/m036.sql",
+      "source": "Historical migration 036 (schema and approved neutral seed statements only)",
+      "sha256": "655700b9f7ba2c9475013fd9ebe0cb9dc33bd7baee259262223eaf042c5e3bbf"
+    },
+    {
+      "file": "sql/m037.sql",
+      "source": "Historical migration 037 (schema and approved neutral seed statements only)",
+      "sha256": "b00c9e428024e45b34e6eb7d9d2de977240a2e56e9954c08ef83136b6d442d47"
+    },
+    {
+      "file": "sql/m038.sql",
+      "source": "Historical migration 038 (schema and approved neutral seed statements only)",
+      "sha256": "8bf911042ddde6e9e7577bc651e008241b06f5c17241496a0d5714d47faa28e7"
+    },
+    {
+      "file": "sql/m039.sql",
+      "source": "Historical migration 039 (schema and approved neutral seed statements only)",
+      "sha256": "6a421e2633764eec053d4cad75e70f0633defc569bdab3c06b3613d8f29fef0d"
+    },
+    {
+      "file": "sql/m040.sql",
+      "source": "Historical migration 040 (schema and approved neutral seed statements only)",
+      "sha256": "bbaa8b753104dbd7e4a4850318bc2c57a30de99f5a8329b0d902b90bbcca8536"
+    },
+    {
+      "file": "sql/m041.sql",
+      "source": "Historical migration 041 (schema and approved neutral seed statements only)",
+      "sha256": "63bc3d9a05949345afd96dbf9e6885bbc2c32fbb0d95b60f1f5f664b41abb330"
+    },
+    {
+      "file": "sql/m042.sql",
+      "source": "Historical migration 042 (schema and approved neutral seed statements only)",
+      "sha256": "845363943716f974ae99169f0c18f0d07067301dafd0591f5ed38e8fea9df7c4"
+    },
+    {
+      "file": "sql/m043.sql",
+      "source": "Historical migration 043 (schema and approved neutral seed statements only)",
+      "sha256": "e5548fa0d2ad897da1ad9eee1aa72706f83e644636d83e77e5ba4ad1e3293d8a"
+    },
+    {
+      "file": "sql/m044.sql",
+      "source": "Historical migration 044 (schema and approved neutral seed statements only)",
+      "sha256": "8eff3f297704bec706c62cea807567ec682245af3ffc1a21c496b3a91aaae958"
+    },
+    {
+      "file": "sql/m045.sql",
+      "source": "Historical migration 045 (schema and approved neutral seed statements only)",
+      "sha256": "92faab4097d9c8fffd2d18092bd71e75c119f3ea9bc5760ec4f5c41f1f0a6c2b"
+    },
+    {
+      "file": "sql/m046.sql",
+      "source": "Historical migration 046 (schema and approved neutral seed statements only)",
+      "sha256": "7ce84b442c551af6c9da8dd99d35d6bfeaf71931a885c647bbec61f3fd2aac0f"
+    },
+    {
+      "file": "sql/m047.sql",
+      "source": "Historical migration 047 (schema and approved neutral seed statements only)",
+      "sha256": "09d20b49adf21a8220be712e47cdd761a69226870ccb2395392514bb5f7c8cbd"
+    },
+    {
+      "file": "sql/m048.sql",
+      "source": "Historical migration 048 (schema and approved neutral seed statements only)",
+      "sha256": "5ea01d59176e87b37f0a1a0e33faa51797da453b862b589b6b3e87ac285c2fbe"
+    },
+    {
+      "file": "sql/m049.sql",
+      "source": "Historical migration 049 (schema and approved neutral seed statements only)",
+      "sha256": "1f036c7cee35ea293908f48013afc9628a555ea67371e3de930b03a9f1896015"
+    },
+    {
+      "file": "sql/m050.sql",
+      "source": "Historical migration 050 (schema and approved neutral seed statements only)",
+      "sha256": "5c230d946b2e35654fba46ecb2ba99b0c8246c9dcdbbd6e538d84255e0fd60f5"
+    },
+    {
+      "file": "sql/m051.sql",
+      "source": "Historical migration 051 (schema and approved neutral seed statements only)",
+      "sha256": "2fd0d977f78b36558e3d610628ca853f664f370bd27f8174c41408d0ec793f6f"
+    },
+    {
+      "file": "sql/m052.sql",
+      "source": "Historical migration 052 (schema and approved neutral seed statements only)",
+      "sha256": "2b07eb03f92fd3d9f110f9664dcd50affecb016e8e2a02bdd13f9abbd93c402e"
+    },
+    {
+      "file": "sql/m053.sql",
+      "source": "Historical migration 053 (schema and approved neutral seed statements only)",
+      "sha256": "5caa55782ea1a0f7013b298731abf3a3aff1ee309275d53aa5ec59a10f446a24"
+    },
+    {
+      "file": "sql/m054.sql",
+      "source": "Historical migration 054 (schema and approved neutral seed statements only)",
+      "sha256": "16206135a7fe28ba23ffa6cd53513506ec9769367d403e61dca9a1337c0c33c2"
+    },
+    {
+      "file": "sql/m055.sql",
+      "source": "Historical migration 055 (schema and approved neutral seed statements only)",
+      "sha256": "f46fcf0a0a4752bc147bca7d0a1cf76f28eaefabb641a8595ed159c6bcd18e50"
+    },
+    {
+      "file": "sql/m056.sql",
+      "source": "Historical migration 056 (schema and approved neutral seed statements only)",
+      "sha256": "6eb1589d23e789eeb0000182418ec833b69a0044c228905a65dac24bbed355a3"
+    },
+    {
+      "file": "sql/m057.sql",
+      "source": "Historical migration 057 (schema and approved neutral seed statements only)",
+      "sha256": "955583a1ac1e4545958f37319af37a88038c362b8366e50d314f262610755c81"
+    },
+    {
+      "file": "sql/m058.sql",
+      "source": "Historical migration 058 (schema and approved neutral seed statements only)",
+      "sha256": "966236af6c0c4a57de514a5b93bf2491b0957fb05c55bec9d7932434c75ceea1"
+    },
+    {
+      "file": "sql/m059.sql",
+      "source": "Historical migration 059 (schema and approved neutral seed statements only)",
+      "sha256": "b10f9b72c64c2e7fa46b0515312acf0a288e9419688f35b63c101f8f4de8af6f"
+    },
+    {
+      "file": "sql/m060.sql",
+      "source": "Historical migration 060 (schema and approved neutral seed statements only)",
+      "sha256": "cab8834b1fdae7d5d9f8e49cf4a78a1029f6b43b436fef6ccbf756d470aec8c4"
+    },
+    {
+      "file": "sql/m061.sql",
+      "source": "Historical migration 061 (schema and approved neutral seed statements only)",
+      "sha256": "15f824d6f1ac7c47f8421782ab0b8cc394ed7eb791d304d0f5091731f474ce17"
+    },
+    {
+      "file": "sql/m062.sql",
+      "source": "Historical migration 062 (schema and approved neutral seed statements only)",
+      "sha256": "b28c83ac65d2adfb97f9005317a75106ce41e5ab31c3f69cd30654f8e95e465a"
+    },
+    {
+      "file": "sql/m063.sql",
+      "source": "Historical migration 063 (schema and approved neutral seed statements only)",
+      "sha256": "0315a23c370cb8d5a4bba659e5d5fc953f686b5e7b69844daa0ad11b2eabccd2"
+    },
+    {
+      "file": "sql/m064.sql",
+      "source": "Historical migration 064 (schema and approved neutral seed statements only)",
+      "sha256": "63da0c7782c904f44135f1854922775923ec596907b82be562ef8dc508a013e2"
+    },
+    {
+      "file": "sql/m065.sql",
+      "source": "Historical migration 065 (schema and approved neutral seed statements only)",
+      "sha256": "7bc75b02120b2d770f91c96b709800c252474028402199f17f88c91a7d4ea217"
+    },
+    {
+      "file": "sql/m066.sql",
+      "source": "Historical migration 066 (schema and approved neutral seed statements only)",
+      "sha256": "f6791b6840fd981b0ec04e82406bdc78138f83b15348b21571e17fdcf2c54914"
+    },
+    {
+      "file": "sql/m067.sql",
+      "source": "Historical migration 067 (schema and approved neutral seed statements only)",
+      "sha256": "51dcc09f22ee7fe7f89c817c7565501e0cb1c73f6d518963fe48735e47f9b8d1"
+    },
+    {
+      "file": "sql/m068.sql",
+      "source": "Historical migration 068 (schema and approved neutral seed statements only)",
+      "sha256": "969d468a03a49c78afc99a0b99e47474aaca527c3c363fef341e2b91e3a3589c"
+    },
+    {
+      "file": "sql/m069.sql",
+      "source": "Historical migration 069 (schema and approved neutral seed statements only)",
+      "sha256": "7c5a86e99b562f72053031c024f9093ca307a5e57f3ee2688a8927d2fc2d3dd5"
+    },
+    {
+      "file": "sql/m070.sql",
+      "source": "Historical migration 070 (schema and approved neutral seed statements only)",
+      "sha256": "ba3f696c9ddd0bb33f8d2177517b1b3ed69be3174301e16e3701d2801b539c3e"
+    },
+    {
+      "file": "sql/m071.sql",
+      "source": "Historical migration 071 (schema and approved neutral seed statements only)",
+      "sha256": "327e34ce497021c1d5177446b832f4017f312d70e8b7a629db53885040b6e231"
+    },
+    {
+      "file": "sql/m072.sql",
+      "source": "Historical migration 072 (schema and approved neutral seed statements only)",
+      "sha256": "ff70e139b9c55870cc113cd30d18520f781602de429903f4a5b323677c2dfd26"
+    },
+    {
+      "file": "sql/m073.sql",
+      "source": "Historical migration 073 (schema and approved neutral seed statements only)",
+      "sha256": "0d9839057df2ed07dbb5c13a94c999bcade216d4a629fea7c7c6f0ef2dc84421"
+    },
+    {
+      "file": "sql/m074.sql",
+      "source": "Historical migration 074 (schema and approved neutral seed statements only)",
+      "sha256": "f4dcf358e019eacdb09eaf7647d6b4c580963a07933c04b4ac2d3b267df0547b"
+    },
+    {
+      "file": "sql/patch074.sql",
+      "source": "supabase/patches/074_media_stream_sid_fix.sql",
+      "sha256": "922ea6b145cd9e6adb3cb0a19f88efaf5891a451fef0d4c54d76fbc024090c78"
+    },
+    {
+      "file": "sql/seed001.sql",
+      "source": "supabase/seeds/001_compliance_intents.sql",
+      "sha256": "64001e6c112df5f636c05908c3ec37520d4280e146597ef8663a40ea39b848c3"
+    },
+    {
+      "file": "sql/seed002.sql",
+      "source": "supabase/seeds/002_scoring_template.sql",
+      "sha256": "e32b153f68872540e298288654b7903c5fc7f3aae4eeeeadeea5faa342e53a0c"
+    },
+    {
+      "file": "sql/seed003.sql",
+      "source": "supabase/seeds/003_snp_routing_seed.sql",
+      "sha256": "6897a2a5368a237961ff2b7bedbf5caef906c9b91b18c8b52d0986d60c0725aa"
+    },
+    {
+      "file": "sql/seed004.sql",
+      "source": "supabase/seeds/004_dsnp_eae_seed.sql",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "file": "sql/seed005.sql",
+      "source": "supabase/seeds/005_sales_forum_2026_seed.sql",
+      "sha256": "75922210eb61f94a582f9254d1aefd7d63cdcadfcfe9909573fb3b9c0f3e725f"
+    },
+    {
+      "file": "sql/m075.sql",
+      "source": "Historical migration 075 (schema and approved neutral seed statements only)",
+      "sha256": "71df1739a442df1c8cbca61bb4e67bb3ca677b0da91f4d4b03dc0cb5be19050c"
+    },
+    {
+      "file": "sql/m076.sql",
+      "source": "Historical migration 076 (schema and approved neutral seed statements only)",
+      "sha256": "3e1e929babed4f4276c92ae8fa6124589ea32092d43900ab1fc83f0f65abce16"
+    },
+    {
+      "file": "sql/m077.sql",
+      "source": "Historical migration 077 (schema and approved neutral seed statements only)",
+      "sha256": "9748892f49fd025c1adbae2855ce440ccc8abd3fa312008f3369f7c0cc48c269"
+    },
+    {
+      "file": "sql/m078.sql",
+      "source": "Historical migration 078 (schema and approved neutral seed statements only)",
+      "sha256": "81fac463981eae379fe891cab4758b952b9d0b289e1fc3f47ecbbeecba6e76a4"
+    },
+    {
+      "file": "sql/m079.sql",
+      "source": "Historical migration 079 (schema and approved neutral seed statements only)",
+      "sha256": "3087d36eda6832f57a6eb7b2aa654189639b0b0678e3f4ee65f8c52e0382c583"
+    },
+    {
+      "file": "sql/m080.sql",
+      "source": "Historical migration 080 (schema and approved neutral seed statements only)",
+      "sha256": "18fafa1b1cbdb95f27ba7cec594b9176db316b66ac1e806077971da8c6816edb"
+    },
+    {
+      "file": "sql/m081.sql",
+      "source": "Historical migration 081 (schema and approved neutral seed statements only)",
+      "sha256": "149114058c3315994d4ac2dddfad6f8e45e8953aeddee26d9d069362638f971d"
+    },
+    {
+      "file": "sql/m082.sql",
+      "source": "Historical migration 082 (schema and approved neutral seed statements only)",
+      "sha256": "87de9d2ae22a43622394140b79aea7002a478e803d4e4adc92b0c1423f781bcd"
+    },
+    {
+      "file": "sql/m084.sql",
+      "source": "Historical migration 084 (schema and approved neutral seed statements only)",
+      "sha256": "275485a11e6a5d3c5f9b3531db1fba04e0228fafb5be8ddda9607398fae2baac"
+    },
+    {
+      "file": "sql/m086.sql",
+      "source": "Historical migration 086 (schema and approved neutral seed statements only)",
+      "sha256": "dacedf11c67fc63d721e61dead6e18e8a45bdfc810da10c5db77e9b9616ec267"
+    },
+    {
+      "file": "sql/m088.sql",
+      "source": "Historical migration 088 (schema and approved neutral seed statements only)",
+      "sha256": "6a149797d8829ebf2ed6ef5c7a9dc4c540ea0cfecfca9aba71d243a0948b1de1"
+    },
+    {
+      "file": "sql/m089.sql",
+      "source": "Historical migration 089 (schema and approved neutral seed statements only)",
+      "sha256": "0f7bea6e99572e1d5515688fbf8a5f94b591b076cf68f18ae31adb9f38818bad"
+    },
+    {
+      "file": "sql/m092.sql",
+      "source": "Historical migration 092 (schema and approved neutral seed statements only)",
+      "sha256": "a1daae79d77f0d738fa68ca6c22d8b54ffda7557ebe63528ff8666fa72378f34"
+    },
+    {
+      "file": "sql/m093.sql",
+      "source": "Historical migration 093 (schema and approved neutral seed statements only)",
+      "sha256": "4e9972cbb0596f1ab29940bd02d292a9ae88e05e7cc06a615e0330e3aec2721c"
+    },
+    {
+      "file": "sql/m094.sql",
+      "source": "Historical migration 094 (schema and approved neutral seed statements only)",
+      "sha256": "e8f5c61aeb0141759e6cf4cb8e87fb3255cf647584f18b65264df0e49dc05e28"
+    },
+    {
+      "file": "sql/m095.sql",
+      "source": "Historical migration 095 (schema and approved neutral seed statements only)",
+      "sha256": "67d610c8b8a37b42441b00b9777bb2f6f6b8e61d9b685eaa47b4a73abf8eaaa9"
+    },
+    {
+      "file": "sql/m096.sql",
+      "source": "Historical migration 096 (schema and approved neutral seed statements only)",
+      "sha256": "3dedba3aa8f240403f3432345143d0e164c32415dee71d32ebd043b470438365"
+    },
+    {
+      "file": "sql/m097.sql",
+      "source": "Historical migration 097 (schema and approved neutral seed statements only)",
+      "sha256": "e3fccad2b493a8d5ab74a1ff77a853d8e45166e2836740203d9e9e759515f7b8"
+    },
+    {
+      "file": "sql/m098.sql",
+      "source": "Historical migration 098 (schema and approved neutral seed statements only)",
+      "sha256": "5a6530303d4035be9df111066748a03fd3fd6b17ce620f5668bd61f291a40841"
+    },
+    {
+      "file": "sql/m099.sql",
+      "source": "Historical migration 099 (schema and approved neutral seed statements only)",
+      "sha256": "d0a873e3820a2c761c2e93add37839935fef5cc4f038ae150551d20fc74c5f95"
+    },
+    {
+      "file": "sql/m100.sql",
+      "source": "Historical migration 100 (schema and approved neutral seed statements only)",
+      "sha256": "39112a0274d88ddfe6932c5da1b21c4cbbd216a0f77897492b33d0f5e48ebc78"
+    },
+    {
+      "file": "sql/m101.sql",
+      "source": "Historical migration 101 (schema and approved neutral seed statements only)",
+      "sha256": "b8287ba398688852307c7b65f38df2eebc2bef11b7053b13481c996bdaba7c0e"
+    },
+    {
+      "file": "sql/m102.sql",
+      "source": "Historical migration 102 (schema and approved neutral seed statements only)",
+      "sha256": "fbb37aa5b48d4ef1aff04424351e95dd5f994e584cc2ac0330e471b758db0e93"
+    },
+    {
+      "file": "sql/m103.sql",
+      "source": "Historical migration 103 (schema and approved neutral seed statements only)",
+      "sha256": "09b9b0d62127d65ab899907fd92b44b59482c37a0bb82975888a506554b13359"
+    },
+    {
+      "file": "sql/m104.sql",
+      "source": "Historical migration 104 (schema and approved neutral seed statements only)",
+      "sha256": "b39e64740c8549387d7557951d77ac728f427ebf701631fd8ae22382b13b8478"
+    },
+    {
+      "file": "sql/m105.sql",
+      "source": "Historical migration 105 (schema and approved neutral seed statements only)",
+      "sha256": "366b024b44d375baf23511752fce915ca65a54e93c2ca97326a358248a6cc10d"
+    },
+    {
+      "file": "sql/m106.sql",
+      "source": "Historical migration 106 (schema and approved neutral seed statements only)",
+      "sha256": "742dd792e16f424275449eab2b868223e4850c8c13deef4b647c25c8ca6ac8a0"
+    },
+    {
+      "file": "sql/m107.sql",
+      "source": "Historical migration 107 (schema and approved neutral seed statements only)",
+      "sha256": "b5b634cef8ec4b316ca68dc4d87826fe0e86a28be5b7c9eaa730847fedd3b449"
+    },
+    {
+      "file": "sql/m108.sql",
+      "source": "Historical migration 108 (schema and approved neutral seed statements only)",
+      "sha256": "a7ba6583c184b58b7ff793c7926636c5a0c707cb8c620d15d96361d56173bbcd"
+    },
+    {
+      "file": "sql/m109.sql",
+      "source": "Historical migration 109 (schema and approved neutral seed statements only)",
+      "sha256": "79432534f7406ca172bbb676cc848a9387860f5a19ad373fe2ca3294ad7b2aaf"
+    },
+    {
+      "file": "sql/m110.sql",
+      "source": "Historical migration 110 (schema and approved neutral seed statements only)",
+      "sha256": "3d2cd55f989715f8cc4eedad2320c59555cd23d97136c156bc8ae38f8f6f6d41"
+    },
+    {
+      "file": "sql/m111.sql",
+      "source": "Historical migration 111 (schema and approved neutral seed statements only)",
+      "sha256": "8c56cfb89b4bbe1eea61bfc725ae2207293a76b3d26f29a3975e176b94e3a2b6"
+    },
+    {
+      "file": "sql/m112.sql",
+      "source": "Historical migration 112 (schema and approved neutral seed statements only)",
+      "sha256": "acb3882ed0c23efc86b41dd88eccc22349bd532d822634d196408e5e3e6c8fe3"
+    },
+    {
+      "file": "sql/m113.sql",
+      "source": "Historical migration 113 (schema and approved neutral seed statements only)",
+      "sha256": "d0be86502211c76407df736c7fd3042761acc0ae680bf6fd40dbdb59df6603f4"
+    },
+    {
+      "file": "sql/m114.sql",
+      "source": "Historical migration 114 (schema and approved neutral seed statements only)",
+      "sha256": "60791a32467da5e38ba4ba2e349b2f247d5386ad408a1039f4cee9a275d958db"
+    },
+    {
+      "file": "sql/m115.sql",
+      "source": "Historical migration 115 (schema and approved neutral seed statements only)",
+      "sha256": "c0285f740ff0e16a8e260e1c57ee21839dac02f5c8a4e52461e984388984d497"
+    },
+    {
+      "file": "sql/m116.sql",
+      "source": "Historical migration 116 (schema and approved neutral seed statements only)",
+      "sha256": "08bf824770fdb38042a5ed87bca8b14f217c0e884a67e2d554892d6f22969508"
+    },
+    {
+      "file": "sql/m117.sql",
+      "source": "Historical migration 117 (schema and approved neutral seed statements only)",
+      "sha256": "f68277d6da8541685c0a4582272629f3536406836d840fdae20f6af8310af352"
+    },
+    {
+      "file": "sql/m118.sql",
+      "source": "Historical migration 118 (schema and approved neutral seed statements only)",
+      "sha256": "6bfa8eeded5143bf110ad4c4b7dfe21e0ebe6495800924d4d91c6d628da19c29"
+    },
+    {
+      "file": "sql/m119.sql",
+      "source": "Historical migration 119 (schema and approved neutral seed statements only)",
+      "sha256": "e846fce0fd471313d7f6c8cda199f2bbbdff6e29c5090f9cfa1694736cb8f838"
+    },
+    {
+      "file": "sql/m120.sql",
+      "source": "Historical migration 120 (schema and approved neutral seed statements only)",
+      "sha256": "c45fa84ab3df99cb03df3da90bda4c07dd6fa2fd2bf7b430dc0258d2b17f627a"
+    },
+    {
+      "file": "sql/m121.sql",
+      "source": "Historical migration 121 (schema and approved neutral seed statements only)",
+      "sha256": "37d1c80702ff371301023cb18054e14b296af5febfd37a4b803c676f75994121"
+    },
+    {
+      "file": "sql/m122.sql",
+      "source": "Historical migration 122 (schema and approved neutral seed statements only)",
+      "sha256": "9cc8a4d2dd66398f00a42844f8e567a51d2ca1f2c019cbebbbd90b69f1b8678c"
+    },
+    {
+      "file": "sql/m123.sql",
+      "source": "Historical migration 123 (schema and approved neutral seed statements only)",
+      "sha256": "69ab33489f093e781a9dba7e61c93ab78934952bab19caece9aa705f85eb864a"
+    },
+    {
+      "file": "sql/m124.sql",
+      "source": "Historical migration 124 (schema and approved neutral seed statements only)",
+      "sha256": "2b4a006f667b41ccaf3b7b8e3dca8825384f9df7ac5f3073509a2f727ab766cc"
+    },
+    {
+      "file": "sql/m125.sql",
+      "source": "Historical migration 125 (schema and approved neutral seed statements only)",
+      "sha256": "e4f7f12877a3ffaac45579e45e7ffac14bb65b4019118a4e5eea6e874392091b"
+    },
+    {
+      "file": "sql/m126.sql",
+      "source": "Historical migration 126 (schema and approved neutral seed statements only)",
+      "sha256": "38d6681aac2ed8904f5ed69e872442d1cfc67ec68973b4206c9f640cafa1a690"
+    },
+    {
+      "file": "sql/m127.sql",
+      "source": "Historical migration 127 (schema and approved neutral seed statements only)",
+      "sha256": "69877a711dfdb7cfc79033c47d2a7370fd47cad7cd97d5aeb42cac40aaf8ddaf"
+    },
+    {
+      "file": "sql/m128.sql",
+      "source": "Historical migration 128 (schema and approved neutral seed statements only)",
+      "sha256": "f8495fd7ae4b5c941528774c3d60283a3764e10146e758c9f5fbf6760eb78547"
+    },
+    {
+      "file": "sql/m129.sql",
+      "source": "Historical migration 129 (schema and approved neutral seed statements only)",
+      "sha256": "dcfe2d41e59c820d07af80db117f2c51032c7d594d0b03d2dac9c5634a9eebad"
+    },
+    {
+      "file": "sql/m130.sql",
+      "source": "Historical migration 130 (schema and approved neutral seed statements only)",
+      "sha256": "1d515ab2f547db412653fb06fc4175de9fe5a6902a6a627e1ec13f5b83bcb59b"
+    },
+    {
+      "file": "sql/m131.sql",
+      "source": "Historical migration 131 (schema and approved neutral seed statements only)",
+      "sha256": "1c54b73661f7725f0f8d22586bd5484729be70202385e03b1bf8e15f668dbc48"
+    },
+    {
+      "file": "sql/m132.sql",
+      "source": "Historical migration 132 (schema and approved neutral seed statements only)",
+      "sha256": "124b23551a44af97033275e4afd89cc4ae74fecd404773ed76306fedf2bf2fe8"
+    },
+    {
+      "file": "sql/m133.sql",
+      "source": "Historical migration 133 (schema and approved neutral seed statements only)",
+      "sha256": "3332b5c4459287da0ac28f8975c794cf4de4dae519a3797fc57e625feea3230d"
+    },
+    {
+      "file": "sql/m134.sql",
+      "source": "Historical migration 134 (schema and approved neutral seed statements only)",
+      "sha256": "75d11611f84bddd4d7787583f8b861d91b833d2b34a5402990a551fdbd6bc9fe"
+    },
+    {
+      "file": "sql/m135.sql",
+      "source": "Historical migration 135 (schema and approved neutral seed statements only)",
+      "sha256": "251c97d2fb644ee6ceff83f8cb6283ca038991a096dced1c239dbfb920e8f9a8"
+    },
+    {
+      "file": "sql/m136.sql",
+      "source": "Historical migration 136 (schema and approved neutral seed statements only)",
+      "sha256": "9789b110a926828739a5612ed9431ff6ab2c2c06a53420ee6bd7e6c844888233"
+    },
+    {
+      "file": "sql/m137.sql",
+      "source": "Historical migration 137 (schema and approved neutral seed statements only)",
+      "sha256": "b86a0bc7d0ebd2d841823ee0c3a5f01ecfbcb39faf598e56039b03d58a9d3bee"
+    },
+    {
+      "file": "sql/m138.sql",
+      "source": "Historical migration 138 (schema and approved neutral seed statements only)",
+      "sha256": "f91f5c84d515a9f703cb6a56ee15a86915377fbca3bd8fd25df4b6d6a28b89a9"
+    },
+    {
+      "file": "sql/m139.sql",
+      "source": "Historical migration 139 (schema and approved neutral seed statements only)",
+      "sha256": "79081a92de39c837823b0be7d755a67b384af9fd3e6e0e06c619c24a5c8849e8"
+    },
+    {
+      "file": "sql/m140.sql",
+      "source": "Historical migration 140 (schema and approved neutral seed statements only)",
+      "sha256": "c5a24f86539706161da4544d52fa2b9c6d6ab7b06f8d60d2b13bbe1020ea962b"
+    },
+    {
+      "file": "sql/m141.sql",
+      "source": "Historical migration 141 (schema and approved neutral seed statements only)",
+      "sha256": "1e9d516466611ad6e76133739cbef0fb85572f9241943a866c28cd5a368292c6"
+    },
+    {
+      "file": "sql/m142.sql",
+      "source": "Historical migration 142 (schema and approved neutral seed statements only)",
+      "sha256": "e01496614c1e346e0799111054fc3be7927467b51ad2831f3b661e8533b5a0a0"
+    },
+    {
+      "file": "sql/m144.sql",
+      "source": "Historical migration 144 (schema and approved neutral seed statements only)",
+      "sha256": "42334ccb6a17455eb5b80c1c97d5ff68e62f3b836ae5533e0e4a8da2eb9f12eb"
+    },
+    {
+      "file": "sql/m145.sql",
+      "source": "Historical migration 145 (schema and approved neutral seed statements only)",
+      "sha256": "e7d7a28d17a82e1cdf8d21b4822162a74eb4902c80ae4c8336975ca9cf74773d"
+    },
+    {
+      "file": "sql/m146.sql",
+      "source": "Historical migration 146 (schema and approved neutral seed statements only)",
+      "sha256": "69cffa40786e09aecf0452be8b7552c561e0ed93a400435209a3234ba36fffb5"
+    },
+    {
+      "file": "sql/m147.sql",
+      "source": "Historical migration 147 (schema and approved neutral seed statements only)",
+      "sha256": "d23b28caa795d78bb1da96a927bac52a11e8e50cf2c211272ade8ad3a3db81a7"
+    },
+    {
+      "file": "sql/m148.sql",
+      "source": "Historical migration 148 (schema and approved neutral seed statements only)",
+      "sha256": "dffbf599778b8291a8e2053229791bc0405e265b31e592a7e946dd15804efe7a"
+    },
+    {
+      "file": "sql/m149.sql",
+      "source": "Historical migration 149 (schema and approved neutral seed statements only)",
+      "sha256": "610a00c1aabd89d7648801301a3cb7d194db6f824631fffeb9738645c0eff676"
+    },
+    {
+      "file": "sql/m150.sql",
+      "source": "Historical migration 150 (schema and approved neutral seed statements only)",
+      "sha256": "1303083b3ec38fb4ef081557297c67b813f3b52c700749e8bd8a63edfd0b03a6"
+    },
+    {
+      "file": "sql/m151.sql",
+      "source": "Historical migration 151 (schema and approved neutral seed statements only)",
+      "sha256": "0ecbc6b7abe9921bde455ebd52f3927fd5773a983fad0f3bdc4a9626df872579"
+    },
+    {
+      "file": "sql/m152.sql",
+      "source": "Historical migration 152 (schema and approved neutral seed statements only)",
+      "sha256": "5b917e2fecf33348d9dd3f132fd9890228e5190eaa908a731aa342c16e0b8f05"
+    },
+    {
+      "file": "sql/m153.sql",
+      "source": "Historical migration 153 (schema and approved neutral seed statements only)",
+      "sha256": "578d0110d72b66b4d51df781bb721132ff4fd1f63d1bc6d226e491e71d5eb54c"
+    },
+    {
+      "file": "sql/m154.sql",
+      "source": "Historical migration 154 (schema and approved neutral seed statements only)",
+      "sha256": "48f0c2bfea4d9e0fcc5fc039fec3901612a7213362ca2a3e95d8d9a58ede520c"
+    },
+    {
+      "file": "sql/m155.sql",
+      "source": "Historical migration 155 (schema and approved neutral seed statements only)",
+      "sha256": "4c6a09b8a07d83cb129e1d1648c96e24fa10f226e3b38ec445eb9602c284f565"
+    },
+    {
+      "file": "sql/m156.sql",
+      "source": "Historical migration 156 (schema and approved neutral seed statements only)",
+      "sha256": "d4caa2fdacd0db51c7726184a4690dab13fe87ca9c33fe23dd4c6299ec25e348"
+    },
+    {
+      "file": "sql/seal.sql",
+      "source": "Fresh-install baseline",
+      "sha256": "730d3fdbff3a9201843487873552bb1f811735d2e9123aec11a84a30c8c87709"
+    }
+  ],
+  "exclusions": [
+    {
+      "migration": 7,
+      "statement": 9,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 7,
+      "statement": 10,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 8,
+      "statement": 9,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 10,
+      "statement": 7,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 19,
+      "statement": 1,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 19,
+      "statement": 2,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 22,
+      "statement": 26,
+      "reason": "Name-derived slug backfill; explicit service roster owns identity"
+    },
+    {
+      "migration": 23,
+      "statement": 12,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 26,
+      "statement": 1,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 30,
+      "statement": 2,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 31,
+      "statement": 2,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 31,
+      "statement": 3,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 32,
+      "statement": 1,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 47,
+      "statement": 22,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 51,
+      "statement": 2,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 51,
+      "statement": 4,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 51,
+      "statement": 8,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 64,
+      "statement": 3,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 64,
+      "statement": 5,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 64,
+      "statement": 6,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 67,
+      "statement": 3,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 67,
+      "statement": 5,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 73,
+      "statement": 5,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 106,
+      "statement": 15,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 111,
+      "statement": 4,
+      "reason": "Agency operational seed, name-derived binding, vendor configuration or legacy data snapshot; replaced by explicit protected provisioning"
+    },
+    {
+      "migration": 143,
+      "reason": "Abandoned; approved direct route 142 -> 144 -> 145"
+    },
+    {
+      "migration": 131,
+      "statement": 3,
+      "reason": "Vendor residence-capture enablement; operator opt-in only"
+    },
+    {
+      "migration": 67,
+      "statement": 29,
+      "reason": "Historical billing backfill; no existing calls on fresh install"
+    }
+  ],
+  "replacements": [
+    {
+      "group": "Agency tenant UUID defaults and roster/tenant backfills",
+      "replacement": "No tenant defaults; callers supply tenant, runtime snapshots resolve protected deployment mirror"
+    },
+    {
+      "group": "Agency names, lines and template-name selectors",
+      "replacement": "Neutral shared approved legal text; canonical original template IDs retained"
+    },
+    {
+      "group": "013/014 tenant-selected script seed",
+      "replacement": "Shared NULL-tenant templates; deployment branding provided by profile"
+    },
+    {
+      "group": "Vendor source-name selectors in functions AND views",
+      "replacement": "Service-only bootstrap_vendor_source_name() reads protected settings from 151"
+    },
+    {
+      "group": "049/067 vendor defaults",
+      "replacement": "New controls paused, empty hours, no rate/cap; explicit 151 vendor provisioning"
+    },
+    {
+      "group": "060 duplicate installed policy names from 037",
+      "replacement": "Explicit DROP POLICY IF EXISTS before each policy creation"
+    },
+    {
+      "group": "141/142/144 successor clone UUIDs",
+      "replacement": "Stable fresh-install clone IDs; original canonical IDs unchanged"
+    },
+    {
+      "group": "Global and schema default privileges",
+      "replacement": "Seal closes browser grants for every application owner, including inherited defaults"
+    }
+  ]
+}
