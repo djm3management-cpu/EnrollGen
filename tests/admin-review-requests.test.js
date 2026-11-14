@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -28,7 +29,7 @@ function fixture(component,{admin=false,loaded=true,status=200}={}){
  const module={exports:{}};
  vm.runInNewContext(compiled,{module,exports:module.exports,URLSearchParams,element:(type,props,...children)=>({type,props:props||{},children}),fragment:'fragment',
   setInterval:(fn,ms)=>{timers.set(++nextId,{fn,ms});return nextId;},clearInterval:id=>timers.delete(id),
-  require(name){
+  require(name){if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
    if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({features:{PARAGON_ENABLED:true,CONVERSELY_UPLOAD_ENABLED:true,IX_UPLOAD_ENABLED:true}})};if(name==='react')return h.hooks;if(name.endsWith('/AuthContext'))return {useAppAuth:()=>auth};if(name.endsWith('/useAdminReviewAccess.js'))return {useAdminReviewAccess};if(name.endsWith('/adminReviewApi.js'))return api;if(name.endsWith('/clerkFetch.js'))return {fetchWithClerk};if(name.endsWith('/EnrollmentIntake'))return {__esModule:true,default:'intake'};throw Error(name);},
  });
  h.mount(()=>module.exports.default());

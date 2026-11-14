@@ -1,3 +1,4 @@
+import { agencyName } from '../lib/deploymentPublic.js';
 import { AGENCY_CLOSING } from "../data/agencyClosing.js";
 
 export const MEDSUP_SECTIONS = [
@@ -7,7 +8,7 @@ export const MEDSUP_SECTIONS = [
     key: "recordingOk",
     label: "Recording Disclosure",
     script: [
-      "Thank you for calling New Gen Health Solutions, this is [Agent Name]. Who am I speaking with today?",
+      `Thank you for calling ${agencyName}, this is [Agent Name]. Who am I speaking with today?`,
       "Hi [First Name]. This call may be recorded and monitored for quality and compliance purposes. Is that okay?",
     ],
     gate: "Recording disclosure completed",

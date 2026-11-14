@@ -155,7 +155,7 @@ test('inbound TwiML persists attempt and requests answer/completion; replay neve
   const replay = await request(twilioVoiceRouter, '/twilio/voice', incoming);
   assert.equal(replay.body, first.body); assert.equal(db.claims.length, 1);
   assert.equal(db.tables.telephony_call_attempts.length, 1);
-  const token = /<Stream[^>]*url="wss:\/\/example.test\/media\/([^"]+)"/.exec(first.body)?.[1];
+  const token = /<Stream[^>]*url="wss:\/\/phone.test\/media\/([^"]+)"/.exec(first.body)?.[1];
   const streamClaims = verifyMediaStreamToken(token);
   assert.equal(streamClaims.callSid, incoming.CallSid);
   assert.equal(streamClaims.agentId, db.tables.telephony_call_attempts[0].agent_id);
@@ -165,7 +165,7 @@ test('inbound TwiML persists attempt and requests answer/completion; replay neve
   assert.match(first.body, /<Parameter name="attemptId"/);
   assert.match(first.body, /record="record-from-answer-dual"/);
   assert.match(first.body, /recordingStatusCallbackEvent="completed absent"/);
-  assert.match(first.body, /recordingStatusCallback="https:\/\/example.test\/twilio\/recording\?attemptId=telephony_call_attempts-1"/);
+  assert.match(first.body, /recordingStatusCallback="https:\/\/phone.test\/twilio\/recording\?attemptId=telephony_call_attempts-1"/);
 });
 
 test('no-answer still excludes first agent and reroutes; exhausted capacity still records voicemail TwiML', async () => {
@@ -177,7 +177,7 @@ test('no-answer still excludes first agent and reroutes; exhausted capacity stil
   assert.match(result.body, /<Identity>b<\/Identity>/);
   assert.deepEqual(db.claims[1].p_exclude, ['a']);
   assert.equal(db.tables.telephony_call_attempts.length, 2);
-  const nextToken = /<Stream[^>]*url="wss:\/\/example.test\/media\/([^"]+)"/.exec(result.body)?.[1];
+  const nextToken = /<Stream[^>]*url="wss:\/\/phone.test\/media\/([^"]+)"/.exec(result.body)?.[1];
   assert.equal(verifyMediaStreamToken(nextToken).agentId,'b');
   assert.equal(verifyMediaStreamToken(nextToken).attemptId,db.tables.telephony_call_attempts[1].id);
   const overflow = await request(twilioVoiceRouter, '/twilio/dial-result', {
@@ -395,7 +395,7 @@ test('outbound requests dual-channel recording through the same callback without
   const result = await request(voiceOutboundRouter, '/api/voice/outbound', { CallSid: 'OUT', From: 'client:a', PhoneNumber: '+16097787669' });
   assert.match(result.body, /record="record-from-answer-dual"/);
   assert.match(result.body, /recordingStatusCallbackEvent="completed absent"/);
-  assert.match(result.body, /recordingStatusCallback="https:\/\/example.test\/twilio\/recording\?attemptId=telephony_call_attempts-1"/);
+  assert.match(result.body, /recordingStatusCallback="https:\/\/phone.test\/twilio\/recording\?attemptId=telephony_call_attempts-1"/);
   assert.match(result.body, /answerOnBridge="true"/);
   assert.equal(db.tables.telephony_call_attempts[0].direction, 'outbound');
   assert.equal(db.claims.length, 1);

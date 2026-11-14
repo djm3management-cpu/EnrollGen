@@ -1,3 +1,5 @@
+Historical one-off operation, archived for evidence. Not a provisioning or runtime tool.
+
 // Offline report writer only. No SQL/provider/network imports and no live mode.
 import {readFile,writeFile} from 'node:fs/promises';
 import {RULE_CATALOG,RULES_VERSION,RETIRED_RULE_IDS} from '../../src/compliance/rules/catalog.js';

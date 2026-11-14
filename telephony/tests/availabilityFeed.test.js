@@ -114,16 +114,16 @@ test('method, missing key, preflight and errors are sanitized and logged',async(
   }
   assert.equal(calls,1);assert.equal(logs.length,4);assert.equal(await hashKey(key),hash);
 });
-test('browser roles cannot read key table or call service RPCs; status page key matches seed',async()=>{
+test('browser roles cannot read key table or call service RPCs; status page contains no embedded capability',async()=>{
   const {rows:[r]}=await db.query(`SELECT has_table_privilege('anon','availability_consumers','SELECT') AS keys,
     has_function_privilege('authenticated','get_availability_feed(text,text)','EXECUTE') AS browser,
     has_function_privilege('service_role','get_availability_feed(text,text)','EXECUTE') AS service`);
   assert.deepEqual(r,{keys:false,browser:false,service:true});
   const page=await sql('status-page/index.html');
-  const pageKey=page.match(/const API_KEY = '([^']+)'/)[1];
-  const seeded=await rpc({p_key_hash:await hashKey(pageKey),p_agent_id:null});
-  assert.equal(seeded.data.consumer_name,'nghs-status');assert.equal(seeded.data.authorized,true);
-  assert.equal((await sql('supabase/migrations/047_availability_feed.sql')).includes(pageKey),false);
+  assert.ok(page.includes("'/api/deployment-status'"));
+  assert.ok(!page.includes('const API_KEY'));
+  assert.ok(!page.includes('.supabase.co'));
+
 });
 
 test('shared predicate preserves sticky exclusions, assignment, retries and call-owned release',async()=>{

@@ -1,3 +1,5 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
+const agencyPattern=new RegExp([deploymentPublic.agencyName,...deploymentPublic.agencyAliases].map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'i');
 import {ALL_INTENTS} from '../intents/index.js';
 // Historical pattern definitions only; runtime policy is in catalog.js.
 // Topic matching proves a statement occurred, not that quoted plan facts are true.
@@ -6,7 +8,7 @@ const topics={
  RECORDING_ANNOUNCE:/\b(?:(?:call|conversation|line).{0,35}record(?:ed|ing)|record(?:ed|ing).{0,20}(?:call|conversation|line))/i,
  RECORDING_CONSENT:/\b(?:(?:call|conversation|line).{0,35}record(?:ed|ing)|record(?:ed|ing).{0,20}(?:call|conversation|line))/i,
  AGENT_IDENTIFY_NAME:/\b(?:my name is|this is|i am|i'm)\s+[a-z]+/i,
- AGENT_IDENTIFY_AGENCY:/newgen|new gen|new generation|health solutions|our agency|calling from [a-z]+|here at [a-z]+/i,
+ AGENT_IDENTIFY_AGENCY:agencyPattern,
  AGENT_LICENSED:/licensed.{0,20}(?:agent|sell)|certified.{0,20}agent/i,
  CALL_PURPOSE:/review.{0,40}(?:coverage|options|benefits)|help.{0,30}(?:medicare|coverage)/i,
  INBOUND_GREETING:/thank(?:s| you) for calling/i,

@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { debugLog } from "../lib/debugLog.js";
 import { useCallback, useEffect, useState } from "react";
 import { useTenantConfig } from "./useTenantConfig";
@@ -5,7 +6,7 @@ import { useAppAuth } from "../context/AuthContext";
 import { publishSms, subscribeSms } from "../lib/smsEvents";
 
 
-const TELEPHONY_BASE_URL = (import.meta.env.VITE_TELEPHONY_BASE_URL || "").replace(/\/$/, "");
+const TELEPHONY_BASE_URL = (deploymentPublic.telephonyOrigin).replace(/\/$/, "");
 const THREAD_POLL_MS = 10000;
 const UNREAD_POLL_MS = 20000;
 

@@ -58,7 +58,7 @@ export default function LandingPage() {
               <div className="landing-hero-overlay" aria-hidden="true" />
             <div className="landing-hero-content landing-mystery-content">
               <h1 id="landing-hero-title">
-                <span>new generation agent dashboard</span>
+                <span>agent dashboard</span>
               </h1>
             </div>
           </div>

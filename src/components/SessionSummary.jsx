@@ -1,3 +1,5 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
+import { agencyName,agencyLine,agencyHours } from '../lib/deploymentPublic.js';
 import React, { useCallback, useState } from "react";
 import { ClipboardCheck } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
@@ -41,10 +43,13 @@ function drawPageHeader(doc, subtitle = "Session Summary") {
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
   doc.text("ENROLLGEN", 6, 6);
+  doc.setFontSize(6);
+  doc.text(`${deploymentPublic.documentName} · ${agencyLine} · ${agencyHours}`, 6, 13);
+  doc.setFontSize(7.5);
   doc.setTextColor(255, 200, 200);
   doc.text(`· ${subtitle}`, 35, 6);
   doc.setTextColor(255, 200, 200);
-  doc.text(`Generated: ${new Date().toLocaleString()}`, 204, 6, { align: "right" });
+  doc.text(`Generated: ${new Date().toLocaleString(undefined,{timeZone:deploymentPublic.timezone})}`, 204, 6, { align: "right" });
 }
 
 function addWrappedText(doc, text, x, y, options = {}) {
@@ -112,7 +117,7 @@ function drawMetricCard(doc, x, y, width, title, value, accent) {
   doc.text(String(value), x + 5, y + 15);
 }
 
-function exportSessionSummaryPdf(
+export function exportSessionSummaryPdf(
   summary,
   complianceResult,
   copilotEntries,
@@ -471,11 +476,12 @@ function exportSessionSummaryPdf(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...PC.dim);
-    doc.text("EnrollGen · New Gen Health Solutions · Local session only · Not for distribution", 14, 291);
+    doc.text(`EnrollGen · ${deploymentPublic.documentName} · Local session only · Not for distribution`, 14, 291);
     doc.text(`Page ${i} of ${pageCount}`, 196, 291, { align: "right" });
   }
 
-  doc.save(`enrollgen-session-summary-${Date.now()}.pdf`);
+  if(pdfRuntime.save!==false)doc.save(`enrollgen-session-summary-${Date.now()}.pdf`);
+  return doc;
 }
 
 /* ═══════════════════════════════════════════════════

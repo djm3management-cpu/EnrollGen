@@ -1,3 +1,4 @@
+import {verifyDeploymentConfiguration} from './lib/deploymentRoster.js';
 import { featureEnabled } from './lib/deploymentFeatures.js';
 import { startEgressMetrics } from './egressMetrics.js';
 import {startParagonResidenceWorker} from './paragonResidenceWorker.js';
@@ -30,6 +31,7 @@ import { conferenceRuntime } from './conferenceRuntime.js';
 
 import { expirePhoneSessions } from "./phonePresence.js";
 
+await verifyDeploymentConfiguration(supabase);
 startEgressMetrics();
 
 // Routing checks lease expiry itself, even if this maintenance job is delayed.

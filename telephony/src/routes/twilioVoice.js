@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../lib/deploymentProfile.js';
 import { resolveParagonArrival, claimParagonArrival, enqueueBillingCallback, verifiedParagonArrival } from "../paragonBilling.js";
 import { Router } from "express";
 import twilio from "twilio";
@@ -172,7 +173,7 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req,res,next)=>
     const directAgentId = directAgentForNumber(to, config.directAgentNumbers, paragon || publisherCall);
     const paragonSource = paragon
       ? await supabase.from('lead_sources').select('id').eq('tenant_id',config.defaultTenantId)
-        .eq('name','Paragon Media').eq('type','publisher').eq('active',true).maybeSingle()
+        .eq('name',deploymentProfile().paragon.sourceName).eq('type','publisher').eq('active',true).maybeSingle()
       : null;
     if (paragonSource?.error) throw new Error(`Paragon source lookup failed: ${paragonSource.error.message}`);
     // Duplicate evidence is computed atomically by 076 on insert, independently

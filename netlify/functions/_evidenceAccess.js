@@ -54,7 +54,7 @@ export async function resolveEvidenceIdentity(db, auth, { provision = false } = 
     }
   } else {
     // A signed Clerk organization claim is required for self-provisioning.
-    // No default NGHS tenant, body-supplied identity, roster role, or name fallback.
+    // No default agency tenant, body-supplied identity, roster role, or name fallback.
     if (!provision || !auth.orgId) throw new EvidenceError(403, "Agent membership has not been provisioned.");
     tenant = checked(await db.from("tenants").select("*").eq("clerk_org_id", auth.orgId).maybeSingle());
     if (!tenant) throw new EvidenceError(403, "Organization is not configured.");

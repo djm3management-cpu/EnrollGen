@@ -1,3 +1,4 @@
+import {profileForIx} from './fixtures/profile-helpers.js';
 // Explicit opt-in for existing enabled-feature behavior under test.
 process.env.IX_UPLOAD_ENABLED = 'true';
 import assert from 'node:assert/strict';
@@ -8,25 +9,22 @@ import {uploadIx,ixMetadata} from '../integrations/ixUploads.js';
 const id='00000000-0000-4000-8000-000000000001';
 const account='AC'+'a'.repeat(32),parent='CA'+'c'.repeat(32);
 const leg=n=>({account_sid:account,recording_sid:'RE'+String(n).repeat(32),callback_call_sid:parent});
-const env={IX_UPLOAD_ENABLED:'true',IX_USERNAME:'test-user',IX_PASSWORD:'test-password',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'twilio-secret'};
+const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,IX_UPLOAD_ENABLED:'true',IX_USERNAME:'test-user',IX_PASSWORD:'test-password',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'twilio-secret'};
 const okAuth=()=>Response.json({username:env.IX_USERNAME,token:'secret-token',expiresIn:100});
 const registration=payload=>({callRecordingId:id,recordingUploads:payload.callMetadata.recordings.map(({filename},index)=>({filename,presignedUrl:`https://bucket.s3.amazonaws.com/${index}`,expiresAt:'2099-01-01T00:00:00Z'})).reverse()});
 const job={id,call_id:id,confirmation_code:'SF-CODE'};
 const twilio=async(url,options)=>url.endsWith('.json')?Response.json({sid:url.split('/').at(-1).slice(0,-5),account_sid:account,call_sid:parent,channels:2,start_time:'2026-10-30T12:00:00Z',duration:'120'}):options?.method==='PUT'?new Response(null,{status:200}):new Response(new Uint8Array([1,2,3]),{headers:{'Content-Type':'audio/mpeg'}});
 
-test('configuration defaults to test with fixed endpoints; production uses only its configured credentials',async()=>{
- assert.equal(ixConfiguration({}).environment,'test');assert.equal(new SunfireIxClient({}).available,false);
- assert.equal(ixConfiguration({IX_ENV:'production'}).authUrl,'https://api.sunfirematrix.com/v2/authenticate');
- assert.equal(ixConfiguration({}).baseUrl,'https://test-api.sunfirematrix.com/api');
- assert.throws(()=>ixConfiguration({IX_ENV:'sandbox'}),/invalid_ix_environment/);
- const urls=[];
+test('configuration requires an explicit validated profile and the chosen IX environment',async()=>{
+ assert.throws(()=>ixConfiguration({}),/deployment profile/);
+ assert.throws(()=>new SunfireIxClient({}),/deployment profile/);
  for(const environment of ['test','production']){
-  const client=new SunfireIxClient({...env,IX_ENV:environment},{fetchImpl:async(url,options)=>{
-   urls.push(url);if(url.endsWith('/authenticate')){assert.deepEqual(JSON.parse(options.body),{username:'test-user',password:'test-password'});return okAuth();}
-   assert.equal(options.headers.Authorization,'Bearer secret-token');assert.ok(url.endsWith('/ix/callrecordings/internalenrollment'));return Response.json({callRecordingId:id});
-  }});await client.register({sunfireEnrollmentCode:'SF'});
+  const config=ixConfiguration({...env,DEPLOYMENT_PROFILE_JSON:profileForIx(environment)});
+  assert.equal(config.environment,environment);
+  assert.equal(config.authUrl,`${environment==='test'?'https://test-api.sunfirematrix.com':'https://api.sunfirematrix.com'}/v2/authenticate`);
  }
- assert.equal(urls.length,4);assert.match(urls[0],/test-api/);assert.match(urls[2],/\/\/api.sunfire/);
+ const invalid=JSON.parse(profileForIx('test'));invalid.ix.environment='sandbox';
+ assert.throws(()=>ixConfiguration({...env,DEPLOYMENT_PROFILE_JSON:JSON.stringify(invalid)}),/ix.environment/);
 });
 test('authentication is cached, concurrent requests share auth, and tokens refresh before expiry',async()=>{
  let time=1000,auth=0;

@@ -26,17 +26,17 @@ function fixture({status='claimed',complete=true}={}){
  return {db,calls};
 }
 test('disabled recovery never calls a provider or reserves an alert',async()=>{
- const f=fixture();const r=await recoverBeforeScoring({...f,call,env:{},runGapJob:()=>assert.fail('paid call'),sendAlert:async()=>{}});
+ const f=fixture();const r=await recoverBeforeScoring({...f,call,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,},runGapJob:()=>assert.fail('paid call'),sendAlert:async()=>{}});
  assert.equal(r.incomplete,true);assert.equal(f.calls.length,0);
 });
 test('recovery completes before authorizing scoring; still-partial audio never resumes scoring',async()=>{
  for(const complete of [true,false]){const f=fixture({complete});let requests=0;
- const r=await recoverBeforeScoring({...f,call,env:{TRANSCRIPT_AUTO_RECOVERY_ENABLED:'true'},runGapJob:async()=>{requests++;return {ok:true};},sendAlert:async()=>{}});
+ const r=await recoverBeforeScoring({...f,call,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,TRANSCRIPT_AUTO_RECOVERY_ENABLED:'true'},runGapJob:async()=>{requests++;return {ok:true};},sendAlert:async()=>{}});
  assert.equal(requests,1);assert.equal(!!r.recovered,complete);assert.equal(f.calls.some(([n])=>n==='finish_automatic_transcript_recovery'),complete);}
 });
 test('replays, busy jobs and provider failures do not grant another automatic request',async()=>{
- for(const status of ['blocked','busy']){const f=fixture({status});await recoverBeforeScoring({...f,call,env:{TRANSCRIPT_AUTO_RECOVERY_ENABLED:'true'},runGapJob:()=>assert.fail('paid replay'),sendAlert:async()=>{}});}
- const f=fixture();const r=await recoverBeforeScoring({...f,call,env:{TRANSCRIPT_AUTO_RECOVERY_ENABLED:'true'},runGapJob:async()=>{throw Error('timeout');},sendAlert:async()=>{}});assert.equal(r.reason,'recording_recovery_failed');
+ for(const status of ['blocked','busy']){const f=fixture({status});await recoverBeforeScoring({...f,call,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,TRANSCRIPT_AUTO_RECOVERY_ENABLED:'true'},runGapJob:()=>assert.fail('paid replay'),sendAlert:async()=>{}});}
+ const f=fixture();const r=await recoverBeforeScoring({...f,call,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,TRANSCRIPT_AUTO_RECOVERY_ENABLED:'true'},runGapJob:async()=>{throw Error('timeout');},sendAlert:async()=>{}});assert.equal(r.reason,'recording_recovery_failed');
 });
 test('category subtotals use saved points, include N/A and remain stable under filters',()=>{
  const items=['pass','fail','partial','review','na'].map((result,i)=>({category:'opening',result,points_earned:i===0?2:i===2?1:0,points_possible:i<3?2:0}));
@@ -66,5 +66,5 @@ test('durable administrator notifications send only call identifiers and reason 
  const alert={call_id:'call',tenant_id:'tenant',reason:'scoring_attempts_exhausted'},sent=[];
  const db={from(){const q={select(){return q},is(){return q},order(){return q},limit:async()=>({data:[alert]})};return q;}};
  await sendPendingRecoveryAlerts({db,scoringUrl:'https://example.test/.netlify/functions/score-call-background',secret:'fixture',transport:async(url,options)=>{sent.push([String(url),JSON.parse(options.body)]);return {ok:true};}});
- assert.deepEqual(sent,[['https://example.test/.netlify/functions/stt-alert',alert]]);
+ assert.deepEqual(sent,[['https://app.test/.netlify/functions/stt-alert',alert]]);
 });

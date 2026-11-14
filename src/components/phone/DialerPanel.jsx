@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { debugLog } from "../../lib/debugLog.js";
 import DncCallControl from "./DncCallControl";
 import { loadCallLog } from "../../lib/callLogApi";
@@ -48,7 +49,7 @@ function fmtPhone(value) {
 function fmtWhen(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "--";
-  return d.toLocaleString([], { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString([], {timeZone:deploymentPublic.timezone, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
 function fmtDuration(seconds) {

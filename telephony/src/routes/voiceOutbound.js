@@ -127,7 +127,7 @@ voiceOutboundRouter.post("/api/voice/outbound", requireTwilioSignature, outbound
 
   const dial = response.dial({
     action: publicUrl(`/api/voice/outbound-result?agentId=${encodeURIComponent(agentId)}&attemptId=${attemptId}`),
-    callerId: config.twilioPhoneNumber || "+16098065996",
+    callerId: config.twilioPhoneNumber,
     answerOnBridge: true,
     record: "record-from-answer-dual",
     recordingStatusCallback: publicUrl(`/twilio/recording?attemptId=${attemptId}`),

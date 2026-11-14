@@ -10,7 +10,7 @@ function dbFor(session={id:'s',tenant_id:'t',twilio_call_sid:sid}) {
  return {from(table){return {select(){return this;},eq(){return this;},async single(){return {data:table==='sessions'?session:null};},async insert(){return {data:null};}};}};
 }
 test('fresh provider check rejects active parent, child leg, and verification outage',async()=>{
- const db=dbFor(),options=status=>({env:{TELEPHONY_BASE_URL:'https://telephony.test'},send:async()=>Response.json({sid,status})});
+ const db=dbFor(),options=status=>({env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,TELEPHONY_BASE_URL:'https://telephony.test'},send:async()=>Response.json({sid,status})});
  await assert.rejects(verifyPostCallEnded(db,{session_id:'s'},options('in-progress')),e=>e.status===409);
  await assert.rejects(verifyPostCallEnded(db,{session_id:'s'},{...options('completed'),send:async()=>Response.json({sid,status:'completed',parent_call_sid:'parent'})}),e=>e.status===409);
  await assert.rejects(verifyPostCallEnded(db,{session_id:'s'},{...options('completed'),send:async()=>new Response(null,{status:503})}),e=>e.status===503);

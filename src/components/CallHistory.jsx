@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { debugLog } from "../lib/debugLog.js";
 import { useState, useEffect, useMemo } from "react";
 import { useAppAuth } from "../context/AuthContext";
@@ -22,7 +23,7 @@ const FLOW_LABELS = {
 function formatDate(iso) {
   if (!iso) return "-";
   const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString("en-US", {timeZone:deploymentPublic.timezone,
     month: "short",
     day: "numeric",
     year: "numeric",

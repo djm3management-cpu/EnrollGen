@@ -48,20 +48,19 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Netlify cron expressions are UTC. These align with the requested ET
-# windows during daylight saving time.
+# UTC timers poll; deployment timezone determines local report boundaries.
 [functions."nightly-analytics"]
-  schedule = "0 6 * * *"
+  schedule = "0 * * * *"
 
 [functions."weekly-coaching"]
-  schedule = "0 11 * * 1"
+  schedule = "0 * * * *"
 
 [functions."sync-bulletins"]
   schedule = "0 10 * * *"
 
-# Try at 18:00 ET, with retries at 18:15 and 18:30 if needed.
+# Try each hour; the handler admits the profile local reporting window.
 [functions."paragon-daily-email"]
-  schedule = "0,15,30 22,23 * * *"
+  schedule = "0,15,30 * * * *"
 
 [dev]
   command = "npm run dev"

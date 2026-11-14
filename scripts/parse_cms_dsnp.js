@@ -116,10 +116,8 @@ async function main() {
   await loadLocalEnv();
   const connectionString = process.env.SUPABASE_DB_URL;
   const password = process.env.SUPABASE_DB_PASSWORD;
-  if (!connectionString && !password) throw new Error("Set SUPABASE_DB_URL or SUPABASE_DB_PASSWORD locally. Apply migration 081 before loading.");
-  const client = new pg.Client(connectionString
-    ? { connectionString, ssl: { rejectUnauthorized: false } }
-    : { host: "db.qzjtagnpklaxefwurorc.supabase.co", port: 5432, database: "postgres", user: "postgres", password, ssl: { rejectUnauthorized: false } });
+  if (!connectionString) throw new Error("Set explicit SUPABASE_DB_URL locally. Apply migration 081 before loading.");
+  const client = new pg.Client({ connectionString, ssl: { rejectUnauthorized: false } });
   await client.connect();
   try {
     await loadDsnpPlans(client, plans);

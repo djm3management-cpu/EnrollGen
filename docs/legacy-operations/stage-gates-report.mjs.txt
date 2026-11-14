@@ -1,3 +1,5 @@
+Historical one-off operation, archived for evidence. Not a provisioning or runtime tool.
+
 // DRY RUN ONLY. No database/provider imports or execute mode. Local artifacts only.
 import {readFile,writeFile} from 'node:fs/promises';
 import {RULE_CATALOG,RULES_VERSION} from '../../src/compliance/rules/catalog.js';

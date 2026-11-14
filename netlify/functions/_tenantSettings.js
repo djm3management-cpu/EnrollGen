@@ -1,7 +1,9 @@
+import { postJson } from '../../integrations/transport.js';
+import { deploymentProfile, validateDestination } from '../../telephony/src/lib/deploymentProfile.js';
 import "../../integrations/authSafety.js";
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
-export const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
+export const DEPLOYMENT_TENANT_ID = deploymentProfile().tenantId;
 export const JSON_HEADERS = { "Content-Type": "application/json" };
 
 export const DEFAULT_CARRIER_OPTIONS = [
@@ -481,17 +483,6 @@ export async function seedScriptTemplatesForTenant(supabase, tenantId) {
   if (source.error) throw source.error;
 
   if (!source.data?.length) {
-    sourceName = "nghs";
-    source = await supabase
-      .from("script_templates")
-      .select("flow_type, version, sections")
-      .eq("tenant_id", NGHS_TENANT_ID)
-      .eq("is_active", true);
-
-    if (source.error) throw source.error;
-  }
-
-  if (!source.data?.length) {
     return { copied: 0, skipped: true, reason: "no source script templates found" };
   }
 
@@ -513,43 +504,12 @@ export async function seedScriptTemplatesForTenant(supabase, tenantId) {
 }
 
 export function validateWebhookUrl(rawUrl) {
-  const value = safeText(rawUrl);
-  if (!value) throw new Error("Missing GHL webhook URL.");
-
-  let parsed;
-  try {
-    parsed = new URL(value);
-  } catch {
-    throw new Error("GHL webhook URL is not a valid absolute URL.");
-  }
-
-  const allowInsecure = process.env.ALLOW_INSECURE_WEBHOOK_TESTS === "true";
-  if (parsed.protocol !== "https:" && !(allowInsecure && parsed.protocol === "http:")) {
-    throw new Error("GHL webhook URL must use HTTPS.");
-  }
-
-  const host = parsed.hostname.toLowerCase();
-  const privateHostPattern =
-    /^(localhost|0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/;
-  if (host.endsWith(".local") || privateHostPattern.test(host)) {
-    throw new Error("GHL webhook URL cannot point to a local or private network host.");
-  }
-
-  return parsed.toString();
+ const profile=deploymentProfile();
+ if(rawUrl!==profile.ghl?.postCallUrl && rawUrl!==profile.ghl?.enrollmentUrl)throw Error('Destination is not configured by the service operator');
+ return validateDestination(rawUrl,profile.allowedHosts);
 }
 
-export async function postJsonWithTimeout(url, payload, timeoutMs = 10000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    return await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timer);
-  }
+export async function postJsonWithTimeout(url, payload) {
+ const result=await postJson(validateWebhookUrl(url),JSON.stringify(payload));
+ return {ok:result.status>=200&&result.status<300,status:result.status,statusText:'',text:async()=>''};
 }

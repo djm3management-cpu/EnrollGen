@@ -1,3 +1,4 @@
+import { agencyName } from '../lib/deploymentPublic.js';
 /**
  * acaComplianceKnowledge.js — ACA On-Exchange Compliance Knowledge Base
  * Section-specific compliance rules, verbatim scripts, and detection patterns
@@ -9,7 +10,7 @@
 export const ACA_COMPLIANCE_KNOWLEDGE = {
   "Opening & Identity Verification": {
     verbatimScript: [
-      "Thank you for calling New Gen Health Solutions, this is [agent name].",
+      `Thank you for calling ${agencyName}, this is [agent name].`,
       "I want to let you know that this call is being recorded for quality and compliance purposes. Is that okay with you?",
       "Can I please get your full legal name as it appears on your government ID?",
       "And your date of birth?",
@@ -21,7 +22,7 @@ export const ACA_COMPLIANCE_KNOWLEDGE = {
       "full legal name", "name as it appears", "government ID",
       "date of birth", "what is your DOB",
       "what state", "state of residence", "where do you live",
-      "New Gen Health", "my name is",
+      agencyName, "my name is",
       "open enrollment", "special enrollment", "OEP", "SEP",
       "are you currently enrolled", "do you have coverage",
     ],
@@ -256,7 +257,7 @@ export const ACA_COMPLIANCE_KNOWLEDGE = {
       "Let me recap: you're enrolled in [plan name] with a monthly premium of approximately [amount] after your tax credit. Your coverage begins [date].",
       "Your first premium payment is due by [date]. If the first premium is not paid by the due date, your enrollment may be cancelled.",
       "I'd like to schedule a follow-up call in about two weeks to make sure everything is on track with your coverage.",
-      "Thank you for choosing New Gen Health Solutions. Do you have any other questions before we end the call?",
+      `Thank you for choosing ${agencyName}. Do you have any other questions before we end the call?`,
     ],
     keyPhrasesToListenFor: [
       "recap", "summary", "enrolled in", "your plan",

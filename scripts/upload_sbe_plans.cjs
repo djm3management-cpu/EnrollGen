@@ -44,12 +44,9 @@ function toColumnName(header) {
     process.exit(1);
   }
 
+  if(!process.env.SUPABASE_DB_URL)throw Error("Set explicit SUPABASE_DB_URL");
   const client = new Client({
-    host: "db.qzjtagnpklaxefwurorc.supabase.co",
-    port: 5432,
-    database: "postgres",
-    user: "postgres",
-    password: process.env.SUPABASE_DB_PASSWORD,
+    connectionString:process.env.SUPABASE_DB_URL,
     ssl: { rejectUnauthorized: false },
   });
   await client.connect();

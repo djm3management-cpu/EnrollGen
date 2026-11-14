@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {ixConfiguration} from '../../integrations/ixClient.js';
 import {currentConverselyWeek} from '../../integrations/converselySelection.js';
@@ -78,7 +79,7 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
         let events=[];
         if(run){try{events=checked(await db.from('conversely_run_events').select('id,created_at,kind,message').eq('tenant_id',identity.tenant.id).eq('run_id',run.id).order('id').limit(500));}catch{/* Migration may still be pending. */}}
         weekly={available:true,enabled:worker?.enabled===true,worker_available:!!worker&&now()-Date.parse(worker.heartbeat_at)<=5*60_000,next_check_at:nextCheckAt,
-          current_week:currentConverselyWeek(now()),run,results,history:historyResults,events,stages:{calls:audit.filter(row=>row.call_id).length,eligible:audit.filter(row=>row.eligible).length,selected:audit.filter(row=>row.selected).length,submitted:results.filter(row=>row.status==='submitted').length}};
+          current_week:currentConverselyWeek(now(),deploymentProfile(env).timezone),run,results,history:historyResults,events,stages:{calls:audit.filter(row=>row.call_id).length,eligible:audit.filter(row=>row.eligible).length,selected:audit.filter(row=>row.selected).length,submitted:results.filter(row=>row.status==='submitted').length}};
       }catch{weekly={available:false,enabled:false,worker_available:false,run:null,results:[],error:'Conversely run history is unavailable. Apply migration 127 and start the updated worker.'};}
       const enrollmentType=new URL(request.url).searchParams.get('enrollment_type')||'all';
       if(!['all','test','real'].includes(enrollmentType))throw new EvidenceError(400,'Invalid enrollment type.');
@@ -94,7 +95,7 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
         !featureEnabled('IX_UPLOAD_ENABLED',env)?Promise.resolve({data:[],error:null}):db.from('compliance_missing_codes').select('*').eq('tenant_id',identity.tenant.id).order('call_start').limit(200),
         !featureEnabled('IX_UPLOAD_ENABLED',env)?Promise.resolve({data:[],error:null}):db.from('compliance_reconciliation').select('*').eq('tenant_id',identity.tenant.id).order('day',{ascending:false}).limit(30),
       ]);
-      return evidenceJson(200,{admin:true,ix_environment:ixConfiguration(env).environment.toUpperCase(),failures:[...checked(conversely).map(row=>({...row,provider:'Conversely'})),...checked(ix).map(row=>({...row,provider:'UHC IX'}))],
+      return evidenceJson(200,{admin:true,ix_environment:featureEnabled('IX_UPLOAD_ENABLED',env)?ixConfiguration(env).environment.toUpperCase():null,failures:[...checked(conversely).map(row=>({...row,provider:'Conversely'})),...checked(ix).map(row=>({...row,provider:'UHC IX'}))],
         missing:checked(missing),reconciliation:checked(reconciliation),weekly});
     }catch(error){return evidenceFailure(error);}
   };

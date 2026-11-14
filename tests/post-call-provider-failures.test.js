@@ -29,11 +29,11 @@ after(()=>pg.close());
 const embeddingRequest=()=>new Request('https://app.test/embeddings',{method:'POST',body:JSON.stringify({session_id:S,input:'realistic fixture transcript'})});
 
 test('provider quota errors persist failed status and code; success clears only its own stage',async()=>{
- const handler=createEmbeddingsHandler({authenticate:async()=>auth,getDb:()=>db,env:{OPENAI_API_KEY:'fixture'},send:async()=>Response.json({error:{code:'insufficient_quota'}},{status:429})});
+ const handler=createEmbeddingsHandler({authenticate:async()=>auth,getDb:()=>db,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,OPENAI_API_KEY:'fixture'},send:async()=>Response.json({error:{code:'insufficient_quota'}},{status:429})});
  const response=await handler(embeddingRequest());assert.equal(response.status,429);assert.equal((await response.json()).code,'insufficient_quota');
  let job=await getJob();assert.equal(job.status,'failed');assert.equal(job.error_code,'insufficient_quota');assert.equal(postCallFailureMessage(job),'Call saved. Summary is still processing.');
  await recordProviderStatus(db,S,'scoring','provider_http_500');
- const ok=createEmbeddingsHandler({authenticate:async()=>auth,getDb:()=>db,env:{OPENAI_API_KEY:'fixture'},send:async()=>Response.json({data:[{index:0,embedding:Array(1536).fill(1)}]})});
+ const ok=createEmbeddingsHandler({authenticate:async()=>auth,getDb:()=>db,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,OPENAI_API_KEY:'fixture'},send:async()=>Response.json({data:[{index:0,embedding:Array(1536).fill(1)}]})});
  assert.equal((await ok(embeddingRequest())).status,200);
  job=await getJob();assert.equal(job.status,'failed');assert.equal(job.error_code,'provider_http_500');assert.equal(job.provider_errors.embeddings,undefined);
  await recordProviderStatus(db,S,'scoring',null);assert.equal((await getJob()).status,'completed');

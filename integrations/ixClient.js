@@ -1,12 +1,12 @@
+import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
 import {providerJson} from '../telephony/src/recordings.js';
 
 export function ixConfiguration(env = process.env) {
-  const environment = env.IX_ENV || 'test';
-  if (!['test', 'production'].includes(environment)) throw Error('invalid_ix_environment');
-  const origin = environment === 'production' ? 'https://api.sunfirematrix.com' : 'https://test-api.sunfirematrix.com';
-  return {environment, authUrl: `${origin}/v2/authenticate`, baseUrl: `${origin}/api`,
-    username: env.IX_USERNAME || '', password: env.IX_PASSWORD || ''};
+  const p=deploymentProfile(env);
+  if(!featureEnabled('IX_UPLOAD_ENABLED',env))return {environment:null,username:'',password:''};
+  const {environment,origin}=p.ix;
+  return {environment,authUrl:`${origin.replace(/\/$/,'')}/v2/authenticate`,baseUrl:`${origin.replace(/\/$/,'')}/api`,username:env.IX_USERNAME||'',password:env.IX_PASSWORD||''};
 }
 
 export class IxError extends Error {
@@ -42,6 +42,7 @@ export class SunfireIxClient {
   async response(url, options, stage) {
     if (!featureEnabled('IX_UPLOAD_ENABLED', this.env)) throw new IxError('ix_upload_disabled', {outcome:'failed'});
     let response;
+    validateDestination(url,deploymentProfile(this.env).allowedHosts);
     try { response = await this.fetchImpl(url, {...options, redirect: 'error', signal: AbortSignal.timeout(30_000)}); }
     catch { throw new IxError('ix_network_error'); }
     let body;

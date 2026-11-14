@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { useState } from "react";
 import {
   AlertTriangle,
@@ -314,7 +315,7 @@ export function FemaFeed({
               <div className="fema-feed-hz-items fema-feed-stack-items">
                 <div className="fema-feed-detail">
                   <span>Last successful feed sync: {bulletinStatus.feeds.some(feed => feed.last_success_at)
-                    ? new Date(Math.max(...bulletinStatus.feeds.map(feed => Date.parse(feed.last_success_at) || 0))).toLocaleString()
+                    ? new Date(Math.max(...bulletinStatus.feeds.map(feed => Date.parse(feed.last_success_at) || 0))).toLocaleString(undefined,{timeZone:deploymentPublic.timezone})
                     : "No recorded success"}</span>
                 </div>
                 {bulletinStatus.error && <div className="fema-feed-hz-empty">{bulletinStatus.error}</div>}
@@ -324,8 +325,8 @@ export function FemaFeed({
                     <div key={feed.feed_id}>
                       {feed.label}: {feed.status === "error" ? `Error: ${feed.error}` : "OK"}
                       {Date.now() - Date.parse(feed.checked_at) > 36 * 60 * 60 * 1000 ? " · Stale" : ""}
-                      {" · Last success: "}{feed.last_success_at ? new Date(feed.last_success_at).toLocaleString() : "Never"}
-                      {" · Checked: "}{new Date(feed.checked_at).toLocaleString()}
+                      {" · Last success: "}{feed.last_success_at ? new Date(feed.last_success_at).toLocaleString(undefined,{timeZone:deploymentPublic.timezone}) : "Never"}
+                      {" · Checked: "}{new Date(feed.checked_at).toLocaleString(undefined,{timeZone:deploymentPublic.timezone})}
                     </div>
                   ))}
                 </details>

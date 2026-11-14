@@ -288,17 +288,7 @@ export default function TenantSettings({ currentUser = null }) {
   const activeAgentCount = agents.filter((agent) => agent.is_active !== false).length || activeAgents.length;
   const atSeatLimit = Number.isFinite(seatLimit) && activeAgentCount >= seatLimit;
 
-  const loadAgents = useCallback(async () => {
-    if (!tenantId) return;
-    const { data, error } = await supabaseClient
-      .from("tenant_agents")
-      .select("id, name, npn, ghl_user_id, clerk_user_id, is_active")
-      .eq("tenant_id", tenantId)
-      .order("is_active", { ascending: false })
-      .order("name", { ascending: true });
-    if (error) throw error;
-    setAgents(data || []);
-  }, [supabaseClient, tenantId]);
+  const loadAgents = useCallback(async () => { setAgents(current=>JSON.stringify(current)===JSON.stringify(activeAgents)?current:activeAgents); }, [activeAgents]);
 
   useEffect(() => {
     if (!tenant) return;
@@ -363,12 +353,12 @@ export default function TenantSettings({ currentUser = null }) {
       const { error } = await supabaseClient
         .from("tenants")
         .update({
-          name: profile.name,
+
           agency_npn: profile.agency_npn,
           licensed_states: profile.licensed_states,
-          agency_display_name: profile.agency_display_name,
-          ghl_webhook_url: profile.ghl_webhook_url,
-          ghl_location_id: profile.ghl_location_id,
+
+
+
           carrier_options: carriers.filter(Boolean),
           coop_rates: rowsToCoopRates(coopRows),
           compliance_config: complianceConfig,
@@ -384,37 +374,8 @@ export default function TenantSettings({ currentUser = null }) {
     }
   };
 
-  const addAgent = async () => {
-    if (!tenantId || !newAgent.name.trim() || atSeatLimit) return;
-    const { error } = await supabaseClient.from("tenant_agents").insert({
-      tenant_id: tenantId,
-      name: newAgent.name.trim(),
-      npn: newAgent.npn.trim() || null,
-      ghl_user_id: newAgent.ghl_user_id.trim() || null,
-      is_active: true,
-    });
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-    setNewAgent({ name: "", npn: "", ghl_user_id: "" });
-    await loadAgents();
-    await refetchTenant();
-  };
-
-  const updateAgent = async (agent, patch) => {
-    const { error } = await supabaseClient
-      .from("tenant_agents")
-      .update(patch)
-      .eq("id", agent.id)
-      .eq("tenant_id", tenantId);
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-    await loadAgents();
-    await refetchTenant();
-  };
+  const addAgent = async () => { setMessage('Roster changes require the server operator provisioning command.'); };
+  const updateAgent = async () => { setMessage('Roster changes require the server operator provisioning command.'); };
 
   const testWebhook = async () => {
     setMessage("");
@@ -422,7 +383,7 @@ export default function TenantSettings({ currentUser = null }) {
       const response = await fetchWithClerk(getToken, "/api/test-ghl-webhook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ webhook_url: profile.ghl_webhook_url }),
+        body: JSON.stringify({}),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || data.error || "Webhook test failed.");
@@ -549,7 +510,7 @@ export default function TenantSettings({ currentUser = null }) {
           <SettingsField label="CRM webhook URL">
             <div className="tenant-settings-inline">
               <input
-                value={profile.ghl_webhook_url}
+                value="Managed by the server deployment profile" readOnly
                 onChange={(event) => updateProfile("ghl_webhook_url", event.target.value)}
                 placeholder="https://services.leadconnectorhq.com/hooks/..."
               />
@@ -560,7 +521,7 @@ export default function TenantSettings({ currentUser = null }) {
           </SettingsField>
           <SettingsField label="CRM location ID">
             <input
-              value={profile.ghl_location_id}
+              value="Managed by the server deployment profile" readOnly
               onChange={(event) => updateProfile("ghl_location_id", event.target.value)}
             />
           </SettingsField>

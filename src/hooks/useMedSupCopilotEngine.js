@@ -1,3 +1,5 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
+import { agencyName } from '../lib/deploymentPublic.js';
 import { LIVE_ASSISTANT_PROMPT, shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { debugLog } from "../lib/debugLog.js";
 import { AGENCY_CLOSING_GUIDANCE } from "../data/agencyClosing.js";
@@ -216,7 +218,7 @@ function buildAskSystemPrompt({ sectionKey, knowledge, recentTranscript, copilot
 
 ${AGENCY_CLOSING_GUIDANCE}
 
-You are a knowledgeable Medicare Supplement sales assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer.
+You are a knowledgeable Medicare Supplement sales assistant for agents at ${agencyName}. An agent is on a LIVE call and needs a quick, accurate answer.
 Answer the agent's question first. Help with scripts, benefits, objections and lookups. Use verified facts; never invent coverage. For drugs verify dose/form and pharmacy; for providers verify exact location and plan/network using Sunfire or the carrier tool. Keep answers to one or two short plain-text lines, at most 40 words. No grades, scores, counts or unsolicited disclosure reminders.
 ## YOUR CAPABILITIES
 - Medicare Supplement (Medigap) plan details and standardized benefits
@@ -615,7 +617,7 @@ SECTION CONTEXT (rolling window):
           id: Date.now(), level: "info",
           text: `${prefix}\n\n${raw}`,
           retrievalTrace,
-          ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          ts: new Date().toLocaleTimeString([], {timeZone:deploymentPublic.timezone, hour: "2-digit", minute: "2-digit" }),
         }]);
         logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, { section: currentStep, retrievalTrace });
       }

@@ -1,3 +1,4 @@
+import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
 /**
  * Compliance Engine API — Netlify serverless function.
  * Handles all compliance-related API routes via path-based routing.
@@ -51,7 +52,6 @@ const NOT_APPLICABLE_RESULT = "na";
 const LEGACY_NOT_APPLICABLE_RESULT = "not_applicable";
 const INSUFFICIENT_PASS_FAIL = "N/A";
 const LEGACY_INSUFFICIENT_PASS_FAIL = "INSUFFICIENT";
-const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
 
 function json(status, data) {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
@@ -75,13 +75,7 @@ async function resolveTenantId(supabase, orgId) {
     if (data?.id) return data.id;
   }
 
-  const { data, error } = await supabase
-    .from("tenants")
-    .select("id")
-    .eq("id", NGHS_TENANT_ID)
-    .maybeSingle();
-  if (error) throw error;
-  return data?.id || NGHS_TENANT_ID;
+  return null;
 }
 
 function parsePath(url) {

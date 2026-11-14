@@ -1,3 +1,4 @@
+import { deploymentPublic } from './deploymentPublic.js';
 import { debugLog } from "./debugLog.js";
 import { fetchWithClerk } from "./clerkFetch.js";
 import { redactSensitiveText, redactTranscriptEntries } from "./redaction.js";
@@ -110,13 +111,13 @@ function normalizeTenantConfig(row) {
   if (!row) return null;
   return {
     id: row.id,
-    name: row.name || "",
+    name: deploymentPublic.agencyName,
     clerk_org_id: row.clerk_org_id || null,
-    ghl_webhook_url: row.ghl_webhook_url || "",
+
     ghl_location_id: row.ghl_location_id || "",
     coop_rates: row.coop_rates && typeof row.coop_rates === "object" ? row.coop_rates : {},
     carrier_options: Array.isArray(row.carrier_options) ? row.carrier_options : [],
-    agency_display_name: row.agency_display_name || row.name || "",
+    agency_display_name: deploymentPublic.agencyName,
     agency_npn: row.agency_npn || "",
     licensed_states: Array.isArray(row.licensed_states) ? row.licensed_states : [],
     compliance_config:
@@ -131,12 +132,10 @@ export async function fetchTenantConfig(supabaseClient, tenantId) {
   let query = supabaseClient
     .from("tenants")
     .select(
-      "id, name, clerk_org_id, ghl_webhook_url, ghl_location_id, coop_rates, carrier_options, agency_display_name, agency_npn, licensed_states, compliance_config"
+      "id, name, clerk_org_id, ghl_location_id, coop_rates, carrier_options, agency_display_name, agency_npn, licensed_states, compliance_config"
     );
 
-  if (tenantId) {
-    query = query.eq("id", tenantId);
-  }
+  query = query.eq("id", tenantId || deploymentPublic.tenantId);
 
   const { data, error } = await query
     .order("clerk_org_id", { ascending: true, nullsFirst: false })
@@ -151,7 +150,7 @@ export async function fetchTenantAgents(supabaseClient, tenantId) {
   if (!supabaseClient?.from || !tenantId) return [];
   const { data, error } = await supabaseClient
     .from("tenant_agents")
-    .select("id, name, ghl_user_id, npn, clerk_user_id, agent_slug, role")
+    .select("id, name, ghl_user_id, npn, clerk_user_id, agent_slug, is_active, identity_aliases")
     .eq("tenant_id", tenantId)
     .eq("is_active", true)
     .order("name", { ascending: true });
@@ -164,21 +163,10 @@ export async function fetchTenantAgents(supabaseClient, tenantId) {
     npn: agent.npn || "",
     clerk_user_id: agent.clerk_user_id || "",
     agent_slug: agent.agent_slug || "",
-    role: agent.role || "agent",
+    is_active: agent.is_active===true,identity_aliases:agent.identity_aliases||[],
   }));
 }
 
-export function getAgentGhlUserId(agents = [], agentName) {
-  const raw = normalizeLookup(agentName);
-  if (!raw) return "";
-  const exact = agents.find((agent) => normalizeLookup(agent.name) === raw);
-  if (exact?.ghl_user_id) return exact.ghl_user_id;
-  const loose = agents.find((agent) => {
-    const name = normalizeLookup(agent.name);
-    return name && (name.includes(raw) || raw.includes(name));
-  });
-  return loose?.ghl_user_id || "";
-}
 
 export function formatPhoneInput(value) {
   const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
@@ -238,7 +226,7 @@ export function buildTranscriptText(mergedTranscript = [], fallbackTranscript = 
           : "AGENT";
         const stamp = entry.timestamp ? new Date(entry.timestamp) : null;
         const time = stamp && !Number.isNaN(stamp.getTime())
-          ? stamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+          ? stamp.toLocaleTimeString([], {timeZone:deploymentPublic.timezone, hour: "2-digit", minute: "2-digit", second: "2-digit" })
           : null;
         return `${time ? `[${time}] ` : ""}${speaker}: ${entry.text.trim()}`;
       })
@@ -425,7 +413,8 @@ export async function recordWebhookResult(getToken, payload) {
 }
 
 export function buildGhlWebhookPayload(payload = {}, tenantConfig = {}, tenantAgents = []) {
-  const writingAgent = payload.writing_agent || tenantAgents.find((agent) => agent.name)?.name || "";
+  const writer=tenantAgents.find(a=>a.id===payload.writing_agent_id);
+  const writingAgent=writer?.name||'';
   return {
     firstName: payload.customer_first_name || "",
     lastName: payload.customer_last_name || "",
@@ -447,62 +436,13 @@ export function buildGhlWebhookPayload(payload = {}, tenantConfig = {}, tenantAg
     agency: payload.agency || tenantConfig?.agency_display_name || "",
     aor: writingAgent,
     assignedUserId:
-      getAgentGhlUserId(tenantAgents, writingAgent) ||
-      tenantAgents.find((agent) => agent.ghl_user_id)?.ghl_user_id ||
-      "",
+      writer?.ghl_user_id || '',
     hra: payload.hra || "No",
     hraDate: payload.hra_date || "",
     submittedAt: new Date().toISOString(),
   };
 }
 
-export async function sendEnrollmentWebhookAfterSave(
-  getToken,
-  { callRecordId, payload, webhookUrl, tenantConfig, tenantAgents = [] }
-) {
-  if (payload?.call_outcome !== "enrolled" || !callRecordId) {
-    return { status: "skipped" };
-  }
-
-  const targetUrl = webhookUrl || tenantConfig?.ghl_webhook_url;
-  if (!targetUrl) {
-    return { status: "failed", error: "Tenant GHL webhook URL is not configured." };
-  }
-
-  let webhookSent = false;
-  let webhookError = "";
-  let webhookSentAt = "";
-
-  try {
-    const response = await fetch(targetUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildGhlWebhookPayload(payload, tenantConfig, tenantAgents)),
-    });
-
-    if (response.ok) {
-      webhookSent = true;
-      webhookSentAt = new Date().toISOString();
-    } else {
-      webhookError = `HTTP ${response.status}: ${response.statusText}`;
-    }
-  } catch (error) {
-    webhookError = error?.message || "Webhook request failed";
-  }
-
-  try {
-    await recordWebhookResult(getToken, {
-      call_record_id: callRecordId,
-      webhook_sent: webhookSent,
-      webhook_sent_at: webhookSentAt,
-      webhook_error: webhookError,
-    });
-  } catch {
-    debugLog("[PostCall] failed to record webhook result");
-  }
-
-  return {
-    status: webhookSent ? "sent" : "failed",
-    error: webhookError,
-  };
+export async function sendEnrollmentWebhookAfterSave() {
+  throw new Error('Enrollment delivery is managed by the server.');
 }

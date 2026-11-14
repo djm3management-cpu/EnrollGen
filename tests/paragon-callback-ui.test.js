@@ -1,3 +1,5 @@
+import {deploymentPublic} from '../src/lib/deploymentPublic.js';
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -14,10 +16,10 @@ const compile=text=>transformSync(text,{loader:'jsx',format:'cjs',jsxFactory:'el
 function badgeFixture(){
  const h=hookHarness(),module={exports:{}},listeners=new Map();let count=2,error=false;
  const auth={getToken:async()=> 'token',user:{id:'user-a'},organization:{id:'org-a'}};
- vm.runInNewContext(compile(source('../src/components/ParagonCallbackBadge.jsx')),{
+ vm.runInNewContext(compile(source('../src/components/ParagonCallbackBadge.jsx')),{deploymentPublic,
   module,exports:module.exports,element,
   window:{setInterval:fn=>{listeners.set('timer',fn);return 1;},clearInterval(){},addEventListener:(key,fn)=>listeners.set(key,fn),removeEventListener:key=>listeners.delete(key)},
-  require(name){
+  require(name){if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
    if(name==='react')return h.hooks;
    if(name.endsWith('/AuthContext'))return {useAppAuth:()=>auth};
    if(name.endsWith('/evidenceApi'))return {evidenceRequest:async(_token,url)=>{assert.equal(url,'paragon-zip-confirm?summary=1');if(error)throw Error('API down');return {count};}};
@@ -51,7 +53,7 @@ test('filtered CRM task list includes all open own Paragon callbacks and row sho
   const rows=walk(h.value).filter(node=>node.type===FollowUpRow);assert.equal(rows.length,1);assert.equal(rows[0].props.row.id,task.id);
   // The row uses the same React hook contract; inspect it with a separate component instance.
   const rowCode=code.slice(0,code.indexOf('function FollowUpsView('));
-  const Row=vm.runInNewContext(compile(rowCode)+';FollowUpRow',{...rowHarness.hooks,element,fragment:'fragment',encodeURIComponent});
+  const Row=vm.runInNewContext(compile(rowCode)+';FollowUpRow',{deploymentPublic,...rowHarness.hooks,element,fragment:'fragment',encodeURIComponent});
   const updates=[];rowHarness.mount(()=>Row({...rows[0].props,update:async(...args)=>updates.push(args)}));await rowHarness.flush();
   const nodes=walk(rowHarness.value);assert.ok(nodes.some(n=>n.children.includes('Jane Doe')));assert.ok(nodes.some(n=>n.children.includes('+15555550123')&&n.children.includes('AZ')));
   assert.equal(nodes.find(n=>n.type==='a').props.href,'/crm/calls?inbound_call_id=original-call');
@@ -68,10 +70,10 @@ test('CRM task hook merges regular tasks and callbacks, dispatches correct actio
  const callback={id:'paragon:abc',source:'paragon',agent_id:'mark',due_at:'2026-10-29',status:'open'};
  const client={from(){const q={select:()=>q,eq:()=>q,order:()=>q,range:async()=>({data:[{id:'regular',agent_id:'mark',due_at:'2026-10-30',status:'open'}]})};return q;}};
  const getToken=async()=> 'token';
- vm.runInNewContext(compile(source('../src/hooks/useFollowUps.js')),{
+ vm.runInNewContext(compile(source('../src/hooks/useFollowUps.js')),{deploymentPublic,
   module,exports:module.exports,Date,
   setInterval:()=>1,clearInterval(){},window:{addEventListener:(key,fn)=>listeners.set(key,fn),removeEventListener:key=>listeners.delete(key)},
-  require(name){
+  require(name){if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
    if(name==='react')return h.hooks;
    if(name.endsWith('/AuthContext'))return {useAppAuth:()=>({getToken})};
    if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({tenantId:'tenant',supabaseClient:client,agents:[],loading:false,features:{PARAGON_ENABLED:true}})};

@@ -1,3 +1,4 @@
+import {deploymentProfile,validateDestination} from './lib/deploymentProfile.js';
 import { featureEnabled } from './lib/deploymentFeatures.js';
 import { randomUUID } from 'node:crypto';
 import { redactSensitiveText } from './lib/redaction.js';
@@ -56,7 +57,7 @@ export async function runTranscriptDispatch({ db, scoringUrl, secret, transport 
     if (job.delivered_revision >= job.revision) continue;
     let lastError = null;
     try {
-      const response = await transport(scoringUrl, { method: 'POST',
+      const response = await transport(validateDestination(scoringUrl,deploymentProfile().allowedHosts), { method: 'POST',redirect:'error',
         headers: { 'Content-Type': 'application/json', 'x-enrollgen-job-secret': secret },
         body: JSON.stringify({ callId: job.call_id, tenantId: job.tenant_id }),
         signal: AbortSignal.timeout(10_000) });
@@ -94,7 +95,7 @@ export async function sendPendingRecoveryAlerts({db,scoringUrl,secret,transport=
  const {data,error}=await db.from('transcript_recovery_alerts').select('call_id,tenant_id,reason').is('alerted_at',null).order('created_at').limit(20);
  if(error)throw error;
  for(const alert of data||[]) {
-  const response=await transport(new URL('/.netlify/functions/stt-alert',scoringUrl),{method:'POST',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':secret},body:JSON.stringify(alert),signal:AbortSignal.timeout(10000)});
+  const response=await transport(validateDestination(new URL('/.netlify/functions/stt-alert',deploymentProfile().appOrigin),deploymentProfile().allowedHosts),{method:'POST',redirect:'error',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':secret},body:JSON.stringify(alert),signal:AbortSignal.timeout(10000)});
   if(!response.ok)throw Error('Recovery alert delivery failed');
  }
 }

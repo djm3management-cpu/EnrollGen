@@ -1,10 +1,9 @@
-export const PARAGON_DEFAULTS = Object.freeze({
-  allowed_states: ['AR', 'AZ', 'DE', 'FL', 'GA', 'IN', 'KS', 'KY', 'LA', 'MO', 'NJ', 'OH', 'SC', 'TN', 'TX', 'VA'],
-  required_carriers: ['aetna', 'humana', 'uhc', 'wellcare', 'devoted', 'healthspring'],
-  critical_carriers: ['uhc', 'humana'],
-  plan_year: 2027,
-  reservation_ttl_seconds: 30,
-});
+import {deploymentProfile} from './lib/deploymentProfile.js';
+export function paragonConfiguration() {
+ const v=deploymentProfile().paragon;
+ return v?{allowed_states:v.states,required_carriers:v.requiredCarriers,critical_carriers:v.criticalCarriers,plan_year:v.planYear,reservation_ttl_seconds:v.reservationTtlSeconds}:{allowed_states:[],required_carriers:[],critical_carriers:[],plan_year:null,reservation_ttl_seconds:30};
+}
+export const PARAGON_DEFAULTS=Object.freeze(paragonConfiguration());
 
 const ALIASES = Object.freeze({
   centene: 'wellcare', wellcare: 'wellcare',

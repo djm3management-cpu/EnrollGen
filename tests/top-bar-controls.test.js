@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -11,7 +12,7 @@ function fixture(file,component,extra){
  const harness=hookHarness(),document=new EventTarget();
  let source=readFileSync(new URL('../src/components/'+file,import.meta.url),'utf8').replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\n/gm,'').replace('export default function','function').replace(/^export default .*;$/gm,'');
  source=transformSync(source,{loader:'jsx',jsxFactory:'h',format:'cjs'}).code;
- const context=vm.createContext({...harness.hooks,document,window:new EventTarget(),memo:fn=>fn,
+ const context=vm.createContext({deploymentPublic,...harness.hooks,document,window:new EventTarget(),memo:fn=>fn,
   AVAILABILITY_OPTIONS,availabilityLabel,requiresPhoneReady,
   useSessionLock:()=>({requestLock:()=>{}}),useInboundCall:()=>null,phoneHasInProgressCall:phone=>Boolean(phone?.activeCall||phone?.incomingCall||phone?.dialingCall),
   h:(type,props,...children)=>({type,props:props||{},children}),...extra});

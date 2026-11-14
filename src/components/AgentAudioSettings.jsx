@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAppAuth } from '../context/AuthContext';
-import { readLocalAgentId } from '../lib/agentIdentity';
+import { resolveAgentId } from '../lib/agentIdentity';
+import {useTenantConfig} from '../hooks/useTenantConfig';
 import { callContinuity } from '../lib/callContinuity.js';
 import { calibratedThreshold, readAudioPreferences, saveAudioPreferences } from '../lib/audioPreferences.js';
 import { AgentAudioProcessor, requestAgentMicrophone } from '../lib/audio/AgentAudioProcessor.js';
 
 export default function AgentAudioSettings() {
   const { user } = useAppAuth();
-  const agentId = readLocalAgentId();
+  const {agents}=useTenantConfig();
+  const agentId = resolveAgentId(user,agents);
   const [preferences, setPreferences] = useState(() => readAudioPreferences(user, agentId));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');

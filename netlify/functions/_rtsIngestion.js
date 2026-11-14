@@ -66,7 +66,7 @@ Carrier matching rules:
 
 Agent matching rules:
 - Match by NPN first (exact match). NPN is the authoritative identifier.
-- If no NPN column exists, match by name (fuzzy). "SHIOMOS, MICHAEL" = "Michael Shiomos" = "Mike Shiomos" = "SHIOMOS MIKE".
+- If no NPN column exists, match only an explicit identity_aliases entry from KNOWN_AGENTS. Never infer identity from a human name. Unmatched rows are UNKNOWN.
 - If an agent matches no KNOWN_AGENTS entry, flag as UNKNOWN with the raw name and NPN if available.
 - Agency-level rows (where the name matches the agency/firm name) should be flagged as AGENCY_LEVEL, not matched to an individual agent.
 

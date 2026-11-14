@@ -29,7 +29,7 @@ export function deliveryDiagnostic(error, { env = {}, provider = false } = {}) {
     else if (/API key is invalid/i.test(error?.message ?? '')) diagnostic.message = 'Resend API key is invalid';
   }
   if (error?.message === 'Report mail not configured') {
-    diagnostic.missing_env = ['RESEND_API_KEY','INTEGRATIONS_REPORT_FROM'].filter(key => !env[key]);
+    diagnostic.missing_env = ['RESEND_API_KEY'].filter(key => !env[key]);
   }
   return diagnostic;
 }

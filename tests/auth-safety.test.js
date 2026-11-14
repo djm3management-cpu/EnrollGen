@@ -14,7 +14,7 @@ const switches = ['DISABLE_CLERK_AUTH', 'VITE_DISABLE_CLERK_AUTH', 'ALLOW_INSECU
 test('deployment startup rejects every bypass setting, including empty and false, without disclosing values', () => {
   for (const module of ['integrations/worker.js', 'netlify/functions/_clerkAuth.js', 'telephony/src/config.js']) {
     for (const name of switches) for (const value of ['', 'false', 'true']) {
-      const env = { ...process.env, NODE_ENV: 'production' };
+      const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, ...process.env, NODE_ENV: 'production' };
       for (const flag of switches) delete env[flag];
       env[name] = value;
       const result = spawnSync(process.execPath, ['--input-type=module', '-e', `await import('./${module}')`], { env, encoding: 'utf8' });
@@ -25,7 +25,7 @@ test('deployment startup rejects every bypass setting, including empty and false
   }
 });
 test('local webhook exception cannot escape into a build or hosted development process', () => {
-  const env = { NODE_ENV: 'development', ALLOW_INSECURE_WEBHOOK_TESTS: 'true' };
+  const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, NODE_ENV: 'development', ALLOW_INSECURE_WEBHOOK_TESTS: 'true' };
   assert.doesNotThrow(() => assertSafeAuthEnvironment(env));
   assert.throws(() => assertSafeAuthEnvironment(env, { build: true }), /Unsafe authentication/);
   for (const marker of ['NETLIFY', 'RAILWAY_ENVIRONMENT_ID', 'CI', 'AWS_LAMBDA_FUNCTION_NAME']) {

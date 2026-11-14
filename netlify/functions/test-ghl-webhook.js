@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import {
@@ -11,10 +12,7 @@ import {
   validateWebhookUrl,
 } from "./_tenantSettings.js";
 
-function resolveWebhookUrl(body, tenant) {
-  const provided = readFirst(body, ["ghl_webhook_url", "ghlWebhookUrl", "webhook_url"]);
-  return safeText(provided.value) || tenant?.ghl_webhook_url || "";
-}
+function resolveWebhookUrl() { return deploymentProfile().ghl.postCallUrl; }
 
 function buildTestPayload(body, tenant, auth) {
   const providedPayload = body?.payload && typeof body.payload === "object" ? body.payload : {};
@@ -81,7 +79,7 @@ export default async (request) => {
       ok: response.ok,
       status: response.status,
       status_text: response.statusText,
-      webhook_url: webhookUrl,
+
       response_body: responseText.slice(0, 1000),
     });
   } catch (error) {

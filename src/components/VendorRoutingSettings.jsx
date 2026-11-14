@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchWithClerk } from '../lib/clerkFetch';
 
@@ -57,7 +58,7 @@ export default function VendorRoutingSettings({ getToken }) {
     <div className="tenant-settings-card vendor-routing__report">
       <div className="tenant-settings-section-title">Paragon vendor report link</div>
 
-      <p className="tenant-settings-muted">{data.report_token_updated_at ? `Active · rotated ${new Date(data.report_token_updated_at).toLocaleString()}` : 'No active link'}</p>
+      <p className="tenant-settings-muted">{data.report_token_updated_at ? `Active · rotated ${new Date(data.report_token_updated_at).toLocaleString(undefined,{timeZone:deploymentPublic.timezone})}` : 'No active link'}</p>
       {reportLink && <label>New link — copy now <input readOnly aria-label="New Paragon report link" value={`${window.location.origin}${reportLink}`} onFocus={event => event.target.select()} /></label>}
       <div className="tenant-settings-inline">
         <button data-key-role="secondary" className="billing-button is-primary" type="button" disabled={saving} onClick={() => save({action:'report_token_rotate'})}>{data.report_token_updated_at ? 'Rotate report link' : 'Create report link'}</button>
@@ -75,12 +76,12 @@ export default function VendorRoutingSettings({ getToken }) {
         {counter.billable_count} billable today · No daily call limit · ${Number(counter.amount_due).toFixed(2)}
       </p>}
       {['mon','tue','wed','thu','fri','sat','sun'].map(day => {
-        const cfg=controls?.staffed_hours?.days?.[day] || {enabled:false,start:'10:15',end:'17:15'};
-        const update=(field,value)=>setData(current=>({...current,controls:{...current.controls,staffed_hours:{timezone:'America/New_York',days:{...current.controls?.staffed_hours?.days,[day]:{start:'10:15',end:'17:15',...cfg,[field]:value}}}}}));
+        const cfg=controls?.staffed_hours?.days?.[day] || deploymentPublic.staffedHours[day];
+        const update=(field,value)=>setData(current=>({...current,controls:{...current.controls,staffed_hours:{timezone:deploymentPublic.timezone,days:{...current.controls?.staffed_hours?.days,[day]:{...cfg,[field]:value}}}}}));
         return <div className="tenant-settings-inline" key={day}>
           <label><input type="checkbox" checked={cfg.enabled} disabled={!billing_ready || saving} onChange={event=>update('enabled',event.target.checked)} /> {day.toUpperCase()}</label>
-          <label>Open <input type="time" value={cfg.start || '10:15'} disabled={!billing_ready || !cfg.enabled || saving} onChange={event=>update('start',event.target.value)} /></label>
-          <label>Close <input type="time" value={cfg.end || '17:15'} disabled={!billing_ready || !cfg.enabled || saving} onChange={event=>update('end',event.target.value)} /></label>
+          <label>Open <input type="time" value={cfg.start} disabled={!billing_ready || !cfg.enabled || saving} onChange={event=>update('start',event.target.value)} /></label>
+          <label>Close <input type="time" value={cfg.end} disabled={!billing_ready || !cfg.enabled || saving} onChange={event=>update('end',event.target.value)} /></label>
         </div>;
       })}
       <div className="tenant-settings-inline">
@@ -101,7 +102,7 @@ export default function VendorRoutingSettings({ getToken }) {
         const stamp = lastEdited.get(agent.id);
         const stale = !stamp || Date.now()-new Date(stamp).getTime()>=AGE_LIMIT;
         return <span key={agent.id} className={stale?'vendor-routing__stale':''}>
-          {agent.name}: {stamp ? `last edited ${new Date(stamp).toLocaleDateString()}` : 'never edited'}{stale ? ' · review needed (30+ days)' : ''}
+          {agent.name}: {stamp ? `last edited ${new Date(stamp).toLocaleDateString(undefined,{timeZone:deploymentPublic.timezone})}` : 'never edited'}{stale ? ' · review needed (30+ days)' : ''}
         </span>;
       })}
     </div>
@@ -109,7 +110,7 @@ export default function VendorRoutingSettings({ getToken }) {
       <tbody>{matrix.map(row => <tr key={`${row.agent_id}:${row.state}`}>
         <td>{agents.find(agent => agent.id===row.agent_id)?.name || row.agent_id}</td><td>{row.state}</td>
         {CARRIERS.map(carrier => <td key={carrier}><input aria-label={`${row.state} ${carrier}`} type="checkbox" checked={row[carrier]} disabled={saving} onChange={() => saveRow(row,true,CARRIERS.filter(name => name===carrier ? !row[name] : row[name]))} /></td>)}
-        <td>{new Date(row.updated_at).toLocaleDateString()}</td>
+        <td>{new Date(row.updated_at).toLocaleDateString(undefined,{timeZone:deploymentPublic.timezone})}</td>
         <td><button data-key-role="destructive" type="button" className="billing-button" disabled={saving} onClick={() => saveRow(row,false)}>Remove</button></td>
       </tr>)}</tbody></table></div>
     <div className="tenant-settings-inline">

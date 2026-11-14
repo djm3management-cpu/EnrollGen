@@ -1,3 +1,4 @@
+import { agencyName } from '../lib/deploymentPublic.js';
 /**
  * medSupComplianceKnowledge.js
  * Medicare Supplement section knowledge for the Med Sup copilot.
@@ -8,11 +9,11 @@ import { AGENCY_CLOSING } from "./agencyClosing.js";
 export const MEDSUP_COMPLIANCE_KNOWLEDGE = {
   "Recording Disclosure": {
     verbatimScript: [
-      "Thank you for calling New Gen Health Solutions, this is [Agent Name]. Who am I speaking with today?",
+      `Thank you for calling ${agencyName}, this is [Agent Name]. Who am I speaking with today?`,
       "Hi [First Name]. This call may be recorded and monitored for quality and compliance purposes. Is that okay?",
     ],
     keyPhrasesToListenFor: [
-      "thank you for calling new gen health solutions",
+      `thank you for calling ${agencyName}`,
       "this is",
       "who am i speaking with today",
       "recorded and monitored",
@@ -214,7 +215,7 @@ export const MEDSUP_COMPLIANCE_KNOWLEDGE = {
       "do not offer every plan available",
       "Medicare.gov",
       "1-800-MEDICARE",
-      "thank you for calling new gen health solutions",
+      `thank you for calling ${agencyName}`,
     ],
     requiredElements: [
       "1. Recap what was reviewed",

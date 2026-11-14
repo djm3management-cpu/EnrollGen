@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NGHS Agent Status</title>
+<title>EnrollGen Agent Status</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -94,7 +94,7 @@
 <div class="grid-bg"></div>
 <div class="container">
   <div class="header">
-    <div class="label-small">NEW GEN HEALTH SOLUTIONS</div>
+    <div class="label-small"><span id="agencyName"></span></div><div class="label-small" id="agencyContact"></div>
     <div class="title">AGENT STATUS</div>
     <div id="summary" class="summary is-unavailable">
       <span class="dot offline"></span>
@@ -110,10 +110,26 @@
   </div>
 </div>
 
-<script>
-const API_URL = 'https://qzjtagnpklaxefwurorc.supabase.co/functions/v1/get-availability';
-// Dedicated, public read-only consumer: nghs-status. Revocable in availability_consumers.
-const API_KEY = 'av_9vtCeVDInrHCtQyCfY9NkMUI7pdohO5v1dmnLPZhXY8';
+<script type="module">
+import React, {useEffect} from 'react';
+import {createRoot} from 'react-dom/client';
+import {ClerkProvider,SignInButton,useAuth} from '@clerk/clerk-react';
+import {agencyName,agencyLine,agencyHours} from '../src/lib/deploymentPublic.js';
+let statusToken=async()=>null;
+document.getElementById('agencyName').textContent=agencyName;
+document.getElementById('agencyContact').textContent=agencyLine+' · '+agencyHours;
+document.title=agencyName+' Agent Status';
+function StatusSession(){
+ const {getToken,isLoaded,isSignedIn}=useAuth();
+ useEffect(()=>{statusToken=getToken;if(isLoaded)void fetchStatus();},[getToken,isLoaded,isSignedIn]);
+ return isLoaded&&!isSignedIn?React.createElement(SignInButton,{mode:'modal'},React.createElement('button',{className:'summary is-unavailable'},'Sign in to view status')):null;
+}
+const authRoot=document.createElement('div');
+document.getElementById('summary').before(authRoot);
+const publishableKey=import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+if(publishableKey)createRoot(authRoot).render(React.createElement(ClerkProvider,{publishableKey},React.createElement(StatusSession)));
+
+const API_URL = '/api/deployment-status';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -129,9 +145,14 @@ function statusLabel(status) {
 
 async function fetchStatus() {
   try {
-    const res = await fetch(API_URL, { headers: { 'x-api-key': API_KEY }, cache: 'no-store', signal: AbortSignal.timeout(5000) });
+    const token=await statusToken();
+    if(!token){document.getElementById('lastSync').textContent='SIGN IN TO VIEW STATUS';return;}
+    const res = await fetch(API_URL, { headers:{Authorization:`Bearer ${token}`}, cache: 'no-store', signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    document.getElementById('agencyName').textContent=data.profile.agencyName;
+    document.getElementById('agencyContact').textContent=data.agencyLine+' · '+data.agencyHours;
+    document.title=data.profile.agencyName+' Agent Status';
     render(data);
   } catch (err) {
     const summary = document.getElementById('summary');
@@ -173,11 +194,10 @@ function render(data) {
     `;
   }).join('');
 
-  document.getElementById('lastSync').textContent = `LAST SYNC ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  document.getElementById('lastSync').textContent = `LAST SYNC ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit',timeZone:data.profile.timezone })}`;
 }
 
-fetchStatus();
-setInterval(fetchStatus, 10000);
+setInterval(()=>void fetchStatus(), 10000);
 </script>
 </body>
 </html>

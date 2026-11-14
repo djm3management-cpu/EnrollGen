@@ -1,3 +1,5 @@
+Historical one-off operation, archived for evidence. Not a provisioning or runtime tool.
+
 // Offline local artifacts only. No database/provider imports or execute mode.
 import {readFile,writeFile} from 'node:fs/promises';
 import {aggregateVersion} from '../../src/compliance/engine/VersionAggregator.js';

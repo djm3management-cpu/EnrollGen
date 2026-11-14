@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -98,7 +99,7 @@ test('notice offers an explicit reload, disables it during calls and can be dism
   const { code } = await transform(source, { loader: 'jsx', format: 'cjs', jsx: 'transform' });
   const module = { exports: {} };
   vm.runInNewContext(code, { module, exports: module.exports, React,
-    require(name) {
+    require(name) {if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
       if (name === './AppToast') return { default: function AppToast() {} };
       if (name === 'react') return { useSyncExternalStore: (_subscribe, snapshot) => snapshot() };
       if (name.includes('preloadRecovery')) return { preloadRecovery: h.recovery };

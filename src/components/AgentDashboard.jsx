@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import {useTenantConfig} from "../hooks/useTenantConfig";
 import { useId, useMemo, useState } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -17,7 +18,7 @@ function TimelineChart({ buckets, compliance = false, hourly = false }) {
   const width = W - LEFT - RIGHT, height = H - TOP - BOTTOM;
   const x = index => LEFT + width * (index + 0.5) / buckets.length;
   const y = value => TOP + height * (1 - value / ceiling);
-  const label = date => hourly ? date.toLocaleTimeString([], { hour: 'numeric' }) : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const label = date => hourly ? date.toLocaleTimeString([], {timeZone:deploymentPublic.timezone, hour: 'numeric' }) : date.toLocaleDateString([], {timeZone:deploymentPublic.timezone, month: 'short', day: 'numeric' });
   const key = compliance ? 'compliance' : 'sales';
   const paths = [];
   let segment = [];
@@ -166,7 +167,7 @@ export default function AgentDashboard({ userId, onOpenContacts }) {
           {data.agentOptions.map(agent => <option key={agent.key} value={agent.clerkUserId === userId ? "self" : agent.key}>{agent.label}{agent.clerkUserId === userId ? ' (you)' : ''}</option>)}
         </select>
       </div>
-      <div className="agent-dash-status">{features.PARAGON_ENABLED && <ParagonCallbackBadge />}<button data-key-role="secondary" onClick={onOpenContacts}>{data.loading ? 'Loading' : data.contacts} {scope === 'agency' ? 'agency contacts' : 'assigned contacts'} ↗</button><button data-key-role="secondary" onClick={data.refresh} disabled={data.loading}>Refresh</button><span role="status">{data.loading ? 'Loading your activity...' : data.updatedAt ? `Updated ${data.updatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Awaiting data'}</span></div>
+      <div className="agent-dash-status">{features.PARAGON_ENABLED && <ParagonCallbackBadge />}<button data-key-role="secondary" onClick={onOpenContacts}>{data.loading ? 'Loading' : data.contacts} {scope === 'agency' ? 'agency contacts' : 'assigned contacts'} ↗</button><button data-key-role="secondary" onClick={data.refresh} disabled={data.loading}>Refresh</button><span role="status">{data.loading ? 'Loading your activity...' : data.updatedAt ? `Updated ${data.updatedAt.toLocaleTimeString([], {timeZone:deploymentPublic.timezone, hour: 'numeric', minute: '2-digit' })}` : 'Awaiting data'}</span></div>
     </header>
     {data.error && <p className="agent-dash-error" role="alert">{data.error} Use Refresh to retry. {data.updatedAt ? 'Showing the last successful update.' : 'Metrics are unavailable until data loads.'}</p>}
     <section className="agent-dash-metrics" aria-label="Today’s key metrics">

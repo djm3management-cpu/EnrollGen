@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../src/lib/deploymentPublic.js';
 import {createSuggestionDedupe} from '../../src/lib/copilotDedupe.js';
 import { liveAssistantEntry, disclosureChecklist } from "../../src/lib/liveAssistantPolicy.js";
 import fs from 'node:fs';
@@ -20,7 +21,7 @@ export function coreHarness(engine) {
   const nodes = parse(source, { sourceType: 'module' }).program.body.filter(n => n.type !== 'ImportDeclaration');
   const code = nodes.map(n => source.slice((n.declaration || n).start, n.end)).join('\n');
   const hook = vm.runInNewContext(code + '\nuseCopilotEngineCore', {
-    createSuggestionDedupe, createTranscriptGuard, createSkipCounterReporter, liveAssistantEntry, disclosureChecklist,
+    deploymentPublic, createSuggestionDedupe, createTranscriptGuard, createSkipCounterReporter, liveAssistantEntry, disclosureChecklist,
     useRef: initial => memo(() => ({ current: initial }), []),
     useState: initial => { const ref = memo(() => ({ value: initial }), []); return [ref.value, next => { ref.value = typeof next === 'function' ? next(ref.value) : next; }]; },
     useCallback: (fn, deps) => memo(() => fn, deps),

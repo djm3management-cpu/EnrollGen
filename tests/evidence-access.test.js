@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../src/lib/deploymentPublic.js';
 import {completeCall,assessment,installComplianceFixture} from './helpers/complianceFixture.js';
 import {createCallRecordDetailsHandler} from '../netlify/functions/call-record-details.js';
 import { debugLog } from "../src/lib/debugLog.js";
@@ -103,13 +104,13 @@ before(async () => {
     CREATE TABLE usage_records(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,record_type text,quantity integer,metadata jsonb);
     GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
     GRANT SELECT,UPDATE ON tenant_agents,call_records TO authenticated;
-    INSERT INTO tenants(id,name,clerk_org_id) VALUES('${tenant}','A','org-a'),('${otherTenant}','B','org-b');
+    INSERT INTO tenants(id,name,clerk_org_id) VALUES('${tenant}','${deploymentPublic.agencyName}','org-a'),('${otherTenant}','B','org-b');
     INSERT INTO enrolled_agents(id,tenant_id,clerk_user_id,name,is_active) VALUES
       ('${agent}','${tenant}','user-agent','Agent A',true),('${peer}','${tenant}','user-peer','Agent B',true),
       ('${foreign}','${otherTenant}','user-foreign','Agent C',true),('${inactive}','${tenant}','user-inactive','Inactive',false);
     INSERT INTO tenant_agents(tenant_id,name,clerk_user_id,agent_slug,is_active,role) VALUES
       ('${tenant}','Agent A','user-agent','agent_a',true,'agent');
-    INSERT INTO agents(id,name,agency) VALUES('${legacy}','Agent A','A');
+    INSERT INTO agents(id,name,agency) VALUES('${legacy}','Agent A','${deploymentPublic.agencyName}');
     INSERT INTO sessions(id,agent_id,tenant_id,flow,product_line) VALUES
       ('${session}','${agent}','${tenant}','ma','MA'),('${peerSession}','${peer}','${tenant}','ma','MA'),
       ('${foreignSession}','${foreign}','${otherTenant}','ma','MA');
@@ -227,7 +228,7 @@ test("both search RPCs enforce RLS and deny anonymous EXECUTE; Co-Pilot includes
   }
   const source = readFileSync(new URL("../src/lib/transcriptSearch.js",import.meta.url),"utf8")
     .replace(/^import .*;\n/gm,"").replace("export async function","async function");
-  const context = vm.createContext({ debugLog, getEvidenceSupabase:()=>db, getQueryEmbedding:async()=>[0,0], console });
+  const context = vm.createContext({deploymentPublic, debugLog, getEvidenceSupabase:()=>db, getQueryEmbedding:async()=>[0,0], console });
   vm.runInContext(source+";globalThis.run=fetchTranscriptReferences",context);
   const references = await context.run({getToken:async()=>"fixture-jwt",query:"recording",matchCount:100});
   assert.equal(references.error,null); assert.ok(references.contextBlock.includes("[R"));
@@ -458,7 +459,7 @@ test("session hook waits for server ownership before flags/checkpoints and retai
   const source = readFileSync(new URL("../src/hooks/useSessionTracker.js",import.meta.url),"utf8")
     .replace(/^import .*;\n/gm,"").replaceAll('import.meta.env.VITE_DISABLE_CLERK_AUTH === "true"',"false")
     .replaceAll("import.meta.env.DEV","false").replace(/^export /gm,"");
-  const context = vm.createContext({ debugLog,
+  const context = vm.createContext({deploymentPublic, debugLog,
     useRef:value=>({current:value}),useCallback:fn=>fn,useEffect:()=>{},
     useAppAuth:()=>({getToken:async()=>"fixture-clerk-session"}),runSessionTrackingDiagnostic:()=>{},
     evidenceRequest:async (_token,endpoint,body)=>{

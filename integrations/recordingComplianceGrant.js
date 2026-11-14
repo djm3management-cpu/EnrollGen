@@ -1,3 +1,4 @@
+import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { randomBytes, createHash } from 'node:crypto';
 export class RecordingLinkError extends Error {
   constructor(status,message){super(message);this.status=status;}
@@ -22,7 +23,7 @@ export async function recordingComplianceGrant(db, identity, row, { format = 'wa
   if (!storagePath && !provider) throw new EvidenceError(404,
     format === 'mp3' ? 'MP3 requires a retained Twilio recording.' : 'Recording audio is unavailable.');
   let base;
-  try { base = new URL(env.TELEPHONY_BASE_URL || env.VITE_TELEPHONY_BASE_URL); } catch { /* Checked below. */ }
+  try { base = new URL(deploymentProfile(env).telephonyOrigin); } catch { /* Checked below. */ }
   if (!base || base.protocol !== 'https:' || base.username || base.password || base.search || base.hash) {
     throw new EvidenceError(503, 'Recording download service is not configured.');
   }

@@ -406,7 +406,7 @@ test('Deepgram connect timeout notifies and retries; normal stop preserves final
 
 test('production inbound parent/child identity accepts documented MZ start and denies child reservation', async t => {
   const claims={callSid:'CAa44621807f498d3dede1eb16ce02d192',attemptId:'fb43fb0a-cb98-47ca-837c-b889006de579',
-    tenantId:tenant,agentId:'mike_shiomos',inboundCallId:'5fcbe3a8-887e-4b12-8275-8c6ae3e93508',direction:'inbound'};
+    tenantId:tenant,agentId:'pilot_agent_01',inboundCallId:'5fcbe3a8-887e-4b12-8275-8c6ae3e93508',direction:'inbound'};
   const childSid='CA060f237b887be453e64adf7698149a19';
   await sql('INSERT INTO inbound_calls VALUES($1,$2,$3,$4,NULL)',[claims.inboundCallId,tenant,claims.callSid,claims.agentId]);
   await sql('INSERT INTO telephony_call_attempts(id,tenant_id,parent_call_sid,agent_id,inbound_call_id,direction,status) VALUES($1,$2,$3,$4,$5,$6,$7)',
@@ -586,7 +586,7 @@ test('Railway cost switch defaults and explicit overrides are parsed by the prod
   const {execFileSync}=await import('node:child_process');
   const script=`const {config}=await import('./src/config.js'); process.stdout.write(JSON.stringify([config.sttWaitForAnswer,config.deleteTwilioRecordingsAfterCopy]));`;
   for(const [wait,remove,expected] of [[undefined,undefined,[true,false]],['false','true',[false,true]],['true','false',[true,false]]]){
-    const env={...process.env};delete env.STT_WAIT_FOR_ANSWER;delete env.DELETE_TWILIO_RECORDINGS_AFTER_COPY;
+    const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...process.env};delete env.STT_WAIT_FOR_ANSWER;delete env.DELETE_TWILIO_RECORDINGS_AFTER_COPY;
     if(wait!==undefined)env.STT_WAIT_FOR_ANSWER=wait;if(remove!==undefined)env.DELETE_TWILIO_RECORDINGS_AFTER_COPY=remove;
     const result=execFileSync(process.execPath,['--input-type=module','-e',script],{cwd:new URL('../',import.meta.url),env,encoding:'utf8'});
     assert.deepEqual(JSON.parse(result),expected);

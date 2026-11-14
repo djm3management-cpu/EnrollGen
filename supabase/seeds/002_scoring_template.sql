@@ -1,5 +1,5 @@
 -- ============================================================
--- NGHS Medicare Advantage Standard v1 Scoring Template
+-- Medicare Advantage Standard v1 Scoring Template
 -- Run AFTER 001_compliance_intents.sql
 -- ============================================================
 
@@ -9,7 +9,7 @@ INSERT INTO scoring_templates (
   total_possible_points, passing_threshold, auto_fail_threshold, categories
 ) VALUES (
   '00000000-0000-0000-0000-000000000001',
-  'NGHS Medicare Advantage Standard v1',
+  'Medicare Advantage Standard v1',
   'MA',
   NULL,
   1,

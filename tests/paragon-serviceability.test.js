@@ -12,7 +12,7 @@ const tenant=id(1),foreign=id(2),source=id(3),dylan=id(4),mark=id(5),mike=id(6),
 const sql=async(query,args=[]) => (await pg.query(query,args)).rows;
 const migration=name=>readFileSync(new URL(`../supabase/migrations/${name}`,import.meta.url),'utf8');
 const sid=n=>'CA'+String(n).padStart(32,'0');
-async function addCall(n,{state=null,zip=null,wrong=false,answer='dylan_maria'}={}){
+async function addCall(n,{state=null,zip=null,wrong=false,answer='pilot_agent_03'}={}){
  const call=id(n),record=id(n+1000);
  await sql(`INSERT INTO call_records(id,tenant_id,customer_first_name,customer_last_name) VALUES($1,$2,'Jane','Doe')`,[record,tenant]);
  await sql(`INSERT INTO inbound_calls(id,tenant_id,twilio_call_sid,source_kind,lead_source_id,routed_agent_id,from_number,caller_state,confirmed_state,confirmed_zip,wrong_state,call_record_id,status)
@@ -28,7 +28,7 @@ const request=body=>new Request('https://app.test/api/paragon-zip-confirm',{meth
 async function existingCallback(n){
  const call=await addCall(n,{state:'AZ',zip:'85001',wrong:true});
  const [task]=await sql(`INSERT INTO paragon_callback_tasks(inbound_call_id,tenant_id,assigned_agent_id,caller_state,confirmed_zip)
- VALUES($1,$2,'mark_endres','AZ','85001') RETURNING id`,[call,tenant]);
+ VALUES($1,$2,'pilot_agent_02','AZ','85001') RETURNING id`,[call,tenant]);
  return {call,task};
 }
 const rollback=async work=>{await pg.exec('BEGIN');try{await work();}finally{await pg.exec('ROLLBACK');}};
@@ -40,13 +40,13 @@ before(async()=>{
  CREATE TABLE call_transcripts(id uuid PRIMARY KEY,disposition text);`);
  await sql(`INSERT INTO tenants VALUES($1,'org-a'),($2,'org-b')`,[tenant,foreign]);
  await sql(`INSERT INTO lead_sources(id,tenant_id,name,type,active) VALUES($1,$2,'Paragon Media','publisher',true)`,[source,tenant]);
- for(const [agent,name,npn,slug,user] of [[dylan,'Dylan Maria','22167358','dylan_maria','dylan-user'],[mark,'Mark Endres','20856361','mark_endres','mark-user'],[mike,'Mike Shiomos','20574678','mike_shiomos','mike-user']])await sql(`INSERT INTO tenant_agents(id,tenant_id,name,npn,agent_slug,clerk_user_id,is_active) VALUES($1,$2,$3,$4,$5,$6,true)`,[agent,tenant,name,npn,slug,user]);
- await pg.exec(`INSERT INTO agent_availability(agent_id,status,available) VALUES('dylan_maria','available',true),('mark_endres','offline',false),('mike_shiomos','available',true)`);
+ for(const [agent,name,npn,slug,user] of [[dylan,'Pilot Agent 03','22167358','pilot_agent_03','dylan-user'],[mark,'Pilot Agent 02','20856361','pilot_agent_02','mark-user'],[mike,'Pilot Agent 01','20574678','pilot_agent_01','mike-user']])await sql(`INSERT INTO tenant_agents(id,tenant_id,name,npn,agent_slug,clerk_user_id,is_active) VALUES($1,$2,$3,$4,$5,$6,true)`,[agent,tenant,name,npn,slug,user]);
+ await pg.exec(`INSERT INTO agent_availability(agent_id,status,available) VALUES('pilot_agent_03','available',true),('pilot_agent_02','offline',false),('pilot_agent_01','available',true)`);
  for(const name of ['051_paragon_vendor_matrix.sql','052_paragon_ping_and_claim.sql','053_paragon_zip_and_reports.sql','055_paragon_vendor_report.sql','056_resolve_recent_paragon_ping.sql','057_paragon_vendor_report_proof.sql','067_paragon_billing_hours.sql','098_ancillary_sale_disposition.sql'])await pg.exec(migration(name));
  await addCall(10,{state:'NY',zip:'10001',wrong:true});
- await sql(`INSERT INTO paragon_callback_tasks(id,inbound_call_id,tenant_id,assigned_agent_id,caller_state,confirmed_zip) VALUES($1,$2,$3,'mike_shiomos','NY','10001')`,[legacyTask,legacy,tenant]);
+ await sql(`INSERT INTO paragon_callback_tasks(id,inbound_call_id,tenant_id,assigned_agent_id,caller_state,confirmed_zip) VALUES($1,$2,$3,'pilot_agent_01','NY','10001')`,[legacyTask,legacy,tenant]);
  await addCall(12,{state:'AZ',zip:'85001',wrong:true});
- await sql(`INSERT INTO paragon_callback_tasks(id,inbound_call_id,tenant_id,assigned_agent_id,caller_state,confirmed_zip) VALUES($1,$2,$3,'mike_shiomos','AZ','85001')`,[id(13),id(12),tenant]);
+ await sql(`INSERT INTO paragon_callback_tasks(id,inbound_call_id,tenant_id,assigned_agent_id,caller_state,confirmed_zip) VALUES($1,$2,$3,'pilot_agent_01','AZ','85001')`,[id(13),id(12),tenant]);
  await pg.exec(migration('126_paragon_out_of_state_tasks.sql'));
 });
 after(()=>pg.close());
@@ -54,7 +54,7 @@ test('migration closes unserviceable legacy fallback tasks and exposes the confi
  const [task]=await sql('SELECT * FROM paragon_callback_tasks WHERE id=$1',[legacyTask]);assert.equal(task.status,'cancelled');assert.equal(task.reason,'out_of_state_not_serviceable');assert.ok(task.closed_at);
  const [call]=await sql('SELECT * FROM inbound_calls WHERE id=$1',[legacy]);assert.equal(call.paragon_serviceability,'not_serviceable');assert.equal(call.confirmed_state,'NY');assert.equal(call.return_reason,'out_of_state_not_serviceable');
  const report=(await sql(`SELECT * FROM paragon_vendor_report($1,'2026-10-29','2026-10-30')`,[source])).find(row=>row.call_id==='vendor-10');assert.equal(report.caller_state,'NY');assert.equal(report.serviceability,'Out of state: not serviceable');assert.equal(report.billable,'yes','a dispute flag does not rewrite stored billing evidence');
- const [eligibleLegacy]=await sql('SELECT * FROM paragon_callback_tasks WHERE id=$1',[id(13)]);assert.equal(eligibleLegacy.assigned_agent_id,'mark_endres');assert.equal(eligibleLegacy.status,'open');
+ const [eligibleLegacy]=await sql('SELECT * FROM paragon_callback_tasks WHERE id=$1',[id(13)]);assert.equal(eligibleLegacy.assigned_agent_id,'pilot_agent_02');assert.equal(eligibleLegacy.status,'open');
  await sql(`UPDATE paragon_callback_tasks SET status='completed' WHERE id=$1`,[id(13)]);
 });
 test('assigned agent sees existing callback details/count and can reschedule/complete without residence confirmation',()=>rollback(async()=>{

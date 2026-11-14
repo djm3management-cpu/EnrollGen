@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -8,7 +9,7 @@ const source = readFileSync(new URL('../src/lib/outboundApi.js', import.meta.url
   .replace('import.meta.env.VITE_TELEPHONY_BASE_URL', '"https://telephony.test"');
 function client(responses, isCurrent = () => true) {
   let requests = 0, waits = 0;
-  const context = vm.createContext({ fetchWithClerk: async () => {
+  const context = vm.createContext({deploymentPublic, fetchWithClerk: async () => {
     const result = responses[Math.min(requests++, responses.length - 1)];
     return new Response(JSON.stringify(result.body), { status: result.status });
   }, setTimeout });
@@ -42,7 +43,7 @@ test('rejected outbound browser legs never auto-start transcript persistence', (
   const flow = readFileSync(new URL('../src/components/ScriptFlow.jsx', import.meta.url), 'utf8');
   const effect = flow.slice(flow.indexOf('  const inboundStartedRef'), flow.indexOf('  useEffect(() => {\n    const contact', flow.indexOf('  const inboundStartedRef')));
   let started = 0;
-  const ctx = vm.createContext({ useRef: value => ({ current: value }), useEffect: fn => fn(),
+  const ctx = vm.createContext({deploymentPublic, useRef: value => ({ current: value }), useEffect: fn => fn(),
     inbound: { activeCall: { params: { direction: 'outbound' } } }, setCallStarted: () => started++ });
   vm.runInContext(`(()=>{${effect}})()`, ctx); assert.equal(started, 0);
   ctx.inbound.activeCall.params.attemptId = 'verified-attempt';

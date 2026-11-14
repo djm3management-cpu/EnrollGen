@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { useState } from 'react';
 import { followUpBucket } from '../../lib/followUps';
 
@@ -13,7 +14,7 @@ function FollowUpRow({ row, agents, update, onOpenContact }) {
     finally { setPending(false); }
   };
   return <tr>
-    <td className="mono">{row.due_at ? new Date(row.due_at).toLocaleString() : 'No due date'}</td>
+    <td className="mono">{row.due_at ? new Date(row.due_at).toLocaleString(undefined,{timeZone:deploymentPublic.timezone}) : 'No due date'}</td>
     <td>{row.reason || 'Follow-up'}</td>
     <td>{agents.find(agent => agent.agent_slug === row.agent_id)?.name || 'Unassigned'}</td>
     <td>{row.source==='paragon'&&<><div>{row.caller_name||'Unknown caller'}</div><div className="mono">{row.caller_phone||'Phone unavailable'} · {row.caller_state}</div><a className="contacts-mini-btn" href={`/crm/calls?inbound_call_id=${encodeURIComponent(row.inbound_call_id)}`}>ORIGINAL CALL</a>{' '}</>}{row.contact_id&&<button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => onOpenContact(row.contact_id)}>OPEN CONTACT</button>}</td>

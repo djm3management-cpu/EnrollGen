@@ -1,12 +1,13 @@
+import { agencyName } from '../lib/deploymentPublic.js';
 /*
-  NGHS Medicare SEP Qualification Script
-  Source: NGHS_SEP_Agent_Script.pdf
+  Agency Medicare SEP Qualification Script
+  Source: approved SEP reference
   Intended use: AgentTools data module for rendering a “SEP Lookup” tool
 */
 
-export const NGHS_SEP_SCRIPT = {
+export const AGENCY_SEP_SCRIPT = {
   title: "Medicare SEP Qualification Script",
-  subtitle: "Agent Reference | New Gen Health Solutions | Internal Use Only",
+  subtitle: `Agent Reference | ${agencyName} | Internal Use Only`,
   instructions:
     "Work through each section. If the customer answers YES to any screening question, document the SEP trigger, confirm the enrollment window, and proceed with plan selection.",
   footer:

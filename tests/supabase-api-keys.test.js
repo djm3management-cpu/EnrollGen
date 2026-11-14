@@ -19,7 +19,7 @@ const jwt = (role = 'authenticated', alg = 'HS256') => [btoa(JSON.stringify({ al
 
 test('Railway startup verification checks private database access and logs only key source/type and safe status',async()=>{
   for(const [service,client,report] of [['integrations-worker',createSupabaseClient,reportSupabaseKeySelection],['telephony',telephonyClient,reportPhoneKeySelection]]){
-    const env={SUPABASE_SECRET_KEY:'sb_secret_private_fixture',SUPABASE_SERVICE_ROLE_KEY:'old-private-value'};
+    const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,SUPABASE_SECRET_KEY:'sb_secret_private_fixture',SUPABASE_SERVICE_ROLE_KEY:'old-private-value'};
     for(const failed of [false,true]){
       const logs=[];
       const db=client(url,env.SUPABASE_SECRET_KEY,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:async(target,init)=>{
@@ -134,7 +134,7 @@ test('browser singleton clients never use an opaque public key as a JWT, includi
 });
 
 test('telephony boots using only the new key without requiring the legacy variable',()=>{
-  const env={...process.env,SUPABASE_SECRET_KEY:'sb_secret_fixture',PUBLIC_BASE_URL:url,SUPABASE_URL:url};
+  const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...process.env,SUPABASE_SECRET_KEY:'sb_secret_fixture',PUBLIC_BASE_URL:url,SUPABASE_URL:url};
   delete env.SUPABASE_SERVICE_ROLE_KEY;
   for(const name of ['TWILIO_ACCOUNT_SID','TWILIO_AUTH_TOKEN','TWILIO_API_KEY_SID','TWILIO_API_KEY_SECRET','TWILIO_TWIML_APP_SID','DEEPGRAM_API_KEY','INBOUND_VENDOR_API_KEY','CLERK_SECRET_KEY','AGENT_WS_SIGNING_SECRET'])env[name]='fixture';
   const out=execFileSync(process.execPath,['--input-type=module','-e',"import {config} from './telephony/src/config.js'; console.log(config.supabaseSecretKey==='sb_secret_fixture')"],{env,encoding:'utf8'});
@@ -142,7 +142,7 @@ test('telephony boots using only the new key without requiring the legacy variab
 });
 
 test('office sync accepts only a new secret and does not send it as a Bearer JWT',()=>{
-  const env={...process.env,SUPABASE_SECRET_KEY:'sb_secret_fixture',SUPABASE_URL:url,NEXTCLOUD_URL:'https://office.test',NEXTCLOUD_USER:'fixture',NEXTCLOUD_APP_TOKEN:'fixture'};
+  const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...process.env,SUPABASE_SECRET_KEY:'sb_secret_fixture',SUPABASE_URL:url,NEXTCLOUD_URL:'https://office.test',NEXTCLOUD_USER:'fixture',NEXTCLOUD_APP_TOKEN:'fixture'};
   delete env.SUPABASE_SERVICE_KEY;delete env.SUPABASE_SERVICE_ROLE_KEY;
   const out=execFileSync('python3',['-c',"import json,runpy; m=runpy.run_path('infra/office-nextcloud/sync/sync.py'); m['validate_env'](); print(json.dumps(m['supabase_headers']()))"],{env,encoding:'utf8'});
   const headers=JSON.parse(out);assert.equal(headers.apikey,'sb_secret_fixture');assert.equal(headers.Authorization,undefined);

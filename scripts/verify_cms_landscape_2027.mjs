@@ -3,12 +3,8 @@ import pg from "pg";
 
 const password = process.env.SUPABASE_DB_PASSWORD;
 const connectionString = process.env.SUPABASE_DB_URL;
-if (!connectionString && !password) throw new Error("Set SUPABASE_DB_URL or SUPABASE_DB_PASSWORD locally");
-const client = new pg.Client(connectionString
-  ? { connectionString, ssl: { rejectUnauthorized: false } }
-  : { host: "db.qzjtagnpklaxefwurorc.supabase.co", port: 5432,
-      database: "postgres", user: "postgres", password,
-      ssl: { rejectUnauthorized: false } });
+if (!connectionString) throw new Error("Set explicit SUPABASE_DB_URL locally");
+const client = new pg.Client({ connectionString, ssl: { rejectUnauthorized: false } });
 await client.connect();
 try {
   const checks = {

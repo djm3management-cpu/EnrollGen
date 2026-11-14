@@ -5,7 +5,7 @@ import {useEffect,useState} from 'react';
 import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 import OpportunityDialog from '../opportunities/OpportunityDialog';
-import {INTAKE_FIELDS,PLAN_TYPES,mergeIntakePrefill,CARRIERS,WRITING_AGENTS,fieldVisible,normalizeIntake,intakeErrors,formatPhone,formatMbi,formatPremium,followUpDate,planAutofill} from '../../lib/enrollmentIntake.js';
+import {INTAKE_FIELDS,PLAN_TYPES,mergeIntakePrefill,CARRIERS,fieldVisible,normalizeIntake,intakeErrors,formatPhone,formatMbi,formatPremium,followUpDate,planAutofill} from '../../lib/enrollmentIntake.js';
 
 export default function EnrollmentIntake({callId,onClose,onSaved,initialPrefill={},intakeId}){
  const {getToken}=useAppAuth();
@@ -14,6 +14,7 @@ export default function EnrollmentIntake({callId,onClose,onSaved,initialPrefill=
  const [contactSearch,setContactSearch]=useState('');
  const [record,setRecord]=useState(null),[data,setData]=useState(null),[records,setRecords]=useState([]),[prefill,setPrefill]=useState(null),[contactId,setContactId]=useState('');
  const [admin,setAdmin]=useState(false);
+ const [roster,setRoster]=useState([]);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[errors,setErrors]=useState({}),[sync,setSync]=useState(null);
  const [search,setSearch]=useState(''),[plans,setPlans]=useState([]),[planStatus,setPlanStatus]=useState('');
  const request=async(suffix='',options)=>{
@@ -28,7 +29,7 @@ export default function EnrollmentIntake({callId,onClose,onSaved,initialPrefill=
    const first=result.intakes.find(row=>row.id===intakeId)||result.intakes[0];
    const savedFields=Object.fromEntries(Object.entries(first?.data||{}).filter(([,value])=>value!==''&&value!=null));
    const selectedType=first&&!first.completed_at&&initialPrefill.planType?{planType:initialPrefill.planType}:{};
-   setAdmin(result.admin===true);setRecords(result.intakes);setPrefill(defaults);
+   setRoster(result.roster||[]);setAdmin(result.admin===true);setRecords(result.intakes);setPrefill(defaults);
    setContactId(first?.contact_id||result.contact_id||'');setRecord(first?.id||null);
    setData(first?mergeIntakePrefill({...defaults,...savedFields},selectedType):defaults);setSync(first?.sync||null);
   }).catch(err=>{if(!cancelled)setError(err.message);});
@@ -52,11 +53,11 @@ export default function EnrollmentIntake({callId,onClose,onSaved,initialPrefill=
   if(key==='phone')value=formatPhone(value);
   if(key==='mbi')value=formatMbi(value);
   if(key==='state')value=value.toUpperCase().slice(0,2);
-  setData(previous=>({...previous,[key]:value,...(key==='effectiveDate'?{sixtyDayDate:followUpDate(value)}:{}),...(key==='medicaid'&&value==='No'?{medicaidNum:''}:{}),...(key==='hra'&&value==='No'?{hraDate:''}:{})}));
+  setData(previous=>({...previous,[key]:value,...(key==='aor'?{writingAgentId:roster.find(a=>a.name===value)?.id||''}:{}),...(key==='effectiveDate'?{sixtyDayDate:followUpDate(value)}:{}),...(key==='medicaid'&&value==='No'?{medicaidNum:''}:{}),...(key==='hra'&&value==='No'?{hraDate:''}:{})}));
   setErrors(previous=>{const next={...previous};delete next[key];return next;});
  };
  const save=async event=>{
-  event.preventDefault();const normalized=normalizeIntake(data),invalid=intakeErrors(normalized);setData(normalized);setErrors(invalid);
+  event.preventDefault();const normalized=normalizeIntake(data),invalid=intakeErrors(normalized,roster);setData(normalized);setErrors(invalid);
   if(Object.keys(invalid).length){setError(`Complete or correct: ${Object.values(invalid).join(', ')}`);return;}
   setBusy(true);setError('');
   try{
@@ -93,7 +94,7 @@ export default function EnrollmentIntake({callId,onClose,onSaved,initialPrefill=
       <p className="contacts-muted" role="status">{planStatus}</p>
       <label className="contacts-edit-field"><span>Available plans</span><select className="contacts-edit-input" value="" disabled={busy||!plans.length} onChange={event=>{const plan=plans.find(p=>String(p.id)===event.target.value);if(plan)setData(previous=>({...previous,...planAutofill(plan)}));}}><option value="">Select a plan or enter details manually</option>{plans.map(plan=><option key={plan.id} value={plan.id}>{plan.plan_name} · {plan.contract_id}-{plan.plan_id}-{plan.segment_id} · {plan.monthly_premium==null?'Premium unavailable':formatPremium(plan.monthly_premium)}</option>)}</select></label></div>}
      <div className="enrollment-intake-grid">{fields.filter(([key])=>fieldVisible(key,data)).map(([key,label,type,required])=>{
-      const options=type==='yesno'?['No','Yes']:type==='carrier'?CARRIERS:type==='agent'?WRITING_AGENTS:type==='planType'?PLAN_TYPES:null;
+      const options=type==='yesno'?['No','Yes']:type==='carrier'?CARRIERS:type==='agent'?roster.map(a=>a.name):type==='planType'?PLAN_TYPES:null;
       const props={id:`intake-${key}`,className:'contacts-edit-input',value:data[key]||'',disabled:busy,'aria-invalid':Boolean(errors[key]),required:required||(key==='sunfireCode'&&data.newCarrier==='UnitedHealthcare'),onChange:event=>change(key,event.target.value)};
       return <label className="contacts-edit-field" key={key} htmlFor={props.id}><span>{label}{props.required?' *':''}</span>{options?<select {...props}>{type!=='yesno'&&<option value="">Choose…</option>}{options.map(option=><option key={option}>{option}</option>)}</select>:<input {...props} type={type} maxLength={key==='state'?2:500} onBlur={key==='premium'?()=>change(key,formatPremium(data[key])):undefined}/>}{errors[key]&&<small className="ops-error">{errors[key]}</small>}</label>;
      })}</div>

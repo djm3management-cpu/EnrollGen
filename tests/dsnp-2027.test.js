@@ -72,7 +72,7 @@ test('SQL CLI needs no database credentials and enforces live validation before 
     const file = join(dir, 'cy2027-fixture.xlsx');
     const output = join(dir, 'load.sql');
     const run = (...args) => spawnSync(process.execPath, ['scripts/parse_cms_dsnp.js', '--file', file, ...args], {
-      encoding: 'utf8', env: { ...process.env, SUPABASE_DB_URL: '', SUPABASE_DB_PASSWORD: '' },
+      encoding: 'utf8', env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, ...process.env, SUPABASE_DB_URL: '', SUPABASE_DB_PASSWORD: '' },
     });
     XLSX.writeFile(workbook([row]), file);
     const result = run('--sql-out', output);

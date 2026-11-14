@@ -1,10 +1,11 @@
+import { deploymentProfile } from './lib/deploymentProfile.js';
+const profile = deploymentProfile();
 import { featureEnabled } from './lib/deploymentFeatures.js';
 import "./authSafety.js";
 import { supabaseSecretKey } from "./lib/supabaseKeys.js";
 import { parseDirectAgentNumbers } from "./directRouting.js";
 
 const REQUIRED_VARS = [
-  "PUBLIC_BASE_URL",
   "SUPABASE_URL",
   "TWILIO_ACCOUNT_SID",
   "TWILIO_AUTH_TOKEN",
@@ -47,7 +48,7 @@ export const config = {
   sttWaitForAnswer: process.env.STT_WAIT_FOR_ANSWER?.trim().toLowerCase() !== 'false',
   deleteTwilioRecordingsAfterCopy: process.env.DELETE_TWILIO_RECORDINGS_AFTER_COPY?.trim().toLowerCase() === 'true',
   port: Number(process.env.PORT || 8080),
-  publicBaseUrl: stripTrailingSlash(process.env.PUBLIC_BASE_URL),
+  publicBaseUrl: stripTrailingSlash(profile.telephonyOrigin),
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseSecretKey: supabaseSecretKey(),
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
@@ -55,17 +56,17 @@ export const config = {
   twilioApiKeySid: process.env.TWILIO_API_KEY_SID,
   twilioApiKeySecret: process.env.TWILIO_API_KEY_SECRET,
   twilioTwimlAppSid: process.env.TWILIO_TWIML_APP_SID,
-  twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || null,
+  twilioPhoneNumber: profile.textSender,
   directAgentNumbers: parseDirectAgentNumbers(process.env.DIRECT_AGENT_NUMBERS, process.env.TWILIO_PHONE_NUMBER),
   deepgramApiKey: process.env.DEEPGRAM_API_KEY,
   inboundVendorApiKey: process.env.INBOUND_VENDOR_API_KEY,
   clerkSecretKey: process.env.CLERK_SECRET_KEY,
   clerkJwtKey: process.env.CLERK_JWT_KEY,
   agentWsSigningSecret: process.env.AGENT_WS_SIGNING_SECRET,
-  // Inbound routing is single tenant (NGHS) in v1. Multi-tenant
+  // Inbound routing uses the validated deployment tenant. Multi-tenant
   // number-to-tenant mapping is a follow-up; see README.
   defaultTenantId:
-    process.env.DEFAULT_TENANT_ID || "00000000-0000-4000-8000-000000000001",
+    profile.tenantId,
   dialTimeoutSeconds: Number(process.env.DIAL_TIMEOUT_SECONDS || 20),
   minConnectedSeconds,
   conferenceCallingEnabled: featureEnabled('CONFERENCE_CALLING_ENABLED'),

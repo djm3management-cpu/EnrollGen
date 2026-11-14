@@ -94,7 +94,6 @@ const SEPQualifier = lazyWithRetry(loadSEPQualifier);
 const AuthenticatedStyleGate = lazyWithRetry(loadAuthenticatedStyleGate);
 const RTSTab = lazyWithRetry(loadRTSTab);
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
-const tenantBootstrapAttempts = new Set();
 
 function SettingsIcon({ size = 14 }) {
   return (
@@ -1182,100 +1181,7 @@ function AppContent({ currentUser = null }) {
   );
 }
 
-function TenantAutoBootstrap({ currentUser = null, organization, onComplete, onTenantSeeded }) {
-  const { getToken } = useAppAuth();
-  const [error, setError] = useState("");
-  const userId = currentUser?.id || "";
-  const userFullName = currentUser?.fullName || "";
-  const userFirstName = currentUser?.firstName || "";
-  const userLastName = currentUser?.lastName || "";
-  const bootstrapAgent = useMemo(
-    () => ({
-      name: userFullName || [userFirstName, userLastName].filter(Boolean).join(" ") || "Agent",
-      npn: "",
-      clerk_user_id: userId,
-      ghl_user_id: "",
-    }),
-    [userFirstName, userFullName, userId, userLastName]
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function bootstrapTenant() {
-      if (!organization?.id) return;
-      if (tenantBootstrapAttempts.has(organization.id)) return;
-
-      tenantBootstrapAttempts.add(organization.id);
-      setError("");
-      try {
-        const agencyName = organization.name || "New Agency";
-        const response = await fetchWithClerk(getToken, "/api/seed-new-tenant", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            bootstrap_only: true,
-            org_id: organization.id,
-            tenant: {
-              name: agencyName,
-              agency_display_name: agencyName,
-            },
-            agents: [bootstrapAgent],
-          }),
-        });
-
-        const raw = await response.text().catch(() => "");
-        let data = {};
-        try {
-          data = raw ? JSON.parse(raw) : {};
-        } catch {
-          data = {};
-        }
-        if (!response.ok) {
-          const detail = data.detail || data.error || raw?.slice(0, 240);
-          throw new Error(
-            detail
-              ? `Unable to create agency workspace (${response.status}): ${detail}`
-              : `Unable to create agency workspace (HTTP ${response.status}).`
-          );
-        }
-
-        if (!cancelled) {
-          if (data.tenant?.id) onTenantSeeded?.(data.tenant);
-          await onComplete?.({ background: true });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setError(error?.message || "Unable to create agency workspace.");
-        }
-      }
-    }
-
-    bootstrapTenant();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    bootstrapAgent,
-    getToken,
-    onComplete,
-    onTenantSeeded,
-    organization?.id,
-    organization?.name,
-  ]);
-
-  return (
-    <div className="subscription-paywall">
-      <div className="subscription-paywall-card">
-        <span className="billing-eyebrow">TENANT</span>
-        <h1>Setting up {organization?.name || "agency"}</h1>
-        <p>Linking your Clerk organization to an EnrollGen workspace.</p>
-        {error ? <div className="billing-alert is-error">{error}</div> : null}
-      </div>
-    </div>
-  );
-}
+function TenantAutoBootstrap() { return <Onboarding/>; }
 
 function AuthenticatedAppContent() {
   const { user, organization, organizationLoaded, callProtected } = useAppAuth();

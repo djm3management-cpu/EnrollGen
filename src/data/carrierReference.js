@@ -1,3 +1,4 @@
+import { agencyName } from '../lib/deploymentPublic.js';
 export const CARRIER_REFERENCE = [
   {
     carrier: "Devoted Health",
@@ -26,7 +27,7 @@ export const CARRIER_REFERENCE = [
           "OTC allowance",
         ],
         network: "HMO — must use in-network providers",
-        notes: "Primary NGHS carrier. Majority of MA book.",
+        notes: `Primary ${agencyName} carrier. Majority of MA book.`,
       },
     ],
     portal: "https://providers.devoted.com",

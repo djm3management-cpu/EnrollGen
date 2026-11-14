@@ -1,3 +1,6 @@
+import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
+import { loadDeploymentRoster, writingAgent } from '../../telephony/src/lib/deploymentRoster.js';
+import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity,scopeCallToIdentity} from './_evidenceAccess.js';
 import {emptyIntake,normalizeIntake,intakeErrors,ghlPayload,carrierKey,CARRIERS,landscapeCarrierMatches} from '../../src/lib/enrollmentIntake.js';
@@ -18,6 +21,9 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
     const allowed=new Set(calls.map(call=>call.id));
     return evidenceJson(200,{intakes:await readIntakes(db,rows.filter(row=>allowed.has(row.call_id)))});
    }
+   const profile=deploymentProfile();
+   if(tenant.id!==profile.tenantId)throw new EvidenceError(403,'Agency unavailable.');
+   const roster=await loadDeploymentRoster(db,profile,{ghl:featureEnabled('GHL_ENABLED')});
    const callId=url.searchParams.get('call_id');
    if(!/^[0-9a-f-]{36}$/i.test(callId||''))throw new EvidenceError(400,'Call ID is required.');
    const call=checked(await scopeCallToIdentity(db.from('call_records').select('*').eq('id',callId),identity).maybeSingle());
@@ -44,8 +50,10 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
    if(request.method==='POST'){
     let input;try{input=await request.json();}catch{throw new EvidenceError(400,'Invalid JSON.');}
     if(!input?.data || typeof input.data!=='object')throw new EvidenceError(400,'Intake fields are required.');
-    const data=normalizeIntake(input.data),errors=intakeErrors(data);
+    const data=normalizeIntake(input.data),errors=intakeErrors(data,roster);
     if(Object.keys(errors).length)return evidenceJson(400,{error:`Complete or correct: ${Object.values(errors).join(', ')}`,fields:errors});
+    const writer=writingAgent(roster,data.writingAgentId||data.aor);
+    data.writingAgentId=writer.id;data.writingAgentSlug=writer.agent_slug;data.agency=profile.agencyName;
     const contactId=input.contact_id||call.contact_id;
     const contact=checked(await db.from('contacts').select('id').eq('id',contactId).eq('tenant_id',tenant.id).maybeSingle());
     if(!contact)throw new EvidenceError(400,'Link a contact before saving the enrollment intake.');
@@ -56,7 +64,7 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
     }
     if(!identity.admin && data.testEnrollment!==(previous?.is_test_enrollment||false))throw new EvidenceError(403,'Only admins can change test enrollment mode.');
     const submittedAt=previous?.submitted_at||now();
-    const id=checked(await db.rpc('save_enrollment_intake',{p_id:previous?.id||null,p_tenant:tenant.id,p_call:callId,p_contact:contactId,p_data:{...data,...(previous?.data?.legacyStep7?{legacyStep7:previous.data.legacyStep7}:{})},p_carrier:carrierKey(data.newCarrier),p_payload:ghlPayload(data,submittedAt)}));
+    const id=checked(await db.rpc('save_enrollment_intake',{p_id:previous?.id||null,p_tenant:tenant.id,p_call:callId,p_contact:contactId,p_data:{...data,...(previous?.data?.legacyStep7?{legacyStep7:previous.data.legacyStep7}:{})},p_carrier:carrierKey(data.newCarrier),p_payload:ghlPayload(data,submittedAt,roster)}));
     // Durable save precedes delivery. Provider failures never change save success.
     try{if(!data.testEnrollment)await deliver(db,{limit:1});}catch{ /* No submitted PII or provider response is logged. */ }
     return evidenceJson(200,{saved:true,id});
@@ -70,8 +78,8 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
     for(const key of ['first_name','last_name','dob','phone','email','mbi_full'])if(row?.pii_encrypted?.[key])contact[key]=checked(await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]}));
    }
    const callAgent=call.agent_id===agent?.id?agent:call.agent_id?checked(await db.from('enrolled_agents').select('id,name').eq('id',call.agent_id).eq('tenant_id',tenant.id).maybeSingle()):null;
-   const prefill={...emptyIntake(callAgent?.name||call.agent_name||''),firstName:contact.first_name||call.customer_first_name||'',lastName:contact.last_name||call.customer_last_name||'',dob:contact.dob||call.customer_dob||'',phone:contact.phone||call.customer_phone||'',email:contact.email||call.customer_email||'',state:contact.state||call.customer_state||call.state_code||'',zip:contact.zip||call.zip_code||'',mbi:contact.mbi_full||call.customer_mbi||'',prevCarrier:contact.current_carrier||'',sunfireCode:call.sunfire_code||''};
-   return evidenceJson(200,{admin:identity.admin,intakes,prefill,contact_id:call.contact_id,product_type:call.product_type});
+   const prefill={...emptyIntake(callAgent?.name||'',roster),firstName:contact.first_name||call.customer_first_name||'',lastName:contact.last_name||call.customer_last_name||'',dob:contact.dob||call.customer_dob||'',phone:contact.phone||call.customer_phone||'',email:contact.email||call.customer_email||'',state:contact.state||call.customer_state||call.state_code||'',zip:contact.zip||call.zip_code||'',mbi:contact.mbi_full||call.customer_mbi||'',prevCarrier:contact.current_carrier||'',sunfireCode:call.sunfire_code||''};
+   return evidenceJson(200,{roster:roster.map(({id,name,is_active})=>({id,name,is_active})),admin:identity.admin,intakes,prefill,contact_id:call.contact_id,product_type:call.product_type});
   }catch(error){return evidenceFailure(error);}
  };
 }

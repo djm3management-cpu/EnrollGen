@@ -1,3 +1,5 @@
+import {previousReportDate} from '../telephony/src/lib/deploymentSchedule.js';
+import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
 import {canonicalCarrier} from './converselySelection.js';
 import {SunfireIxClient,IxError} from './ixClient.js';
@@ -5,15 +7,15 @@ import {postJson} from './transport.js';
 import {mediaUrl,twilioHeaders,providerJson,fetchRecordingMedia} from '../telephony/src/recordings.js';
 const checked=({data,error})=>{if(error)throw Error('database_error');return data;};
 const attention = code => new IxError(code,{outcome:'needs_attention'});
-function uploadUrl(target) {
+function uploadUrl(target,profile) {
   let url;try{url=new URL(target.presignedUrl);}catch{throw attention('invalid_ix_upload_url');}
   if(url.protocol!=='https:' || url.username || url.password || !url.hostname.endsWith('.amazonaws.com') || url.port)
     throw attention('invalid_ix_upload_url');
-  return url.href;
+  try{return validateDestination(url.href,profile.allowedHosts);}catch{throw attention('invalid_ix_upload_url');}
 }
-export function ixMetadata(call,recordings) {
+export function ixMetadata(call,recordings,profile=deploymentProfile()) {
   const m=call.metadata || {};
-  const result={recordings:recordings.map(({filename,startTime,endTime})=>({filename,startTime,endTime})),teamName:'New Gen Health Solutions'};
+  const result={recordings:recordings.map(({filename,startTime,endTime})=>({filename,startTime,endTime})),teamName:profile.ix.teamName};
   const fields={leadSource:call.lead_source || m.lead_source,leadChannel:m.lead_channel || m.channel,leadMedium:m.lead_medium || m.utm_medium,
     leadCampaign:m.campaign_name || m.lead_campaign || m.utm_campaign || call.campaign_name};
   for(const [key,value] of Object.entries(fields))if(typeof value==='string' && value.trim())result[key]=value;
@@ -28,6 +30,7 @@ export async function ixCallAttribution(db,call,recordings) {
   const inbound=checked(await db.from('inbound_calls').select('lead_source_id').eq('id',inboundId).eq('tenant_id',call.tenant_id).maybeSingle());
   let source;
   if(inbound?.lead_source_id)source=checked(await db.from('lead_sources').select('name').eq('id',inbound.lead_source_id).eq('tenant_id',call.tenant_id).maybeSingle());
+  if(!featureEnabled('PARAGON_ENABLED'))return {...call,lead_source:call.lead_source||source?.name};
   const billing=checked(await db.from('paragon_billing_facts').select('amount_due').eq('inbound_call_id',inboundId).eq('tenant_id',call.tenant_id).not('finalized_at','is',null).maybeSingle());
   return {...call,lead_source:call.lead_source || source?.name,lead_cost:billing?.amount_due ?? call.lead_cost};
 }
@@ -60,7 +63,7 @@ export async function uploadIx(job, recordings, client, {env=process.env,fetchIm
         recording_sid:recording.recording_sid,account_sid:recording.account_sid,callback_call_sid:recording.callback_call_sid});
     }
     if(!legs.length)throw Error('recordings_missing');
-    const registration=await client.register({sunfireEnrollmentCode:job.confirmation_code,callMetadata:ixMetadata(call,legs)});
+    const registration=await client.register({sunfireEnrollmentCode:job.confirmation_code,callMetadata:ixMetadata(call,legs,deploymentProfile(env))});
     if(typeof registration?.callRecordingId!=='string' || !registration.callRecordingId)throw attention('ix_invalid_registration');
     state={environment:client.environment,callRecordingId:registration.callRecordingId,recordings:legs,
       recordingUploads:Array.isArray(registration.recordingUploads)?registration.recordingUploads.map(target=>({filename:target?.filename,presignedUrl:target?.presignedUrl,expiresAt:target?.expiresAt})):[],uploadedFilenames:[]};
@@ -72,7 +75,7 @@ export async function uploadIx(job, recordings, client, {env=process.env,fetchIm
     throw attention('ix_invalid_upload_targets');
   for(const leg of state.recordings){
     if(state.uploadedFilenames.includes(leg.filename))continue;
-    const target=targets.get(leg.filename),url=uploadUrl(target);
+    const target=targets.get(leg.filename),url=uploadUrl(target,deploymentProfile(env));
     if(!Number.isFinite(Date.parse(target.expiresAt)) || Date.parse(target.expiresAt)<=now())throw attention('upload_url_expired');
     if(!config.twilioAuthToken || leg.account_sid!==config.twilioAccountSid)throw Error('twilio_not_configured');
     const audio=await fetchRecordingMedia(mediaUrl(leg.account_sid,leg.recording_sid,2).replace('.wav?','.mp3?'),config,{signal},fetchImpl);
@@ -95,14 +98,15 @@ export async function uploadIx(job, recordings, client, {env=process.env,fetchIm
 
 export async function dailySummaries(db,{env,send,now}) {
   if(!featureEnabled('IX_UPLOAD_ENABLED',env) || !featureEnabled('IX_REPORT_ENABLED',env) || !featureEnabled('OPERATIONAL_EMAIL_ENABLED',env))return;
-  if(!env.RESEND_API_KEY || !env.INTEGRATIONS_REPORT_FROM)return;
-  const date=new Date(now()-86400000).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+  if(!env.RESEND_API_KEY)throw Error('email_key_missing');
+  const profile=deploymentProfile(env);
+  const date=previousReportDate(now(),profile.timezone);
   const rows=checked(await db.from('compliance_reconciliation').select('*').eq('day',date)) || [];
   for(const row of rows){
     checked(await db.from('compliance_daily_summaries').upsert({tenant_id:row.tenant_id,report_date:date,counts:row},{onConflict:'tenant_id,report_date',ignoreDuplicates:true}));
     const summary=checked(await db.from('compliance_daily_summaries').select('*').eq('tenant_id',row.tenant_id).eq('report_date',date).single());
     if(summary.sent_at)continue;
-    const result=await send('https://api.resend.com/emails',JSON.stringify({from:env.INTEGRATIONS_REPORT_FROM,to:['mike@newgenhealthsolutions.com'],
+    const result=await send(validateDestination(profile.email.endpoint,profile.allowedHosts),JSON.stringify({from:profile.email.from,reply_to:profile.email.replyTo,to:profile.ix.reportRecipients,
       subject:`UHC IX uploads — ${date}`,text:`Enrollments: ${row.enrollments}\nExpected uploads: ${row.expected_uploads}\nUploaded: ${row.uploaded}\nFailed: ${row.failed}\nMissing codes: ${row.missing_codes}`}),
       {Authorization:`Bearer ${env.RESEND_API_KEY}`,'Idempotency-Key':summary.id});
     if(result.status>=200 && result.status<300)checked(await db.from('compliance_daily_summaries').update({sent_at:new Date(now()).toISOString()}).eq('id',summary.id));
@@ -111,6 +115,7 @@ export async function dailySummaries(db,{env,send,now}) {
 
 export function createIxIntegration(db,{env=process.env,send=postJson,now=()=>Date.now(),fetchImpl=fetch,ixClient=new SunfireIxClient(env,{fetchImpl,now})}={}) {
   deploymentFeatures(env);
+  deploymentProfile(env);
   let nextSweep=0,nextSummary=0;
   return {
     providers:{ix:{available:ixClient.available,claim:async()=>featureEnabled('IX_UPLOAD_ENABLED',env)?checked(await db.rpc('claim_ix_upload',{p_environment:ixClient.environment})):[],deliver:async(job,call)=>{

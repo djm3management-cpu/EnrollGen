@@ -1,3 +1,4 @@
+import { agencyName } from '../../lib/deploymentPublic.js';
 export const STATE_ACA_GATES = [
   {
     id: "state-aca-0",
@@ -5,7 +6,7 @@ export const STATE_ACA_GATES = [
     key: "gate0Ok",
     title: "Opening & Coverage Screening",
     script: [
-      "Hi, this is [Agent Name], licensed agent with New Gen Health Solutions.",
+      `Hi, this is [Agent Name], licensed agent with ${agencyName}.`,
       "The main purpose of this call is health insurance. There are a few qualifying questions I need to ask first. Let's get started.",
       "Do you currently have coverage through your employer, Medicaid, or anything like that?",
     ],

@@ -1,6 +1,6 @@
+import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, billingDisabledEntitlement } from '../../telephony/src/lib/deploymentFeatures.js';
 const JSON_HEADERS = { "Content-Type": "application/json" };
-const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
 
 function json(status, payload) {
   return new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
@@ -26,14 +26,7 @@ export async function resolveTenantIdForOrg(supabase, orgId) {
     if (data?.id) return data.id;
   }
 
-  const { data, error } = await supabase
-    .from("tenants")
-    .select("id")
-    .eq("id", NGHS_TENANT_ID)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data?.id || NGHS_TENANT_ID;
+  return null;
 }
 
 export async function requireActiveSubscription(supabase, tenantId) {

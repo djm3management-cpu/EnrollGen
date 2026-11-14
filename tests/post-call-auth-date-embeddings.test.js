@@ -30,7 +30,7 @@ test('US dates normalize before input binding, invalid dates are rejected, ident
 });
 test('Unicode chunks stay below token-safe byte bounds and long inputs combine into one valid vector',async()=>{
  const text='🦄 cancer '.repeat(2000);const chunks=embeddingChunks(text);assert.equal(chunks.join(''),text);assert.ok(chunks.every(chunk=>Buffer.byteLength(chunk)<=6000));
- const handler=createEmbeddingsHandler({authenticate:async()=>({userId:'test'}),env:{OPENAI_API_KEY:'test'},send:async(_url,init)=>{
+ const handler=createEmbeddingsHandler({authenticate:async()=>({userId:'test'}),env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,OPENAI_API_KEY:'test'},send:async(_url,init)=>{
  const inputs=JSON.parse(init.body).input;assert.ok(inputs.every(input=>Buffer.byteLength(input)<=6000));
  return new Response(JSON.stringify({data:inputs.map((_,index)=>({index,embedding:Array(1536).fill(1)}))}));
  }});

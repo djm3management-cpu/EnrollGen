@@ -1,6 +1,7 @@
+import {deploymentPublic} from './deploymentPublic.js';
 import {fetchWithClerk} from './clerkFetch.js';
 import { normalizePhoneE164 } from './phone.js';
-const BASE = (import.meta.env.VITE_TELEPHONY_BASE_URL || '').replace(/\/$/, '');
+const BASE = (deploymentPublic.telephonyOrigin).replace(/\/$/, '');
 export async function outboundRequest(getToken, path, body) {
   const response = await fetchWithClerk(getToken,`${BASE}/api/voice/${path}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },

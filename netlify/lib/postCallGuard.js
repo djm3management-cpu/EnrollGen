@@ -1,3 +1,4 @@
+import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
 import process from 'node:process';
 import {randomBytes,createHash} from 'node:crypto';
 import {EvidenceError,checked} from '../functions/_evidenceAccess.js';
@@ -16,9 +17,9 @@ export async function verifyPostCallEnded(db,payload,{send=fetch,env=process.env
   checked(await db.from('post_call_status_tickets').insert({token_hash:createHash('sha256').update(token).digest('hex'),
     tenant_id:session?.tenant_id || record.tenant_id,call_sid:sid,expires_at:new Date(Date.now()+30000).toISOString()}));
   let url;
-  try {url=new URL('/internal/post-call-status',env.TELEPHONY_BASE_URL || env.VITE_TELEPHONY_BASE_URL);}
+  try {url=new URL('/internal/post-call-status',deploymentProfile(env).telephonyOrigin);}
   catch {throw new EvidenceError(503,'Call status verification is unavailable.');}
-  if(url.protocol!=='https:')throw new EvidenceError(503,'Call status verification is unavailable.');
+  if(!validateDestination(url,deploymentProfile(env).allowedHosts))throw new EvidenceError(503,'Call status verification is unavailable.');
   const response=await send(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token}),signal:AbortSignal.timeout(10000),redirect:'error'});
   if(!response.ok)throw new EvidenceError(503,'Call status verification is unavailable.');
   const call=await response.json();

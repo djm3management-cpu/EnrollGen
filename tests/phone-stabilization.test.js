@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../src/lib/deploymentPublic.js';
 import { egressMetrics } from '../telephony/src/egressMetrics.js';
 import {createSessionLock,IDLE_LOCK_MS} from '../src/lib/sessionLock.js';
 import {createCallContinuity} from '../src/lib/callContinuity.js';
@@ -44,7 +45,7 @@ function phoneFixture(){
  let source=readFileSync(new URL('../src/context/InboundCallContext.jsx',import.meta.url),'utf8');
  source=source.slice(source.indexOf('function paramsFromCall'),source.indexOf('function AuthedInboundCallProvider'));
  source=source.replace('import("@twilio/voice-sdk")','Promise.resolve({Device:globalThis.Device})').replace('return <InboundCallContext.Provider value={value}>{children}</InboundCallContext.Provider>;','return value;');
- const context=vm.createContext({...harness.hooks,installAgentAudio,requestAgentMicrophone:()=>{},readAudioPreferences:()=>({enabled:true}),updateLiveTranscript,computeRmsLevel,computeWaveformPeaks,callContinuity:createCallContinuity(),Device,console:{info:(...args)=>waveform.logs.push(args.join(' ')),warn:console.warn,error:console.error},Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
+ const context=vm.createContext({deploymentPublic,...harness.hooks,installAgentAudio,requestAgentMicrophone:()=>{},readAudioPreferences:()=>({enabled:true}),updateLiveTranscript,computeRmsLevel,computeWaveformPeaks,callContinuity:createCallContinuity(),Device,console:{info:(...args)=>waveform.logs.push(args.join(' ')),warn:console.warn,error:console.error},Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
   useAppAuth:()=>({getToken:token}),useTenantConfig:()=>({agents:[],supabaseClient:null}),useAvailability:()=>availability,
   // Conference-enabled lifecycle paths have their own SQL/WebSocket suite.
   useConferenceCall:()=>({enabled:false,agents:[],conference:null,busy:false,error:'',run:async()=>{}}),
@@ -265,7 +266,7 @@ function boxFixture({seconds=60,deferLookup=false}={}){
  const onVisibleChange=value=>visibility.push(value);
  let source=stripImports(readFileSync(new URL('../src/components/phone/CallDispositionBox.jsx',import.meta.url),'utf8')).replace('export default function','function');
  source=transformSync(source,{loader:'jsx',jsxFactory:'h',jsxFragment:'fragment',format:'cjs'}).code;
- const context=vm.createContext({...harness.hooks,h:(type,props,...children)=>({type,props:props||{},children}),X:'x',ChevronDown:'chevron',fragment:'fragment',
+ const context=vm.createContext({deploymentPublic,...harness.hooks,h:(type,props,...children)=>({type,props:props||{},children}),X:'x',ChevronDown:'chevron',fragment:'fragment',
   CALL_OUTCOME_OPTIONS:[],ANCILLARY_PRODUCT_OPTIONS:[],phoneHasInProgressCall,mayShowCallDisposition,
   useAppAuth:()=>({getToken:token}),setActivePostCallMetadata:()=>{},
   fetchWithClerk:async(_token,_url,options)=>{requests.push(options?.method||'GET');if(options?.method==='POST'){savedCallSids.push(JSON.parse(options.body).call_sid);return{ok:true,json:async()=>({saved:true,session_id:'session',call_outcome:JSON.parse(options.body).call_outcome})};}
@@ -336,7 +337,7 @@ test('phone dropdown collapses pending disposition to a pill through ringing and
  const harness=hookHarness();let phone={enabled:true};
  let source=stripImports(readFileSync(new URL('../src/components/phone/PhoneDropdown.jsx',import.meta.url),'utf8')).replace('export default function','function');
  source=transformSync(source,{loader:'jsx',jsxFactory:'h',format:'cjs'}).code;
- const context=vm.createContext({...harness.hooks,h:(type,props,...children)=>({type,props:props||{},children}),
+ const context=vm.createContext({deploymentPublic,...harness.hooks,h:(type,props,...children)=>({type,props:props||{},children}),
   useInboundCall:()=>phone,Phone:'phone',IncomingCallToast:'toast',ActiveCallBar:'bar',ActiveCallExpanded:'expanded',DialerPanel:'dialer',CallDispositionBox:'disposition',OPEN_DIALER_EVENT:'open',
   window:{addEventListener(){},removeEventListener(){}},document:{addEventListener(){},removeEventListener(){}},
  });

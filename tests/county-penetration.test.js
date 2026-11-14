@@ -69,7 +69,7 @@ test('CLI dry-run and sql-out are credential-free and reject incompatible option
   try {
     const input = join(dir, 'State_County_Penetration_MA_2026_09.csv'), output = join(dir, 'load.sql');
     writeFileSync(input, csv);
-    const run = (...args) => spawnSync(process.execPath, ['scripts/parse_cms_penetration.js', '--file', input, '--month', '2026-09', ...args], { encoding: 'utf8', env: { ...process.env, SUPABASE_DB_URL: '' } });
+    const run = (...args) => spawnSync(process.execPath, ['scripts/parse_cms_penetration.js', '--file', input, '--month', '2026-09', ...args], { encoding: 'utf8', env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, ...process.env, SUPABASE_DB_URL: '' } });
     assert.equal(run('--dry-run').status, 0);
     assert.equal(existsSync(output), false);
     const exported = run('--sql-out', output); assert.equal(exported.status, 0, exported.stderr);

@@ -1,3 +1,4 @@
+import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
 import {selectConverselyWeek,processManualConverselyRun} from './converselyRuns.js';
 import {intakeCallFields} from '../src/lib/enrollmentIntake.js';
@@ -18,7 +19,7 @@ const converselyDate = (value,field) => {
   if(!Number.isFinite(date.getTime()))throw Error(`conversely_invalid_${field}`);
   return date.toISOString().slice(0,10);
 };
-export function converselyPayload(call, recordingPath, agent = {}) {
+export function converselyPayload(call, recordingPath, agent = {},profile=deploymentProfile()) {
   const m = call.metadata || {};
   const callTime=new Date(requiredConversely(call.call_start,'call_datetime'));
   if(!Number.isFinite(callTime.getTime()))throw Error('conversely_invalid_call_datetime');
@@ -29,7 +30,7 @@ export function converselyPayload(call, recordingPath, agent = {}) {
   if(!/^\d{4}$/.test(contractYear))throw Error('conversely_invalid_contract_year');
   const record={
     CallID:requiredConversely(call.id,'call_id'), CallType:'Medicare',
-    RecordingPath:requiredConversely(recordingPath,'recording_path'), Target:'New Gen Health Solutions',
+    RecordingPath:requiredConversely(recordingPath,'recording_path'), Target:profile.conversely.target,
     ApplicantFirstName:requiredConversely(call.customer_first_name,'applicant_first_name'),
     ApplicantLastName:requiredConversely(call.customer_last_name,'applicant_last_name'),
     ApplicantPhoneNumber:requiredConversely(call.customer_phone,'applicant_phone_number'),
@@ -68,7 +69,7 @@ export async function playableMp3(candidate,{env=process.env,fetchImpl=fetch}={}
 }
 export async function scheduleConverselyWeek(db,{env=process.env,log=console.log,now=()=>Date.now(),isPlayable=playableMp3,fetchImpl=fetch}={}) {
   if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env))return;
-  const week=previousConverselyWeek(now());
+  const week=previousConverselyWeek(now(),deploymentProfile(env).timezone);
   const existing=checked(await db.from('conversely_weekly_runs').select('week_start').eq('week_start',week).not('scheduled_at','is',null).maybeSingle());
   if(existing)return;
   const {config,decisions}=await selectConverselyWeek(db,week,{env,now,isPlayable,fetchImpl});
@@ -81,6 +82,7 @@ export async function scheduleConverselyWeek(db,{env=process.env,log=console.log
 export function createComplianceWorker(db,{env=process.env,send=postJson,log=console.log,now=()=>Date.now(),fetchImpl=fetch,
  isPlayable=playableMp3,providers={},scheduleExtras=async()=>{}}={}) {
   deploymentFeatures(env);
+  deploymentProfile(env);
   const rpc=async(name,params={})=>checked(await db.rpc(name,params));
   let nextWeeklyCheck=0,nextHeartbeat=0,nextFinalize=0;
   return async ({schedule=true,deliveries=true}={})=>{
@@ -119,7 +121,7 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
           const intake=checked(await db.from('enrollment_intakes').select('id,data,submitted_at,completed_at,is_test_enrollment').eq('id',job.enrollment_key).eq('call_id',job.call_id).eq('tenant_id',job.tenant_id).not('completed_at','is',null).single());
           if(!intake)throw Error('intake_incomplete');
           if(provider==='conversely' && intake.is_test_enrollment)throw Error('test_enrollment_excluded');
-          if(provider==='ix' && intake.is_test_enrollment!==((env.IX_ENV||'test')==='test'))throw Error('ix_enrollment_environment_mismatch');
+          if(provider==='ix' && intake.is_test_enrollment!==(deploymentProfile(env).ix.environment==='test'))throw Error('ix_enrollment_environment_mismatch');
           call=intakeCallFields(call,intake);
           const recording=checked(await db.from('recording_ingestion').select('*').eq('tenant_id',job.tenant_id)
             .eq('call_record_id',job.call_id).eq('recording_sid',job.twilio_recording_sid).eq('provider_status','completed').single());
@@ -134,7 +136,7 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
             if(reason)throw Error(reason);
             if(!env.CONVERSELY_API_KEY)throw Error('conversely_key_missing');
             const grant=await recordingComplianceGrant(db,{admin:true,tenant:{id:job.tenant_id},auth:{userId:'integrations-worker'}},recording,{env,format:'mp3'});
-            const result=await send('https://sms.converselyai.com/api/metadata/import',JSON.stringify({metadata:[converselyPayload(call,grant.url,{pcpName:intake.data?.pcpName})]}),
+            const result=await send(validateDestination(deploymentProfile(env).conversely.endpoint,deploymentProfile(env).allowedHosts),JSON.stringify({metadata:[converselyPayload(call,grant.url,{pcpName:intake.data?.pcpName},deploymentProfile(env))]}),
               {'Api-Key':env.CONVERSELY_API_KEY,'Idempotency-Key':job.id});
             log(JSON.stringify({event:'conversely_response',id:job.id,status:result.status,
               body:typeof result.body==='string'?result.body.replaceAll(env.CONVERSELY_API_KEY,'[REDACTED]'):null}));

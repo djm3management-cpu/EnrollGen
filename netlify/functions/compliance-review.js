@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {loadRecordingPlan,recoveryEstimate} from '../lib/transcriptRecovery.js';
 import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
@@ -74,7 +75,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     const existing=checked(await db.from('manual_transcript_gap_fills').select('id').eq('request_id',input.request_id).eq('tenant_id',call.tenant_id).eq('call_id',call.id).maybeSingle());
     if(existing)return evidenceJson(200,{job_id:existing.id,reused:true});
     const job=checked(await db.from('manual_transcript_gap_fills').insert({request_id:input.request_id,call_id:call.id,tenant_id:call.tenant_id,recording_id:recording.id,requested_by:auth.userId,source_transcript:call.transcript_diarized,ranges:gapEstimate.ranges,channel_speakers:mapping,timeline_offset_ms:offset,estimated_cost_usd:estimated}).select('*').single());
-    const origin=new URL(env.COMPLIANCE_APP_ORIGIN||'https://enrollgen.com').origin;
+    const origin=new URL(deploymentProfile(env).appOrigin).origin;
     try{const response=await transport(`${origin}/.netlify/functions/transcript-gaps-background`,{method:'POST',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':env.SCORE_CALL_JOB_SECRET},body:JSON.stringify({job_id:job.id}),signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Gap-fill delivery failed');}
     catch(error){checked(await db.from('manual_transcript_gap_fills').update({status:'failed',error:'delivery_failed'}).eq('id',job.id).eq('tenant_id',call.tenant_id).eq('call_id',call.id));throw error;}
     return evidenceJson(202,{job_id:job.id});
@@ -88,7 +89,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     if(input.confirm!==true||!/^[0-9a-f-]{36}$/i.test(input.request_id||''))throw new EvidenceError(400,'Confirmed request ID required');
     const pass=checked(await db.rpc('claim_compliance_pass',{p_call_id:call.id,p_tenant_id:call.tenant_id,p_request_id:input.request_id,p_mode:'manual',p_requested_by:auth.userId}));
     if(pass.status!=='claimed')throw new EvidenceError(409,pass.status);
-    const origin=new URL(env.COMPLIANCE_APP_ORIGIN||'https://enrollgen.com').origin;
+    const origin=new URL(deploymentProfile(env).appOrigin).origin;
     if(!origin.startsWith('https://'))throw new EvidenceError(503,'Invalid compliance origin');
     try{
      const response=await transport(`${origin}/.netlify/functions/compliance-review-background`,{method:'POST',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':env.SCORE_CALL_JOB_SECRET},body:JSON.stringify({pass_id:pass.id}),signal:AbortSignal.timeout(10000)});

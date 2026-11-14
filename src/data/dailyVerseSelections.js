@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 /**
  * Curated pool used for the date-anchored "verse of the day".
  * A deterministic hash of the calendar date selects one entry, so
@@ -101,7 +102,7 @@ export function getDailyReference(now = new Date()) {
 
 export function getDailyDateLabel(now = new Date()) {
   return now
-    .toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    .toLocaleDateString("en-US", {timeZone:deploymentPublic.timezone, month: "short", day: "numeric" })
     .toUpperCase();
 }
 

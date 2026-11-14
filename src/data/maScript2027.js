@@ -1,3 +1,4 @@
+import { agencyName } from '../lib/deploymentPublic.js';
 // Source of truth: docs/MULTIPLAN_2113SMS_SalesScript2027_M draft 09.28.2026.docx.
 // Spoken wording follows the supplied draft; notes retain only operational requirements.
 import { ENROLLMENT_CLOSING } from "./enrollmentClosing.js";
@@ -139,7 +140,7 @@ const enrollmentPlatform = [note("Move to the CMS / carrier-approved telephonic 
 const definitions = [
   ["recording", "Introduction & Recording", "recordingOk", [
     direction([
-      say("Thank you for calling New Gen Health Solutions. My name is [First and Last Name]. I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?"),
+      say(`Thank you for calling ${agencyName}. My name is [First and Last Name]. I am a licensed sales agent on a recorded line. Who do I have the pleasure of speaking with?`),
       cue("Greet customer"),
       say("Are you prepared to review your coverage and potentially enroll into a new 2027 health plan, pending it makes sense for you to do so today?"),
       say("To make sure we have the accurate information, May I have your Phone Number, in case we get disconnected?"),
@@ -149,7 +150,7 @@ const definitions = [
       cue("Confirm a valid PTC or BRC was completed by the beneficiary before calling"),
       say("Hi, may I please speak with [First Name]?"),
       cue("If the beneficiary is unavailable, arrange a callback"),
-      say("Hello, this is [Agent First and Last Name], and I am a Licensed Sales Agent with New Gen Health Solutions on a recorded line. I am calling today in response to your request for Medicare plan information [in your voice mail/through the mail or form on our website]."),
+      say(`Hello, this is [Agent First and Last Name], and I am a Licensed Sales Agent with ${agencyName} on a recorded line. I am calling today in response to your request for Medicare plan information [in your voice mail/through the mail or form on our website].`),
       cue("Greet customer"),
       recording,
       location,
@@ -157,8 +158,8 @@ const definitions = [
   ]],
   ["tpmo", "TPMO & Federal Contracting Statement", "tpmoOk", [
     tpmo("tpmo"),
-    say("Just so you know who you are speaking with, and how we can help you find a Medicare plan with the benefits you are looking for, let me tell you a little bit about New Gen Health Solutions."),
-    say("New Gen Health Solutions is not a government agency or an insurance company, and I am licensed to sell Medicare plans in the state of [CLIENT STATE]. My goal is to help educate you on your options, we will review what your goals are for coverage and what benefits are most important to you. I may ask a few questions to determine your eligibility you do not have to provide any health information unless it’s used to determine enrollment eligibility. Reviewing plan options with me will not impact your current or future Medicare status nor will you be automatically enrolled into a plan. If we find a plan that you feel better fits your needs and you are ready and eligible to enroll in that plan, I can help you get enrolled into it today, so you can start using your benefits after the application is approved and the plan is effective."),
+    say(`Just so you know who you are speaking with, and how we can help you find a Medicare plan with the benefits you are looking for, let me tell you a little bit about ${agencyName}.`),
+    say(`${agencyName} is not a government agency or an insurance company, and I am licensed to sell Medicare plans in the state of [CLIENT STATE]. My goal is to help educate you on your options, we will review what your goals are for coverage and what benefits are most important to you. I may ask a few questions to determine your eligibility you do not have to provide any health information unless it’s used to determine enrollment eligibility. Reviewing plan options with me will not impact your current or future Medicare status nor will you be automatically enrolled into a plan. If we find a plan that you feel better fits your needs and you are ready and eligible to enroll in that plan, I can help you get enrolled into it today, so you can start using your benefits after the application is approved and the plan is effective.`),
     say("Plans are insured or covered by a Medicare Advantage (HMO, PPO, PFFS) organization with a Medicare contract and/or a Medicare-approved Part D sponsor. Enrollment in the plan depends on the plan’s contract renewal with Medicare."),
   ]],
   ["soa", "Healthcare Decisions & Scope of Appointment", "soaOk", [
@@ -168,7 +169,7 @@ const definitions = [
       option("other", "Someone else", representative),
     ]),
     note("Obtain scope of appointment before plan or benefit discussion on both inbound and outbound calls. Same-call recorded verbal agreement is allowed. Mention all product types available in the area; discuss only the options agreed to."),
-    say("I work for New Gen Health Solutions, and in your area, we have a wide variety of plans such as [Medicare Advantage plans, Medicare Advantage Prescription Drug plans, Stand-alone Prescription Drug plans, Medicare Supplements Insurance Plans, Optional Supplemental Benefits (OSBs), Stand-Alone Vision, Stand-Alone Dental]. Would you like to discuss all of these options or are you only interested in certain ones?"),
+    say(`I work for ${agencyName}, and in your area, we have a wide variety of plans such as [Medicare Advantage plans, Medicare Advantage Prescription Drug plans, Stand-alone Prescription Drug plans, Medicare Supplements Insurance Plans, Optional Supplemental Benefits (OSBs), Stand-Alone Vision, Stand-Alone Dental]. Would you like to discuss all of these options or are you only interested in certain ones?`),
     choice("scope", "Options the beneficiary agrees to discuss", [option("all", "All available options"), option("selected", "Selected options", [note("Record the agreed product types in the call notes.")]), option("declined", "Declined", [close()])]),
     say("I can give you a brief overview of each of these plans, then you can decide which plan might be best for you based on your needs. Would that be ok?"),
     yesNo("overview", "Overview accepted?", [], [close()]),
@@ -193,7 +194,7 @@ const definitions = [
     ]),
     say("Can you please provide your permanent home address?"), note("If the caller declines, continue without it."),
     say("Would you like to provide your phone number so we can contact you in the future? This is optional."),
-    say("Does New Gen Health Solutions have permission to have a licensed sales agent contact you in the future about plan information and your Medicare enrollment options? Your consent is voluntary and allows us to contact you via text messaging or automatic dialing. You may contact us to change your preferences at any time. Changing your preferences will not affect your eligibility for enrollment or benefits of plans in your area. Data use charges and rates from your cellular carrier may apply"),
+    say(`Does ${agencyName} have permission to have a licensed sales agent contact you in the future about plan information and your Medicare enrollment options? Your consent is voluntary and allows us to contact you via text messaging or automatic dialing. You may contact us to change your preferences at any time. Changing your preferences will not affect your eligibility for enrollment or benefits of plans in your area. Data use charges and rates from your cellular carrier may apply`),
     yesNo("futureContact", "Future contact permission?", [note("Confirm the phone number.")], [note("Document the refusal and follow the agency’s DNC procedure.")]),
     say("Would you like to provide an email address that we can use to contact you? This is the fastest and easiest way for us to send you information, but this is optional, and you can opt-out of the messages at any time. The email would be used to contact you as an alternate line of communication with updates to plan details or marketing information."),
     say("Would you like to tell us if you are you a veteran?"),
@@ -264,7 +265,7 @@ const definitions = [
       choice("callback", "Inbound callback", [
         option("waiting", "Awaiting callback", [close("Close — awaiting inbound callback", "callback_scheduled")]),
         option("received", "Inbound callback received", [
-          say("Thank you for calling New Gen Health Solutions. My name is [First and Last Name]. I am a licensed sales agent. Who do I have the pleasure of speaking with?"),
+          say(`Thank you for calling ${agencyName}. My name is [First and Last Name]. I am a licensed sales agent. Who do I have the pleasure of speaking with?`),
           recording, consent("callbackRecording"), tpmo("callbackTpmo", true), ...enrollmentPlatform,
         ]),
       ]),

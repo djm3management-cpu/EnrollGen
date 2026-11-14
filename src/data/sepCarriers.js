@@ -2,7 +2,7 @@
   Carrier configuration for the SEP Lookup Tool.
   Includes brand colors and product lines. Carrier names and color badges
   render locally; third-party logo hotlinks are intentionally not used.
-  Internal use only — New Gen Health Solutions.
+  Internal use only — agency reference.
 */
 
 export const CARRIERS = {

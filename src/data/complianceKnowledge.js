@@ -1,3 +1,4 @@
+import { agencyName } from '../lib/deploymentPublic.js';
 /**
  * COMPLIANCE KNOWLEDGE MAP
  * Extracted verbatim from every Section component. This is the
@@ -8,7 +9,7 @@
 export const COMPLIANCE_KNOWLEDGE = {
   "Recording Disclosure": {
     verbatimScript: [
-      "Thank you for calling New Gen Health Solutions",
+      `Thank you for calling ${agencyName}`,
       "My name is [Agent Name]",
       "I am a licensed sales agent on a recorded line",
       "Who do I have the pleasure of speaking with",
@@ -16,7 +17,7 @@ export const COMPLIANCE_KNOWLEDGE = {
       "is it ok if I continue",
     ],
     keyPhrasesToListenFor: [
-      "new gen health solutions",
+      agencyName.toLowerCase(),
       "licensed",
       "sales agent",
       "recorded line",

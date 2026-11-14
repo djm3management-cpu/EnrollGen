@@ -13,7 +13,7 @@ import { classifyCall } from '../src/compliance/engine/IntentClassifier.js';
 import { engineBuilders, promptOptions } from './helpers/copilotPrompts.js';
 
 const code = 'CONDUCT_001_NO_CROSS_SELLING';
-const closing = "Thank you for calling New Gen Health Solutions. If you're ever interested, we'd be happy to set up a separate time to review other coverage options with you. You can reach us at (609) 806-5996, Monday through Friday, 10 AM to 6 PM. Have a great day!";
+const closing = "Thank you for calling Pilot Benefit Agency. If you're ever interested, we'd be happy to set up a separate time to review other coverage options with you. You can reach us at (212) 555-0100, Monday through Friday, 10 AM to 6 PM (America/New_York). Have a great day!";
 const fragment = "If you're ever interested, we'd be happy to set up a separate time to review other coverage options with you.";
 const pitch = 'Before we review Medicare Advantage, our life insurance pays your family $50,000 for just $25 a month.';
 const detection = (text = closing, patch = {}) => ({ intent_code: code,
@@ -59,7 +59,7 @@ test('approved closing cannot cause cross-sell or scope deductions, including sp
     assert.deepEqual(result.risk_flags, []);
     assert.equal(result.sequence_violations, 0);
   }
-  const redacted = closing.replace('(609) 806-5996', '[PHONE_REDACTED]').replaceAll("'", '’');
+  const redacted = closing.replace('(212) 555-0100', '[PHONE_REDACTED]').replaceAll("'", '’');
   assert.equal(score([detection(`[agent]: “${redacted}”`)]).total_points_possible, 0);
   // Unrelated requirements retain their own evidence and scoring.
   const other = detection(closing, { intent_code: 'ENROLL_012_NO_INCENTIVES_OFFERED' });
@@ -90,8 +90,8 @@ async function classifyMock(evidence) {
       { speaker: 'agent', text: closing, start_ms: 170000, end_ms: 180000 }],
     callLLM: async (system, transcript) => {
       assert.ok(system.includes('Offering a separate future review'));
-      assert.ok(transcript.includes(closing.replace('(609) 806-5996', '([PHONE_REDACTED]')));
-      assert.ok(!transcript.includes('806-5996'));
+      assert.ok(transcript.includes(closing.replace('(212) 555-0100', '([PHONE_REDACTED]')));
+      assert.ok(!transcript.includes('555-0100'));
       return { detections: evidence.map(evidence_text => ({ intent_code: code,
         detected: true, confidence: evidence_text === pitch ? 0.95 : 0.99,
         speaker: 'agent', evidence_text, anti_pattern: true, hard_cms_violation: true,

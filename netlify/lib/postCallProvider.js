@@ -1,3 +1,4 @@
+import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
 import {checked} from '../functions/_evidenceAccess.js';
 
@@ -36,12 +37,12 @@ async function sendProviderAlert(db, sessionId, stage, code, subject, options={}
   const claimed=options.dailyClaim || checked(await db.rpc('claim_provider_quota_alert'));
   if (!claimed) return;
   const env=globalThis.process?.env || {};
-  const recipient=env.POST_CALL_ALERT_EMAIL || 'mike@newgenhealthsolutions.com';
+  const profile=deploymentProfile();
   if (!env.RESEND_API_KEY) throw new Error('alert_email_not_configured');
-  const response=await fetch('https://api.resend.com/emails',{
-    method:'POST', signal:AbortSignal.timeout(15000),
+  const response=await fetch(validateDestination(profile.email.endpoint,profile.allowedHosts),{
+    method:'POST', redirect:'error', signal:AbortSignal.timeout(15000),
     headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`post-call-quota-${options.dailyClaim || new Date().toISOString().slice(0,13)}`},
-    body:JSON.stringify({from:'reports@newgenhealthsolutions.com',to:[recipient],
+    body:JSON.stringify({from:profile.email.from,reply_to:profile.email.replyTo,to:profile.email.recipients,
       subject,
       text:`EnrollGen post-call processing stopped with ${code} during ${stage}. Session: ${sessionId}. The failure is visible in the app and the transcript remains retained.`}),
   });

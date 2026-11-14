@@ -26,18 +26,18 @@ test('inbound agent dot follows server recovery and failure, independently of br
   assert.equal(agentTrackActive(inbound, false), false);
 });
 
-test('manual worker probe sends one synthetic CSV only to Mike, with stable idempotency and no scheduler', async () => {
+test('manual worker probe sends one synthetic CSV only to the configured recipient, with stable idempotency and no scheduler', async () => {
   const requests = [];
-  const options = { env: { PARAGON_ENABLED:'true', OPERATIONAL_EMAIL_ENABLED:'true', RESEND_API_KEY: 'fixture', INTEGRATIONS_REPORT_FROM: 'reports@example.com' },
+  const options = { env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, PARAGON_ENABLED:'true', OPERATIONAL_EMAIL_ENABLED:'true', RESEND_API_KEY: 'fixture', INTEGRATIONS_REPORT_FROM: 'reports@example.com' },
     send: async (url, body, headers) => { requests.push({ url, body: JSON.parse(body), headers }); return { status: 200 }; } };
   assert.equal((await runManualReport(['--test-report', '--test-id', 'oct03'], options)).result, 'sent');
   assert.equal(requests.length, 1);
   const request = requests[0];
   assert.equal(request.url, 'https://api.resend.com/emails');
-  assert.deepEqual(request.body.to, ['mike@newgenhealthsolutions.com']);
+  assert.deepEqual(request.body.to, ['recipient@example.test']);
   assert.equal(request.body.cc, undefined);
   assert.equal(request.body.bcc, undefined);
-  assert.equal(request.headers['Idempotency-Key'], 'mike-report-test-oct03');
+  assert.equal(request.headers['Idempotency-Key'], 'sample-report-test-oct03');
   const csv = Buffer.from(request.body.attachments[0].content, 'base64').toString();
   assert.match(csv, /sample-report-only/);
   assert.match(csv, /test_call/);
@@ -48,7 +48,7 @@ test('manual worker probe sends one synthetic CSV only to Mike, with stable idem
 
 test('CallStore endCall returns timer metadata and resets without requesting a token or persisting', async () => {
   const source = read('../src/stores/callStore.js').replace(/^import .*;\n/gm, '').replace('export function useCallStore', 'function useCallStore').replace('import.meta.env.DEV', 'false');
-  const context = vm.createContext({ Date, useSyncExternalStore() {}, process: { env: { PARAGON_ENABLED:'true', OPERATIONAL_EMAIL_ENABLED:'true', NODE_ENV: 'test' } } });
+  const context = vm.createContext({ Date, useSyncExternalStore() {}, process: { env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, PARAGON_ENABLED:'true', OPERATIONAL_EMAIL_ENABLED:'true', NODE_ENV: 'test' } } });
   vm.runInContext(source + '\nglobalThis.store = useCallStore;', context);
   context.store.getState().startCall('agent', 'call');
   const result = await context.store.getState().endCall();

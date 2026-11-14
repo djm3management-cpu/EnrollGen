@@ -1,3 +1,4 @@
+import {deploymentPublic} from './deploymentPublic.js';
 import { debugLog } from "./debugLog.js";
 import { getEvidenceSupabase } from "./evidenceSupabase";
 import { getQueryEmbedding } from "./embeddings";
@@ -8,7 +9,7 @@ function formatCallDate(value) {
   if (!value) return "Unknown date";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown date";
-  return date.toLocaleDateString();
+  return date.toLocaleDateString(undefined,{timeZone:deploymentPublic.timezone});
 }
 
 function normalizeSourceSystem(value) {

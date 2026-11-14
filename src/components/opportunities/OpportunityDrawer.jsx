@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import CrmPanelBoundary from '../CrmPanelBoundary';
 import { useCallback, useEffect, useState } from 'react';
 import { OpportunityEditor } from './OpportunityEditor';
@@ -61,13 +62,13 @@ export default function OpportunityDrawer({ row, data, onClose, onOpenContact, i
         {history.map((item) => <li key={item.id} style={{ '--stage-color': historyStage(item, 'to', data.stages).color }}><div className="opps-history-stages">
           {item.from_stage_name ? <StageBadge stage={historyStage(item, 'from', data.stages)} /> : <span className="contacts-muted">Created</span>}
           <span aria-hidden="true">→</span><StageBadge stage={historyStage(item, 'to', data.stages)} /></div>
-          <span className="contacts-muted">{new Date(item.changed_at).toLocaleString()} · {data.agents.find((agent) => agent.id === item.changed_by)?.name || 'Agent'}</span></li>)}
+          <span className="contacts-muted">{new Date(item.changed_at).toLocaleString(undefined,{timeZone:deploymentPublic.timezone})} · {data.agents.find((agent) => agent.id === item.changed_by)?.name || 'Agent'}</span></li>)}
       </ol>}
     </section>
     {deleting && <DeleteOpportunityDialog row={row} data={data} onClose={() => setDeleting(false)} onDeleted={onClose} />}
     <section className="contacts-section"><h3 className="contacts-section-head">LINKED CALLS</h3>
       {!loading && !calls.length && <p className="contacts-muted">No calls for this contact.</p>}
-      {calls.map((call) => <div className="opps-call" key={call.id}><span>{call.call_start ? new Date(call.call_start).toLocaleString() : 'Call'} · {call.call_outcome || call.product_type || 'Unknown outcome'}{call.id === row.call_id ? ' · Linked' : ''}</span>
+      {calls.map((call) => <div className="opps-call" key={call.id}><span>{call.call_start ? new Date(call.call_start).toLocaleString(undefined,{timeZone:deploymentPublic.timezone}) : 'Call'} · {call.call_outcome || call.product_type || 'Unknown outcome'}{call.id === row.call_id ? ' · Linked' : ''}</span>
         <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={callLoading} onClick={() => openCall(call)}>{callDetail?.id === call.id ? 'HIDE CALL' : 'VIEW CALL'}</button></div>)}
       {callLoading && <p className="contacts-muted">Loading call…</p>}
       {callDetail && <CrmPanelBoundary label="Opportunity call details" resetKey={callDetail.id}><CallDetailPanel detail={callDetail} loading={callLoading} /></CrmPanelBoundary>}

@@ -1,3 +1,5 @@
+import {AGENCY_CLOSING} from '../../data/agencyClosing.js';
+import { agencyName } from '../../lib/deploymentPublic.js';
 // U65Data.js - U65 Off-Exchange script flow data
 
 // The supplied plan sources do not establish subsidy thresholds or age-based ACA quotes.
@@ -93,12 +95,12 @@ const U65_SCREENS = [
         blocks: [
           SPOKEN('"Hey, is this [Customer]?"'),
           SPOKEN(
-            '"Hi, [Customer] — [Agent] from New Gen Health Solutions. You were looking at health coverage online a few days back, [select below]:"'
+            `"Hi, [Customer] — [Agent] from ${agencyName}. You were looking at health coverage online a few days back, [select below]:"`
           ),
           { type: "opener-selector" },
           CALLOUT("Voicemail", [
             SPOKEN(
-              '"Hi, this is [Agent] with New Gen Health Solutions, calling about the health coverage request you submitted. Give me a call back at [number]."'
+              `"Hi, this is [Agent] with ${agencyName}, calling about the health coverage request you submitted. Give me a call back at [number]."`
             ),
           ]),
           CALLOUT("Not the decision maker", [
@@ -398,7 +400,7 @@ const U65_SCREENS = [
         title: "Recap",
         blocks: [
           SPOKEN(
-            '"Your application is for [product]. Approval, premium, fees and effective date: verify with carrier. I will follow up after carrier confirmation. Thanks for trusting New Gen Health Solutions."'
+            `"Your application is for [product]. Approval, premium, fees and effective date: verify with carrier. I will follow up after carrier confirmation. Thanks for trusting ${agencyName}."\n\n${AGENCY_CLOSING}`
           ),
         ],
       },
@@ -420,7 +422,7 @@ const U65_SMALL_BUSINESS_SCREENS = [
         title: "Connect + Situation",
         blocks: [
           SPOKEN(
-            '"Hey [Owner Name], this is [Agent First Name] with New Gen Health Solutions, a health insurance agency. Quick question for you. Are you guys currently offering any kind of health benefits to your crew, or is that something your employees are handling on their own right now?"'
+            `"Hey [Owner Name], this is [Agent First Name] with ${agencyName}, a health insurance agency. Quick question for you. Are you guys currently offering any kind of health benefits to your crew, or is that something your employees are handling on their own right now?"`
           ),
           {
             type: "branch-set",

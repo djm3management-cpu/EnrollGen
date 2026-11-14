@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { changeMAAnswer, getMAScriptView } from "../lib/maScriptFlow.js";
 import { MA_SCRIPT_SECTIONS } from "../data/maScript2027.js";
 import { normalizeDateInput } from '../lib/dateInput.js';
@@ -574,8 +575,9 @@ export function generateSessionSummary(state) {
   return {
     agentName: state.agentName || "(not entered)",
     callDirection: state.callDirection || "inbound",
-    sessionStart: sessionStartDate.toLocaleString(),
-    sessionEnd: now.toLocaleString(),
+    agencyName:deploymentPublic.agencyName,agencyLine:deploymentPublic.agencyLine,staffedHours:deploymentPublic.staffedHours,timezone:deploymentPublic.timezone,
+    sessionStart: sessionStartDate.toLocaleString(undefined,{timeZone:deploymentPublic.timezone}),
+    sessionEnd: now.toLocaleString(undefined,{timeZone:deploymentPublic.timezone}),
     planName: state.notes.planName || "(not entered)",
     effectiveDate: state.notes.effectiveDate || "(not entered)",
     enrollmentCode: state.notes.enrollmentCode || "(not entered)",

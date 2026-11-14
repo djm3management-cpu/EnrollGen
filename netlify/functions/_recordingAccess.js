@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { randomBytes, createHash } from 'node:crypto';
 import { EvidenceError, checked, resolveEvidenceIdentity, requireOwnedSession, hasTenantAdminRole, resolveCallAccessIdentity } from './_evidenceAccess.js';
 
@@ -145,7 +146,7 @@ export async function recordingMediaGrant(db, identity, row, { download = false,
   if (!row.account_sid || !row.recording_sid || row.provider_status === 'absent' || row.copy_status === 'absent') {
     throw new EvidenceError(404, 'Recording audio is unavailable.');
   }
-  const base = env.TELEPHONY_BASE_URL || env.VITE_TELEPHONY_BASE_URL;
+  const base = deploymentProfile(env).telephonyOrigin;
   let url;
   try { url = new URL(base); } catch { throw new EvidenceError(503, 'Recording download service is not configured.'); }
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {

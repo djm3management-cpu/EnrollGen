@@ -1,3 +1,4 @@
+import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
 import { createHash } from 'node:crypto';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient, resolveEvidenceIdentity, bindPostCallPayload, requireOwnedSession } from './_evidenceAccess.js';
@@ -69,8 +70,8 @@ export function createPostCallQueueHandler({authenticate = request=>requireClerk
         p_request_key:key,p_action:body.action,p_payload:body,
       }));
       if (queued.dispatch) {
-        const response=await send(new URL('/.netlify/functions/post-call-background',request.url),{
-          method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(8000),
+        const response=await send(new URL('/.netlify/functions/post-call-background',deploymentProfile().appOrigin),{
+          method:'POST',redirect:'error',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(8000),
           body:JSON.stringify({session_id:body.session_id,dispatch_token:queued.dispatch_token}),
         });
         if (response.status !== 202) throw new EvidenceError(503,'Post-call dispatch failed. Your queued request is retained.');

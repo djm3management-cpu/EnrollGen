@@ -1,7 +1,7 @@
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 // Legacy URL retained for callback clients; residence confirmation is retired.
 import { requireClerkAuth } from './_clerkAuth.js';
-import { NGHS_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
+import { DEPLOYMENT_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
 
 const json = (body,status=200) => new Response(JSON.stringify(body),{ status,headers:JSON_HEADERS });
 export function createParagonCallbacksHandler({authenticate=requireClerkAuth,getDb=getSupabase}={}) {
@@ -13,11 +13,11 @@ export function createParagonCallbacksHandler({authenticate=requireClerkAuth,get
   if (auth.response) return auth.response;
   const db = getDb();
   if(auth.orgId){
-    const {data:tenant,error}=await db.from('tenants').select('clerk_org_id').eq('id',NGHS_TENANT_ID).maybeSingle();
+    const {data:tenant,error}=await db.from('tenants').select('clerk_org_id').eq('id',DEPLOYMENT_TENANT_ID).maybeSingle();
     if(error||!tenant||tenant.clerk_org_id!==auth.orgId)return json({error:'Agency unavailable'},403);
   }
   const { data:agent,error:agentError } = await db.from('tenant_agents')
-    .select('id,agent_slug').eq('tenant_id',NGHS_TENANT_ID).eq('clerk_user_id',auth.userId)
+    .select('id,agent_slug').eq('tenant_id',DEPLOYMENT_TENANT_ID).eq('clerk_user_id',auth.userId)
     .eq('is_active',true).maybeSingle();
   if (agentError || !agent) return request.method === 'GET' ? json({ tasks:[] }) : json({ error:'Agent unavailable' },403);
   if (request.method === 'GET') {
@@ -27,25 +27,25 @@ export function createParagonCallbacksHandler({authenticate=requireClerkAuth,get
     if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>500)return json({error:'Invalid callback page.'},400);
     const result=await db.from('paragon_callback_tasks')
       .select('id,inbound_call_id,assigned_agent_id,caller_state,created_at,due_at,status',{count:'exact',head:summary})
-      .eq('tenant_id',NGHS_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open')
+      .eq('tenant_id',DEPLOYMENT_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open')
       .order('created_at',{ascending:false}).order('id').range(offset,offset+limit-1);
     if(result.error)return json({error:'Callback tasks unavailable'},503);
     if(summary)return json({count:result.count||0});
     const tasks=result.data||[],ids=tasks.map(task=>task.inbound_call_id);
     const calls=[],records=[];
     for(let offset=0;offset<ids.length;offset+=100){
-      const {data,error}=await db.from('inbound_calls').select('id,from_number,call_record_id').eq('tenant_id',NGHS_TENANT_ID).in('id',ids.slice(offset,offset+100));
+      const {data,error}=await db.from('inbound_calls').select('id,from_number,call_record_id').eq('tenant_id',DEPLOYMENT_TENANT_ID).in('id',ids.slice(offset,offset+100));
       if(error)return json({error:'Callback call details unavailable'},503);calls.push(...(data||[]));
     }
     const recordIds=[...new Set(calls.map(call=>call.call_record_id).filter(Boolean))];
     for(let offset=0;offset<recordIds.length;offset+=100){
-      const {data,error}=await db.from('call_records').select('id,contact_id,customer_first_name,customer_last_name').eq('tenant_id',NGHS_TENANT_ID).in('id',recordIds.slice(offset,offset+100));
+      const {data,error}=await db.from('call_records').select('id,contact_id,customer_first_name,customer_last_name').eq('tenant_id',DEPLOYMENT_TENANT_ID).in('id',recordIds.slice(offset,offset+100));
       if(error)return json({error:'Callback caller details unavailable'},503);records.push(...(data||[]));
     }
     const contactNames=new Map();
     const missingNameIds=[...new Set(records.filter(record=>record.contact_id&&(!record.customer_first_name||!record.customer_last_name)).map(record=>record.contact_id))];
     for(let offset=0;offset<missingNameIds.length;offset+=100){
-      const {data:contacts,error}=await db.from('contacts').select('id,pii_encrypted').eq('tenant_id',NGHS_TENANT_ID).in('id',missingNameIds.slice(offset,offset+100));
+      const {data:contacts,error}=await db.from('contacts').select('id,pii_encrypted').eq('tenant_id',DEPLOYMENT_TENANT_ID).in('id',missingNameIds.slice(offset,offset+100));
       if(error)return json({error:'Callback contact details unavailable'},503);
       for(const contact of contacts||[]){
         const names=await Promise.all(['first_name','last_name'].map(async key=>{
@@ -66,7 +66,7 @@ export function createParagonCallbacksHandler({authenticate=requireClerkAuth,get
     if(action==='reschedule'&&(!due_at||!Number.isFinite(Date.parse(due_at))))return json({error:'A valid due date is required'},400);
     const patch=action==='complete'?{status:'completed',closed_at:new Date().toISOString()}:{due_at:new Date(due_at).toISOString()};
     const {data,error}=await db.from('paragon_callback_tasks').update(patch)
-      .eq('id',task_id).eq('tenant_id',NGHS_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open').select('id').maybeSingle();
+      .eq('id',task_id).eq('tenant_id',DEPLOYMENT_TENANT_ID).eq('assigned_agent_id',agent.agent_slug).eq('status','open').select('id').maybeSingle();
     return error?json({error:'Unable to update callback task'},503):!data?json({error:'Callback task unavailable'},403):json({saved:true});
   }
   return json({ error:'Unsupported callback action' },400);

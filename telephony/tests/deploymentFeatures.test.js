@@ -59,6 +59,6 @@ test('all telephony integration routes exit before auth, claims or outbound prov
 });
 
 test('telephony fails configuration startup on a malformed shared safety switch',()=>{
- const child=spawnSync(process.execPath,['--input-type=module','-e',"import './src/config.js'"],{cwd:new URL('..',import.meta.url),env:{...process.env,CONFERENCE_CALLING_ENABLED:'yes'},encoding:'utf8'});
+ const child=spawnSync(process.execPath,['--input-type=module','-e',"import './src/config.js'"],{cwd:new URL('..',import.meta.url),env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...process.env,CONFERENCE_CALLING_ENABLED:'yes'},encoding:'utf8'});
  assert.notEqual(child.status,0);assert.match(child.stderr,/Invalid deployment feature flag CONFERENCE_CALLING_ENABLED/);
 });

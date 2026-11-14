@@ -1,3 +1,6 @@
+import {profileForIx} from './fixtures/profile-helpers.js';
+import rosterFixture from './fixtures/deployment-roster.json' with {type:'json'};
+const roster=rosterFixture;
 process.env.IX_UPLOAD_ENABLED='true';
 // Explicit opt-in for existing enabled-feature behavior under test.
 process.env.GHL_ENABLED = 'true';
@@ -23,12 +26,14 @@ const db={...base,async rpc(name,args={}){
  return result;
 }};
 const query=async(sql,args=[]) => (await pg.query(sql,args)).rows;
-const valid=(extra={})=>normalizeIntake({...emptyIntake('Mike Shiomos'),firstName:'Jane',lastName:'Doe',dob:'1955-02-28',phone:'2125550101',state:'NY',zip:'10001',mbi:'1ab2cd3ef45',prevCarrier:'Original Medicare',newCarrier:'UnitedHealthcare',planName:'Test Plan',enrollCode:'AEP',premium:'0',contractId:'H1234',planId:'001',sunfireCode:'SF-123',effectiveDate:'2027-01-01',sixtyDayDate:'2027-03-02',...extra});
+const valid=(extra={})=>normalizeIntake({writingAgentId:roster[0].id,...emptyIntake('Pilot Agent 01',roster),firstName:'Jane',lastName:'Doe',dob:'1955-02-28',phone:'2125550101',state:'NY',zip:'10001',mbi:'1ab2cd3ef45',prevCarrier:'Original Medicare',newCarrier:'UnitedHealthcare',planName:'Test Plan',enrollCode:'AEP',premium:'0',contractId:'H1234',planId:'001',sunfireCode:'SF-123',effectiveDate:'2027-01-01',sixtyDayDate:'2027-03-02',...extra});
 const authenticate=async()=>({userId:'user-a',orgId:'org-a'});
 const handler=(options={})=>createEnrollmentIntakesHandler({authenticate,getDb:()=>db,deliver:async()=>{},now:()=> '2026-10-29T16:00:00.000Z',...options});
 const req=(data,extras={})=>new Request(`https://app.test/api/enrollment-intakes?call_id=${call}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data,...extras})});
 let intakeId;
 before(async()=>{
+ await pg.exec(`CREATE TABLE IF NOT EXISTS tenant_agents(id uuid PRIMARY KEY,tenant_id uuid,name text,npn text,clerk_user_id text,agent_slug text,ghl_user_id text,is_active boolean,identity_aliases jsonb,licensed_states jsonb,team text,sunfire_agent_id text,ams_producer_id text);`);
+ for(const row of roster) await pg.query(`INSERT INTO tenant_agents SELECT * FROM jsonb_populate_record(NULL::tenant_agents,$1::jsonb)`,[JSON.stringify(row)]);
  await pg.exec(`CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role BYPASSRLS;
  CREATE SCHEMA extensions;CREATE SCHEMA pii_vault;CREATE SCHEMA vault;
  CREATE EXTENSION pgcrypto WITH SCHEMA extensions;
@@ -52,9 +57,9 @@ before(async()=>{
  CREATE TABLE compliance_scorecards(id uuid,tenant_id uuid,call_id uuid,overall_score numeric,is_thread_composite boolean);
  CREATE TABLE recording_ingestion(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,call_record_id uuid,recording_sid text,account_sid text,callback_call_sid text,recording_channels smallint,copy_status text DEFAULT 'stored',provider_status text,recording_duration_seconds integer,first_seen_at timestamptz DEFAULT now());
  INSERT INTO tenants VALUES('${tenant}','org-a');
- INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user-a',true,'Mike Shiomos',NULL);
+ INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user-a',true,'Pilot Agent 01',NULL);
  INSERT INTO contacts(id,tenant_id,state,zip,current_carrier) VALUES('${contact}','${tenant}','NY','10001','Original Medicare'),('${household}','${tenant}','NY','10001','Aetna');
- INSERT INTO call_records VALUES('${call}','${tenant}','${agent}','${contact}','incomplete','Aetna','MA',NULL,'2026-10-20T15:00:00Z','Mike Shiomos','OLD','complete',NULL,'{}','inbound',now(),120);
+ INSERT INTO call_records VALUES('${call}','${tenant}','${agent}','${contact}','incomplete','Aetna','MA',NULL,'2026-10-20T15:00:00Z','Pilot Agent 01','OLD','complete',NULL,'{}','inbound',now(),120);
  INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,recording_channels,provider_status) VALUES('${tenant}','${call}','REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','CAcccccccccccccccccccccccccccccccc',2,'completed');`);
  const pii=readFileSync(new URL('../supabase/migrations/022_pii_protection_phase1.sql',import.meta.url),'utf8');
  await pg.exec(pii.slice(pii.indexOf('CREATE OR REPLACE FUNCTION pii_vault.get_active_key()'),pii.indexOf('-- Blind-index HMAC key')));
@@ -63,11 +68,11 @@ before(async()=>{
 });
 after(()=>pg.close());
 test('every required field and UHC-only confirmation rule are enforced; defaults are valid',()=>{
- assert.deepEqual(intakeErrors(valid()),{});
- for(const [key] of INTAKE_FIELDS.filter(([, , ,required])=>required))assert.ok(intakeErrors({...valid(),[key]:''})[key],key);
- assert.ok(intakeErrors(valid({sunfireCode:''})).sunfireCode);
- assert.equal(intakeErrors(valid({newCarrier:'Aetna',sunfireCode:''})).sunfireCode,undefined);
- const defaults=emptyIntake('Dylan Maria');assert.equal(defaults.aor,'Dylan Maria');assert.equal(defaults.segmentId,'0');for(const key of ['medicaid','hra','sep'])assert.equal(defaults[key],'No');
+ assert.deepEqual(intakeErrors(valid(),roster),{});
+ for(const [key] of INTAKE_FIELDS.filter(([, , ,required])=>required))assert.ok(intakeErrors({...valid(),[key]:''},roster)[key],key);
+ assert.ok(intakeErrors(valid({sunfireCode:''}),roster).sunfireCode);
+ assert.equal(intakeErrors(valid({newCarrier:'Aetna',sunfireCode:''}),roster).sunfireCode,undefined);
+ const defaults=emptyIntake('Pilot Agent 03',roster);assert.equal(defaults.aor,'Pilot Agent 03');assert.equal(defaults.segmentId,'0');for(const key of ['medicaid','hra','sep'])assert.equal(defaults[key],'No');
  for(const carrier of CARRIERS)assert.ok(carrierKey(carrier));
  assert.equal(carrierKey('Wellcare / Centene'),'WellCare');assert.equal(carrierKey('Elevance / Anthem'),'Anthem');assert.equal(carrierKey('Cigna / HealthSpring'),'HealthSpring');
 });
@@ -76,7 +81,7 @@ test('conditional fields appear only for Yes and hidden values are cleared',()=>
   assert.equal(fieldVisible(field,{[toggle]:'No'}),false);assert.equal(fieldVisible(field,{[toggle]:'Yes'}),true);
   assert.equal(normalizeIntake({...valid(),[field]:'stale',[toggle]:'No'})[field],'');
  }
- assert.equal(intakeErrors(valid({hra:'Yes',hraDate:'not-a-date'})).hraDate,'Date of HRA (valid date required)');
+ assert.equal(intakeErrors(valid({hra:'Yes',hraDate:'not-a-date'}),roster).hraDate,'Date of HRA (valid date required)');
 });
 test('typing formats phone and uppercase MBI, premiums accept zero, and calendar follow-up handles leap years and DST',()=>{
  assert.equal(formatPhone('212'),'\u0028212');assert.equal(formatPhone('2125'),'(212) 5');assert.equal(formatPhone('+1 2125550101'),'(212) 555-0101');
@@ -86,11 +91,11 @@ test('typing formats phone and uppercase MBI, premiums accept zero, and calendar
  assert.deepEqual(planAutofill({plan_name:'Landscape',contract_id:'H9999',plan_id:'012',segment_id:'',monthly_premium:0}),{planName:'Landscape',contractId:'H9999',planId:'012',segmentId:'0',premium:'$0.00'});
 });
 test('GHL has the legacy keys plus plan type and ZIP, date/phone/MBI/premium formats and mapped agent assignment',()=>{
- const payload=ghlPayload(valid({medicaid:'Yes',medicaidNum:'CASE',hra:'Yes',hraDate:'2026-10-29'}),'2026-10-29T16:00:00.000Z');
+ const payload=ghlPayload(valid({medicaid:'Yes',medicaidNum:'CASE',hra:'Yes',hraDate:'2026-10-29'}),'2026-10-29T16:00:00.000Z',roster);
  assert.deepEqual(Object.keys(payload).sort(),'planType,zip,firstName,lastName,dob,phone,email,state,mbi,medicaid,medicaidNum,prevCarrier,newCarrier,planName,enrollCode,premium,sunfireCode,effectiveDate,sixtyDayDate,sep,contractId,planId,segmentId,enrollmentId,pcpName,agency,aor,assignedUserId,assignedTo,hra,hraDate,submittedAt'.split(',').sort());
  assert.equal(payload.phone,'(212) 555-0101');assert.equal(payload.mbi,'1AB2-CD3-EF45');assert.equal(payload.premium,'$0.00');assert.equal(payload.dob,'1955-02-28');assert.equal(payload.medicaid,'Yes');assert.equal(payload.sep,'No');assert.equal(payload.hra,'Yes');
- assert.equal(payload.agency,'New Gen Health Solutions');assert.equal(payload.assignedUserId,'1UVVwLG5sFIzHVOJJjmE');assert.equal(payload.assignedTo,payload.assignedUserId);
- assert.equal(ghlPayload(valid({aor:'Dylan Maria'}),'now').assignedUserId,'ybc6Z1qfF5PgD1k0DzOo');
+ assert.equal(payload.agency,'Pilot Benefit Agency');assert.equal(payload.assignedUserId,'pilot-ghl-01');assert.equal(payload.assignedTo,payload.assignedUserId);
+ assert.equal(ghlPayload(valid({aor:'Pilot Agent 03',writingAgentId:roster[2].id}),'now',roster).assignedUserId,'pilot-ghl-03');
 });
 test('PY2027 plan search filters carrier/state/category, pages county rows and allows manual entry when absent',async()=>{
  const response=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${call}&plans=1&state=NY&carrier=Aetna&q=Landscape`));
@@ -108,13 +113,13 @@ test('saving survives GHL failure, encrypts all sensitive fields and creates ass
  assert.equal(response.status,200);intakeId=(await response.json()).id;assert.ok(intakeId);
  const [row]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intakeId]);
  for(const [key] of INTAKE_FIELDS)if(!['dob','mbi','medicaidNum'].includes(key))assert.equal(row.data[key],data[key],key);
- const payload=ghlPayload(data,'now');assert.equal(payload.planType,'D-SNP');assert.equal(payload.zip,'10001');
+ const payload=ghlPayload(data,'now',roster);assert.equal(payload.planType,'D-SNP');assert.equal(payload.zip,'10001');
  for(const key of ['dob','mbi','medicaidNum']){
   assert.equal(Object.hasOwn(row.data,key),false);assert.ok(row.pii_encrypted[key].c);assert.ok(row.pii_encrypted[key].k);
   assert.equal((await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]})).data,data[key]);
  }
  assert.ok(!JSON.stringify(row).includes('SECRET-CASE'));assert.ok(!JSON.stringify(row).includes('1955-02-28'));
- const [task]=await query('SELECT * FROM follow_ups WHERE id=$1',[row.follow_up_id]);assert.equal(task.agent_id,'mike_shiomos');assert.equal(task.contact_id,contact);assert.equal(new Date(task.due_at).toISOString(),'2027-03-02T14:00:00.000Z');
+ const [task]=await query('SELECT * FROM follow_ups WHERE id=$1',[row.follow_up_id]);assert.equal(task.agent_id,'pilot_agent_01');assert.equal(task.contact_id,contact);assert.equal(new Date(task.due_at).toISOString(),'2027-03-02T14:00:00.000Z');
  const [delivery]=await query('SELECT * FROM ghl_enrollment_deliveries');assert.equal(delivery.status,'pending');
  const sent=JSON.parse((await db.rpc('decrypt_pii_value',{p_encrypted:delivery.payload_encrypted})).data);
  for(const [key] of INTAKE_FIELDS)if(key!=='personalCode')assert.equal(sent[key],data[key],`GHL ${key}`);
@@ -123,20 +128,20 @@ test('saving survives GHL failure, encrypts all sensitive fields and creates ass
 });
 test('GET decrypts only owned intakes and shows sync status; foreign call and organization are denied',async()=>{
  const response=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${call}`));assert.equal(response.status,200);
- const body=await response.json();assert.equal(body.intakes[0].data.mbi,'1AB2-CD3-EF45');assert.equal(body.intakes[0].sync.status,'pending');assert.equal(body.prefill.aor,'Mike Shiomos');
+ const body=await response.json();assert.equal(body.intakes[0].data.mbi,'1AB2-CD3-EF45');assert.equal(body.intakes[0].sync.status,'pending');assert.equal(body.prefill.aor,'Pilot Agent 01');
  const foreign=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(99)}`));assert.equal(foreign.status,403);
  assert.equal((await handler({authenticate:async()=>({userId:'user-a',orgId:'org-b'})})(req(valid()))).status,403);
 });
 test('editing reuses the follow-up task and preserves submission time; household enrollments have separate rows and contacts',async()=>{
  const first=(await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intakeId]))[0];
- const response=await handler()(req(valid({sixtyDayDate:'2027-04-03',aor:'Dylan Maria'}),{id:intakeId}));assert.equal(response.status,200);
+ const response=await handler()(req(valid({sixtyDayDate:'2027-04-03',aor:'Pilot Agent 03',writingAgentId:roster[2].id}),{id:intakeId}));assert.equal(response.status,200);
  const updated=(await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intakeId]))[0];assert.equal(updated.follow_up_id,first.follow_up_id);assert.deepEqual(updated.submitted_at,first.submitted_at);
- assert.equal((await query('SELECT * FROM follow_ups')).length,1);assert.equal((await query('SELECT agent_id FROM follow_ups'))[0].agent_id,'dylan_maria');
+ assert.equal((await query('SELECT * FROM follow_ups')).length,1);assert.equal((await query('SELECT agent_id FROM follow_ups'))[0].agent_id,'pilot_agent_03');
  const householdResponse=await handler()(req(valid({firstName:'John',sunfireCode:'SF-456'}),{contact_id:household}));assert.equal(householdResponse.status,200);
  assert.equal((await query('SELECT * FROM enrollment_intakes')).length,2);assert.equal((await query('SELECT * FROM follow_ups')).length,2);assert.equal((await query('SELECT * FROM ix_uploads')).length,2);
 });
 test('GHL uses durable leases, exponential retries, stable idempotency, and sanitized errors',async()=>{
- const sent=[];const env={GHL_ENABLED:'true',GHL_ENROLLMENT_WEBHOOK_URL:'https://ghl.test/webhook'};
+ const sent=[];const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,GHL_ENABLED:'true',GHL_ENROLLMENT_WEBHOOK_URL:'https://ghl.test/webhook'};
  for(let attempt=1;attempt<=5;attempt++){
   await query(`UPDATE ghl_enrollment_deliveries SET next_attempt_at=CASE WHEN id=(SELECT id FROM ghl_enrollment_deliveries ORDER BY created_at LIMIT 1) THEN now()-interval '1 second' ELSE now()+interval '1 day' END`);
   await deliverEnrollmentWebhooks(db,{env,limit:1,send:async(url,body,headers)=>{sent.push({url,body:JSON.parse(body),headers});return {status:500};}});
@@ -162,10 +167,10 @@ test('compliance metadata comes only from the selected completed intake and subm
 });
 test('IX sends Type A metadata and does not deliver a queued call without an intake',async()=>{
  const received=[];
- const env={IX_ENV:'production',IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
+ const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,IX_ENV:'production',DEPLOYMENT_PROFILE_JSON:profileForIx('production'),IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
  const integration=createIxIntegration(db,{env,ixClient:{environment:'production',available:true,register:async args=>{received.push(args);return {callRecordingId:id(88),recordingUploads:args.callMetadata.recordings.map(({filename})=>({filename,presignedUrl:'https://bucket.s3.amazonaws.com/audio',expiresAt:'2099-01-01T00:00:00Z'}))};},finalize:async()=>({status:'finalized'})},fetchImpl:async(url,options)=>url.endsWith('.json')?Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:'120'}):options.method==='PUT'?new Response(null,{status:200}):new Response(new Uint8Array([1,2]))});
  await createComplianceWorker(db,{env,...integration,log:()=>{}})({schedule:false});assert.equal(received.length,2);
- assert.equal(received[0].sunfireEnrollmentCode,'SF-123');assert.deepEqual(Object.keys(received[0]).sort(),['callMetadata','sunfireEnrollmentCode']);assert.equal(received[0].callMetadata.recordings.length,1);assert.equal(received[0].callMetadata.teamName,'New Gen Health Solutions');
+ assert.equal(received[0].sunfireEnrollmentCode,'SF-123');assert.deepEqual(Object.keys(received[0]).sort(),['callMetadata','sunfireEnrollmentCode']);assert.equal(received[0].callMetadata.recordings.length,1);assert.equal(received[0].callMetadata.teamName,'Pilot Benefit Agency');
  await query(`INSERT INTO ix_uploads(tenant_id,call_id,twilio_recording_sid,enrollment_key,confirmation_code) VALUES($1,$2,'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',$3,'ORPHAN')`,[tenant,call,id(99)]);
  await createComplianceWorker(db,{env,...integration,log:()=>{}})({schedule:false});assert.equal(received.length,2);
 });
@@ -206,21 +211,21 @@ const mikeAdminAuth={userId:'user-a',orgId:'org-a',tokenPayload:{public_metadata
 async function withDylanCall(work){
  await pg.exec('BEGIN');
  try{
-  await query(`INSERT INTO enrolled_agents VALUES($1,$2,'user-dylan',true,'Dylan Maria',NULL)`,[dylanAgent,tenant]);
-  await query(`INSERT INTO call_records(id,tenant_id,agent_id,contact_id,call_outcome,product_type,agent_name) VALUES($1,$2,$3,$4,'incomplete','MA','Dylan Maria')`,[dylanCall,tenant,dylanAgent,contact]);
+  await query(`INSERT INTO enrolled_agents VALUES($1,$2,'user-dylan',true,'Pilot Agent 03',NULL)`,[dylanAgent,tenant]);
+  await query(`INSERT INTO call_records(id,tenant_id,agent_id,contact_id,call_outcome,product_type,agent_name) VALUES($1,$2,$3,$4,'incomplete','MA','Pilot Agent 03')`,[dylanCall,tenant,dylanAgent,contact]);
   await work();
  }finally{await pg.exec('ROLLBACK');}
 }
 const intakeRequest=(method='GET',body=null,extra='')=>new Request(`https://app.test/api/enrollment-intakes?call_id=${dylanCall}${extra}`,method==='GET'?undefined:{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 for(const [label,identity] of [['agent-own',dylanAuth],['admin-other',mikeAdminAuth],['global-admin-without-active-org',{...mikeAdminAuth,orgId:null}]])test(`${label} can open, search plans, create and edit intakes while retaining the call's writing agent`,()=>withDylanCall(async()=>{
  const api=handler({authenticate:async()=>identity});
- let response=await api(intakeRequest());assert.equal(response.status,200);const initial=await response.json();assert.equal(initial.prefill.aor,'Dylan Maria');
+ let response=await api(intakeRequest());assert.equal(response.status,200);const initial=await response.json();assert.equal(initial.prefill.aor,'Pilot Agent 03');
  assert.equal((await api(intakeRequest('GET',null,'&plans=1&state=NY&carrier=Aetna'))).status,200);
- response=await api(intakeRequest('POST',{data:valid({aor:initial.prefill.aor})}));assert.equal(response.status,200);const intake=(await response.json()).id;
- response=await api(intakeRequest('POST',{id:intake,data:valid({aor:'Dylan Maria',planName:'Updated by authorized user'})}));assert.equal(response.status,200);
- const [saved]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intake]);assert.equal(saved.data.aor,'Dylan Maria');assert.equal(saved.data.planName,'Updated by authorized user');
- assert.equal((await query('SELECT agent_id FROM follow_ups WHERE id=$1',[saved.follow_up_id]))[0].agent_id,'dylan_maria');
- const [ghl]=await query(`SELECT decrypt_pii_value(payload_encrypted)::jsonb AS payload FROM ghl_enrollment_deliveries WHERE intake_id=$1 ORDER BY revision DESC LIMIT 1`,[intake]);assert.equal(ghl.payload.aor,'Dylan Maria');assert.equal(ghl.payload.assignedUserId,'ybc6Z1qfF5PgD1k0DzOo');
+ response=await api(intakeRequest('POST',{data:valid({aor:initial.prefill.aor,writingAgentId:roster[2].id})}));assert.equal(response.status,200);const intake=(await response.json()).id;
+ response=await api(intakeRequest('POST',{id:intake,data:valid({aor:'Pilot Agent 03',writingAgentId:roster[2].id,planName:'Updated by authorized user'})}));assert.equal(response.status,200);
+ const [saved]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intake]);assert.equal(saved.data.aor,'Pilot Agent 03');assert.equal(saved.data.planName,'Updated by authorized user');
+ assert.equal((await query('SELECT agent_id FROM follow_ups WHERE id=$1',[saved.follow_up_id]))[0].agent_id,'pilot_agent_03');
+ const [ghl]=await query(`SELECT decrypt_pii_value(payload_encrypted)::jsonb AS payload FROM ghl_enrollment_deliveries WHERE intake_id=$1 ORDER BY revision DESC LIMIT 1`,[intake]);assert.equal(ghl.payload.aor,'Pilot Agent 03');assert.equal(ghl.payload.assignedUserId,'pilot-ghl-03');
  assert.equal((await query('SELECT agent_id FROM call_records WHERE id=$1',[dylanCall]))[0].agent_id,dylanAgent,'admin editing never changes call ownership');
  assert.equal((await (await api(intakeRequest())).json()).intakes[0].data.planName,'Updated by authorized user');
 }));
@@ -229,7 +234,7 @@ test('non-admin Mike remains denied on Dylan calls, even with forged body or uns
   const api=handler({authenticate:async()=>identity});
   assert.equal((await api(intakeRequest())).status,403);
   assert.equal((await api(intakeRequest('GET',null,'&plans=1&state=NY&carrier=Aetna'))).status,403);
-  assert.equal((await api(intakeRequest('POST',{role:'admin',isAdmin:true,data:valid({aor:'Dylan Maria'})}))).status,403);
+  assert.equal((await api(intakeRequest('POST',{role:'admin',isAdmin:true,data:valid({aor:'Pilot Agent 03',writingAgentId:roster[2].id})}))).status,403);
  }
  assert.equal((await query('SELECT * FROM enrollment_intakes WHERE call_id=$1',[dylanCall])).length,0);
 }));
@@ -243,7 +248,7 @@ test('admin claims require the matching organization and support Clerk role and 
  assert.equal((await handler({authenticate:async()=>mikeAdminAuth})(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(74)}`))).status,403);
 }));
 
-const ixEnv={IX_ENV:'production',IX_UPLOAD_ENABLED:'true',IX_USERNAME:'ix-user',IX_PASSWORD:'ix-password',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
+const ixEnv={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,IX_ENV:'production',DEPLOYMENT_PROFILE_JSON:profileForIx('production'),IX_UPLOAD_ENABLED:'true',IX_USERNAME:'ix-user',IX_PASSWORD:'ix-password',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
 const ixFetch=(status,extra={})=>async(url,options)=>{
  if(url.endsWith('/authenticate'))return Response.json({username:'ix-user',token:'private-token',expiresIn:100});
  if(url.endsWith('.json'))return Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:120});
@@ -334,16 +339,17 @@ test('IX expired URL attention is durable and registration is never repeated',as
 test('IX default off and missing credentials never consume attempts; daily summaries stay durable',async()=>{
  await pg.exec('BEGIN');try{
   const intake=await queuedIntake('DISABLED');
-  for(const env of [{},{IX_UPLOAD_ENABLED:'true'}])await createComplianceWorker(db,{env,...createIxIntegration(db,{env}),log:()=>{}})({schedule:false});
+  for(const env of [{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON},{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,IX_UPLOAD_ENABLED:'true'}])await createComplianceWorker(db,{env,...createIxIntegration(db,{env}),log:()=>{}})({schedule:false});
   assert.equal((await query('SELECT attempts FROM ix_uploads WHERE enrollment_key=$1',[intake]))[0].attempts,0);
   const reportDay=(await query('SELECT day::text FROM compliance_reconciliation ORDER BY day LIMIT 1'))[0].day;
-  const sent=[],opts={env:{IX_UPLOAD_ENABLED:'true',IX_REPORT_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'mail-key',INTEGRATIONS_REPORT_FROM:'reports@example.test'},now:()=>Date.parse(`${reportDay}T17:00:00Z`)+86400000,
+  const sent=[],opts={env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,IX_UPLOAD_ENABLED:'true',IX_REPORT_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'mail-key',INTEGRATIONS_REPORT_FROM:'reports@example.test'},now:()=>Date.parse(`${reportDay}T17:00:00Z`)+86400000,
    send:async(url,body,headers)=>{sent.push({url,body:JSON.parse(body),headers});return {status:200};}};
-  await dailySummaries(db,opts);await dailySummaries(db,opts);assert.equal(sent.length,1);assert.deepEqual(sent[0].body.to,['mike@newgenhealthsolutions.com']);assert.ok(sent[0].headers['Idempotency-Key']);
+  await dailySummaries(db,opts);await dailySummaries(db,opts);assert.equal(sent.length,1);assert.deepEqual(sent[0].body.to,['recipient@example.test']);assert.ok(sent[0].headers['Idempotency-Key']);
  }finally{await pg.exec('ROLLBACK');}
 });
 
 test('IX uses linked, tenant-scoped source and finalized per-call billing cost when known',async()=>{
+ process.env.PARAGON_ENABLED='true';
  await pg.exec('BEGIN');try{
   await query(`INSERT INTO inbound_calls VALUES($1,$2,$3)`,[id(900),tenant,id(901)]);
   await query(`INSERT INTO lead_sources VALUES($1,$2,'Paragon Media')`,[id(901),tenant]);
@@ -374,14 +380,14 @@ async function safeguardFixture(work){
   await query('UPDATE ix_uploads SET retryable=false');
   const api=handler({authenticate:async()=>mikeAdminAuth});
   const create=async(testEnrollment,sunfireCode)=>{
-   const response=await api(intakeRequest('POST',{data:valid({testEnrollment,sunfireCode,aor:'Dylan Maria'})}));
+   const response=await api(intakeRequest('POST',{data:valid({testEnrollment,sunfireCode,aor:'Pilot Agent 03',writingAgentId:roster[2].id})}));
    assert.equal(response.status,200,JSON.stringify(await response.clone().json()));return (await response.json()).id;
   };
   await query(`INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,recording_channels,provider_status) VALUES($1,$2,'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','CAcccccccccccccccccccccccccccccccc',2,'completed')`,[tenant,dylanCall]);
   await work({api,create});
  });
 }
-const adminUploads=(auth=mikeAdminAuth,env={IX_UPLOAD_ENABLED:'true',IX_ENV:'test'})=>createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>auth,env});
+const adminUploads=(auth=mikeAdminAuth,env={IX_UPLOAD_ENABLED:'true',IX_ENV:'test',DEPLOYMENT_PROFILE_JSON:profileForIx('test')})=>createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>auth,env});
 const retryRequest=id=>new Request('https://app.test/compliance-uploads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'retry_ix_upload',id})});
 
 test('test environment sends only test intakes; real rows preserve checkpoints, attempts and scheduling until production',()=>safeguardFixture(async({create})=>{
@@ -389,7 +395,7 @@ test('test environment sends only test intakes; real rows preserve checkpoints, 
  await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[dylanCall]);
  await query(`UPDATE ix_uploads SET ix_state='{"sentinel":"untouched"}',next_attempt_at=now()-interval '1 minute' WHERE enrollment_key=$1`,[real]);
  const [before]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[real]);
- const registrations=[],testEnv={...ixEnv,IX_ENV:'test'};
+ const registrations=[],testEnv={...ixEnv,IX_ENV:'test',DEPLOYMENT_PROFILE_JSON:profileForIx('test')};
  const fetchImpl=async(url,options)=>{
   if(url.endsWith('/internalenrollment')){
    const payload=JSON.parse(options.body);registrations.push(payload.sunfireEnrollmentCode);
@@ -412,7 +418,7 @@ test('production skips test rows without sending audio or consuming attempts',()
  await createComplianceWorker(db,{env:ixEnv,...createIxIntegration(db,{env:ixEnv,fetchImpl:()=>assert.fail('test intake must not reach provider')}),log:()=>{}})({schedule:false});
  const [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[sandbox]);
  assert.equal(row.status,'skipped_test_enrollment');assert.equal(row.attempts,0);assert.deepEqual(row.ix_state,{});
- const response=await adminUploads(mikeAdminAuth,{IX_UPLOAD_ENABLED:'true',IX_ENV:'production'})(new Request('https://app.test/compliance-uploads'));
+ const response=await adminUploads(mikeAdminAuth,{IX_UPLOAD_ENABLED:'true',IX_ENV:'production',DEPLOYMENT_PROFILE_JSON:profileForIx('production')})(new Request('https://app.test/compliance-uploads'));
  const data=await response.json();assert.equal(data.ix_environment,'PRODUCTION');assert.ok(data.failures.some(r=>r.id===row.id&&r.is_test_enrollment));
  for(const type of ['test','real']){
   const filtered=await (await adminUploads()(new Request(`https://app.test/compliance-uploads?enrollment_type=${type}`))).json();
@@ -442,9 +448,9 @@ test('test enrollments create no GHL jobs, are excluded from Conversely candidat
 test('only admins can set or change the test flag, and the checkbox defaults unchecked',()=>safeguardFixture(async({api,create})=>{
  const member=handler({authenticate:async()=>dylanAuth});
  const initial=await (await member(intakeRequest())).json();assert.equal(initial.admin,false);assert.equal(initial.prefill.testEnrollment,false);
- assert.equal((await member(intakeRequest('POST',{data:valid({testEnrollment:true,aor:'Dylan Maria'})}))).status,403);
+ assert.equal((await member(intakeRequest('POST',{data:valid({testEnrollment:true,aor:'Pilot Agent 03',writingAgentId:roster[2].id})}))).status,403);
  const sandbox=await create(true,'ADMIN-ONLY');
- assert.equal((await member(intakeRequest('POST',{id:sandbox,data:valid({testEnrollment:false,aor:'Dylan Maria'})}))).status,403);
+ assert.equal((await member(intakeRequest('POST',{id:sandbox,data:valid({testEnrollment:false,aor:'Pilot Agent 03',writingAgentId:roster[2].id})}))).status,403);
  assert.equal((await (await api(intakeRequest())).json()).admin,true);
 }));
 
@@ -474,7 +480,7 @@ test('admin retry clears unfinalized registration and targets and records actor/
 test('migration preserves historical fields in encrypted native drafts, keeps newer intake values, and completing a draft marks it complete',async()=>{
  const historical=id(400),unlinked=id(401);
  await query(`ALTER TABLE call_records ADD COLUMN plan_name text,ADD COLUMN plan_id text,ADD COLUMN effective_date date,ADD COLUMN application_id text,ADD COLUMN customer_dob date,ADD COLUMN customer_mbi text,ADD COLUMN medicaid_number text`);
- await query(`INSERT INTO call_records(id,tenant_id,agent_id,contact_id,product_type,carrier_name,plan_name,plan_id,effective_date,application_id,customer_dob,customer_mbi,medicaid_number,agent_name) VALUES($1,$2,$3,$4,'MA','Aetna','Legacy plan','008','2027-01-01','OLD-APP','1955-02-28','1AB2CD3EF45','PRIVATE','Mike Shiomos')`,[historical,tenant,agent,contact]);
+ await query(`INSERT INTO call_records(id,tenant_id,agent_id,contact_id,product_type,carrier_name,plan_name,plan_id,effective_date,application_id,customer_dob,customer_mbi,medicaid_number,agent_name) VALUES($1,$2,$3,$4,'MA','Aetna','Legacy plan','008','2027-01-01','OLD-APP','1955-02-28','1AB2CD3EF45','PRIVATE','Pilot Agent 01')`,[historical,tenant,agent,contact]);
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,product_type,plan_name) VALUES($1,$2,$3,'MA','Unlinked legacy')`,[unlinked,tenant,agent]);
  const migration=readFileSync(new URL('../supabase/migrations/146_script_enrollment_intake.sql',import.meta.url),'utf8');
  await pg.exec(migration);

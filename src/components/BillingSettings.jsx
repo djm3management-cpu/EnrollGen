@@ -1,3 +1,5 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
+import { agencyName } from '../lib/deploymentPublic.js';
 import {callContinuity} from "../lib/callContinuity.js";
 import { useEffect, useMemo, useState } from "react";
 import { CreditCard, ExternalLink, RefreshCcw, Zap } from "lucide-react";
@@ -9,7 +11,7 @@ function formatDate(value) {
   if (!value) return "--";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "--";
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(undefined, {timeZone:deploymentPublic.timezone,
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -152,7 +154,7 @@ export default function BillingSettings() {
 
       {isInternal ? (
         <div className="billing-alert is-internal">
-          Internal NGHS account. Billing gates are bypassed for this tenant.
+          Internal {agencyName} account. Billing gates are bypassed for this tenant.
         </div>
       ) : null}
 

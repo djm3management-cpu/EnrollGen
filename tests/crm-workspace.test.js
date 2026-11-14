@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -52,7 +53,7 @@ function callHook(initialFilters, options = {}) {
   const h = hookHarness(), host = new EventTarget();
   const client = {}, getToken = async () => 'token';
   let filters = initialFilters, settings = options;
-  const context = vm.createContext({ ...h.hooks, window: host, Symbol, JSON, loadCallLog, loadCallLogPages,
+  const context = vm.createContext({deploymentPublic, ...h.hooks, window: host, Symbol, JSON, loadCallLog, loadCallLogPages,
     useAppAuth: () => ({ getToken }), useTenantConfig: () => ({ supabaseClient: client, tenant: { id: 'tenant' } }) });
   vm.runInContext(hookSource + ';globalThis.callHook=useCallLogRows;', context);
   h.mount(() => context.callHook(filters, settings));
@@ -98,7 +99,7 @@ const h = (type, props, ...children) => ({ type, props: props || {}, children })
 const nodes = tree => !tree || typeof tree !== 'object' ? [] : [tree, ...(tree.children || []).flat(Infinity).flatMap(nodes)];
 function componentSource(path, name, bindings) {
   const source = readFileSync(new URL(path, import.meta.url), 'utf8').replace(/^import .*;\n/gm, '').replace(/^export default /gm, '').replace(/^export /gm, '');
-  const context = vm.createContext({ h, Fragment: 'fragment', CrmPanelBoundary: 'crm-boundary', ...bindings });
+  const context = vm.createContext({deploymentPublic, h, Fragment: 'fragment', CrmPanelBoundary: 'crm-boundary', ...bindings });
   vm.runInContext(transformSync(source, { loader: 'jsx', jsxFactory: 'h', jsxFragment: 'Fragment', format: 'cjs' }).code + `;globalThis.component=${name};`, context);
   return context.component;
 }
@@ -186,7 +187,7 @@ test('background refresh retains mounted call rows while updating compliance and
 
 test('all workflow navs expose CRM and Agent Tools without separate Calls or Compliance entries', () => {
   const source = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
-  const context = vm.createContext({ modeSupportsAgentTools: mode => ['ma', 'aca'].includes(mode) });
+  const context = vm.createContext({deploymentPublic, modeSupportsAgentTools: mode => ['ma', 'aca'].includes(mode) });
   vm.runInContext(source.slice(source.indexOf('function getTabsForMode('), source.indexOf('function AppShell(')) + ';globalThis.tabs=getTabsForMode;', context);
   for (const mode of ['ma', 'aca', 'medsup', 'u65', 'ancillary']) {
     const tabs = context.tabs(mode, {DAILY_VERSE_ENABLED:true});

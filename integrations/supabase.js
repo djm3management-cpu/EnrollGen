@@ -1,3 +1,5 @@
+import { deploymentProfile } from '../telephony/src/lib/deploymentProfile.js';
+deploymentProfile();
 import { featureHeaders } from '../telephony/src/lib/deploymentFeatures.js';
 import "./authSafety.js";
 import { createClient } from '@supabase/supabase-js';

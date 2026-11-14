@@ -1,5 +1,8 @@
 import { assertSafeAuthEnvironment } from "../../integrations/authSafety.js";
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { verifyToken } from "@clerk/backend";
+
+deploymentProfile();
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 

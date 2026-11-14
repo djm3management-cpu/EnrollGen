@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import {createSuggestionDedupe} from '../lib/copilotDedupe.js';
 import { liveAssistantEntry, disclosureChecklist } from "../lib/liveAssistantPolicy.js";
 /**
@@ -396,7 +397,7 @@ export function useCopilotEngineCore({
       id: Date.now() + Math.floor(Math.random() * 1000),
       level,
       text: displayText,
-      ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      ts: new Date().toLocaleTimeString([], {timeZone:deploymentPublic.timezone, hour: "2-digit", minute: "2-digit" }),
       ...extra,
     };
     messagesRef.current = [...messagesRef.current.slice(-19), entry];

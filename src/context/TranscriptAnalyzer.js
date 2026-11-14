@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { hasMedicareResource, hasTpmoOrgCount, hasTpmoPlanCount } from '../compliance/shared/tpmo2027.js';
 /**
  * TranscriptAnalyzer, Real-Time Medicare Intent Detection Engine
@@ -267,15 +268,7 @@ const INTENT_MAP = {
     section: "Call Opening",
     description: "Agent named their agency",
     detect: (t) => {
-      const r = findPhrase(t, [
-        "new gen health",
-        "new gen health solutions",
-        "newgen health",
-        "new generation health",
-        "calling from",
-        "with new gen",
-        "at new gen",
-      ]);
+      const r = findPhrase(t, [deploymentPublic.agencyName,...deploymentPublic.agencyAliases]);
       return {
         detected: r.found,
         confidence: r.found ? 90 : 0,

@@ -1,9 +1,10 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import {useTenantConfig} from "./useTenantConfig";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchWithClerk } from '../lib/clerkFetch';
 import { flushConferenceCheckpoint } from '../lib/conferenceCheckpoint';
 
-const BASE = (import.meta.env.VITE_TELEPHONY_BASE_URL || '').replace(/\/$/, '');
+const BASE = (deploymentPublic.telephonyOrigin).replace(/\/$/, '');
 export function useConferenceCall({ getToken, activeCall }) {
   const {features}=useTenantConfig();
   const allowed=features.CONFERENCE_CALLING_ENABLED === true;

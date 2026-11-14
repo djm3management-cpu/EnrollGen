@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { debugLog } from "../lib/debugLog.js";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MAX_TRANSCRIPT_LENGTH } from "../data/complianceKnowledge";
@@ -198,7 +199,7 @@ export function useSpeechRecognition({ onNewFinal, onSpokenQuestion, externalTra
         lastFinalChunkRef.current = newFinal.trim();
         setTranscript(updatedTranscript);
         const rowTimestamp = new Date().toISOString();
-        const rowTs = new Date().toLocaleTimeString([], {
+        const rowTs = new Date().toLocaleTimeString([], {timeZone:deploymentPublic.timezone,
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",

@@ -1,3 +1,4 @@
+import {agencyName} from '../../src/lib/deploymentPublic.js';
 import { MA_CY2027_GUIDANCE } from '../../src/data/maCompliance2027.js';
 import { LIVE_ASSISTANT_PROMPT } from "../../src/lib/liveAssistantPolicy.js";
 import fs from 'node:fs';
@@ -19,7 +20,7 @@ export function loadPromptBuilders(source) {
   const nodes = parse(source, { sourceType: 'module' }).program.body.filter(node =>
     names.has(node.id?.name || node.declarations?.[0]?.id?.name));
   return vm.runInNewContext(nodes.map(node => source.slice(node.start, node.end)).join('\n')
-    + '\n({ buildCoachingSystemPrompt, buildAskSystemPrompt })', { AGENCY_CLOSING_GUIDANCE, MA_CY2027_GUIDANCE, LIVE_ASSISTANT_PROMPT });
+    + '\n({ buildCoachingSystemPrompt, buildAskSystemPrompt })', { agencyName, AGENCY_CLOSING_GUIDANCE, MA_CY2027_GUIDANCE, LIVE_ASSISTANT_PROMPT });
 }
 
 export function engineBuilders(engine) {

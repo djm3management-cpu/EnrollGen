@@ -175,10 +175,11 @@ test('lease fencing, provider conflicts, missing evidence and retry preserve fin
  assert.equal((await sql('SELECT billable_seconds FROM paragon_call_billing WHERE parent_call_sid=$1',[call.parent]))[0].billable_seconds,90);
 });
 test('settings validate, are audited, and cannot alter eligibility; private ledger/RPCs deny browser roles',async()=>{
- const valid={staffed_hours:standard,daily_cap:'',cap_mode:'soft',rate:28};assert.equal(validateParagonControls(valid).cap,null);
+ const profileHours={timezone:JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).timezone,days:JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).staffedHours};
+ const valid={staffed_hours:profileHours,daily_cap:'',cap_mode:'soft',rate:28};assert.equal(validateParagonControls(valid).cap,null);
  for(const bad of [{...valid,rate:0},{...valid,staffed_hours:{}}])assert.throws(()=>validateParagonControls(bad));
- assert.deepEqual(validateParagonControls({...valid,daily_cap:20,cap_mode:'hard'}),{hours:standard,cap:null,mode:'soft',rate:28});
- assert.deepEqual(validateParagonControls({staffed_hours:standard,rate:28}),{hours:standard,cap:null,mode:'soft',rate:28});
+ assert.deepEqual(validateParagonControls({...valid,daily_cap:20,cap_mode:'hard'}),{hours:profileHours,cap:null,mode:'soft',rate:28});
+ assert.deepEqual(validateParagonControls({staffed_hours:profileHours,rate:28}),{hours:profileHours,cap:null,mode:'soft',rate:28});
  const before=await sql('SELECT count(*) n FROM vendor_agent_state_eligibility');
  await sql('SELECT set_paragon_controls($1,$2,$3,$4,$5,$6)',[T,JSON.stringify(standard),20,'soft',28,'test-admin']);
  assert.equal((await sql('SELECT count(*) n FROM vendor_agent_state_eligibility'))[0].n,before[0].n);

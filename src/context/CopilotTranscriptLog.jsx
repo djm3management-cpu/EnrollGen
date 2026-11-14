@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import {
   createContext,
   useContext,
@@ -193,7 +194,7 @@ export function CopilotLogProvider({ children }) {
     const enriched = {
       id: Date.now() + Math.random(),
       timestamp: new Date().toISOString(),
-      timeDisplay: new Date().toLocaleTimeString([], {
+      timeDisplay: new Date().toLocaleTimeString([], {timeZone:deploymentPublic.timezone,
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",

@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { memo, useEffect, useMemo } from "react";
 import {
   ArrowUpRight,
@@ -47,7 +48,7 @@ function formatDisplayDate(value) {
     return value;
   }
 
-  return parsed.toLocaleDateString();
+  return parsed.toLocaleDateString(undefined,{timeZone:deploymentPublic.timezone});
 }
 
 function formatPremium(value) {

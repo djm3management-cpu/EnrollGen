@@ -41,7 +41,7 @@ test('unknown individual scope and unknown identity never fall back to agency da
 test('selector contains only named roster agents, including agents without calls', () => {
   const rows = dashboardAgents(roster, [{ id: 'legacy', name: 'Mike' }, { id: 'old', name: 'Former Agent', clerk_user_id: 'former' }]);
   assert.equal(rows.length, 3);
-  assert.deepEqual(rows.find(agent => agent.label === 'Mike').agentIds, ['legacy']);
+  assert.deepEqual(rows.find(agent => agent.label === 'Mike').agentIds, []);
   assert.deepEqual(rows.find(agent => agent.label === 'Dylan').agentIds, []);
   assert.equal(rows.find(agent => agent.label === 'Former Agent'), undefined);
 });

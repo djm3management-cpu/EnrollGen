@@ -1,3 +1,4 @@
+import {dayStart,shiftDays} from './dashboardMetrics.js';
 export const FOLLOW_UPS_UPDATED = 'enrollgen:follow-ups-updated';
 export function notifyFollowUpsUpdated() {
   window.dispatchEvent(new Event(FOLLOW_UPS_UPDATED));
@@ -6,8 +7,8 @@ export function followUpBucket(row, now = new Date()) {
   if (row.status !== 'open' || !row.due_at) return null;
   const due = new Date(row.due_at);
   if (Number.isNaN(due.getTime())) return null;
-  const start = new Date(now); start.setHours(0, 0, 0, 0);
-  const end = new Date(start); end.setDate(end.getDate() + 1);
+  const start = dayStart(now);
+  const end = shiftDays(start,1);
   return due < start ? 'overdue' : due < end ? 'today' : 'upcoming';
 }
 export async function createFollowUp(client, fields) {

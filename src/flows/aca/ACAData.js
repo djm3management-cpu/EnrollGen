@@ -1,3 +1,5 @@
+import {AGENCY_CLOSING} from '../../data/agencyClosing.js';
+import { agencyName } from '../../lib/deploymentPublic.js';
 // ACAScript.js, ACA On-Exchange Script Flow Data
 // Gates 0–6 per u65-aca-spec.md Section 2.2
 
@@ -9,14 +11,14 @@ export const ACA_GATES = [
     label: "Opening & Identity Verification",
     compliance: false,
     script: [
-      "Hi, this is [Agent Name] with New Gen Health Solutions. Am I speaking with [Client Name]?",
+      `Hi, this is [Agent Name] with ${agencyName}. Am I speaking with [Client Name]?`,
       "Great. I'm a licensed health insurance agent and Ill be helping you review your health coverage options. Before we get started, I need to let you know this call may be recorded for quality and compliance purposes. Is that okay?",
       "Perfect. Let me verify a few things. Can you confirm your full legal name and date of birth?",
       "And can you confirm your state and ZIP code?",
       "I also need to confirm whether youve had a recent qualifying life event that may make you eligible for coverage, such as losing other coverage, moving, getting married, or having a baby.",
     ],
     notes: [
-      "If consent is declined: explain recording is required per NGHS compliance policy and offer a secure online enrollment link instead.",
+      `If consent is declined: explain recording is required per ${agencyName} compliance policy and offer a secure online enrollment link instead.`,
       "On state capture: derive stateBased signal. If NJ or PA, flag state-based exchange (Get Covered NJ or PA Pennie).",
       "Branch: If OEP → set enrollmentPeriod to OEP, skip Gate 1. If SEP → proceed to Gate 1.",
     ],
@@ -175,7 +177,7 @@ export const ACA_GATES = [
     ],
     exchangeNote: "Enrollment platform by state: NJ → Get Covered NJ (getcovered.nj.gov) | PA → PA Pennie (pennie.com) | VA, GA → Healthcare.gov",
     notes: [
-      "COMPLIANCE: SSN is collected within the exchange platform, NOT in EnrollGen or any NGHS system. Agent enters directly into the exchange enrollment portal.",
+      `COMPLIANCE: SSN is collected within the exchange platform, NOT in EnrollGen or any ${agencyName} system. Agent enters directly into the exchange enrollment portal.`,
       "Advise: If income is variable (self-employed, gig), recommend taking less APTC upfront to avoid repayment at tax time.",
       "COMPLIANCE: Always provide the confirmation number and effective date verbally AND offer to send via email/text.",
     ],
@@ -201,7 +203,7 @@ export const ACA_GATES = [
       "Let me recap what we set up today. You're enrolled in [Plan Name] with [Carrier]. Your monthly premium is $[amount] after the tax credit. Coverage starts [date]. You'll receive a welcome packet from [Carrier] with your ID card and instructions for setting up your online portal.",
       "A few important things: make sure you pay your first premium by [date] or your coverage won't activate. If you need to see a doctor before your ID card arrives, you can call [Carrier] member services for a temporary ID.",
       "I'm going to follow up with you in about two weeks to make sure everything is set up and you have your ID card. What's the best way to reach you?",
-      "Is there anything else I can help you with today? [Pause] Great. Thank you for trusting New Gen Health Solutions with your health coverage. Have a great day!",
+      AGENCY_CLOSING,
     ],
     checklist: [
       "Coverage recap provided to client",

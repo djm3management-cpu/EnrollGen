@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import { debugLog } from "../src/lib/debugLog.js";
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,7 +20,7 @@ async function componentHarness(file, stubs = {}, extra = '') {
   const { code } = await transform(source + extra, { loader: 'jsx', format: 'cjs', jsx: 'transform' });
   const module = { exports: {} };
   vm.runInNewContext(code, { debugLog, module, exports: module.exports, React, console,
-    require(name) {
+    require(name) {if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
       if (name === 'react') return hooks;
       if (name.includes('/phone')) return { normalizePhoneE164 };
       if (name === 'lucide-react') return new Proxy({}, { get: () => 'icon' });

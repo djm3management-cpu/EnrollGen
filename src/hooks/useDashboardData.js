@@ -23,7 +23,7 @@ export function useDashboardData(userId, scope = 'self') {
     const hasDirectIdentity = (agents || []).some((agent) => agent.clerk_user_id === userId);
     return (agents || []).map((agent) => {
       // A signed-in Clerk identity is authoritative. Availability can retain
-      // a stale/local alias (for example M3 -> mark_endres) and must not
+      // a stale/local alias (for example a stale legacy alias) and must not
       // relabel another agent as the current user.
       if (hasDirectIdentity || agent.agent_slug !== currentSlug) return agent;
       return {

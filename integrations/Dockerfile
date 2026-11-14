@@ -4,9 +4,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY integrations ./integrations
-COPY src/lib/enrollmentIntake.js ./src/lib/enrollmentIntake.js
+COPY src/lib/enrollmentIntake.js src/lib/deploymentPublic.js ./src/lib/
 # Provider streaming helpers use Node built-ins only; no telephony server startup.
 COPY telephony/src/recordings.js ./telephony/src/recordings.js
-COPY telephony/src/lib/deploymentFeatures.js ./telephony/src/lib/deploymentFeatures.js
+COPY telephony/src/lib ./telephony/src/lib
 USER node
 CMD ["node", "integrations/worker.js"]

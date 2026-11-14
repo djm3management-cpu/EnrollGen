@@ -109,9 +109,9 @@ VALUES
   NULL,
   0,
   NULL,
-  'https://apply.myenroller.com',
+  NULL,
   'MyEnroller',
-  'https://apply.myenroller.com',
+  NULL,
   NULL,
   NULL,
   'MyEasyMatch cross-sell tool shows MA plan gaps vs HIP benefits with live pricing. Optional dental rider on Med Sup is an indemnity benefit and pays regardless of actual charges. Available in select states including GA.'

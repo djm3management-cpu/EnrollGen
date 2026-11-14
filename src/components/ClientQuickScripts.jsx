@@ -1,3 +1,4 @@
+import { agencyName,agencyLine,agencyHours } from '../lib/deploymentPublic.js';
 import { useState } from "react";
 import { X } from "lucide-react";
 
@@ -9,7 +10,7 @@ const QUICK_SCRIPTS = {
         {
           label: "Opener",
           lines: [
-            "Hey [Name], this is [Agent] with New Gen Health Solutions. I saw your Medicare Advantage plan showed a disenrollment and wanted to check in, is now an okay time?",
+            `Hey [Name], this is [Agent] with ${agencyName}. I saw your Medicare Advantage plan showed a disenrollment and wanted to check in, is now an okay time?`,
           ],
         },
         {
@@ -61,7 +62,7 @@ const QUICK_SCRIPTS = {
         {
           label: "Opener",
           lines: [
-            "Hey [Name], this is [Agent] with New Gen Health Solutions, just calling to say thanks for trusting us with your Medicare coverage.",
+            `Hey [Name], this is [Agent] with ${agencyName}, just calling to say thanks for trusting us with your Medicare coverage.`,
           ],
         },
         {
@@ -88,7 +89,7 @@ const QUICK_SCRIPTS = {
         {
           label: "Opener",
           lines: [
-            "Hi [Name], this is [Agent] with New Gen Health Solutions. Your marketplace plan showed as disenrolled and I wanted to reach out, got a minute?",
+            `Hi [Name], this is [Agent] with ${agencyName}. Your marketplace plan showed as disenrolled and I wanted to reach out, got a minute?`,
           ],
         },
         {
@@ -120,7 +121,7 @@ const QUICK_SCRIPTS = {
         {
           label: "Opener",
           lines: [
-            "Hi [Name], this is [Agent] with New Gen Health Solutions, wanted to say thanks for letting us help with your health plan.",
+            `Hi [Name], this is [Agent] with ${agencyName}, wanted to say thanks for letting us help with your health plan.`,
           ],
         },
         {
@@ -174,6 +175,7 @@ export default function ClientQuickScripts({ flowType, activeScriptId, onClose }
           </header>
 
           <div className="client-quick-script-panel__body">
+            <div className="client-quick-script-section"><p>{agencyName} · {agencyLine} · {agencyHours}</p></div>
             {activeScript.sections.map((section) => (
               <div className="client-quick-script-section" key={section.label}>
                 <div className="client-quick-script-section__label">

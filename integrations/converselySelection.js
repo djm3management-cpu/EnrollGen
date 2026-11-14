@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../telephony/src/lib/deploymentProfile.js';
 const normalize = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g,'');
 export const CARRIER_ALIASES = {
   UnitedHealthcare:['UHC','United Healthcare','AARP Medicare Advantage'],
@@ -15,7 +16,7 @@ export function converselyConfiguration(env={}) {
     const carrier=canonicalCarrier(name);if(!carrier)throw Error('invalid_conversely_carrier');return carrier;
   }))];
   // Contract exceptions are configuration data keyed by stable roster slug/UUID/Clerk ID.
-  const exclusions=JSON.parse(env.CONVERSELY_AGENT_EXCLUSIONS ?? '{"mark_endres":["Humana"]}');
+  const exclusions=JSON.parse(env.CONVERSELY_AGENT_EXCLUSIONS ?? '{}');
   if(!exclusions || Array.isArray(exclusions) || typeof exclusions!=='object')throw Error('invalid_conversely_exclusions');
   for(const [agent,values] of Object.entries(exclusions)){
     if(!agent || !Array.isArray(values))throw Error('invalid_conversely_exclusions');
@@ -29,15 +30,15 @@ export function carrierEligibility(call,config) {
   if([call.agent_id,call.agent_slug,call.clerk_user_id].filter(Boolean).some(agent=>config.exclusions[agent]?.includes(carrier)))return 'agent_contract_excluded';
   return null;
 }
-// Last completed Monday–Sunday week in New York. Calendar arithmetic avoids DST drift.
-export function previousConverselyWeek(now=Date.now()) {
-  const local=new Date(new Date(now).toLocaleString('en-US',{timeZone:'America/New_York'}));
-  const date=new Date(Date.UTC(local.getFullYear(),local.getMonth(),local.getDate()));
+// Last completed Monday–Sunday week in the deployment timezone. Calendar arithmetic avoids DST drift.
+export function previousConverselyWeek(now=Date.now(),timezone=deploymentProfile().timezone) {
+  const day=new Intl.DateTimeFormat('en-CA',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));
+  const date=new Date(`${day}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate()-((date.getUTCDay()+6)%7)-7);
   return date.toISOString().slice(0,10);
 }
-export function currentConverselyWeek(now=Date.now()) {
-  const monday=new Date(`${previousConverselyWeek(now)}T12:00:00Z`);
+export function currentConverselyWeek(now=Date.now(),timezone=deploymentProfile().timezone) {
+  const monday=new Date(`${previousConverselyWeek(now,timezone)}T12:00:00Z`);
   monday.setUTCDate(monday.getUTCDate()+7);return monday.toISOString().slice(0,10);
 }
 export function selectWeeklySamples(candidates,config) {

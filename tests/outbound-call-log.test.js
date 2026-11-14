@@ -19,7 +19,7 @@ async function log(identity=auth,params='',status=200) {
  const data=await response.json();assert.equal(response.status,status,JSON.stringify(data));return data;
 }
 async function recording(identity,target,post=false,status=200) {
- const response=await createRecordingsHandler({authenticate:async()=>identity,getDb:()=>db,env:{TELEPHONY_BASE_URL:'https://telephony.test'}})(new Request('https://test/recordings'+(post?'':'?'+new URLSearchParams(target)),post?{method:'POST',body:JSON.stringify(target)}:undefined));
+ const response=await createRecordingsHandler({authenticate:async()=>identity,getDb:()=>db,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,TELEPHONY_BASE_URL:'https://telephony.test'}})(new Request('https://test/recordings'+(post?'':'?'+new URLSearchParams(target)),post?{method:'POST',body:JSON.stringify(target)}:undefined));
  const data=await response.json();assert.equal(response.status,status,JSON.stringify(data));return data;
 }
 before(async()=>{
@@ -98,7 +98,7 @@ test('orphan/linked attempt recording PLAY and Download require exact protected 
  const target={attempt_id:OUT};const listed=await recording(auth,target);assert.equal(listed.recordings.length,1);
  const grant=await recording(auth,{...target,action:'media'},true);assert.match(grant.url,/storage.test/);
  const download=await recording(auth,{...target,action:'media',download:true},true);assert.match(download.url,/download=recording-RE/);
- const provider=await recording(auth,{...target,action:'media',source:'twilio',download:true},true);assert.match(provider.url,/telephony.test\/api\/recordings\/media/);
+ const provider=await recording(auth,{...target,action:'media',source:'twilio',download:true},true);assert.equal(new URL(provider.url).origin,new URL(JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).telephonyOrigin).origin);assert.match(new URL(provider.url).pathname,/^\/api\/recordings\/media\//);
  await recording(other,target,false,403);await recording(auth,{attempt_id:id(14)},false,403);
  await recording(auth,{attempt_id:OUT,call_record_id:id(15)},false,400);
  await recording(admin,target);await recording({...auth,orgId:'org-b'},target,false,403);

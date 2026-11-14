@@ -4,7 +4,7 @@ export function dashboardAgents(roster, enrolled) {
   const options = roster.map(agent => {
     const matches = enrolled.filter(record => {
       if (record.clerk_user_id && agent.clerk_user_id) return (agent.clerkUserIds || [agent.clerk_user_id]).includes(record.clerk_user_id);
-      return normalizeName(record.name) && normalizeName(record.name) === normalizeName(agent.name);
+      return false;
     });
     return {
       key: `roster:${agent.id}`, label: agent.name || agent.agent_slug || 'Agent',

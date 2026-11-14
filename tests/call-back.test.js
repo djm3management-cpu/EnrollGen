@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -35,7 +36,7 @@ async function fixture() {
     const { code } = transformSync(source, { loader: 'jsx', format: 'cjs' });
     const module = { exports: {} };
     vm.runInNewContext(code, { module, exports: module.exports, React,
-      require(name) {
+      require(name) {if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
         if (name === 'react') return harness.hooks;
         if (name === 'lucide-react') return { Phone: 'Phone' };
         if (name.includes('callContinuity')) return { callContinuity: continuity };
@@ -137,7 +138,7 @@ test('availability exposes existing reservation reads and confirmed presence wit
   const module = { exports: {} };
   vm.runInNewContext(code, { module, exports: module.exports, React, Date, AbortController,
     setInterval(fn) { refresh = fn; return 1; }, clearInterval() {},
-    require(name) {
+    require(name) {if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
       if (name === 'react') return { ...harness.hooks, createContext: () => ({ Provider: 'provider' }) };
       if (name.includes('availabilityApi')) return { availabilityRequest: async () => payload };
       if (name.includes('AuthContext')) return { useAppAuth: () => ({ getToken }) };

@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { useEffect, useId, useState } from 'react';
 import { useAppAuth } from '../context/AuthContext';
 import { evidenceRequest } from '../lib/evidenceApi';
@@ -7,7 +8,7 @@ const STATUS_LABELS = {
   available: 'Online · Available', callbacks_only: 'Online · Callbacks Only', busy: 'Busy', offline: 'Offline',
 };
 const localDate = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-const timeFormat = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
+const timeFormat = new Intl.DateTimeFormat(undefined, {timeZone:deploymentPublic.timezone, hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
 
 export default function AgentStatusLog() {
   const { getToken, user, organization } = useAppAuth();
@@ -74,7 +75,7 @@ export default function AgentStatusLog() {
 
     {current.error && <p className="agent-dash-error" role="alert">{current.error} Use Refresh log to retry.</p>}
     <div className="agent-dash-table-wrap"><table><thead><tr><th scope="col">Agent</th><th scope="col">Status</th><th scope="col">Date</th><th scope="col">Time</th></tr></thead><tbody>
-      {current.rows.map(row => <tr key={row.id}><th scope="row">{row.agent_name}</th><td>{STATUS_LABELS[row.status] || row.status}</td><td>{new Date(row.changed_at).toLocaleDateString()}</td><td><time dateTime={row.changed_at}>{timeFormat.format(new Date(row.changed_at))}</time></td></tr>)}
+      {current.rows.map(row => <tr key={row.id}><th scope="row">{row.agent_name}</th><td>{STATUS_LABELS[row.status] || row.status}</td><td>{new Date(row.changed_at).toLocaleDateString(undefined,{timeZone:deploymentPublic.timezone})}</td><td><time dateTime={row.changed_at}>{timeFormat.format(new Date(row.changed_at))}</time></td></tr>)}
       {!current.rows.length && <tr><td colSpan={4} className="agent-status-log__empty">{current.loading ? 'Loading status history…' : current.error ? 'Status history is unavailable.' : 'No status changes for these filters.'}</td></tr>}
     </tbody></table></div>
     <div className="agent-status-log__pagination"><span role="status">{current.loading ? 'Loading…' : `${current.count ? page * PAGE_SIZE + 1 : 0}–${Math.min((page + 1) * PAGE_SIZE, current.count)} of ${current.count} changes`}</span><div><button data-key-role="secondary" onClick={() => setPage(value => value - 1)} disabled={current.loading || page === 0}>Previous</button><button data-key-role="secondary" onClick={() => setPage(value => value + 1)} disabled={current.loading || (page + 1) * PAGE_SIZE >= current.count}>Next</button></div></div>

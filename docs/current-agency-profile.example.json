@@ -1,0 +1,120 @@
+{
+  "tenantId": "<CURRENT_TENANT_UUID>",
+  "organizationId": "<CURRENT_CLERK_ORGANIZATION_ID>",
+  "agencyName": "New Gen Health Solutions",
+  "agencyAliases": [
+    "NGHS",
+    "New Gen Health",
+    "Newgen Health",
+    "New Generation Health"
+  ],
+  "documentName": "New Gen Health Solutions",
+  "agencyLine": "+16098065996",
+  "agencyLineLabel": "Agency main line",
+  "textSender": "<VERIFIED_TEXT_SENDER_E164>",
+  "phoneDisplay": "national",
+  "timezone": "America/New_York",
+  "staffedHours": {
+    "mon": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "tue": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "wed": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "thu": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "fri": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "sat": {
+      "enabled": false,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "sun": {
+      "enabled": false,
+      "start": "10:00",
+      "end": "18:00"
+    }
+  },
+  "allowedHosts": [
+    "<EXACT_ALLOWED_HOST>"
+  ],
+  "email": {
+    "from": "<VERIFIED_SENDER>",
+    "replyTo": "<REPLY_TO>",
+    "recipients": [
+      "<OPERATIONAL_RECIPIENT>"
+    ],
+    "endpoint": "<HTTPS_EMAIL_ENDPOINT>"
+  },
+  "ghl": {
+    "postCallUrl": "<HTTPS_POST_CALL_URL>",
+    "enrollmentUrl": "<HTTPS_ENROLLMENT_URL>",
+    "locationId": "<GHL_LOCATION_ID>"
+  },
+  "conversely": {
+    "target": "New Gen Health Solutions",
+    "endpoint": "<HTTPS_CONVERSELY_ENDPOINT>"
+  },
+  "ix": {
+    "teamName": "New Gen Health Solutions",
+    "environment": "<test_OR_production>",
+    "origin": "<HTTPS_IX_ORIGIN>",
+    "reportRecipients": [
+      "<IX_REPORT_RECIPIENT>"
+    ]
+  },
+  "paragon": {
+    "sourceName": "Paragon Media",
+    "pushUrl": "<HTTPS_PUSH_URL>",
+    "postbackUrl": "<HTTPS_POSTBACK_URL>",
+    "pushSecret": "<SECRET>",
+    "postbackSecret": "<SECRET>",
+    "rate": "<CONTRACT_RATE>",
+    "dailyCap": "<CONTRACT_CAP>",
+    "states": [
+      "<APPROVED_STATE>"
+    ],
+    "reportRecipients": [
+      "<VENDOR_REPORT_RECIPIENT>"
+    ],
+    "pingKeyHash": "<SHA256_OF_NEW_VENDOR_KEY>",
+    "availabilityKeyHash": "<SHA256_OF_NEW_AVAILABILITY_KEY>",
+    "reportTokenHash": "<SHA256_OF_NEW_REPORT_TOKEN>",
+    "capMode": "<soft_OR_hard>",
+    "requiredCarriers": [
+      "<CONTRACT_CARRIER>"
+    ],
+    "criticalCarriers": [
+      "<CRITICAL_CARRIER>"
+    ],
+    "planYear": 2027,
+    "reservationTtlSeconds": 30,
+    "eligibility": [
+      {
+        "agentId": "<ROSTER_UUID>",
+        "state": "<APPROVED_STATE>",
+        "carriers": [
+          "<APPROVED_CARRIER>"
+        ]
+      }
+    ]
+  },
+  "appOrigin": "<HTTPS_APP_ORIGIN>",
+  "telephonyOrigin": "<HTTPS_TELEPHONY_ORIGIN>"
+}

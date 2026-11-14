@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -13,7 +14,7 @@ function load(path, exportName, bindings={}) {
   const source=readFileSync(new URL('../'+path,import.meta.url),'utf8');
   const module={exports:{}};
   vm.runInNewContext(transformSync(source,{loader:'jsx',format:'cjs',jsxFactory:'h',jsxFragment:'Fragment'}).code,{
-    h,Fragment:'fragment',module,exports:module.exports,require(name){return bindings[name]||{};},
+    h,Fragment:'fragment',module,exports:module.exports,require(name){if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;return bindings[name]||{};},
   });return module.exports[exportName];
 }
 const logs=[];

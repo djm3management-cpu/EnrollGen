@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { useEffect, useRef, useState } from "react";
 import { Smile, Image } from "lucide-react";
 import { useAppAuth } from "../../context/AuthContext";
@@ -10,7 +11,7 @@ const EMOJI = {
   Objects: [["🎉", "party celebration"], ["🎂", "birthday cake"], ["🎁", "gift present"], ["☕", "coffee"], ["🍌", "banana minions"], ["📞", "phone call"], ["📅", "calendar appointment"], ["✅", "check done yes"], ["❌", "cross no"], ["📍", "location pin"], ["🏠", "home house"], ["🚗", "car"], ["💬", "message chat"], ["✨", "sparkles"]],
 };
 const ALL = Object.values(EMOJI).flat();
-const BASE = (import.meta.env.VITE_TELEPHONY_BASE_URL || "").replace(/\/$/, "");
+const BASE = (deploymentPublic.telephonyOrigin).replace(/\/$/, "");
 
 export default function ComposePickers({ onEmoji, onGif, disabled }) {
   const [panel, setPanel] = useState(null);

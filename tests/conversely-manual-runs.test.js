@@ -19,14 +19,14 @@ const db={...base,async rpc(name,args={}){
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const tenant=id(1),agent=id(2),mark=id(3),excluded=id(4),foreign=id(5),week=currentConverselyWeek();
 const account='AC'+'a'.repeat(32),parent='CA'+'b'.repeat(32),sid=n=>'RE'+String(n).padStart(32,'0');
-const env={CONVERSELY_UPLOAD_ENABLED:'true',CONVERSELY_API_KEY:'test-key',CONVERSELY_SAMPLES_PER_AGENT:'5',CONVERSELY_CARRIERS:'UHC,Aetna,Humana',TELEPHONY_BASE_URL:'https://audio.test'};
+const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',CONVERSELY_AGENT_EXCLUSIONS:'{"pilot_agent_02":["Humana"]}',CONVERSELY_API_KEY:'test-key',CONVERSELY_SAMPLES_PER_AGENT:'5',CONVERSELY_CARRIERS:'UHC,Aetna,Humana',TELEPHONY_BASE_URL:'https://phone.test'};
 const admin={userId:'admin',orgId:'org-a',tokenPayload:{org_role:'org:admin'}};
 const query=async(sql,args=[]) => (await pg.query(sql,args)).rows;
 const file=name=>readFileSync(new URL('../supabase/migrations/'+name,import.meta.url),'utf8');
 const sent=[];
 const logs=[];
 let failAgent=null;
-const send=async(_url,body,headers)=>{const payload=JSON.parse(body);assert.equal(headers['Api-Key'],env.CONVERSELY_API_KEY);assert.equal(Object.hasOwn(headers,'X-API-Key'),false);assert.ok(payload.metadata.every(item=>item.Target==='New Gen Health Solutions'));sent.push({payload,headers});return payload.metadata[0].AgentID===failAgent?{status:200,body:'Invalid API key: '+env.CONVERSELY_API_KEY}:{status:200};};
+const send=async(_url,body,headers)=>{const payload=JSON.parse(body);assert.equal(headers['Api-Key'],env.CONVERSELY_API_KEY);assert.equal(Object.hasOwn(headers,'X-API-Key'),false);assert.ok(payload.metadata.every(item=>item.Target==='Pilot Benefit Agency'));sent.push({payload,headers});return payload.metadata[0].AgentID===failAgent?{status:200,body:'Invalid API key: '+env.CONVERSELY_API_KEY}:{status:200};};
 const tick=createComplianceWorker(db,{env,send,log:line=>logs.push(JSON.parse(line)),isPlayable:async()=>true});
 async function addCall(n,owner,carrier,score,{when=new Date(Date.now()-1000).toISOString(),intake=true,targetTenant=tenant}={}){
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_start,call_outcome,compliance_status,compliance_scorecard_id,metadata,product_type)
@@ -52,8 +52,8 @@ before(async()=>{
  CREATE TABLE compliance_missing_codes(tenant_id uuid,call_start timestamptz);
  CREATE TABLE compliance_reconciliation(tenant_id uuid,day date);
  INSERT INTO tenants VALUES('${tenant}','org-a'),('${foreign}','org-b');
- INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user-a','Agent A',NULL,true),('${mark}','${tenant}','mark-user','Mark Endres',NULL,true),('${excluded}','${tenant}','excluded-user','Agent C',NULL,true),('${id(6)}','${foreign}','foreign-user','Foreign',NULL,true);
- INSERT INTO recording_agent_subjects VALUES('${tenant}','user-a','agent_a'),('${tenant}','mark-user','mark_endres');`);
+ INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user-a','Agent A',NULL,true),('${mark}','${tenant}','mark-user','Pilot Agent 02',NULL,true),('${excluded}','${tenant}','excluded-user','Agent C',NULL,true),('${id(6)}','${foreign}','foreign-user','Foreign',NULL,true);
+ INSERT INTO recording_agent_subjects VALUES('${tenant}','user-a','agent_a'),('${tenant}','mark-user','pilot_agent_02');`);
  await pg.exec(file('123_compliance_uploads.sql'));
  await pg.exec('CREATE TABLE ix_uploads(LIKE conversely_submissions INCLUDING ALL);ALTER TABLE ix_uploads ADD COLUMN provider_message text,ADD COLUMN finalized_at timestamptz;CREATE VIEW ix_upload_admin_rows AS SELECT *,false AS is_test_enrollment FROM ix_uploads');
  const migration=file('125_enrollment_intakes.sql'),start=migration.indexOf('CREATE OR REPLACE FUNCTION public.conversely_week_candidates'),end=migration.indexOf('-- Historical rows',start);
@@ -117,7 +117,7 @@ test('later eligible agents can submit, failures show per-agent, and retries reu
  result=await history();assert.equal(result.results.find(row=>row.agent_id===mark).status,'submitted');assert.equal(result.run.status,'complete');
 });
 test('disabling the worker after a click prevents selection/delivery, and disabled or stale workers reject new requests',async()=>{
- await start();await processManualConverselyRun(db,{env:{CONVERSELY_UPLOAD_ENABLED:'false'},isPlayable:()=>assert.fail('disabled')});
+ await start();await processManualConverselyRun(db,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'false'},isPlayable:()=>assert.fail('disabled')});
  assert.equal((await history()).run.status,'pending');assert.equal(sent.length,3);
  await db.rpc('heartbeat_conversely_worker',{p_enabled:false});assert.equal((await api()(request({action:'run_conversely_now'}))).status,409);
  await query(`UPDATE conversely_worker_status SET enabled=true,heartbeat_at=now()-interval '6 minutes'`);assert.equal((await api()(request({action:'run_conversely_now'}))).status,409);
@@ -165,12 +165,12 @@ test('delivery rechecks Clerk-ID agent exclusions and allowlist changes before p
   const {decisions}=await selectConverselyWeek(db,previous,{env,isPlayable:async()=>true,tenantId:tenant});
   await db.rpc('reserve_conversely_run',{p_id:run.id,p_token:run.lease_token,p_decisions:decisions});
   const sendsBefore=sent.length;
-  await createComplianceWorker(db,{env:{...env,CONVERSELY_AGENT_EXCLUSIONS:JSON.stringify({'user-a':['Aetna']})},send,log:()=>{}})({schedule:false});
+  await createComplianceWorker(db,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...env,CONVERSELY_AGENT_EXCLUSIONS:JSON.stringify({'user-a':['Aetna']})},send,log:()=>{}})({schedule:false});
   assert.equal(sent.length,sendsBefore);
   let [slot]=await query('SELECT * FROM conversely_week_slots WHERE tenant_id=$1 AND week_start=$2',[tenant,previous]);
   assert.equal((await query('SELECT last_error FROM conversely_submissions WHERE id=$1',[slot.submission_id]))[0].last_error,'agent_contract_excluded');
   await query(`UPDATE conversely_submissions SET next_attempt_at=now()-interval '1 second' WHERE id=$1`,[slot.submission_id]);
-  await createComplianceWorker(db,{env:{...env,CONVERSELY_CARRIERS:'Humana'},send,log:()=>{}})({schedule:false});assert.equal(sent.length,sendsBefore);
+  await createComplianceWorker(db,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...env,CONVERSELY_CARRIERS:'Humana'},send,log:()=>{}})({schedule:false});assert.equal(sent.length,sendsBefore);
   assert.equal((await query('SELECT last_error FROM conversely_submissions WHERE id=$1',[slot.submission_id]))[0].last_error,'carrier_not_sms');
  }finally{await pg.exec('ROLLBACK');}
 });

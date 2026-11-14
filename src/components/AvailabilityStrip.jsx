@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { memo, useEffect, useRef, useState } from "react";
 import { AVAILABILITY_OPTIONS, availabilityLabel, requiresPhoneReady } from "../lib/availabilityStatus";
 import { useAvailability } from "../context/AvailabilityContext";
@@ -8,7 +9,7 @@ const STATUS_COLORS = Object.fromEntries(
   STATUS_OPTIONS.map((option) => [option.value, option.color])
 );
 
-const TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
+const TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {timeZone:deploymentPublic.timezone,
   hour: "2-digit",
   minute: "2-digit",
   hour12: false,

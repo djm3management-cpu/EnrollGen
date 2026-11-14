@@ -1,3 +1,4 @@
+import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { paragonReportTotals } from './_paragonControls.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
@@ -6,16 +7,17 @@ import { addDays, etDate, etMidnight, reportCsv } from './paragon-vendor-report.
 export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,makeDb = (url,key) => createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}})} = {}) => async () => {
   if (!featureEnabled('PARAGON_ENABLED')) return disabledResponse('PARAGON_ENABLED');
   if (!featureEnabled('OPERATIONAL_EMAIL_ENABLED')) return disabledResponse('OPERATIONAL_EMAIL_ENABLED');
+  const profile=deploymentProfile();
   const current = now();
-  const localHour = Number(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'numeric',hourCycle:'h23'}).format(current));
-  if (localHour !== 18) return new Response('Outside 6 PM ET window');
+  const localHour = Number(new Intl.DateTimeFormat('en-US',{timeZone:deploymentProfile().timezone,hour:'numeric',hourCycle:'h23'}).format(current));
+  if (localHour !== 18) return new Response('Outside daily report window');
   const day = etDate(current);
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key = supabaseSecretKey();
   if (!url || !key) return new Response('Database unavailable',{status:503});
   const db = makeDb(url,key);
   const {data:source,error:sourceError} = await db.from('lead_sources').select('id')
-    .eq('name','Paragon Media').eq('type','publisher').eq('active',true).maybeSingle();
+    .eq('name',profile.paragon.sourceName).eq('type','publisher').eq('active',true).maybeSingle();
   if (sourceError || !source) return new Response('Paragon source unavailable',{status:503});
   const params = {p_source_id:source.id,p_start:etMidnight(day),p_end:etMidnight(addDays(day,1))};
   const calls = [];
@@ -39,14 +41,14 @@ export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,mak
   try {
     if (!process.env.RESEND_API_KEY) throw new Error('resend_not_configured');
     const csv = reportCsv(calls);
-    const response = await fetchImpl('https://api.resend.com/emails',{
-      method:'POST',
+    const response = await fetchImpl(validateDestination(profile.email.endpoint,profile.allowedHosts),{
+      method:'POST',redirect:'error',
       headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`paragon-daily-${day}`},
       body:JSON.stringify({
-        from:'reports@newgenhealthsolutions.com',reply_to:'mike@newgenhealthsolutions.com',
-        to:['dispo@paragonmedia.io'],
-        subject:`Paragon daily dispositions — ${day} ET`,
-        text:`Attached: ${calls.length} Paragon calls received on ${day} Eastern Time. Expected amount: $${amount.toFixed(2)} using stored contract rates.`,
+        from:profile.email.from,reply_to:profile.email.replyTo,
+        to:profile.paragon.reportRecipients,
+        subject:`Paragon daily dispositions — ${day} ${profile.timezone}`,
+        text:`Attached: ${calls.length} Paragon calls received on ${day} ${deploymentProfile().timezone}. Expected amount: $${amount.toFixed(2)} using stored contract rates.`,
         attachments:[{filename:`paragon-dispositions-${day}.csv`,content:Buffer.from(csv,'utf8').toString('base64')}],
       }),signal:AbortSignal.timeout(20000),
     });
@@ -66,4 +68,4 @@ export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,mak
 };
 
 export default createDailyHandler();
-export const config = {schedule:'0,15,30 22,23 * * *'};
+export const config = {schedule:'0,15,30 * * * *'};

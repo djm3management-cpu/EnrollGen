@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { AGENCY_CLOSING } from '../../data/agencyClosing.js';
 
 const CLOSING_RELATED_INTENTS = new Set([
@@ -8,7 +9,8 @@ const CLOSING_RELATED_INTENTS = new Set([
 function normalize(text) {
   return String(text || '')
     .replace(/\[(?:agent|unknown)\]:/gi, ' ')
-    .replace(/\[PHONE_REDACTED\]|\(?609\)?[\s.-]*806[\s.-]*5996/gi, '6098065996')
+    .replace(/\[PHONE_REDACTED\]/gi, deploymentPublic.agencyLine)
+    .replace(/\+?1?\s*\(?([0-9]{3})\)?[\s.-]*([0-9]{3})[\s.-]*([0-9]{4})/g, '$1$2$3')
     .replace(/[’‘]/g, "'")
     .toLowerCase().replace(/[^a-z0-9']+/g, ' ').trim();
 }

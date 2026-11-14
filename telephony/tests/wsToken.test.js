@@ -12,15 +12,15 @@ const {mintAgentWsToken,verifyAgentWsToken,inspectAgentWsToken}=await import('..
 const {mintMediaStreamToken}=await import('../src/media/streamToken.js');
 const {handleAgentUpgrade,agentWss,sendToAgent}=await import('../src/media/agentSocket.js');
 test('existing agent token format and signing remain compatible, with no media purpose change',()=>{
-  const token=mintAgentWsToken('mike_shiomos','user_fixture','sess_fixture');
+  const token=mintAgentWsToken('pilot_agent_01','user_fixture','sess_fixture');
   const [payload,signature]=token.split('.');
   assert.equal(signature,createHmac('sha256','fixture').update(payload).digest('base64url'));
-  assert.equal(verifyAgentWsToken(token).agentId,'mike_shiomos');
+  assert.equal(verifyAgentWsToken(token).agentId,'pilot_agent_01');
   assert.equal(inspectAgentWsToken(token,Date.now()+901000).reason,'expired_token');
   assert.equal(inspectAgentWsToken(token+'bad').reason,'signature_mismatch');
   assert.equal(inspectAgentWsToken(null).reason,'missing_token');
   assert.equal(inspectAgentWsToken('invalid').reason,'malformed_token');
-  assert.equal(verifyAgentWsToken(mintMediaStreamToken({callSid:'CAfixture',agentId:'mike_shiomos',attemptId:'fixture',tenantId:'fixture',inboundCallId:'fixture'})),null);
+  assert.equal(verifyAgentWsToken(mintMediaStreamToken({callSid:'CAfixture',agentId:'pilot_agent_01',attemptId:'fixture',tenantId:'fixture',inboundCallId:'fixture'})),null);
 });
 test('agent rejection logging reports only a safe reason, never the URL or credential',()=>{
   const lines=[],writes=[];const warn=console.warn;console.warn=line=>lines.push(line);
@@ -36,28 +36,28 @@ test('agent rejection logging reports only a safe reason, never the URL or crede
 
 test('rotating the shared server signing secret invalidates old browser credentials but freshly minted tokens work',async()=>{
   const {config}=await import('../src/config.js');const original=config.agentWsSigningSecret;
-  const stale=mintAgentWsToken('mike_shiomos','user_fixture','sess_fixture');
+  const stale=mintAgentWsToken('pilot_agent_01','user_fixture','sess_fixture');
   try{
     config.agentWsSigningSecret='new-server-only-fixture-secret';
     assert.equal(inspectAgentWsToken(stale).reason,'signature_mismatch');
-    assert.equal(verifyAgentWsToken(mintAgentWsToken('mike_shiomos','user_fixture','sess_fixture')).agentId,'mike_shiomos');
+    assert.equal(verifyAgentWsToken(mintAgentWsToken('pilot_agent_01','user_fixture','sess_fixture')).agentId,'pilot_agent_01');
   }finally{config.agentWsSigningSecret=original;}
 });
 
 test('valid agent websocket authenticates the owning subject and delivers live transcript messages',async()=>{
   const originalFetch=globalThis.fetch;
   globalThis.fetch=async url=>{
-    const payload=String(url).includes('/tenant_agents')?[{id:'fixture',agent_slug:'mike_shiomos',clerk_user_id:'user_fixture',is_active:true}]:true;
+    const payload=String(url).includes('/tenant_agents')?[{id:'fixture',agent_slug:'pilot_agent_01',clerk_user_id:'user_fixture',is_active:true}]:true;
     assert.ok(String(url).startsWith('https://example.test/rest/v1/'));
     return new Response(JSON.stringify(payload),{headers:{'Content-Type':'application/json'}});
   };
   const server=createServer();server.on('upgrade',handleAgentUpgrade);
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  const ws=new WebSocket(`ws://127.0.0.1:${server.address().port}/agent?token=${mintAgentWsToken('mike_shiomos','user_fixture','sess_fixture')}`);
+  const ws=new WebSocket(`ws://127.0.0.1:${server.address().port}/agent?token=${mintAgentWsToken('pilot_agent_01','user_fixture','sess_fixture')}`);
   try{
     const [connected]=await once(ws,'message');assert.equal(JSON.parse(String(connected)).type,'connected');
     const delivered=once(ws,'message');
-    sendToAgent('mike_shiomos',{type:'transcript',speaker:'customer',text:'Fixture speech',isFinal:true});
+    sendToAgent('pilot_agent_01',{type:'transcript',speaker:'customer',text:'Fixture speech',isFinal:true});
     assert.equal(JSON.parse(String((await delivered)[0])).text,'Fixture speech');
   }finally{
     const closed=once(ws,'close');ws.close();await closed;

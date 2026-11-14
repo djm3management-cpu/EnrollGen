@@ -1,3 +1,4 @@
+import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { createHmac } from 'node:crypto';
 import { lookup } from 'node:dns/promises';
 import https from 'node:https';
@@ -20,7 +21,7 @@ export function validateUrl(value) {
   return url;
 }
 export async function postJson(urlString, body, headers = {}) {
-  const url = validateUrl(urlString);
+  const url = validateUrl(validateDestination(urlString,deploymentProfile().allowedHosts));
   const hostname = url.hostname.replace(/^\[|\]$/g,'');
   let dnsTimer;
   const addresses = await Promise.race([

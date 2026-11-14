@@ -57,12 +57,10 @@ function normalizedName(value) {
 }
 
 function rowAgentKey(row, visibleAgents) {
-  const match = visibleAgents.find((agent) =>
-    (row.agent_npn && agent.npn && row.agent_npn === agent.npn) ||
-    normalizedName(agent.name) === normalizedName(row.agent_name) ||
-    ((normalizedName(agent.name) === "mikeshiomos" && normalizedName(row.agent_name) === "michaelshiomos") ||
-      (normalizedName(agent.name) === "michaelshiomos" && normalizedName(row.agent_name) === "mikeshiomos"))
-  );
+  const match = visibleAgents.find((agent) => agent.is_active===true && (
+    row.tenant_agent_id===agent.id || (row.agent_npn && agent.npn===row.agent_npn) ||
+    agent.identity_aliases?.some(alias=>normalizedName(alias)===normalizedName(row.agent_name))
+  ));
   return match?.name || row.agent_name;
 }
 

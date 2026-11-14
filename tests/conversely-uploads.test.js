@@ -11,7 +11,7 @@ const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const tenant=id(1),agent=id(2),mark=id(3),empty=id(4);
 const account='AC'+'a'.repeat(32),parent='CA'+'b'.repeat(32),sid=n=>'RE'+String(n).padStart(32,'0');
 const now=()=>Date.parse('2026-10-27T16:00:00Z');
-const env={CONVERSELY_UPLOAD_ENABLED:'true',CONVERSELY_API_KEY:'secret',TELEPHONY_BASE_URL:'https://audio.test'};
+const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',CONVERSELY_AGENT_EXCLUSIONS:'{"pilot_agent_02":["Humana"]}',CONVERSELY_API_KEY:'secret',TELEPHONY_BASE_URL:'https://phone.test'};
 const query=(sql,args=[])=>pg.query(sql,args);
 async function addCall(n,owner,carrier,score,time,{status='complete',recording=true}={}){
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_outcome,carrier_name,call_start,compliance_status,compliance_scorecard_id,metadata)
@@ -34,7 +34,7 @@ before(async()=>{
  expected_call_sid text,channels smallint,created_at timestamptz,expires_at timestamptz);
  INSERT INTO tenants VALUES('${tenant}');
  INSERT INTO enrolled_agents(id,tenant_id,clerk_user_id,is_active) VALUES('${agent}','${tenant}','ordinary',true),('${mark}','${tenant}','mark-subject',true),('${empty}','${tenant}','empty',true);
- INSERT INTO recording_agent_subjects VALUES('${tenant}','mark-subject','mark_endres');`);
+ INSERT INTO recording_agent_subjects VALUES('${tenant}','mark-subject','pilot_agent_02');`);
  await pg.exec(readFileSync(new URL('../supabase/migrations/123_compliance_uploads.sql',import.meta.url),'utf8'));
  await pg.exec(readFileSync(new URL('../supabase/migrations/127_conversely_manual_runs.sql',import.meta.url),'utf8'));
  await addCall(10,agent,'Aetna',80,'2026-10-20T16:00:00Z');
@@ -49,14 +49,14 @@ after(()=>pg.close());
 test('carrier aliases match case-insensitively; unlisted names and restricted allowlists fail closed',()=>{
  for(const name of ['UnitedHealthcare','uhc','UNITED HEALTHCARE','AARP Medicare Advantage'])assert.equal(canonicalCarrier(name),'UnitedHealthcare');
  for(const [alias,carrier] of [['Devoted Health','Devoted'],['Centene','WellCare'],['Wellcare by Allwell','WellCare'],['Zing Health','Zing'],['Elevance','Anthem'],['Anthem Blue Cross','Anthem'],['Aetna Medicare','Aetna'],['CVS','Aetna'],['Cigna','HealthSpring'],['Cigna HealthSpring','HealthSpring'],['Humana','Humana']])assert.equal(canonicalCarrier(alias),carrier);
- assert.equal(carrierEligibility({carrier_name:'Unknown'},converselyConfiguration()),'carrier_not_sms');
+ assert.equal(carrierEligibility({carrier_name:'Unknown'},converselyConfiguration({CONVERSELY_AGENT_EXCLUSIONS:'{"pilot_agent_02":["Humana"]}'})),'carrier_not_sms');
  assert.equal(carrierEligibility({carrier_name:'Humana'},converselyConfiguration({CONVERSELY_CARRIERS:'uhc,Devoted Health'})),'carrier_not_sms');
  assert.throws(()=>converselyConfiguration({CONVERSELY_CARRIERS:'Unknown'}));
 });
 test('Humana exception uses configurable agent identifiers, never an agent name comparison',()=>{
- const config=converselyConfiguration();
- assert.equal(carrierEligibility({agent_slug:'mark_endres',agent_name:'Any Display Name',carrier_name:'Humana'},config),'agent_contract_excluded');
- assert.equal(carrierEligibility({agent_slug:'different',agent_name:'Mark Endres',carrier_name:'Humana'},config),null);
+ const config=converselyConfiguration({CONVERSELY_AGENT_EXCLUSIONS:'{"pilot_agent_02":["Humana"]}'});
+ assert.equal(carrierEligibility({agent_slug:'pilot_agent_02',agent_name:'Any Display Name',carrier_name:'Humana'},config),'agent_contract_excluded');
+ assert.equal(carrierEligibility({agent_slug:'different',agent_name:'Pilot Agent 02',carrier_name:'Humana'},config),null);
  assert.equal(carrierEligibility({agent_id:'custom-agent',carrier_name:'CVS'},converselyConfiguration({CONVERSELY_AGENT_EXCLUSIONS:'{"custom-agent":["Aetna"]}'})),'agent_contract_excluded');
 });
 test('last closed ET week handles Monday boundaries and daylight saving',()=>{
@@ -67,12 +67,12 @@ test('last closed ET week handles Monday boundaries and daylight saving',()=>{
 });
 test('sampling count is configurable and highest-score ties choose the newest call',()=>{
  const calls=[80,95,95].map((score,i)=>({tenant_id:tenant,agent_id:agent,call_id:id(i),carrier_name:'UHC',score,call_start:`2026-10-${20+i}T16:00:00Z`,compliance_status:'complete',playable:true}));
- assert.deepEqual(selectWeeklySamples(calls,converselyConfiguration()).filter(row=>row.selected).map(row=>row.call_id),[id(2)]);
+ assert.deepEqual(selectWeeklySamples(calls,converselyConfiguration({CONVERSELY_AGENT_EXCLUSIONS:'{"pilot_agent_02":["Humana"]}'})).filter(row=>row.selected).map(row=>row.call_id),[id(2)]);
  assert.deepEqual(selectWeeklySamples(calls,converselyConfiguration({CONVERSELY_SAMPLES_PER_AGENT:'2'})).filter(row=>row.selected).sort((a,b)=>a.sample_rank-b.sample_rank).map(row=>row.call_id),[id(2),id(1)]);
  for(const value of ['0','-1','NaN','1.5'])assert.throws(()=>converselyConfiguration({CONVERSELY_SAMPLES_PER_AGENT:value}));
 });
 test('disabled sampling does not reserve a run or create jobs',async()=>{
- await scheduleConverselyWeek(db,{env:{},now,isPlayable:()=>assert.fail()});
+ await scheduleConverselyWeek(db,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,},now,isPlayable:()=>assert.fail()});
  assert.equal((await query('SELECT * FROM conversely_weekly_runs')).rows.length,0);
  assert.equal((await query('SELECT * FROM conversely_submissions')).rows.length,0);
 });
@@ -99,7 +99,7 @@ test('delivery uses MP3-suffixed bearer URL, fresh retry tickets and stable idem
  await tick({schedule:false});await tick({schedule:false});assert.equal(sent.length,2);
  assert.ok(Array.isArray(sent[0].payload.metadata));
  assert.equal(sent[0].payload.metadata.length,1);
- assert.ok(sent.every(({payload})=>payload.metadata.every(item=>item.Target==='New Gen Health Solutions')));
+ assert.ok(sent.every(({payload})=>payload.metadata.every(item=>item.Target==='Pilot Benefit Agency')));
  assert.match(sent[0].payload.metadata[0].RecordingPath,/\/api\/recordings\/conversly\/[\w-]{43}\.mp3$/);
  assert.equal(sent[0].payload.metadata[0].CallType,'Medicare');
  assert.notEqual(sent[0].payload.metadata[0].RecordingPath,sent[1].payload.metadata[0].RecordingPath);
@@ -110,10 +110,10 @@ test('delivery uses MP3-suffixed bearer URL, fresh retry tickets and stable idem
 });
 test('playability probes Twilio MP3 with a bounded range and rejects unavailable recordings',async()=>{
  const candidate={account_sid:account,recording_sid:sid(10),recording_channels:2};
- assert.equal(await playableMp3(candidate,{env:{CONVERSELY_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'},fetchImpl:async(url,options)=>{
+ assert.equal(await playableMp3(candidate,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'},fetchImpl:async(url,options)=>{
   assert.match(url,/\.mp3\?/);assert.equal(options.headers.Range,'bytes=0-0');return new Response('x',{status:206,headers:{'Content-Type':'audio/mpeg'}});
  }}),true);
- assert.equal(await playableMp3(candidate,{env:{CONVERSELY_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'},fetchImpl:async()=>new Response(null,{status:404})}),false);
+ assert.equal(await playableMp3(candidate,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'},fetchImpl:async()=>new Response(null,{status:404})}),false);
 });
 test('retry lease ownership, exponential delay, five-attempt exhaustion and RLS are shared',async()=>{
  await query(`INSERT INTO conversely_submissions(tenant_id,call_id,twilio_recording_sid,enrollment_key) VALUES($1,$2,$3,'retry-test')`,[tenant,id(10),sid(10)]);

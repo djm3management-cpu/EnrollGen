@@ -1,3 +1,6 @@
+import {localDay,shiftCalendarDay} from '../../telephony/src/lib/deploymentCalendar.js';
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
+import {zonedMidnight} from '../../telephony/src/lib/deploymentSchedule.js';
 import { complete } from "../../src/lib/llm/client.ts";
 import { llmRuntime } from "./_llmTelemetry.js";
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
@@ -17,21 +20,9 @@ function getSupabase() {
   return createClient(url, serviceRoleKey);
 }
 
-function startOfToday() {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-function addDays(date, days) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function dateKey(date) {
-  return date.toISOString().slice(0, 10);
-}
+function startOfToday() {return new Date(zonedMidnight(localDay(new Date(),deploymentProfile().timezone)));}
+function addDays(date,days) {return new Date(zonedMidnight(shiftCalendarDay(localDay(date,deploymentProfile().timezone),days)));}
+function dateKey(date) {return localDay(date,deploymentProfile().timezone);}
 
 function asNumber(value) {
   const numeric = Number(value);
@@ -235,6 +226,9 @@ async function processTenant(supabase, tenant, context) {
 }
 
 export default async (_request, context) => {
+ const localParts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:deploymentProfile().timezone,weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+ if(localParts.weekday!=='Mon'||Number(localParts.hour)!==7)return new Response('Outside local schedule window');
+
   try {
     const supabase = getSupabase();
     const { data: tenants, error } = await supabase
@@ -262,5 +256,5 @@ export default async (_request, context) => {
 };
 
 export const config = {
-  schedule: "0 11 * * 1",
+  schedule: "0 * * * *",
 };

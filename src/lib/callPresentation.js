@@ -1,3 +1,4 @@
+import {deploymentPublic} from './deploymentPublic.js';
 function validDate(value) {
   if (!value) return null;
   const date = new Date(value);
@@ -10,7 +11,7 @@ export function formatCallTime(value) {
 
 export function formatCallDateTime(value) {
   const date = validDate(value);
-  return date ? `${date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })} ${formatCallTime(value)}` : '--';
+  return date ? `${date.toLocaleDateString('en-US', {timeZone:deploymentPublic.timezone, month: '2-digit', day: '2-digit', year: '2-digit' })} ${formatCallTime(value)}` : '--';
 }
 
 export function formatTalk(seconds) {

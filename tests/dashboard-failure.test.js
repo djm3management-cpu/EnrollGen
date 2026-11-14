@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -18,7 +19,7 @@ function statusFixture(){
  vm.runInNewContext(transformSync(source('../src/components/AgentStatusLog.jsx'),{loader:'jsx',format:'cjs',jsxFactory:'element'}).code,{
   module,exports:module.exports,Date,Intl,URLSearchParams,element,
   window:{setInterval:fn=>{listeners.set('timer',fn);return 1;},clearInterval(){},addEventListener:(key,fn)=>listeners.set(key,fn),removeEventListener:key=>listeners.delete(key)},
-  require(name){
+  require(name){if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
    if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({features:{PARAGON_ENABLED:true,CONVERSELY_UPLOAD_ENABLED:true,IX_UPLOAD_ENABLED:true}})};
    if(name==='react')return {...h.hooks,useId:()=> 'status-log'};
    if(name.endsWith('/AuthContext'))return {useAppAuth:()=>auth};
@@ -72,7 +73,7 @@ function dashboardFixture(failedSource){
  vm.runInNewContext(transformSync(source('../src/hooks/useDashboardData.js'),{loader:'js',format:'cjs'}).code,{
   module,exports:module.exports,Date,
   window:{setInterval:()=>1,clearInterval(){},addEventListener(){},removeEventListener(){}},
-  require(name){
+  require(name){if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
    if(name==='react')return h.hooks;
    if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({supabaseClient:client,tenant:{id:'tenant-a'},agents:roster,loading:false})};
    if(name.endsWith('/AuthContext'))return {useAppAuth:()=>({getToken})};

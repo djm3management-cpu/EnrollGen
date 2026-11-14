@@ -1,3 +1,5 @@
+import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
+import {postJson} from '../../integrations/transport.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 const LEGACY_ENROLLMENT_COLUMNS=['carrier_name','plan_name','plan_id','effective_date','application_id','enrollment_code','enrollment_confirmation_number','premium','sunfire_code','sixty_day_date','medicaid','medicaid_number','previous_carrier','sep','agency','writing_agent','hra','hra_date'];
 function omitMAEnrollmentColumns(record,payload){
@@ -60,12 +62,12 @@ function normalizeTenant(row) {
   if (!row) return null;
   return {
     id: row.id,
-    name: row.name || "",
-    ghl_webhook_url: row.ghl_webhook_url || "",
-    ghl_location_id: row.ghl_location_id || "",
+    name: deploymentProfile().agencyName,
+    ghl_webhook_url: deploymentProfile().ghl?.postCallUrl || "",
+    ghl_location_id: deploymentProfile().ghl?.locationId || "",
     coop_rates: row.coop_rates && typeof row.coop_rates === "object" ? row.coop_rates : {},
     carrier_options: Array.isArray(row.carrier_options) ? row.carrier_options : [],
-    agency_display_name: row.agency_display_name || row.name || "",
+    agency_display_name: deploymentProfile().agencyName,
   };
 }
 
@@ -79,18 +81,6 @@ async function fetchTenantAgents(supabase, tenantId) {
 
   if (error) throw error;
   return data || [];
-}
-
-function getAgentGhlUserId(agents, agentName) {
-  const raw = normalizeLookup(agentName);
-  if (!raw) return "";
-  const exact = agents.find((agent) => normalizeLookup(agent.name) === raw);
-  if (exact?.ghl_user_id) return exact.ghl_user_id;
-  const loose = agents.find((agent) => {
-    const name = normalizeLookup(agent.name);
-    return name && (name.includes(raw) || raw.includes(name));
-  });
-  return loose?.ghl_user_id || "";
 }
 
 function normalizeProductType(value) {
@@ -474,7 +464,8 @@ async function saveCheckpoint(supabase, payload, auth, tenant, { final = false }
 }
 
 function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
-  const writingAgent = safeText(payload.writing_agent) || tenantAgents.find((agent) => agent.name)?.name || "";
+  const writer=(payload.clerk_user_id?tenantAgents.find(a=>a.clerk_user_id===payload.clerk_user_id):tenantAgents.find(a=>a.id===payload.writing_agent_id));
+  const writingAgent=writer?.name||'';
   return {
     firstName: safeText(payload.customer_first_name),
     lastName: safeText(payload.customer_last_name),
@@ -493,21 +484,19 @@ function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
     effectiveDate: payload.effective_date || "",
     sixtyDayDate: payload.sixty_day_date || "",
     sep: safeText(payload.sep) || "No",
-    agency: safeText(payload.agency) || tenant.agency_display_name || tenant.name || "",
+    agency: deploymentProfile().agencyName,
     aor: writingAgent,
     assignedUserId:
-      getAgentGhlUserId(tenantAgents, writingAgent) ||
-      tenantAgents.find((agent) => agent.ghl_user_id)?.ghl_user_id ||
-      "",
+      writer?.ghl_user_id || "",
     hra: safeText(payload.hra) || "No",
     hraDate: payload.hra_date || "",
     submittedAt: new Date().toISOString(),
   };
 }
 
-export async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
+export async function sendEnrollmentWebhook(tenant, tenantAgents, payload, {send=postJson}={}) {
   if (!featureEnabled('GHL_ENABLED')) return { sent: false, sentAt: null, error: 'GHL disabled' };
-  if (!tenant?.ghl_webhook_url) {
+  if (!deploymentProfile().ghl?.postCallUrl) {
     return {
       sent: false,
       sentAt: null,
@@ -516,11 +505,11 @@ export async function sendEnrollmentWebhook(tenant, tenantAgents, payload) {
   }
 
   try {
-    const response = await fetch(tenant.ghl_webhook_url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildGhlWebhookPayload(payload, tenant, tenantAgents)),
-    });
+    const profile=deploymentProfile();
+    const outbound=buildGhlWebhookPayload(payload,tenant,tenantAgents);
+    if(!outbound.assignedUserId)throw Error('Writing agent GHL mapping required');
+    const result=await send(validateDestination(profile.ghl.postCallUrl,profile.allowedHosts),JSON.stringify(outbound));
+    const response={ok:result.status>=200&&result.status<300,status:result.status,text:async()=>''};
 
     if (response.ok) {
       return { sent: true, sentAt: new Date().toISOString(), error: "" };
@@ -666,6 +655,7 @@ async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subsc
     } else {
       const webhookResult = await sendEnrollmentWebhook(tenant, tenantAgents, {
         ...payload,
+        clerk_user_id:agent.clerk_user_id,writing_agent_id:null,
         agency: updatePayload.agency,
         writing_agent: updatePayload.writing_agent,
         enrollment_code: updatePayload.enrollment_code,

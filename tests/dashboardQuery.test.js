@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -77,7 +78,7 @@ test('dashboard executes select before filters and metrics exclude combined chil
   vm.runInNewContext(transformSync(source, { loader: 'js', format: 'cjs' }).code, {
     module, exports: module.exports, Date: FixedDate,
     window: { setInterval: () => 1, clearInterval() {}, addEventListener() {}, removeEventListener() {} },
-    require(name) {
+    require(name) {if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
       if (name === 'react') return h.hooks;
       if (name.endsWith('/useTenantConfig')) return { useTenantConfig: () => tenant };
       if (name.endsWith('/AuthContext')) return { useAppAuth: () => ({ getToken }) };

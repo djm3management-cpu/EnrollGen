@@ -1,11 +1,12 @@
+import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
 import {
   getSupabase,
   processTenant,
 } from "./nightly-analytics.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
-const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
-const NGHS_CLERK_ORG_ID = "org_3DHzWeCe9QZ4zmAYXCmUpGnDwfQ";
+const DEPLOYMENT_TENANT_ID = deploymentProfile().tenantId;
+const DEPLOYMENT_ORG_ID = deploymentProfile().organizationId;
 
 function json(status, payload) {
   return new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
@@ -24,27 +25,9 @@ async function maybeSingle(query) {
   return data || null;
 }
 
-async function findNghsTenant(supabase) {
-  const columns = "id, name, agency_display_name, clerk_org_id";
-
-  const byId = await maybeSingle(
-    supabase.from("tenants").select(columns).eq("id", NGHS_TENANT_ID)
-  );
-  if (byId) return byId;
-
-  const byClerkOrg = await maybeSingle(
-    supabase.from("tenants").select(columns).eq("clerk_org_id", NGHS_CLERK_ORG_ID)
-  );
-  if (byClerkOrg) return byClerkOrg;
-
-  const { data: byName, error } = await supabase
-    .from("tenants")
-    .select(columns)
-    .or("name.ilike.%New Gen Health%,agency_display_name.ilike.%New Gen Health%,name.ilike.%NGHS%,agency_display_name.ilike.%NGHS%")
-    .limit(1);
-
-  if (error) throw error;
-  return byName?.[0] || null;
+async function findDeploymentTenant(supabase) {
+ const {data,error}=await supabase.from('tenants').select('id,name,agency_display_name,clerk_org_id').eq('id',DEPLOYMENT_TENANT_ID).eq('clerk_org_id',DEPLOYMENT_ORG_ID).maybeSingle();
+ if(error)throw error;return data;
 }
 
 export default async (request) => {
@@ -58,12 +41,12 @@ export default async (request) => {
 
   try {
     const supabase = getSupabase();
-    const tenant = await findNghsTenant(supabase);
+    const tenant = await findDeploymentTenant(supabase);
 
     if (!tenant) {
       return json(404, {
         ok: false,
-        error: "NGHS tenant not found",
+        error: "Deployment tenant not found",
       });
     }
 

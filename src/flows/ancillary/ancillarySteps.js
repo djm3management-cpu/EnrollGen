@@ -1,4 +1,6 @@
-import { SUB_PRODUCT } from "./ancillaryConstants";
+import {AGENCY_CLOSING} from '../../data/agencyClosing.js';
+import { agencyName } from '../../lib/deploymentPublic.js';
+import { SUB_PRODUCT } from "./ancillaryConstants.js";
 
 export const ANCILLARY_STEPS = {
   [SUB_PRODUCT.HIP]: [
@@ -113,10 +115,10 @@ If we find something that fits, we'll go ahead and submit an application to get 
       purpose:
         "Identify the caller or client, establish the agent's identity, and obtain recording consent.",
       scripts: {
-        inbound: `Thank you for calling, this is [Agent Name], a licensed insurance agent with New Gen Health Solutions. Who am I speaking with today?
+        inbound: `Thank you for calling, this is [Agent Name], a licensed insurance agent with ${agencyName}. Who am I speaking with today?
 
 Before we get started, I do need to let you know that this call may be recorded for quality and compliance purposes. Is that okay with you?`,
-        outbound: `Hi [Client Name], this is [Agent Name] with New Gen Health Solutions. How are you doing today?
+        outbound: `Hi [Client Name], this is [Agent Name] with ${agencyName}. How are you doing today?
 
 Before we chat, I do need to let you know this call may be recorded for quality and compliance purposes. Is that alright?`,
       },
@@ -161,7 +163,7 @@ A lot of my clients have been looking at fixed annuity products because the rate
         },
         {
           key: "relationshipAcknowledged",
-          label: "Existing NGHS relationship acknowledged",
+          label: `Existing ${agencyName} relationship acknowledged`,
           required: true,
           mode: "outbound",
         },
@@ -410,5 +412,7 @@ And I am still here for your [Medicare/health] coverage too. If anything comes u
 };
 
 export function getAncillarySteps(subProduct) {
-  return ANCILLARY_STEPS[subProduct] || [];
+  const steps=ANCILLARY_STEPS[subProduct] || [];
+  return steps.map((step,index)=>index!==steps.length-1?step:{...step,
+    ...(step.scripts?{scripts:Object.fromEntries(Object.entries(step.scripts).map(([mode,text])=>[mode,`${text}\n\n${AGENCY_CLOSING}`]))}:{content:`${step.content||''}\n\n${AGENCY_CLOSING}`})});
 }

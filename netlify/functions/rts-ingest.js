@@ -102,7 +102,7 @@ async function getKnownData(supabase, tenantId) {
     await Promise.all([
       supabase
         .from("tenant_agents")
-        .select("id, name, npn, clerk_user_id, role")
+        .select("id, name, npn, clerk_user_id, identity_aliases")
         .eq("tenant_id", tenantId)
         .eq("is_active", true)
         .order("name"),
@@ -133,6 +133,7 @@ async function getKnownData(supabase, tenantId) {
       id: agent.id,
       name: agent.name,
       npn: agent.npn || null,
+      identity_aliases:agent.identity_aliases||[],
     })),
     carriers: [...carriersByName.values()],
   };
@@ -280,16 +281,11 @@ async function handleUpload(request, supabase, context) {
   });
 }
 
-function resolveAgentForRecord(record, mappings, agentsById) {
-  const exact = mappings.get(agentMappingKey(record.agent_raw_name, record.agent_npn));
-  const byNpn = record.agent_npn
-    ? [...mappings.values()].find((item) => normalizedKey(item.raw_npn) === normalizedKey(record.agent_npn))
-    : null;
-  const byName = [...mappings.values()].find(
-    (item) => normalizedKey(item.raw_name) === normalizedKey(record.agent_raw_name)
-  );
-  const mapping = exact || byNpn || byName;
-  return mapping?.matched_agent_id ? agentsById.get(mapping.matched_agent_id) || null : null;
+function resolveAgentForRecord(record, _mappings, agentsById) {
+ const matches=[...agentsById.values()].filter(agent=>
+  (record.agent_npn && agent.npn===record.agent_npn) ||
+  (!record.agent_npn && agent.identity_aliases?.some(alias=>normalizedKey(alias)===normalizedKey(record.agent_raw_name))));
+ return matches.length===1?matches[0]:null;
 }
 
 function buildNotes(record) {
@@ -314,7 +310,7 @@ function channelForSource(sourceType) {
 }
 
 async function handleCommit(supabase, context, body) {
-  const admin = context.actor.role === "admin" || isAdminAuth(context.auth);
+  const admin = isAdminAuth(context.auth);
   if (!admin) return json(403, { error: "Only a tenant admin can commit an RTS ingestion." });
 
   const filename = clean(body.source_filename || body.ingestion?.filename, 255);
@@ -351,7 +347,7 @@ async function handleCommit(supabase, context, body) {
   const known = await getKnownData(supabase, context.tenant.id);
   const { data: tenantAgentRows, error: tenantAgentError } = await supabase
     .from("tenant_agents")
-    .select("id, name, npn, clerk_user_id")
+    .select("id, name, npn, clerk_user_id, identity_aliases")
     .eq("tenant_id", context.tenant.id)
     .eq("is_active", true);
   if (tenantAgentError) throw tenantAgentError;

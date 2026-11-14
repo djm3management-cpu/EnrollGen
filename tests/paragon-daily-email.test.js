@@ -46,9 +46,9 @@ test('daily attachment uses the report columns and logs the send', async () => {
   const {response,events} = await run([fixture]);
   assert.equal(response.status,200);
   const body = events.find(([name]) => name === 'send')[1];
-  assert.equal(body.from,'reports@newgenhealthsolutions.com');
-  assert.equal(body.reply_to,'mike@newgenhealthsolutions.com');
-  assert.deepEqual(body.to,['dispo@paragonmedia.io']);
+  assert.equal(body.from,'reports@example.test');
+  assert.equal(body.reply_to,'reply@example.test');
+  assert.deepEqual(body.to,['recipient@example.test']);
   const csv = Buffer.from(body.attachments[0].content,'base64').toString();
   assert.equal(csv.split('\r\n')[0],'call_id,received_at,caller_phone,caller_state,duration_seconds,billable,non_billable_reason,disposition_category,app_written,serviceability');
   assert.ok(!csv.includes('SECRET'));

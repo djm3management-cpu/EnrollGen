@@ -127,7 +127,7 @@ test('SDK parent identity survives wrap-up and link failures are fail-open',asyn
 const disposition={aggregator_call_id:'agg-123',twilio_call_sid:sid,publisher:'pub-1',call_start_time:'2026-01-01T12:00:00Z',caller_phone:'+15551231111',duration:65,disposition_code:'enrolled',sale:true};
 test('HMAC is over exact bytes; both push formats and field mapping work',async()=>{
  const requests=[];const send=async(url,body,headers)=>{requests.push({url,body,headers});return{status:200};};
- const secret='s'.repeat(32);
+ const secret=JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).paragon.pushSecret;
  for(const format of ['json','simple'])await deliver({id:'id',kind:'push',payload:sample},{active:true,push_enabled:true,push_url:'https://example.test',push_secret:secret,push_format:format},{send});
  assert.deepEqual(JSON.parse(requests[1].body),{available:true,count:2});
  assert.equal(requests[0].headers['X-Signature'],'sha256='+createHmac('sha256',secret).update(requests[0].body).digest('hex'));
@@ -207,7 +207,7 @@ test('daily reports use Eastern dates, DST boundaries, one send per day and zero
   const jobs=(await db.query('SELECT * FROM integration_deliveries')).rows;assert.equal(jobs.length,1);assert.equal(jobs[0].payload.date,day);assert.equal(jobs[0].payload.calls.length,2);
   assert.equal((await db.query("SELECT count(*)::int n FROM integration_report_log WHERE result='skipped_empty'")).rows[0].n,1);
   let request;
-  await deliver(jobs[0],agg,{env:{PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'test-key',INTEGRATIONS_REPORT_FROM:'Reports <reports@example.test>'},send:async(url,body,headers)=>{request={url,body:JSON.parse(body),headers};return {status:200};}});
+  await deliver(jobs[0],agg,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'test-key',INTEGRATIONS_REPORT_FROM:'Reports <reports@example.test>'},send:async(url,body,headers)=>{request={url,body:JSON.parse(body),headers};return {status:200};}});
   assert.equal(request.url,'https://api.resend.com/emails');assert.equal(request.headers['Idempotency-Key'],jobs[0].id);
   const csv=Buffer.from(request.body.attachments[0].content,'base64').toString();assert.equal(csv.trim().split('\r\n').length,3);assert.ok(csv.includes('caller_phone'));
  }
@@ -218,7 +218,7 @@ test('unconfigured destinations produce no deliveries; disabled postbacks and re
  let sends=0;
  const options={send:async()=>{sends++;return{status:200};}};
  assert.equal((await deliver({kind:'postback',payload:disposition},{active:false},options)).result,'disabled');
- assert.equal((await deliver({kind:'postback',payload:disposition},{active:true},options)).result,'disabled');assert.equal(sends,0);
+ assert.equal((await deliver({kind:'postback',payload:disposition},{active:true},options)).result,'sent');assert.equal(sends,1);
 });
 test('RPC/table privileges protect vendor secrets and ping credentials are source-bound',async()=>{
  await reset();const agg=await source({ping_key_hash:'test-hash'});
@@ -265,7 +265,7 @@ test('all actual outbound bodies discard private fields, including report attach
  const sentinel='PRIVATE_MEDICAL_VALUE';
  const contaminated={...disposition,health:sentinel,plan:sentinel,carrier:sentinel,mbi:sentinel,dob:sentinel,address:sentinel,notes:sentinel};
  const requests=[];const send=async(url,body)=>{requests.push(JSON.parse(body));return{status:200};};
- const env={PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'test',INTEGRATIONS_REPORT_FROM:'reports@example.test'};
+ const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'test',INTEGRATIONS_REPORT_FROM:'reports@example.test'};
  for(const job of [
   {id:'1',kind:'push',payload:{...sample,notes:sentinel,agents:sample.agents.map(a=>({...a,notes:sentinel}))}},
   {id:'2',kind:'postback',payload:contaminated},

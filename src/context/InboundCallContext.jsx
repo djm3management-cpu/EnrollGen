@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { callContinuity } from "../lib/callContinuity.js";
 import { debugLog, logAudioProcessingError } from "../lib/debugLog.js";
 import { createVoiceTelemetry } from "../lib/voiceTelemetry.js";
@@ -38,7 +39,7 @@ import { computeRmsLevel, computeWaveformPeaks } from "../audio/audioPeaks.js";
 
 export const INBOUND_CALLS_ENABLED =
   import.meta.env.VITE_INBOUND_CALLS_ENABLED === "true";
-const TELEPHONY_BASE_URL = (import.meta.env.VITE_TELEPHONY_BASE_URL || "").replace(/\/$/, "");
+const TELEPHONY_BASE_URL = (deploymentPublic.telephonyOrigin).replace(/\/$/, "");
 const WS_TOKEN_REFRESH_MS = 10 * 60 * 1000;
 const WS_TOKEN_REFRESH_RETRY_MS = 30 * 1000;
 

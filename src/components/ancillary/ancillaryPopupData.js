@@ -1,3 +1,4 @@
+import { agencyName } from '../../lib/deploymentPublic.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const ANCILLARY_TRIGGER_OPTIONS = [
@@ -117,7 +118,7 @@ The good news is we can cover that gap for about a dollar a day. I'll show you t
     icon: "phone-call",
     title: "ANCILLARY FOLLOW-UP DUE",
     intro: "Call script:",
-    quote: `"Hi [Name], this is [Agent Name] from New Gen Health Solutions. Just checking in - have you received your new plan ID card yet?
+    quote: `"Hi [Name], this is [Agent Name] from ${agencyName}. Just checking in - have you received your new plan ID card yet?
 
 Great. I also wanted to circle back on that hospital benefit plan we discussed. Most of my clients end up adding it after they see what the copays look like on their first visit. It's still about $30 a month with no health questions. Want me to get that set up for you?"`,
     notes: [

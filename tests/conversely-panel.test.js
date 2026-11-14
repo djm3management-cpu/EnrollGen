@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import * as adminReviewApi from '../src/lib/adminReviewApi.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,7 +15,7 @@ function fixture(features={CONVERSELY_UPLOAD_ENABLED:true,IX_UPLOAD_ENABLED:true
  vm.runInNewContext(code,{
   module,exports:module.exports,Date,element:(type,props,...children)=>({type,props:props||{},children}),fragment:'fragment',
   setInterval:(fn,ms)=>{timers.set(++timerId,{fn,ms});return timerId;},clearInterval:id=>timers.delete(id),
-  require(name){
+  require(name){if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
    if(name.endsWith('/useTenantConfig'))return {useTenantConfig:()=>({features})};
    if(name==='react')return h.hooks;
    if(name.endsWith('/adminReviewApi.js'))return adminReviewApi;

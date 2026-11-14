@@ -1,0 +1,1 @@
+export function profileForIx(environment){const p=JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON);p.ix.environment=environment;p.ix.origin=environment==='production'?'https://api.sunfirematrix.com':'https://test-api.sunfirematrix.com';return JSON.stringify(p);}

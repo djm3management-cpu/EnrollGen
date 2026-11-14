@@ -4,8 +4,8 @@ import {createWorker,deliver} from '../integrations/worker.js';
 import {deliveryDiagnostic} from '../integrations/diagnostics.js';
 
 test('missing worker mail variables survive in both ledger RPC and logs without sending', async () => {
-  for (const config of [{},{RESEND_API_KEY:'secret'},{INTEGRATIONS_REPORT_FROM:'reports@example.test'}]) {
-    const env={PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',...config};
+  for (const config of [{}, {INTEGRATIONS_REPORT_FROM:'reports@example.test'}]) {
+    const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',...config};
     const job={id:'job',kind:'report',source_id:'source',payload:{date:'2026-10-01',calls:[]},attempts:1,lease_token:'lease',expires_at:new Date(Date.now()+86400000).toISOString()};
     const queue=[job],finished=[],logs=[];
     const db={rpc:async(name,params)=>{
@@ -16,7 +16,7 @@ test('missing worker mail variables survive in both ledger RPC and logs without 
     await createWorker(db,{env,send:async()=>assert.fail('mail must not be sent'),log:l=>logs.push(JSON.parse(l))})({schedule:false});
     assert.equal(finished[0].p_result,'delivery_error');
     assert.equal(finished[0].p_error.message,'Report mail not configured');
-    assert.deepEqual(finished[0].p_error.missing_env,['RESEND_API_KEY','INTEGRATIONS_REPORT_FROM'].filter(k=>!env[k]));
+    assert.deepEqual(finished[0].p_error.missing_env,['RESEND_API_KEY'].filter(k=>!env[k]));
     assert.deepEqual(logs[0].error,finished[0].p_error);
   }
 });
@@ -28,7 +28,7 @@ test('network and CSV exceptions retain safe diagnostics; arbitrary text and sta
 });
 test('report HTTP rejection preserves safe provider reason and stable delivery key', async () => {
   const job={id:'stable-id',kind:'report',payload:{date:'2026-10-01',calls:[]}};
-  const result=await deliver(job,{active:true,report_emails:['dispo@example.test']},{env:{PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'secret',INTEGRATIONS_REPORT_FROM:'reports@example.test'},send:async(url,body,headers)=>{
+  const result=await deliver(job,{active:true,report_emails:['dispo@example.test']},{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,PARAGON_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',RESEND_API_KEY:'secret',INTEGRATIONS_REPORT_FROM:'reports@example.test'},send:async(url,body,headers)=>{
     assert.equal(headers['Idempotency-Key'],'stable-id');
     assert.equal(JSON.parse(body).attachments.length,1);
     return {status:403,error:{name:'validation_error',message:'The secret.example domain is not verified; bearer secret'}};

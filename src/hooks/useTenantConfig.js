@@ -52,13 +52,15 @@ async function getTenantBundle(getToken) {
       import("../lib/postCallPipeline"),
     ]);
     const { registerClerkTokenGetter, getClerkSupabase, supabase } = supabaseModule;
-    const { fetchTenantAgents, fetchTenantConfig } = pipelineModule;
+    const { fetchTenantConfig } = pipelineModule;
     // Fresh-token client: re-resolves the Clerk token per request so it
     // never goes stale (Clerk tokens expire in about 60 seconds).
     registerClerkTokenGetter(options => getSupabaseToken(getToken, options));
     const client = getClerkSupabase() || supabase;
     const tenant = await fetchTenantConfig(client);
-    const agents = tenant?.id ? await fetchTenantAgents(client, tenant.id) : [];
+    const rosterResponse=await fetchWithClerk(getToken,'/api/deployment-roster');
+    if(!rosterResponse.ok)throw Error('Deployment roster unavailable.');
+    const {roster:agents}=await rosterResponse.json();
 
     const response = await fetchWithClerk(getToken, '/api/deployment-features');
     if (!response.ok) throw new Error('Deployment features unavailable.');

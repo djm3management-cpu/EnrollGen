@@ -1,3 +1,4 @@
+import { agencyName } from '../lib/deploymentPublic.js';
 import { debugLog } from "../lib/debugLog.js";
 import { useState, useMemo, useEffect } from "react";
 import {
@@ -471,7 +472,7 @@ export default function CarrierRef() {
   );
   const activeStates = useMemo(() => new Set(Object.keys(carrierStates)), [carrierStates]);
 
-  /* Every state on the map that is NOT in NGHS ACTIVE = orange expansion state */
+  /* Every state on the map that is NOT in agency ACTIVE = orange expansion state */
   const acaExpansionStates = useMemo(() => {
     const set = new Set();
     for (const code of Object.keys(STATE_PATHS)) {
@@ -550,7 +551,7 @@ export default function CarrierRef() {
     const isSel = selected === code;
     const isHov = hovered === code;
 
-    /* Expansion states (non-NGHS with ACA data): orange tint */
+    /* Expansion states (non-agency with ACA data): orange tint */
     if (!isActive && isExpansion) {
       const sel = selected === code;
       const hov = hovered === code;
@@ -878,7 +879,7 @@ export default function CarrierRef() {
             })}
           </svg>
 
-          {/* Hover tooltip, NGHS active states */}
+          {/* Hover tooltip, agency active states */}
           {hovered && carrierStates[hovered] && (
             <div
               style={{
@@ -1072,7 +1073,7 @@ export default function CarrierRef() {
           </div>
         </section>
 
-        {/* Sidebar, NGHS active states */}
+        {/* Sidebar, agency active states */}
         {selected && carrierStates[selected] && (
           <StateSidebar
             key={selected}
@@ -1083,7 +1084,7 @@ export default function CarrierRef() {
           />
         )}
 
-        {/* Sidebar, ACA expansion states (not in NGHS) */}
+        {/* Sidebar, ACA expansion states (not in agency) */}
         {selected && !carrierStates[selected] && acaExpansionStates.has(selected) && (
           <aside
             className="card carrier-ref-sidebar"
@@ -1228,7 +1229,7 @@ export default function CarrierRef() {
               fontSize: "0.62rem", color: "var(--text-muted)", textAlign: "center",
               fontFamily: "var(--font-mono)",
             }}>
-              Not an active NGHS state · ACA data only
+              Not an active {agencyName} state · ACA data only
             </div>
           </aside>
         )}

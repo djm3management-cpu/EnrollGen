@@ -30,8 +30,8 @@ before(async()=>{
  CREATE TABLE compliance_missing_codes(tenant_id uuid,call_start timestamptz);
  CREATE TABLE compliance_reconciliation(tenant_id uuid,day date);
  INSERT INTO tenants VALUES('${tenant}','org-a'),('${id(7)}','org-b');
- INSERT INTO enrolled_agents VALUES('${mike}','${tenant}','mike-user','Mike Shiomos',NULL,true),('${dylan}','${tenant}','dylan-user','Dylan Maria',NULL,true);
- INSERT INTO recording_agent_subjects VALUES('${tenant}','mike-user','mike_shiomos'),('${tenant}','dylan-user','dylan_maria');
+ INSERT INTO enrolled_agents VALUES('${mike}','${tenant}','mike-user','Pilot Agent 01',NULL,true),('${dylan}','${tenant}','dylan-user','Pilot Agent 03',NULL,true);
+ INSERT INTO recording_agent_subjects VALUES('${tenant}','mike-user','pilot_agent_01'),('${tenant}','dylan-user','pilot_agent_03');
  INSERT INTO sessions VALUES('${id(8)}','${tenant}','${mike}','${mikeCall}'),('${id(9)}','${tenant}','${dylan}','${dylanCall}');
  INSERT INTO call_records(id,tenant_id,agent_id,session_id,call_outcome) VALUES('${mikeCall}','${tenant}','${mike}','${id(8)}','incomplete'),('${dylanCall}','${tenant}','${dylan}','${id(9)}','incomplete'),('${foreignCall}','${id(7)}','${id(10)}',NULL,'incomplete');`);
 });

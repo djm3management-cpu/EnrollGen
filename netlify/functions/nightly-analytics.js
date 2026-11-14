@@ -1,9 +1,12 @@
+import {localDay,shiftCalendarDay} from '../../telephony/src/lib/deploymentCalendar.js';
+import {zonedMidnight} from '../../telephony/src/lib/deploymentSchedule.js';
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const ET_PARTS = new Intl.DateTimeFormat("en-US", {
-  timeZone: "America/New_York",
+  timeZone: deploymentProfile().timezone,
   weekday: "short",
   hour: "numeric",
   hourCycle: "h23",
@@ -21,28 +24,11 @@ export function getSupabase() {
   return createClient(url, serviceRoleKey);
 }
 
-function startOfToday() {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+function startOfToday() {return new Date(zonedMidnight(localDay(new Date(),deploymentProfile().timezone)));}
+function addDays(date,days) {return new Date(zonedMidnight(shiftCalendarDay(localDay(date,deploymentProfile().timezone),days)));}
+function dateKey(date) {return localDay(date,deploymentProfile().timezone);}
 
-function addDays(date, days) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function dateKey(date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function inRange(value, start, end = null) {
-  const time = new Date(value || 0).getTime();
-  if (!Number.isFinite(time)) return false;
-  if (time < start.getTime()) return false;
-  return !end || time < end.getTime();
-}
+function inRange(value,start,end=null) {const time=new Date(value||0).getTime();return Number.isFinite(time)&&time>=start.getTime()&&(!end||time<end.getTime());}
 
 function asNumber(value) {
   const numeric = Number(value);
@@ -355,6 +341,9 @@ export async function processTenant(supabase, tenant) {
 }
 
 export default async () => {
+ const localParts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:deploymentProfile().timezone,weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+ if(Number(localParts.hour)!==3)return new Response('Outside local schedule window');
+
   try {
     const supabase = getSupabase();
     const { data: tenants, error } = await supabase
@@ -382,5 +371,5 @@ export default async () => {
 };
 
 export const config = {
-  schedule: "0 6 * * *",
+  schedule: "0 * * * *",
 };

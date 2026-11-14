@@ -1,0 +1,12 @@
+import {requireClerkAuth} from './_clerkAuth.js';
+import {resolveCallAccessIdentity,getEvidenceServiceClient,evidenceJson,evidenceFailure,EvidenceError} from './_evidenceAccess.js';
+import {deploymentProfile,publicDeploymentProfile,agencyPhone,staffedHoursLabel} from '../../telephony/src/lib/deploymentProfile.js';
+import {loadDeploymentRoster} from '../../telephony/src/lib/deploymentRoster.js';
+export default async request=>{const auth=await requireClerkAuth(request);if(auth.response)return auth.response;
+ try{const db=getEvidenceServiceClient(),identity=await resolveCallAccessIdentity(db,auth),p=deploymentProfile();
+ if(identity.tenant.id!==p.tenantId)throw new EvidenceError(403,'Agency unavailable.');
+ const roster=await loadDeploymentRoster(db,p),{data,error}=await db.from('agent_availability').select('agent_id,status,available').in('agent_id',roster.map(a=>a.agent_slug));if(error)throw error;
+ const agents=roster.map(a=>({...data.find(r=>r.agent_id===a.agent_slug),agent_id:a.agent_slug,agent_name:a.name,licensed_states:a.licensed_states}));const available_count=agents.filter(a=>a.available===true).length;
+ return evidenceJson(200,{profile:publicDeploymentProfile(p),agencyLine:agencyPhone(p),agencyHours:staffedHoursLabel(p),agents,available_count,any_available:available_count>0});
+ }catch(e){return evidenceFailure(e);}};
+export const config={path:'/api/deployment-status'};

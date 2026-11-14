@@ -11,7 +11,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "npm run check:imports && node --test tests/*.test.js",
+    "test": "npm run check:imports && node --import ./tests/fixtures/deployment-env.js --test tests/*.test.js",
     "check:imports": "node scripts/check-import-boundaries.js"
   },
   "dependencies": {

@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMessageThread } from "../../hooks/useMessages";
 import { useTenantConfig } from "../../hooks/useTenantConfig";
@@ -23,7 +24,7 @@ function fmtDayLabel(value) {
   const today = new Date();
   const sameDay = d.toDateString() === today.toDateString();
   if (sameDay) return "TODAY";
-  return d.toLocaleDateString([], { month: "2-digit", day: "2-digit", year: "2-digit" });
+  return d.toLocaleDateString([], {timeZone:deploymentPublic.timezone, month: "2-digit", day: "2-digit", year: "2-digit" });
 }
 
 const ACTIVITY_LABELS = {

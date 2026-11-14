@@ -21,7 +21,7 @@ import ScriptEditor from "./ScriptEditor";
 import AgentToolsProductQuiz, {
   AgentToolsMedMaxScenarioQuiz,
 } from "./AgentToolsProductQuiz";
-import { NGHS_SEP_SCRIPT } from "../context/SEPScript";
+import { AGENCY_SEP_SCRIPT } from "../context/SEPScript";
 import "../AgentTools.css";
 
 const OFFICIAL_REFS = [
@@ -766,7 +766,7 @@ export default function AgentTools({ mode = "ma" }) {
           />
         );
       case "ma-seps":
-        return <SEPReference script={NGHS_SEP_SCRIPT} />;
+        return <SEPReference script={AGENCY_SEP_SCRIPT} />;
       case "script-editor":
         return <ScriptEditor />;
       case "quizzes":

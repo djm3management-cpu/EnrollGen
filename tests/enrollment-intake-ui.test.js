@@ -1,3 +1,4 @@
+import roster from './fixtures/deployment-roster.json' with {type:'json'};
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -10,7 +11,7 @@ const compiled=transformSync(source,{loader:'jsx',jsxFactory:'element',format:'c
 const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.children||[]).flat(Infinity).flatMap(walk)];
 function fixture({admin=false,initialPrefill={}}={}){
  const h=hookHarness(),requests=[],timers=new Map();let timerId=0,saved=0,closed=0;
- const prefill={...domain.emptyIntake('Mike Shiomos'),firstName:'Jane',lastName:'Doe',dob:'1955-02-28',phone:'2125550101',state:'NY',mbi:'1ab2cd3ef45',prevCarrier:'Original Medicare',newCarrier:'Aetna',planName:'Manual Plan',enrollCode:'AEP',premium:'0',contractId:'H1234',planId:'001',sixtyDayDate:'2027-03-02'};
+ const prefill={...domain.emptyIntake('Pilot Agent 01',roster),firstName:'Jane',lastName:'Doe',dob:'1955-02-28',phone:'2125550101',state:'NY',mbi:'1ab2cd3ef45',prevCarrier:'Original Medicare',newCarrier:'Aetna',planName:'Manual Plan',enrollCode:'AEP',premium:'0',contractId:'H1234',planId:'001',sixtyDayDate:'2027-03-02'};
  const getToken=()=> 'token';
  const component=vm.runInNewContext(compiled+';EnrollmentIntake',{
   ...h.hooks,...domain,Event,encodeURIComponent,
@@ -20,7 +21,7 @@ function fixture({admin=false,initialPrefill={}}={}){
   window:{dispatchEvent(){}},element:(type,props,...children)=>({type,props:props||{},children}),
   fetchWithClerk:async(token,url,options)=>{
    requests.push({url,options});
-   return Response.json(options?{saved:true,id:'intake'}:url.includes('&plans=')?{plans:[{id:1,plan_name:'Landscape Plan',contract_id:'H9999',plan_id:'012',segment_id:'2',monthly_premium:25.5}]}:{admin,intakes:[],prefill,contact_id:'contact'});
+   return Response.json(options?{saved:true,id:'intake'}:url.includes('&plans=')?{plans:[{id:1,plan_name:'Landscape Plan',contract_id:'H9999',plan_id:'012',segment_id:'2',monthly_premium:25.5}]}:{roster,admin,intakes:[],prefill,contact_id:'contact'});
   },
  });
  h.mount(()=>component({callId:'call',initialPrefill,onClose:()=>closed++,onSaved:()=>saved++}));

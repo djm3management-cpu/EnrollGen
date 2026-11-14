@@ -1,3 +1,5 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
+import { agencyName } from '../lib/deploymentPublic.js';
 import { MA_CY2027_GUIDANCE, isRetiredMaTimingGuidance } from '../data/maCompliance2027.js';
 import { LIVE_ASSISTANT_PROMPT, shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { debugLog } from "../lib/debugLog.js";
@@ -467,7 +469,7 @@ ${AGENCY_CLOSING_GUIDANCE}
 
 ${MA_CY2027_GUIDANCE}
 
-You are a knowledgeable Medicare sales assistant for agents at New Gen Health Solutions. An agent is on a LIVE call and needs a quick, accurate answer to their question.
+You are a knowledgeable Medicare sales assistant for agents at ${agencyName}. An agent is on a LIVE call and needs a quick, accurate answer to their question.
 Answer the agent's question first. Help with scripts, benefits, objections and lookups. Use verified facts; never invent coverage. For drugs verify dose/form and pharmacy; for providers verify exact location and plan/network using Sunfire or the carrier tool. Keep answers to one or two short plain-text lines, at most 40 words. No grades, scores, counts or unsolicited disclosure reminders.
 ## YOUR CAPABILITIES, you can answer questions about
 - CMS compliance rules and requirements
@@ -1093,7 +1095,7 @@ SECTION CONTEXT (rolling window for current section):
           level: "info",
           text: `${prefix}\n\n${raw}`,
           retrievalTrace,
-          ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          ts: new Date().toLocaleTimeString([], {timeZone:deploymentPublic.timezone, hour: "2-digit", minute: "2-digit" }),
         };
         setMessages((prev) => [...prev.slice(-19), entry]);
         logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, {

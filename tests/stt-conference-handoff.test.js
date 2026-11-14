@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -9,7 +10,7 @@ test('conference upgrade reserves server transcription before checkpoint/network
   for(const failed of [false,true]){
     const h=hookHarness();let release;
     const checkpoint=new Promise(resolve=>{release=resolve;});
-    const context=vm.createContext({...h.hooks,window:{setInterval:()=>1,clearInterval(){}},
+    const context=vm.createContext({deploymentPublic,...h.hooks,window:{setInterval:()=>1,clearInterval(){}},
       useTenantConfig:()=>({features:{CONFERENCE_CALLING_ENABLED:true}}),flushConferenceCheckpoint:()=>checkpoint,
       fetchWithClerk:async(_get,url)=>({ok:!(failed&&url.endsWith('action')),json:async()=>({enabled:true,conference:url.endsWith('action')?{callId:'conference'}:null,error:'failed'})}),
     });
@@ -26,7 +27,7 @@ test('conference upgrade reserves server transcription before checkpoint/network
 
 test('disabled conference controls neither discover capabilities nor poll or dispatch',async()=>{
  const h=hookHarness();let requests=0;
- const context=vm.createContext({...h.hooks,useTenantConfig:()=>({features:{}}),window:{setInterval:()=>1,clearInterval(){}},fetchWithClerk:()=>{requests++;throw Error('unexpected');},flushConferenceCheckpoint:()=>assert.fail('no checkpoint')});
+ const context=vm.createContext({deploymentPublic,...h.hooks,useTenantConfig:()=>({features:{}}),window:{setInterval:()=>1,clearInterval(){}},fetchWithClerk:()=>{requests++;throw Error('unexpected');},flushConferenceCheckpoint:()=>assert.fail('no checkpoint')});
  vm.runInContext(source+';globalThis.useHook=useConferenceCall;',context);
  h.mount(()=>context.useHook({getToken:async()=> 'credential',activeCall:{params:{twilioCallSid:'CA'+'1'.repeat(32)}}}));
  try{await h.flush();assert.equal(h.value.enabled,false);assert.equal(requests,0);await assert.rejects(h.value.run({action:'dial',mode:'add'}),/disabled/);assert.equal(requests,0);}finally{h.unmount();}

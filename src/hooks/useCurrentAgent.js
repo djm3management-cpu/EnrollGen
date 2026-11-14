@@ -1,3 +1,4 @@
+import {useAdminReviewAccess} from './useAdminReviewAccess.js';
 import { debugLog } from "../lib/debugLog.js";
 import { useMemo } from "react";
 import { useTenantConfig } from "./useTenantConfig";
@@ -14,12 +15,12 @@ import { resolveRequestingAgentUuid } from "../lib/agentIdentity";
 // than calling useUser() directly, which throws outside <ClerkProvider>.
 export function useCurrentAgent() {
   const { agents } = useTenantConfig();
+  const {canReview}=useAdminReviewAccess();
   const availability = useAvailability();
   const agentSlug = availability?.agentId || null;
 
   return useMemo(() => {
     const agentUuid = resolveRequestingAgentUuid(agents, agentSlug);
-    const match = (agents || []).find((agent) => agent.agent_slug === agentSlug) || null;
 
     if (!agentUuid && agentSlug) {
       debugLog("hooks/useCurrentAgent.js warn");
@@ -28,9 +29,9 @@ export function useCurrentAgent() {
     return {
       agentSlug,
       agentUuid,
-      role: match?.role || "agent",
-      isAdmin: match?.role === "admin",
+      role: canReview ? "admin" : "agent",
+      isAdmin: canReview,
       ready: Boolean(agentUuid),
     };
-  }, [agents, agentSlug]);
+  }, [agents, agentSlug,canReview]);
 }

@@ -17,7 +17,7 @@ values
     'If the qualifying condition is not verified within 60 days, CMS requires disenrollment from the C-SNP.',
     array['Diabetes', 'CHF', 'Cardiovascular'],
     'Provider can return the verification form by phone, email, or fax once the request is issued.',
-    'https://www.uhcprovider.com/content/provider/en/resource-library/news/2025/complete-verification-c-snp-patients.html'
+    NULL
   ),
   (
     'humana',
@@ -27,7 +27,7 @@ values
     'The member must be verified within 60 days to stay enrolled in the C-SNP.',
     array['Diabetes', 'CHF', 'Cardiovascular'],
     'Humana''s public C-SNP page lists diabetes, cardiovascular disease, chronic heart failure, chronic lung disease, and kidney disease among the qualifying conditions.',
-    'https://www.humana.com/medicare/medicare-advantage-plans/humana-special-needs/c-snp'
+    NULL
   ),
   (
     'wellcare',
@@ -37,7 +37,7 @@ values
     'If Wellcare cannot verify the condition, CMS requires disenrollment from the C-SNP.',
     array['Diabetes', 'CHF', 'Cardiovascular'],
     'Wellcare tells members to provide the providers who can verify the condition during enrollment.',
-    'https://www.wellcare.com/-/media/PDFs/NA/Member/Medicare/NA_Care_Chronic-Condition-Special-Needs_CSNP-Plans_2023_R.ashx'
+    NULL
   )
 on conflict (carrier) do update
 set

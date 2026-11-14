@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { LIVE_ASSISTANT_PROMPT, shortLiveMessage } from "../lib/liveAssistantPolicy.js";
 import { debugLog } from "../lib/debugLog.js";
 import { coachingFormat } from "../lib/llm/schemas/coaching.js";
@@ -709,7 +710,7 @@ SECTION CONTEXT (rolling window):
           id: Date.now(), level: "info",
           text: `${prefix}\n\n${raw}`,
           retrievalTrace,
-          ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          ts: new Date().toLocaleTimeString([], {timeZone:deploymentPublic.timezone, hour: "2-digit", minute: "2-digit" }),
         }]);
         logEntry(LOG_TYPES.COPILOT_MSG, "info", `Q&A: ${question} → ${raw}`, { section: currentStep, retrievalTrace });
       }

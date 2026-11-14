@@ -1,23 +1,16 @@
+import {deploymentPublic} from './deploymentPublic.js';
+import {calendarMidnight,localDay,shiftCalendarDay} from '../../telephony/src/lib/deploymentCalendar.js';
 export const DASHBOARD_RANGES = [
   ['today', 'Today'], ['week', 'This Week'], ['month', 'This Month'], ['30days', 'Last 30 Days'],
 ];
 export const COMPLETED_ENROLLMENTS = new Set(['enrolled', 'enrolled_pending_verification']);
-export function dayStart(date) {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
-}
-export function shiftDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-export function rangeStart(range, now) {
-  const today = dayStart(now);
-  if (range === 'week') return shiftDays(today, -((today.getDay() + 6) % 7));
-  if (range === 'month') return new Date(today.getFullYear(), today.getMonth(), 1);
-  if (range === '30days') return shiftDays(today, -29);
-  return today;
+export function dayStart(date) {return new Date(calendarMidnight(localDay(date,deploymentPublic.timezone),deploymentPublic.timezone));}
+export function shiftDays(date,days) {return new Date(calendarMidnight(shiftCalendarDay(localDay(date,deploymentPublic.timezone),days),deploymentPublic.timezone));}
+export function rangeStart(range,now) {
+ const today=dayStart(now),day=localDay(now,deploymentPublic.timezone),calendar=new Date(`${day}T12:00:00Z`);
+ if(range==='week')return shiftDays(today,-((calendar.getUTCDay()+6)%7));
+ if(range==='month')return new Date(calendarMidnight(day.slice(0,7)+'-01',deploymentPublic.timezone));
+ return range==='30days'?shiftDays(today,-29):today;
 }
 export function callScore(call) {
   const related = call.compliance_scorecards;
@@ -54,7 +47,7 @@ export function buildDashboard(calls, range, now = new Date()) {
   for (let cursor = new Date(start); cursor < tomorrow;) {
     const end = new Date(cursor);
     if (range === 'today') end.setTime(end.getTime() + 3600000);
-    else end.setDate(end.getDate() + 1);
+    else end.setTime(shiftDays(cursor,1).getTime());
     buckets.push({ date: new Date(cursor), ...summarize(selected.filter(call => inWindow(call, cursor, end))) });
     cursor = end;
   }

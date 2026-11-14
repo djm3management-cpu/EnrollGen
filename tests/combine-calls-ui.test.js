@@ -1,3 +1,4 @@
+import * as publicDisplay from '../src/lib/deploymentPublic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -16,7 +17,7 @@ function load(name, harness, imports, window = new EventTarget()) {
   const module = { exports: {} };
   const { code } = transformSync(source, { loader: 'jsx', format: 'cjs' });
   vm.runInNewContext(code, { module, exports: module.exports, React, window, Event,
-    require(name) {
+    require(name) {if(name.endsWith('/deploymentPublic.js')||name.endsWith('/deploymentPublic'))return publicDisplay;
       if (name === 'react') return harness.hooks;
       if (name.includes('callPresentation')) return { formatCallDateTime, formatTalk };
       if (imports[name]) return imports[name];

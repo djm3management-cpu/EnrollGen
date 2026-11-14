@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useContactsList, useContactMutations, contactDisplayName } from '../../hooks/useContacts';
 import { LINES_OF_BUSINESS, opportunityFields } from '../../lib/opportunities';
@@ -116,7 +117,7 @@ export function OpportunityEditor({ data, prefill = {}, existing = null, onSaved
         <label className="contacts-edit-field"><span>SOURCE</span><select className="contacts-edit-input" value={fields.lead_source_id} onChange={(event) => set('lead_source_id', event.target.value)}><option value="">No source</option>{data.sources.filter((row) => data.activeSources.some((source) => source.id === row.id) || row.id === fields.lead_source_id).map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
         <label className="contacts-edit-field"><span>LINKED CALL</span><select className="contacts-edit-input" value={fields.call_id} onChange={(event) => set('call_id', event.target.value)}><option value="">{existing ? 'No call' : 'Latest related call (if any)'}</option>
           {fields.call_id && !calls.some((row) => row.id === fields.call_id) && <option value={fields.call_id}>Selected call</option>}
-          {calls.map((row) => <option key={row.id} value={row.id}>{row.call_start ? new Date(row.call_start).toLocaleString() : String(row.id ?? '').slice(0, 8)} · {row.call_outcome || row.product_type || 'Call'}</option>)}
+          {calls.map((row) => <option key={row.id} value={row.id}>{row.call_start ? new Date(row.call_start).toLocaleString(undefined,{timeZone:deploymentPublic.timezone}) : String(row.id ?? '').slice(0, 8)} · {row.call_outcome || row.product_type || 'Call'}</option>)}
         </select></label>
         <label className="contacts-edit-field contacts-edit-field-wide"><span>NOTES</span><textarea ref={notesRef} className="contacts-edit-input contacts-edit-textarea" rows={4} maxLength={10000} value={fields.notes} onChange={(event) => set('notes', event.target.value)} /></label>
       </div>

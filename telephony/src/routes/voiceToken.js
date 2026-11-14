@@ -18,7 +18,7 @@ voiceTokenRouter.get("/api/voice/token", (_req, res) => {
 
 // Issues the Twilio Voice access token for the browser softphone plus
 // a signed token for the /agent transcript WebSocket.
-// Body: { agent_id: "mark_endres" }
+// Body: { agent_id: "agent_01" }
 voiceTokenRouter.post("/api/voice/token", async (req, res) => {
   const clerkUser = await requireClerkUser(req, res);
   if (!clerkUser) return;

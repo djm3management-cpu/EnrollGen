@@ -1,3 +1,5 @@
+import {verifyDeploymentConfiguration} from '../telephony/src/lib/deploymentRoster.js';
+import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
 import "./authSafety.js";
 import {deliverEnrollmentWebhooks} from './enrollmentWebhook.js';
@@ -16,35 +18,37 @@ export function retryDelay(kind, attempt) {
 export async function deliver(job, target, { send=postJson, env=process.env } = {}) {
   if (!featureEnabled('PARAGON_ENABLED', env) || (job.kind === 'report' && !featureEnabled('OPERATIONAL_EMAIL_ENABLED', env))) return {status:0,result:'disabled'};
   if (!target?.active || (job.kind==='push' && !target.push_enabled)) return {status:0,result:'disabled'};
+  const profile=deploymentProfile(env);
   const headers={'Idempotency-Key':job.id,'X-Delivery-ID':job.id};
   let payload, url, secret;
   if(job.kind==='push') {
-    payload=availabilityPayload(job.payload,job.config_snapshot?.format ?? target.push_format);url=target.push_url;secret=target.push_secret;
+    payload=availabilityPayload(job.payload,job.config_snapshot?.format ?? target.push_format);url=profile.paragon.pushUrl;secret=profile.paragon.pushSecret;
     if (!url || !secret) return {status:0,result:'disabled'};
   } else if(job.kind==='postback') {
-    payload=mappedDisposition(job.payload,job.config_snapshot?.field_map ?? target.postback_field_map);url=target.postback_url;secret=target.postback_secret;
+    payload=mappedDisposition(job.payload,job.config_snapshot?.field_map ?? target.postback_field_map);url=profile.paragon.postbackUrl;secret=profile.paragon.postbackSecret;
     if(!url) return {status:0,result:'disabled'};
   } else {
-    if(!target.report_emails?.length) return {status:0,result:'disabled'};
-    if(!env.RESEND_API_KEY || !env.INTEGRATIONS_REPORT_FROM) throw Error('Report mail not configured');
+
+    if(!env.RESEND_API_KEY) throw Error('Report mail not configured');
     // CSV projection uses exactly the postback's canonical fields, never CRM data.
     const csv=csvReport(job.payload.calls);
-    payload={from:env.INTEGRATIONS_REPORT_FROM,to:target.report_emails,
+    payload={from:profile.email.from,reply_to:profile.email.replyTo,to:profile.paragon.reportRecipients,
       subject:`Daily call dispositions — ${job.payload.date}`,
-      text:`Call dispositions for ${job.payload.date} (America/New_York).`,
+      text:`Call dispositions for ${job.payload.date} (${profile.timezone}).`,
       attachments:[{filename:`dispositions-${job.payload.date}.csv`,content:Buffer.from(csv).toString('base64')}]};
-    url='https://api.resend.com/emails';headers.Authorization=`Bearer ${env.RESEND_API_KEY}`;
+    url=profile.email.endpoint;headers.Authorization=`Bearer ${env.RESEND_API_KEY}`;
   }
   if(job.kind!=='report') assertPrivateFieldsAbsent(payload);
   const body=JSON.stringify(payload);
   if(secret) headers['X-Signature']=signature(body,secret);
-  const response=await send(url,body,headers);
+  const response=await send(validateDestination(url,profile.allowedHosts),body,headers);
   const sent = response.status>=200 && response.status<300;
   return {status:response.status,result:sent?'sent':'http_error',
     ...(!sent && response.error ? {error:deliveryDiagnostic(response.error,{provider:job.kind==='report'})} : {})};
 }
 export function createWorker(db, { send, env=process.env, log=console.log }={}) {
   deploymentFeatures(env);
+  deploymentProfile(env);
   const rpc=async(name,params={})=>{const {data,error}=await db.rpc(name,params);if(error)throw Error(name+' failed');return data;};
   const complianceTick=createComplianceWorker(db,{env,send,log,...createIxIntegration(db,{env,send})});
   let reportTick=0;
@@ -84,14 +88,14 @@ export function createWorker(db, { send, env=process.env, log=console.log }={}) 
 export async function sendSampleReport(testId, options = {}) {
   if (!/^[a-zA-Z0-9_-]{1,64}$/.test(testId || '')) throw Error('A test ID of 1–64 letters, numbers, underscores or hyphens is required');
   return deliver({
-    id: `mike-report-test-${testId}`, kind: 'report',
+    id: `sample-report-test-${testId}`, kind: 'report',
     payload: { date: 'sample', calls: [{
       aggregator_call_id: 'sample-report-only', twilio_call_sid: 'sample',
       publisher: 'SAMPLE', call_start_time: '2026-10-03T14:00:00Z',
       caller_phone: null, duration: 0, disposition_code: 'test_call', sale: false,
       state: 'NJ', app_written: false, wrong_state: false, zip: '08054',
     }] },
-  }, { active: true, report_emails: ['mike@newgenhealthsolutions.com'] }, options);
+  }, { active: true, report_emails: [] }, options);
 }
 
 export async function runManualReport(args, options = {}) {
@@ -103,6 +107,7 @@ export async function runManualReport(args, options = {}) {
 }
 
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
+  deploymentProfile();
   if (process.argv.length > 2) {
     try {
       const result = await runManualReport(process.argv.slice(2));
@@ -115,6 +120,7 @@ if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
   } else {
   const db=createClient(process.env.SUPABASE_URL,supabaseSecretKey(),{auth:{persistSession:false},
     global:{fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(15000)})}});
+  await verifyDeploymentConfiguration(db,deploymentProfile());
   await reportSupabaseKeySelection(db, { service: 'integrations-worker' });
   const tick=createWorker(db);
   let stopped=false; process.on('SIGTERM',()=>{stopped=true;});process.on('SIGINT',()=>{stopped=true;});

@@ -40,7 +40,7 @@ db.storage={from(bucket){assert.equal(bucket,'call-recordings');return {
 const wav=recordingWav();
 const audioFetch=async(url,options)=>{assert.match(String(url),/RequestedChannels=2/);assert.equal(options.redirect,'manual');
   assert.match(options.headers.Authorization,/^Basic /);assert.equal(options.method,undefined);return new Response(wav,{headers:{'content-type':'audio/wav'}});};
-const handler=identity=>createRecordingsHandler({authenticate:async()=>identity,getDb:()=>db,env:{VITE_TELEPHONY_BASE_URL:'https://telephony.test'}});
+const handler=identity=>createRecordingsHandler({authenticate:async()=>identity,getDb:()=>db,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,VITE_TELEPHONY_BASE_URL:'https://telephony.test'}});
 const call=async(identity,body,expected=200)=>{
   const request=typeof body==='string'?new Request('https://example.test/recordings?'+body):new Request('https://example.test/recordings',{method:'POST',body:JSON.stringify(body)});
   const response=await handler(identity)(request);const result=await response.json();assert.equal(response.status,expected,JSON.stringify(result));return result;
@@ -174,7 +174,7 @@ test('authorized Storage play/download works before and after 065 with a service
 });
 test('missing Storage copy yields a short-lived provider capability, not credentials or raw provider URL',async()=>{
   const row=(await sql("SELECT * FROM recording_ingestion WHERE recording_sid=$1",[re(3)]))[0];const grant=await call(auth,{action:'media',call_record_id:C,recording_id:row.id,download:true});
-  assert.equal(grant.source,'twilio');assert.match(grant.url,/^https:\/\/telephony\.test\/api\/recordings\/media\/[A-Za-z0-9_-]{43}$/);
+  assert.equal(grant.source,'twilio');assert.match(grant.url,/^https:\/\/phone\.test\/api\/recordings\/media\/[A-Za-z0-9_-]{43}$/);
   assert.equal(grant.url.includes(AC),false);const ticket=(await sql('SELECT * FROM recording_download_tickets'))[0];assert.equal(ticket.recording_sid,row.recording_sid);assert.equal(ticket.download,true);assert.equal(ticket.token_hash.length,64);
   await call(auth,{action:'media',call_record_id:C,recording_id:'not-my-recording'},404);
 });
@@ -293,7 +293,7 @@ test('Conversly minting is admin-only, tenant-scoped, recording-scoped and separ
     const start=Date.now();const grant=await call(admin,{...body,format});
     assert.equal(grant.expires_in,86400);assert.equal(grant.format,format);
     assert.equal(grant.content_type,format==='mp3'?'audio/mpeg':'audio/wav');
-    assert.match(grant.url,format==='mp3'?/^https:\/\/telephony\.test\/api\/recordings\/conversly\/[A-Za-z0-9_-]{43}\.mp3$/:/^https:\/\/telephony\.test\/api\/recordings\/conversly\/[A-Za-z0-9_-]{43}$/);
+    assert.match(grant.url,format==='mp3'?/^https:\/\/phone\.test\/api\/recordings\/conversly\/[A-Za-z0-9_-]{43}\.mp3$/:/^https:\/\/phone\.test\/api\/recordings\/conversly\/[A-Za-z0-9_-]{43}$/);
     assert.ok(Date.parse(grant.expires_at)>=start+86_400_000 && Date.parse(grant.expires_at)<=Date.now()+86_400_000);
     const ticket=(await sql('SELECT * FROM recording_compliance_tickets WHERE format=$1',[format]))[0];
     assert.equal(ticket.recording_id,row.id);assert.equal(ticket.tenant_id,T);assert.equal(ticket.minted_by,admin.userId);
@@ -303,7 +303,7 @@ test('Conversly minting is admin-only, tenant-scoped, recording-scoped and separ
   assert.equal((await sql('SELECT count(*)::int AS n FROM recording_download_tickets'))[0].n,before);
   const identity=await recordingIdentity(db,admin);
   const storedOnly={...row,account_sid:null,recording_sid:null};
-  const storageGrant=await recordingComplianceGrant(db,identity,storedOnly,{env:{TELEPHONY_BASE_URL:'https://telephony.test'}});
+  const storageGrant=await recordingComplianceGrant(db,identity,storedOnly,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,TELEPHONY_BASE_URL:'https://telephony.test'}});
   assert.equal(storageGrant.format,'wav');
   await assert.rejects(recordingComplianceGrant(db,identity,storedOnly,{format:'mp3'}),/retained Twilio/);
   await assert.rejects(recordingComplianceGrant(db,identity,{...row,storage_path:`${U}/secret.wav`}),/unavailable/);

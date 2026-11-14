@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled } from '../../../telephony/src/lib/deploymentFeatures.js';
 import { parseParagonFieldMap, readParagonPing } from '../_shared/paragonPingAdapter.js';
 
@@ -50,7 +51,7 @@ export function createHandler({ rpc, paragonPing, routingEnabled = false, env,  
       if (error || !data) return respond({ error: 'Availability temporarily unavailable' }, 503);
       consumer = data.consumer_name || 'unknown';
       if (!data.authorized) return respond({ error: 'Unauthorized' }, 401);
-      if (consumer === 'Paragon Media') {
+      if (featureEnabled('PARAGON_ENABLED',env) && consumer === deploymentProfile(env).paragon.sourceName) {
         if (pingFields.invalidPhone) return respond({ available:false,reason:'invalid_phone' });
         if (!paragonPing) return respond({ available: false, reason: 'routing_disabled' });
         const { data: decision, error: pingError } = await paragonPing({

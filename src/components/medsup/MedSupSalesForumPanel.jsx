@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CalendarClock, MapPin, SlidersHorizontal } from "lucide-react";
 import CollapsibleWidget from "../CollapsibleWidget";
@@ -32,7 +33,7 @@ function addDays(date, days) {
 }
 
 function formatDate(date) {
-  return date.toLocaleDateString([], {
+  return date.toLocaleDateString([], {timeZone:deploymentPublic.timezone,
     month: "short",
     day: "numeric",
     year: "numeric",

@@ -48,12 +48,12 @@ before(async () => {
     CREATE TABLE tenant_agents(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,name text,npn text,agent_slug text,is_active boolean);
     INSERT INTO tenant_agents(tenant_id,name,npn,agent_slug,is_active) VALUES
       ('${tenant}','Mark','20856361','mark',true),
-      ('${tenant}','Dylan Maria','22167358','dylan_maria',true),
+      ('${tenant}','Pilot Agent 03','22167358','pilot_agent_03',true),
       ('${tenant}','Mike','20574678','mike',true);
     CREATE TABLE agent_availability(agent_id text PRIMARY KEY,agent_name text,status text,available boolean,
       active_call_sid text,resume_status text,last_assigned_at timestamptz,toggled_at timestamptz);
     INSERT INTO agent_availability(agent_id,agent_name,status,available) VALUES
-      ('mark','Mark','available',true),('dylan_maria','Dylan','available',true),('mike','Mike','available',true);
+      ('mark','Mark','available',true),('pilot_agent_03','Dylan','available',true),('mike','Mike','available',true);
     CREATE TABLE call_records(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,call_duration_seconds integer,
       call_outcome text,app_written boolean,metadata jsonb DEFAULT '{}');
     CREATE TABLE inbound_calls(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,twilio_call_sid text,
@@ -86,7 +86,7 @@ test('seed tiers match Mark, Dylan and Mike coverage', async () => {
   const rows = (await db.query(`SELECT a.agent_slug,paragon_agent_tier(a.agent_slug,'KS',$1) ks,
     paragon_agent_tier(a.agent_slug,'NC',$1) nc FROM tenant_agents a ORDER BY a.agent_slug`,[source])).rows;
   assert.deepEqual(rows.map(row => [row.agent_slug,row.ks,row.nc]),[
-    ['dylan_maria','ineligible','ineligible'],['mark','full','ineligible'],['mike','ineligible','ineligible']]);
+    ['mark','full','ineligible'],['mike','ineligible','ineligible'],['pilot_agent_03','ineligible','ineligible']]);
   await db.query(`UPDATE vendor_routing_config SET plan_year=2028 WHERE source_id=$1`,[source]);
   assert.equal((await db.query(`SELECT paragon_agent_tier('mark','KS',$1) AS tier`,[source])).rows[0].tier,'ineligible');
   await db.query(`UPDATE vendor_routing_config SET plan_year=2027 WHERE source_id=$1`,[source]);

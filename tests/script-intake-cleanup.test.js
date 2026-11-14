@@ -1,3 +1,4 @@
+import roster from './fixtures/deployment-roster.json' with {type:'json'};
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -16,7 +17,7 @@ const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.children||[]).f
 const element=(type,props,...children)=>({type,props:props||{},children});
 const text=node=>(node?.children||[]).flat(Infinity).filter(c=>typeof c==='string').join('');
 function awaitingSubmission(direction='inbound'){
- let state={...structuredClone(initialState),agentName:'Mike Shiomos',callDirection:direction,recordingOk:true,tpmoOk:true,soaOk:true,qualOk:true,neadsOk:true,sobOk:true};
+ let state={...structuredClone(initialState),agentName:'Pilot Agent 01',callDirection:direction,recordingOk:true,tpmoOk:true,soaOk:true,qualOk:true,neadsOk:true,sobOk:true};
  const section=MA_SCRIPT_SECTIONS.find(section=>section.key==='enrollment');
  for(let step=0;step<100;step++){
   const pending=getMAScriptView(section,state).items.find(item=>item.type==='choice'&&!item.selected);
@@ -41,7 +42,7 @@ for(const direction of ['inbound','outbound'])test(`${direction}: selecting Appl
  walk(branchTree).find(node=>node.type==='button'&&text(node)==='Application submitted').props.onClick();
  h.render();assert.equal(state.enrollOk,false);assert.equal(hasSubmittedMAApplication(state),true);
  const nodes=walk(h.value),box=nodes.find(node=>node.type==='box'),button=nodes.find(node=>text(node)==='Complete Enrollment Intake (after call)');
- assert.equal(text(box),MA_CLOSING);assert.match(text(box),/Congratulations, you're all set!/);assert.match(text(box),/\(609\) 806-5996/);
+ assert.equal(text(box),MA_CLOSING);assert.match(text(box),/Congratulations, you're all set!/);assert.match(text(box),/\(212\) 555-0100/);
  assert.ok(nodes.indexOf(button)>nodes.indexOf(box));assert.ok(!nodes.some(node=>node.type==='intake'));
  await button.props.onClick();await h.flush();
  const intake=walk(h.value).find(node=>node.type==='intake');assert.equal(intake.props.callId,'current-call');assert.deepEqual({...intake.props.initialPrefill},scriptIntakePrefill(state));assert.equal(intake.props.initialPrefill.planType,'D-SNP');
@@ -62,19 +63,19 @@ test('step 7 has no duplicate intake inputs or manual completion action',()=>{
 });
 test('all plan types normalize, remain editable, and reach GHL along with ZIP',()=>{
  for(const planType of PLAN_TYPES){
-  const d=mergeIntakePrefill({...emptyIntake('Mike Shiomos'),firstName:'Server contact',phone:'2125550101',state:'NY',zip:'10001'},{planType,firstName:'Old note'});
-  assert.equal(d.firstName,'Server contact');assert.equal(d.planType,planType);assert.equal(ghlPayload(d,'now').planType,planType);assert.equal(ghlPayload(d,'now').zip,'10001');
+  const d=mergeIntakePrefill({...emptyIntake('Pilot Agent 01',roster),firstName:'Server contact',phone:'2125550101',state:'NY',zip:'10001'},{planType,firstName:'Old note'});
+  assert.equal(d.firstName,'Server contact');assert.equal(d.planType,planType);assert.equal(ghlPayload({...d,writingAgentId:roster[0].id},'now',roster).planType,planType);assert.equal(ghlPayload({...d,writingAgentId:roster[0].id},'now',roster).zip,'10001');
  }
  assert.ok(INTAKE_FIELDS.some(([key,,type])=>key==='planType'&&type==='planType'));
 });
 test('enrollment closing is exactly the requested text using only the dialer main DID',()=>{
- const expected="Congratulations, you're all set! Thank you for trusting us with your coverage today. From this point forward, I'm your agent, and New Gen Health Solutions is your agency. If you ever have a question about your plan, a bill, a doctor, or a prescription, call us first at {AGENCY_PHONE} and we'll take care of it.\n\nOne important thing before we hang up. After enrolling, a lot of people start getting calls from other agencies claiming to be from Medicare, your insurance company, or 'your plan.' Please don't give those callers any information. We've seen people switched into plans they never agreed to, and it can take months to undo. Medicare and your insurance company will never cold call you asking for your Medicare number, Social Security number, or banking information.\n\nIf anyone calls about changing your plan, just hang up and call us. If you ever want to review or change your coverage, we're happy to do that with you anytime. Thanks again, and welcome to the family!";
+ const expected="Congratulations, you're all set! Thank you for trusting us with your coverage today. From this point forward, I'm your agent, and Pilot Benefit Agency is your agency. If you ever have a question about your plan, a bill, a doctor, or a prescription, call us first at {AGENCY_PHONE}, Monday through Friday, 10 AM to 6 PM (America/New_York), and we'll take care of it.\n\nOne important thing before we hang up. After enrolling, a lot of people start getting calls from other agencies claiming to be from Medicare, your insurance company, or 'your plan.' Please don't give those callers any information. We've seen people switched into plans they never agreed to, and it can take months to undo. Medicare and your insurance company will never cold call you asking for your Medicare number, Social Security number, or banking information.\n\nIf anyone calls about changing your plan, just hang up and call us. If you ever want to review or change your coverage, we're happy to do that with you anytime. Thanks again, and welcome to the family!";
  assert.equal(ENROLLMENT_CLOSING_TEMPLATE,expected);assert.equal(MA_CLOSING,expected.replace('{AGENCY_PHONE}',formatAgencyPhone(AGENCY_LINE_NUMBER)));
  assert.ok(read('src/components/phone/DialerPanel.jsx').includes("from '../../lib/agencyLine.js'"));
  const code=compile('src/components/SectionWrapUp.jsx').replace('export default React.memo(', 'const SectionWrapUp=React.memo(');
  const component=vm.runInNewContext(code+';SectionWrapUp',{React:{memo:x=>x},element,ScriptBox:'box',MA_CLOSING});
  const rendered=walk(component({agentPhone:'(212) 555-9999',directNumber:'(312) 555-0100'})).find(n=>n.type==='box');
- assert.equal(text(rendered),MA_CLOSING);assert.ok(!text(rendered).includes('555-9999'));assert.match(text(rendered),/\(609\) 806-5996/);
+ assert.equal(text(rendered),MA_CLOSING);assert.ok(!text(rendered).includes('555-9999'));assert.match(text(rendered),/\(212\) 555-0100/);
 });
 test('both record views show the shared read-only enrollment summary with Edit targeting the selected intake',async()=>{
  assert.ok(read('src/components/callLog/CallLogTab.jsx').includes('<EnrollmentSummary callId={row.call_record_id}/>'));

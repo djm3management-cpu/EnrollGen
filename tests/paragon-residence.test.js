@@ -28,7 +28,7 @@ before(async()=>{
  INSERT INTO zip_county_crosswalk VALUES('33101','FL','12086','Miami-Dade'),('85001','AZ','04013','Maricopa'),('10001','NY','36061','New York'),('07001','NJ','34023','Middlesex');`);
  await sql("INSERT INTO tenants VALUES($1,'org-a')",[T]);
  await sql("INSERT INTO lead_sources(id,tenant_id,name,type,active) VALUES($1,$2,'Paragon Media','publisher',true)",[S,T]);
- for(const [n,name,npn,slug,user] of [[4,'Dylan Maria','22167358','dylan_maria','dylan-user'],[5,'Mark Endres','20856361','mark_endres','mark-user']])await sql('INSERT INTO tenant_agents(id,tenant_id,name,npn,agent_slug,clerk_user_id,is_active) VALUES($1,$2,$3,$4,$5,$6,true)',[id(n),T,name,npn,slug,user]);
+ for(const [n,name,npn,slug,user] of [[4,'Pilot Agent 03','22167358','pilot_agent_03','dylan-user'],[5,'Pilot Agent 02','20856361','pilot_agent_02','mark-user']])await sql('INSERT INTO tenant_agents(id,tenant_id,name,npn,agent_slug,clerk_user_id,is_active) VALUES($1,$2,$3,$4,$5,$6,true)',[id(n),T,name,npn,slug,user]);
  await sql("INSERT INTO enrolled_agents VALUES($1,$2,'dylan-user','Dylan',NULL,true)",[A,T]);
  for(const name of ['051_paragon_vendor_matrix.sql','052_paragon_ping_and_claim.sql','053_paragon_zip_and_reports.sql','055_paragon_vendor_report.sql','056_resolve_recent_paragon_ping.sql','057_paragon_vendor_report_proof.sql','067_paragon_billing_hours.sql','098_ancillary_sale_disposition.sql','126_paragon_out_of_state_tasks.sql','131_paragon_residence_capture.sql'])await pg.exec(migration(name));
 });
@@ -36,8 +36,8 @@ after(()=>pg.close());
 beforeEach(async()=>{await pg.exec('TRUNCATE contacts,inbound_calls,telephony_call_attempts,telephony_transcript_segments,paragon_callback_tasks,paragon_residence_jobs,paragon_residence_sep_inputs,paragon_contact_zip_origin CASCADE');});
 async function call(n=20,{zip='33101',source='fmo_transfer',ended=false}={}){
  const c=id(n),contact=id(n+100),attempt=id(n+200),sid='CA'+String(n).padStart(32,'0');
- await sql('INSERT INTO contacts(id,tenant_id,zip,state,source,assigned_agent_id) VALUES($1,$2,$3,$4,$5,$6)',[contact,T,zip,'FL',source,'dylan_maria']);
- await sql("INSERT INTO inbound_calls(id,tenant_id,twilio_call_sid,source_kind,lead_source_id,routed_agent_id,contact_id,status,caller_state) VALUES($1,$2,$3,'publisher',$4,'dylan_maria',$5,$6,'FL')",[c,T,sid,S,contact,ended?'completed':'accepted']);
+ await sql('INSERT INTO contacts(id,tenant_id,zip,state,source,assigned_agent_id) VALUES($1,$2,$3,$4,$5,$6)',[contact,T,zip,'FL',source,'pilot_agent_03']);
+ await sql("INSERT INTO inbound_calls(id,tenant_id,twilio_call_sid,source_kind,lead_source_id,routed_agent_id,contact_id,status,caller_state) VALUES($1,$2,$3,'publisher',$4,'pilot_agent_03',$5,$6,'FL')",[c,T,sid,S,contact,ended?'completed':'accepted']);
  await sql('INSERT INTO telephony_call_attempts VALUES($1,$2,$3,clock_timestamp(),$4)',[attempt,T,c,ended?new Date().toISOString():null]);
  return {c,contact,attempt,sid};
 }
@@ -53,7 +53,7 @@ test('a transcript residence atomically flags a wrong-state call and creates the
  const f=await call();await question(f);await speech(f,'85001, Maricopa County, Arizona.');
  await processResidenceJob(db,await claim());const row=await record(f.c);
  assert.equal(row.confirmed_zip,'85001');assert.equal(row.confirmed_state,'AZ');assert.equal(row.wrong_state,true);assert.equal(row.paragon_serviceability,'callback');assert.equal(row.return_reason,'wrong_state');
- const tasks=await sql('SELECT * FROM paragon_callback_tasks');assert.equal(tasks.length,1);assert.equal(tasks[0].assigned_agent_id,'mark_endres');
+ const tasks=await sql('SELECT * FROM paragon_callback_tasks');assert.equal(tasks.length,1);assert.equal(tasks[0].assigned_agent_id,'pilot_agent_02');
  assert.equal(row.vendor_metadata.paragon_residence.source,'transcript');assert.ok(row.vendor_metadata.paragon_residence.captured_at);
  await wake(f.c);await processResidenceJob(db,await claim());assert.equal((await sql('SELECT * FROM paragon_callback_tasks')).length,1);
 });
@@ -82,15 +82,15 @@ test('explicit agent ZIP provenance is required and invalidated by a subsequent 
 test('successful call-bound SEP input outranks contact evidence but cannot overwrite transcript residence',async()=>{
  const f=await call(25);
  await rpc('save_paragon_contact_zip',{p_contact:f.contact,p_tenant:T,p_zip:'07001',p_user:'dylan-user'});
- await rpc('enqueue_paragon_sep_residence',{p_call:f.c,p_tenant:T,p_agent:'dylan_maria',p_sid:f.sid,p_zip:'85001',p_state:'AZ',p_county:'Maricopa'});
+ await rpc('enqueue_paragon_sep_residence',{p_call:f.c,p_tenant:T,p_agent:'pilot_agent_03',p_sid:f.sid,p_zip:'85001',p_state:'AZ',p_county:'Maricopa'});
  await processResidenceJob(db,await claim());assert.equal((await record(f.c)).vendor_metadata.paragon_residence.source,'sep_lookup');
  await question(f);await speech(f,'My ZIP is 10001 New York.',3);await wake(f.c);await processResidenceJob(db,await claim());assert.equal((await record(f.c)).vendor_metadata.paragon_residence.source,'transcript');
- await rpc('enqueue_paragon_sep_residence',{p_call:f.c,p_tenant:T,p_agent:'dylan_maria',p_sid:f.sid,p_zip:'33101',p_state:'FL',p_county:null});
+ await rpc('enqueue_paragon_sep_residence',{p_call:f.c,p_tenant:T,p_agent:'pilot_agent_03',p_sid:f.sid,p_zip:'33101',p_state:'FL',p_county:null});
  await processResidenceJob(db,await claim());assert.equal((await record(f.c)).confirmed_zip,'10001');
 });
 test('wrong call SID, wrong agent, ended calls and state-only input cannot queue SEP residence',async()=>{
- const f=await call(26);const args={p_call:f.c,p_tenant:T,p_agent:'dylan_maria',p_sid:f.sid,p_zip:'33101',p_state:'FL',p_county:null};
- for(const patch of [{p_sid:'CA'+'f'.repeat(32)},{p_agent:'mark_endres'},{p_zip:null}])assert.ok((await db.rpc('enqueue_paragon_sep_residence',{...args,...patch})).error);
+ const f=await call(26);const args={p_call:f.c,p_tenant:T,p_agent:'pilot_agent_03',p_sid:f.sid,p_zip:'33101',p_state:'FL',p_county:null};
+ for(const patch of [{p_sid:'CA'+'f'.repeat(32)},{p_agent:'pilot_agent_02'},{p_zip:null}])assert.ok((await db.rpc('enqueue_paragon_sep_residence',{...args,...patch})).error);
  await sql('UPDATE telephony_call_attempts SET ended_at=clock_timestamp() WHERE id=$1',[f.attempt]);assert.ok((await db.rpc('enqueue_paragon_sep_residence',args)).error);
  assert.equal((await sql('SELECT * FROM paragon_residence_sep_inputs')).length,0);
 });
@@ -120,7 +120,7 @@ test('authenticated API accepts only owned typed lookups and explicit contact ed
  assert.equal((await member(request(payload))).status,202);
  assert.equal((await member(request({action:'contact_zip_edit',contact_id:f.contact,zip:'07001'}))).status,200);
  assert.equal((await sql('SELECT zip FROM paragon_contact_zip_origin'))[0].zip,'07001');
- await sql("UPDATE contacts SET assigned_agent_id='mark_endres' WHERE id=$1",[f.contact]);
+ await sql("UPDATE contacts SET assigned_agent_id='pilot_agent_02' WHERE id=$1",[f.contact]);
  assert.equal((await member(request({action:'contact_zip_edit',contact_id:f.contact,zip:'10001'}))).status,403);
  assert.equal((await handler({userId:'dev-bypass'})(request(payload))).status,401);
 });

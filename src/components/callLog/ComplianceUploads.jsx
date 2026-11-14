@@ -1,3 +1,4 @@
+import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import {useTenantConfig} from "../../hooks/useTenantConfig";
 import {useAdminReviewAccess} from '../../hooks/useAdminReviewAccess.js';
 import {COMPLIANCE_UPLOADS_ENDPOINT,complianceUploadsUrl} from '../../lib/adminReviewApi.js';
@@ -6,8 +7,8 @@ import EnrollmentIntake from '../enrollment/EnrollmentIntake';
 import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 
-const etDate=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
-const etTime=value=>value?new Date(value).toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit',hour12:true})+' ET':'—';
+const etDate=new Intl.DateTimeFormat('en-CA',{timeZone:deploymentPublic.timezone,year:'numeric',month:'2-digit',day:'2-digit'});
+const etTime=value=>value?new Date(value).toLocaleString('en-US',{timeZone:deploymentPublic.timezone,hour:'numeric',minute:'2-digit',hour12:true})+' '+deploymentPublic.timezone:'—';
 const dayKey=value=>{const parts=Object.fromEntries(etDate.formatToParts(value).map(part=>[part.type,part.value]));return `${parts.year}-${parts.month}-${parts.day}`};
 const label=value=>String(value||'').replaceAll('_',' ');
 const initials=name=>String(name||'?').split(/\s+/).slice(0,2).map(part=>part[0]?.toUpperCase()).join('');

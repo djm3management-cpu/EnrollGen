@@ -26,7 +26,7 @@ import { createComplianceUploadsHandler } from '../netlify/functions/compliance-
 // All credentials are synthetic and present. Neither a configured destination
 // nor a parked queue is permission to perform any integration work.
 const off = Object.fromEntries(FEATURE_NAMES.map(name => [name, 'false']));
-const credentials = { ...off, IX_USERNAME:'fixture', IX_PASSWORD:'fixture', IX_ENV:'test',
+const credentials = { DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, ...off, IX_USERNAME:'fixture', IX_PASSWORD:'fixture', IX_ENV:'test',
   GHL_ENROLLMENT_WEBHOOK_URL:'https://ghl.example.test', RESEND_API_KEY:'fixture',
   INTEGRATIONS_REPORT_FROM:'fixture@example.test', CONVERSELY_API_KEY:'fixture',
   TWILIO_ACCOUNT_SID:'AC'+'a'.repeat(32), TWILIO_AUTH_TOKEN:'fixture',
@@ -42,7 +42,7 @@ for (const name of FEATURE_NAMES) {
     assert.equal(featureEnabled(name,{[name]:'false'}),false);
     assert.equal(featureEnabled(name,{[name]:'true'}),true);
     for(const value of ['TRUE',' true ','yes','1',true,1])assert.throws(()=>deploymentFeatures({[name]:value}),new RegExp(name));
-    const result=spawnSync(process.execPath,['--input-type=module','-e',"import './telephony/src/lib/deploymentFeatures.js'"],{cwd:new URL('..',import.meta.url),env:{...process.env,[name]:'malformed'},encoding:'utf8'});
+    const result=spawnSync(process.execPath,['--input-type=module','-e',"import './telephony/src/lib/deploymentFeatures.js'"],{cwd:new URL('..',import.meta.url),env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...process.env,[name]:'malformed'},encoding:'utf8'});
     assert.notEqual(result.status,0);assert.match(result.stderr,new RegExp(`Invalid deployment feature flag ${name}`));
     assert.doesNotMatch(result.stderr,/malformed/);
   });
@@ -68,10 +68,10 @@ test('all-disabled workers do no scheduling, claims, retries, reports or outboun
 
 test('IX reports require uploads, report flag, and operational mail separately before querying or sending',async()=>{
   for(const flag of ['IX_UPLOAD_ENABLED','IX_REPORT_ENABLED','OPERATIONAL_EMAIL_ENABLED']){
-    const env={...credentials,IX_UPLOAD_ENABLED:'true',IX_REPORT_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',[flag]:'false'};
+    const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...credentials,IX_UPLOAD_ENABLED:'true',IX_REPORT_ENABLED:'true',OPERATIONAL_EMAIL_ENABLED:'true',[flag]:'false'};
     await dailySummaries(db,{env,send:forbidden,now:Date.now});
   }
-  const env={...credentials,PARAGON_ENABLED:'true'};
+  const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...credentials,PARAGON_ENABLED:'true'};
   assert.equal((await deliver({kind:'report'},{active:true,report_emails:['fixture@example.test']},{env,send:forbidden})).result,'disabled');
 });
 
@@ -111,7 +111,7 @@ test('billing-disabled entitlement provides full plan access and seats without t
   assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
   const body=await response.json();assert.deepEqual(body.features,deploymentFeatures({}));assert.equal(body.entitlement.plan,'billing_disabled');
   assert.doesNotMatch(JSON.stringify(body),/fixture|secret|password|example.test/);
-  const enabled=await createDeploymentFeaturesHandler({authenticate:async()=>({userId:'fixture'}),env:{...credentials,STRIPE_BILLING_ENABLED:'true'}})(new Request('https://app.example.test/api/deployment-features'));
+  const enabled=await createDeploymentFeaturesHandler({authenticate:async()=>({userId:'fixture'}),env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...credentials,STRIPE_BILLING_ENABLED:'true'}})(new Request('https://app.example.test/api/deployment-features'));
   assert.equal((await enabled.json()).entitlement,null);
 });
 
@@ -185,19 +185,21 @@ test('migration guards real integration claim SQL and skips parked reports witho
 });
 
 test('GHL post-call delivery uses the deployment gate even with a tenant webhook, and preserves enabled delivery',async()=>{
- const previous=globalThis.fetch;let calls=0;
- const tenant={ghl_webhook_url:'https://ghl.example.test',name:'Fixture Agency'};
- globalThis.fetch=async(url,options)=>{calls++;assert.equal(url,tenant.ghl_webhook_url);assert.equal(JSON.parse(options.body).agency,'Fixture Agency');return new Response(null,{status:200});};
+ let calls=0;
+ const tenant={ghl_webhook_url:'https://attacker.offline.test',name:'Untrusted agency'};
+ const send=async(url,body)=>{calls++;assert.equal(url,'https://ghl.test/webhook');assert.equal(JSON.parse(body).agency,'Pilot Benefit Agency');return {status:200};};
+ const roster=[{id:'writer',clerk_user_id:'subject',name:'Pilot Agent 01',ghl_user_id:'provider-id'}];
  try{
-  assert.equal((await sendEnrollmentWebhook(tenant,[],{})).sent,false);assert.equal(calls,0);
-  process.env.GHL_ENABLED='true';assert.equal((await sendEnrollmentWebhook(tenant,[],{})).sent,true);assert.equal(calls,1);
- }finally{globalThis.fetch=previous;process.env.GHL_ENABLED='false';}
+  assert.equal((await sendEnrollmentWebhook(tenant,roster,{writing_agent_id:'writer'},{send})).sent,false);assert.equal(calls,0);
+  process.env.GHL_ENABLED='true';assert.equal((await sendEnrollmentWebhook(tenant,roster,{writing_agent_id:'writer'},{send})).sent,true);assert.equal(calls,1);
+ }finally{process.env.GHL_ENABLED='false';}
+
 });
 
 test('a disabled repair mode is rejected before claim even when the other repair switch is enabled',async()=>{
  for(const mode of ['manual','automatic']){
   const flag=mode==='automatic'?'TRANSCRIPT_AUTO_RECOVERY_ENABLED':'TRANSCRIPT_GAP_FILL_ENABLED';
-  const env={...credentials,TRANSCRIPT_AUTO_RECOVERY_ENABLED:'true',TRANSCRIPT_GAP_FILL_ENABLED:'true',[flag]:'false'};
+  const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...credentials,TRANSCRIPT_AUTO_RECOVERY_ENABLED:'true',TRANSCRIPT_GAP_FILL_ENABLED:'true',[flag]:'false'};
   const guardedDb={from(){const q={select(){return q;},eq(){return q;},maybeSingle:async()=>({data:{mode}}),update:forbidden};return q;}};
   const response=await createGapFillHandler({env,getDb:()=>guardedDb,transport:forbidden})(request('/api/transcript-gaps-background'));
   assert.equal(response.status,503);assert.equal((await response.json()).feature,flag);
