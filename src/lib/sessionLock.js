@@ -3,11 +3,18 @@ export const FRESH_SIGN_IN_MS = 60_000;
 export const SIGN_IN_CLOCK_SKEW_MS = 5000;
 const ERROR_TEXT = {
   no_factor: 'No supported method', credential: 'Wrong credential', expired: 'Challenge expired',
-  clerk: 'Network or Clerk error', storage: 'Storage unavailable',
+  clerk: 'Network or Clerk error', storage: 'Storage unavailable', rejected: 'Verification rejected',
 };
+const REJECTION_MESSAGES = ['Fresh verification required', 'Invalid factor', 'Invalid challenge', 'No challenge',
+  'Verification identity changed', 'Stale verification', 'Lock changed'];
+const DIAGNOSTIC_NAMES = ['Error', 'TypeError', 'AbortError', 'TimeoutError', 'NotAllowedError',
+  'ClerkAPIResponseError', 'ClerkRuntimeError'];
+const DIAGNOSTIC_MESSAGES = [...Object.values(ERROR_TEXT), ...REJECTION_MESSAGES,
+  'Failed to fetch', 'NetworkError when attempting to fetch resource.', 'Load failed'];
 const CREDENTIAL_CODES = ['form_password_incorrect', 'form_password_or_identifier_incorrect', 'form_password_validation_failed', 'form_code_incorrect', 'form_identifier_not_found', 'form_backup_code_incorrect'];
 const EXPIRED_CODES = ['verification_expired', 'form_code_expired'];
 function failure(cause) { return Object.assign(new Error(ERROR_TEXT[cause]), { lockCause: cause }); }
+function rejection(message) { return Object.assign(new Error(message), { lockCause: 'rejected' }); }
 export function sessionLockErrorCause(error) {
   if (ERROR_TEXT[error?.lockCause]) return error.lockCause;
   const codes = (Array.isArray(error?.errors) ? error.errors : [error]).map(item => item?.code);
@@ -15,11 +22,14 @@ export function sessionLockErrorCause(error) {
   if (codes.some(code => EXPIRED_CODES.includes(code))) return 'expired';
   return 'clerk';
 }
-// Preserve useful underlying SDK error fields without logging arbitrary messages,
-// request metadata, credentials, tokens, or call data.
+// The development logger receives only allowlisted names/messages and SDK codes.
+// Unknown free text can contain credentials, tokens or caller details.
 export function sessionLockDiagnostic(error) {
   const known = [...CREDENTIAL_CODES, ...EXPIRED_CODES];
-  return { cause: sessionLockErrorCause(error), errors: (Array.isArray(error?.errors) ? error.errors : [error]).map(item => ({
+  return { cause: sessionLockErrorCause(error),
+    name: DIAGNOSTIC_NAMES.includes(error?.name) ? error.name : 'unknown',
+    message: DIAGNOSTIC_MESSAGES.includes(error?.message) ? error.message : '[redacted]',
+    errors: (Array.isArray(error?.errors) ? error.errors : [error]).map(item => ({
     code: known.includes(item?.code) ? item.code : 'unknown',
   })), ...(Number.isInteger(error?.status) ? { status: error.status } : {}) };
 }
@@ -46,8 +56,10 @@ export function createSessionLock({ identity, getSession, storage, phoneBusy, on
   let pendingLock = false, challengeId = null, initialized = false;
   const emit = patch => { if (!disposed) { state = { ...state, ...patch }; onChange(state); } };
   const record = (locked, callUntil = 0) => ({ version: 1, ...identity, locked, lastActivity, lockId, callUntil });
-  const matches = session => session?.id === identity.sessionId && session?.user?.id === identity.userId && session.status === 'active';
-  const current = () => !disposed && matches(getSession());
+  const matchesLiveSession = session => session?.id === identity.sessionId && session?.user?.id === identity.userId && session.status === 'active';
+  // Clerk verification resources can contain a partial session without a user.
+  const matchesVerificationSession = session => session?.id === identity.sessionId;
+  const current = () => !disposed && matchesLiveSession(getSession());
   const report = event => { try { audit(event); } catch { /* Logging cannot open the gate. */ } };
   const persist = async change => {
     let callbackError;
@@ -165,7 +177,7 @@ export function createSessionLock({ identity, getSession, storage, phoneBusy, on
       // A recently verified session is not sufficient: demand a new challenge.
       if (!isCurrent()) return;
       if (!verification?.id || verification.status !== 'needs_first_factor' ||
-          !matches(verification.session)) throw new Error('Fresh verification required');
+          !matchesVerificationSession(verification.session)) throw rejection('Fresh verification required');
       if (!current() || disposed) return;
       challengeId = verification.id;
       show(verification);
@@ -175,7 +187,7 @@ export function createSessionLock({ identity, getSession, storage, phoneBusy, on
     return run(async (session, isCurrent) => {
       const verification = state.verification;
       const factor = factors(verification)[index];
-      if (!factor || verification.id !== challengeId) throw new Error('Invalid factor');
+      if (!factor || verification.id !== challengeId) throw rejection('Invalid factor');
       const second = verification.status === 'needs_second_factor';
       if (factor.strategy === 'email_code' || factor.strategy === 'phone_code') {
         const params = { strategy: factor.strategy,
@@ -183,7 +195,7 @@ export function createSessionLock({ identity, getSession, storage, phoneBusy, on
           ...(factor.phoneNumberId ? { phoneNumberId: factor.phoneNumberId } : {}) };
         const prepared = await (second ? session.prepareSecondFactorVerification(params) : session.prepareFirstFactorVerification(params));
         if (!isCurrent()) return;
-        if (prepared.id !== challengeId || !matches(prepared.session) || prepared.status === 'complete') throw new Error('Invalid challenge');
+        if (prepared?.id !== challengeId || !matchesVerificationSession(prepared.session) || prepared.status === 'complete') throw rejection('Invalid challenge');
       }
       if (isCurrent()) emit({ factor });
     });
@@ -191,19 +203,19 @@ export function createSessionLock({ identity, getSession, storage, phoneBusy, on
   async function submit(value = '') {
     return run(async session => {
       const verification = state.verification, factor = state.factor;
-      if (!factor || !challengeId || verification?.id !== challengeId) throw new Error('No challenge');
+      if (!factor || !challengeId || verification?.id !== challengeId) throw rejection('No challenge');
       const capturedChallenge = challengeId, capturedGeneration = generation;
       const params = factor.strategy === 'password' ? { strategy: 'password', password: value } : { strategy: factor.strategy, code: value };
       const result = await (factor.strategy === 'passkey' ? session.verifyWithPasskey() :
         verification.status === 'needs_second_factor' ? session.attemptSecondFactorVerification(params) : session.attemptFirstFactorVerification(params));
       if (disposed || capturedGeneration !== generation || !current()) return;
-      if (result?.id !== capturedChallenge || !matches(result.session)) throw new Error('Verification identity changed');
+      if (result?.id !== capturedChallenge || !matchesVerificationSession(result.session)) throw rejection('Verification identity changed');
       if (result.status !== 'complete') { show(result); return; }
       // Write successfully before mounting protected data. Another tab's lock
       // superseding this challenge invalidates it, even while Clerk was pending.
       await persist(saved => {
-        if (disposed || capturedGeneration !== generation || !current()) throw new Error('Stale verification');
-        if (saved?.locked && saved.lockId !== lockId) throw new Error('Lock changed');
+        if (disposed || capturedGeneration !== generation || !current()) throw rejection('Stale verification');
+        if (saved?.locked && saved.lockId !== lockId) throw rejection('Lock changed');
         lastActivity = now();
         return record(false);
       });

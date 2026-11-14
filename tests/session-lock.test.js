@@ -36,7 +36,7 @@ function clerkSession({ mfa = false, googleOnly = false, createdAt } = {}) {
   const session = { id: 'session-a', user: { id: 'user-a' }, status: 'active', createdAt,
     async startVerification(params) {
       calls.push(['start', params]);
-      challenge = { id: `verify-${++sequence}`, session, status: 'needs_first_factor', level: 'multi_factor',
+      challenge = { id: `verify-${++sequence}`, session: { id: session.id, status: 'active' }, status: 'needs_first_factor', level: 'multi_factor',
         supportedFirstFactors: googleOnly ? [] : [{ strategy: 'password' }, { strategy: 'email_code', emailAddressId: 'email-id' }, { strategy: 'passkey' }],
         supportedSecondFactors: [{ strategy: 'totp' }, { strategy: 'phone_code', phoneNumberId: 'phone-id' }, { strategy: 'backup_code' }] };
       return challenge;
@@ -187,8 +187,8 @@ test('passkey and phone/backup second factors use the installed SDK methods with
   assert.equal(f.lock.getSnapshot().locked, false); assert.equal(f.sdk.calls.at(-1)[1].strategy, 'backup_code');
 });
 
-test('an immediately complete start, unsupported factors, and wrong challenge/session/user results cannot unlock', async () => {
-  for (const variant of ['complete-start', 'no-factors', 'wrong-challenge', 'wrong-session', 'wrong-user', 'revoked-session']) {
+test('an immediately complete start, unsupported factors, and wrong challenge/session results cannot unlock', async () => {
+  for (const variant of ['complete-start', 'no-factors', 'wrong-challenge', 'wrong-session']) {
     const f = await fixture();
     const original = f.sdk.session.startVerification;
     f.sdk.session.startVerification = async params => {
@@ -197,11 +197,88 @@ test('an immediately complete start, unsupported factors, and wrong challenge/se
         variant === 'no-factors' ? { ...verification, supportedFirstFactors: [] } : verification;
     };
     f.sdk.setFirstAttempt(async () => ({ id: variant === 'wrong-challenge' ? 'stale' : 'verify-1', status: 'complete',
-      session: variant === 'wrong-session' ? { ...f.sdk.session, id: 'another-session' } :
-        variant === 'wrong-user' ? { ...f.sdk.session, user: { id: 'another-user' } } :
-        variant === 'revoked-session' ? { ...f.sdk.session, status: 'revoked' } : f.sdk.session }));
+      session: { id: variant === 'wrong-session' ? 'another-session' : f.identity.sessionId, status: 'active' } }));
     await f.verify(); assert.equal(f.lock.getSnapshot().locked, true, variant);
   }
+});
+
+const CLERK_STEPS = ['startVerification', 'prepareFirstFactorVerification', 'prepareSecondFactorVerification',
+  'attemptFirstFactorVerification', 'attemptSecondFactorVerification', 'verifyWithPasskey'];
+async function clerkStepFixture(method) {
+  const f = await fixture({ mfa: true });
+  if (method !== 'startVerification') await f.lock.beginVerification();
+  if (method.includes('SecondFactor')) {
+    await f.lock.selectFactor(1); await f.lock.submit('correct-password');
+  }
+  if (method === 'attemptFirstFactorVerification') await f.lock.selectFactor(1);
+  if (method === 'attemptSecondFactorVerification') await f.lock.selectFactor(0);
+  if (method === 'verifyWithPasskey') await f.lock.selectFactor(0);
+  const perform = () => method === 'startVerification' ? f.lock.beginVerification() :
+    method === 'prepareFirstFactorVerification' ? f.lock.selectFactor(2) :
+      method === 'prepareSecondFactorVerification' ? f.lock.selectFactor(1) : f.lock.submit('credential-fixture');
+  return { ...f, perform };
+}
+
+test('every Clerk step accepts a partial nested session using only its matching id', async () => {
+  for (const method of CLERK_STEPS) {
+    const f = await clerkStepFixture(method), original = f.sdk.session[method];
+    f.sdk.session[method] = async (...args) => ({ ...await original(...args), session: {
+      id: f.identity.sessionId,
+      get user() { throw Error('Nested user must not be read'); },
+      get status() { throw Error('Nested status must not be read'); },
+    } });
+    await f.perform();
+    assert.equal(f.lock.getSnapshot().error, '', method);
+    assert.equal(f.lock.getSnapshot().locked, method !== 'attemptSecondFactorVerification', method);
+    assert.equal(f.audit.includes('session_unlock_failed'), false, method);
+  }
+});
+
+test('every Clerk step rejects a verification with a foreign nested session id', async () => {
+  for (const method of CLERK_STEPS) {
+    const f = await clerkStepFixture(method), original = f.sdk.session[method];
+    f.sdk.session[method] = async (...args) => ({ ...await original(...args), session: { id: 'foreign-session' } });
+    await f.perform();
+    assert.equal(f.lock.getSnapshot().locked, true, method);
+    assert.equal(f.lock.getSnapshot().error, 'Verification rejected', method);
+    assert.ok(f.audit.includes('session_unlock_failed'), method);
+    assert.equal(f.audit.includes('session_unlock'), false, method);
+  }
+});
+
+test('a live user/session change or revocation during any Clerk step rejects its response', async () => {
+  for (const method of CLERK_STEPS) for (const change of ['user', 'session', 'revoked']) {
+    const f = await clerkStepFixture(method), original = f.sdk.session[method];
+    const before = f.lock.getSnapshot();
+    f.sdk.session[method] = async (...args) => {
+      const result = await original(...args);
+      f.changeSession({ ...f.sdk.session, ...(change === 'user' ? { user: { id: 'foreign-user' } } :
+        change === 'session' ? { id: 'foreign-session' } : { status: 'revoked' }) });
+      return result;
+    };
+    await f.perform();
+    const after = f.lock.getSnapshot();
+    assert.equal(after.locked, true, `${method}: ${change}`);
+    assert.equal(after.verification, before.verification, `${method}: ${change}`);
+    assert.equal(after.factor, before.factor, `${method}: ${change}`);
+    assert.equal(f.audit.includes('session_unlock'), false, `${method}: ${change}`);
+    assert.equal((await f.storage.read()).locked, true, `${method}: ${change}`);
+  }
+});
+
+test('internal rejections show Verification rejected and preserve a safe diagnostic reason', async () => {
+  const f = await fixture();
+  f.sdk.session.startVerification = async () => ({ id: 'verify-1', status: 'complete', session: { id: f.identity.sessionId } });
+  await f.lock.beginVerification();
+  assert.equal(f.lock.getSnapshot().locked, true);
+  assert.equal(f.lock.getSnapshot().error, 'Verification rejected');
+  const overlay = overlayHarness({ ...f.lock.getSnapshot(), factors: f.lock.factors() });
+  assert.ok(nodes(overlay.value).some(node => node.props.role === 'alert' && node.children.includes('Verification rejected')));
+  overlay.unmount();
+  const diagnostic = sessionLockDiagnostic(Object.assign(new Error('Fresh verification required'), { lockCause: 'rejected' }));
+  assert.equal(diagnostic.cause, 'rejected');
+  assert.equal(diagnostic.name, 'Error');
+  assert.equal(diagnostic.message, 'Fresh verification required');
 });
 
 test('a user/session change or another tab locking while a Clerk attempt is pending invalidates its completion', async () => {
@@ -214,7 +291,7 @@ test('a user/session change or another tab locking while a Clerk attempt is pend
     if (change === 'session') f.changeSession({ ...f.sdk.session, id: 'other-session' });
     if (change === 'dispose') f.lock.dispose();
     if (change === 'remote-lock') await f.storage.update(saved => ({ ...saved, locked: true, lockId: 'other-lock' }));
-    resolve({ id: 'verify-1', status: 'complete', session: f.sdk.session }); await pending;
+    resolve({ id: 'verify-1', status: 'complete', session: { id: f.identity.sessionId, status: 'active' } }); await pending;
     assert.equal(f.lock.getSnapshot().locked, true, change);
   }
 });
@@ -514,7 +591,7 @@ test('wrong credentials, expired challenge, Clerk/network, no method and unavail
 });
 
 test('development diagnostics preserve structured SDK causes without arbitrary secrets or caller details', () => {
-  const diagnostic = sessionLockDiagnostic({ status: 422, message: 'SECRET password token caller',
+  const diagnostic = sessionLockDiagnostic({ name: 'SECRET caller', status: 422, message: 'SECRET password token caller',
     errors: [{ code: 'form_code_incorrect', message: 'SECRET', meta: { password: 'SECRET' } }], token: 'SECRET' });
   assert.equal(diagnostic.status, 422); assert.equal(diagnostic.errors[0].code, 'form_code_incorrect');
   assert.doesNotMatch(JSON.stringify(diagnostic), /SECRET|password|token|caller/);
@@ -523,8 +600,13 @@ test('development diagnostics preserve structured SDK causes without arbitrary s
     const logger = vm.createContext({ sessionLockDiagnostic, console: { error: (...args) => calls.push(args) } });
     vm.runInContext(strip(source('src/lib/debugLog.js')).replaceAll('import.meta.env', `({ DEV: ${dev} })`) +
       ';globalThis.log=logSessionLockError;', logger);
-    logger.log(sessionLockDiagnostic({ errors: [{ code: 'form_code_incorrect' }], message: 'SECRET' }));
-    assert.equal(calls.length, dev ? 1 : 0);
+    logger.log(sessionLockDiagnostic(new TypeError('Failed to fetch')));
+    logger.log(sessionLockDiagnostic({ name: 'SECRET', errors: [{ code: 'form_code_incorrect' }], message: 'SECRET' }));
+    assert.equal(calls.length, dev ? 2 : 0);
+    if (dev) {
+      assert.equal(calls[0][1].name, 'TypeError'); assert.equal(calls[0][1].message, 'Failed to fetch');
+      assert.equal(calls[1][1].name, 'unknown'); assert.equal(calls[1][1].message, '[redacted]');
+    }
     assert.doesNotMatch(JSON.stringify(calls), /SECRET/);
   }
 });

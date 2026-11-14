@@ -21,7 +21,7 @@ export function logSttUsageFailure(callSid) {
 }
 
 // Reauthentication diagnostics are always visible in development, with only
-// allowlisted SDK codes/status. Arbitrary error messages/metadata stay private.
+// allowlisted error names/messages and SDK codes/status. Other text stays private.
 export function logSessionLockError(diagnostic) {
   if (import.meta.env?.DEV) console.error('Session lock error', diagnostic);
 }
