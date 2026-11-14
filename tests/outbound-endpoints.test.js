@@ -25,7 +25,7 @@ function harness({ claims = [], recovered = false } = {}) {
     requireTwilioSignature() {}, routingReplay() {}, dialAttribution() {},
     // These existing cases exercise the default-off legacy outbound path.
     conferenceGuard: () => (_req, _res, next) => next(),
-    requireClerkUser: async (_, res) => { if (authorized) return { sub: 'verified-user' }; res.status(401).json({ error: 'Unauthorized' }); return null; },
+    requireClerkUser: async (_, res) => { if (authorized) return { sub: 'verified-user', deploymentIdentity:{tenant_id:'tenant',agent_slug:'agent'} }; res.status(401).json({ error: 'Unauthorized' }); return null; },
     outboundDncStatus: async (_, tenant) => { assert.equal(tenant, 'tenant'); return true; },
     supabase: { from(table) {
       const filters = []; const q = { select() { return q; }, eq(k,v) { filters.push([k,v]); return q; },
@@ -49,7 +49,7 @@ test('browser policy derives tenant from verified identity and returns clear DNC
   const h = harness();
   const result = await h.request('outbound-check', { phone: '6097787669', tenant_id: 'forged', agent_id: 'forged' });
   assert.equal(result.data.reason, 'Do Not Call'); assert.equal(result.data.blocked, true);
-  assert.ok(h.reads[0].filters.some(([key,value]) => key === 'clerk_user_id' && value === 'verified-user'));
+  assert.equal(h.reads.length,0); // verified membership supplies scope before any resource query
   h.setAuthorized(false);
   assert.equal((await h.request('outbound-check', { phone: '6097787669' })).statusCode, 401);
 });
@@ -71,7 +71,7 @@ test('canonical status returns persisted attempt/contact and filters tenant, age
   const h = harness();
   const result = await h.request('outbound-status', { callSid: 'sid', contactId: 'forged' });
   assert.equal(result.data.contactId, 'canonical'); assert.equal(result.data.attemptId, 'attempt');
-  assert.equal(h.reads[1].filters.length, 4);
+  assert.equal(h.reads[0].filters.length, 4);
   const pending=await h.request('outbound-status', { callSid: 'other-agent-sid', waitForAttempt: true });
   assert.equal(pending.statusCode,202);assert.equal(pending.data.pending,true);
   assert.equal((await h.request('outbound-status', { callSid: 'other-agent-sid' })).statusCode,404);

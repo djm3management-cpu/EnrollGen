@@ -1,3 +1,4 @@
+import {prepareServerIdentity} from './helpers/serverIdentityFixture.js';
 process.env.PARAGON_ENABLED='true';
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,6 +38,7 @@ before(async()=>{
  await pg.exec(`ALTER TABLE tenants ADD clerk_org_id text;ALTER TABLE tenant_agents ADD clerk_user_id text;
  ALTER TABLE inbound_calls ADD routed_agent_id text,ADD return_reason text;
  ALTER TABLE call_records ADD contact_id uuid,ADD customer_first_name text,ADD customer_last_name text;
+ CREATE TABLE enrolled_agents(id uuid PRIMARY KEY,tenant_id uuid,clerk_user_id text,name text,npn text,is_active boolean);
  CREATE TABLE call_transcripts(id uuid PRIMARY KEY,disposition text);`);
  await sql(`INSERT INTO tenants VALUES($1,'org-a'),($2,'org-b')`,[tenant,foreign]);
  await sql(`INSERT INTO lead_sources(id,tenant_id,name,type,active) VALUES($1,$2,'Paragon Media','publisher',true)`,[source,tenant]);
@@ -48,6 +50,8 @@ before(async()=>{
  await addCall(12,{state:'AZ',zip:'85001',wrong:true});
  await sql(`INSERT INTO paragon_callback_tasks(id,inbound_call_id,tenant_id,assigned_agent_id,caller_state,confirmed_zip) VALUES($1,$2,$3,'pilot_agent_01','AZ','85001')`,[id(13),id(12),tenant]);
  await pg.exec(migration('126_paragon_out_of_state_tasks.sql'));
+ await pg.exec('INSERT INTO enrolled_agents SELECT id,tenant_id,clerk_user_id,name,npn,is_active FROM tenant_agents');
+ await prepareServerIdentity(pg);
 });
 after(()=>pg.close());
 test('migration closes unserviceable legacy fallback tasks and exposes the confirmed state on report',async()=>{
@@ -80,9 +84,9 @@ test('removed residence-confirmation requests cannot read or write call confirma
 
 test('task caller name falls back to existing encrypted contact names when call-record names are absent',()=>rollback(async()=>{
  const {call}=await existingCallback(28);
- await pg.exec(`CREATE TABLE contacts(id uuid,tenant_id uuid,pii_encrypted jsonb);
+ await pg.exec(`CREATE TABLE contacts(id uuid,tenant_id uuid,pii_encrypted jsonb,assigned_agent_id text DEFAULT 'pilot_agent_02');
  CREATE FUNCTION decrypt_pii_value(p_encrypted jsonb) RETURNS text LANGUAGE sql AS $$ SELECT p_encrypted->>'fixture_value' $$;`);
- await sql(`INSERT INTO contacts VALUES($1,$2,'{"first_name":{"fixture_value":"Contact"},"last_name":{"fixture_value":"Name"}}')`,[id(80),tenant]);
+ await sql(`INSERT INTO contacts(id,tenant_id,pii_encrypted) VALUES($1,$2,'{"first_name":{"fixture_value":"Contact"},"last_name":{"fixture_value":"Name"}}')`,[id(80),tenant]);
  await sql('UPDATE call_records SET customer_first_name=NULL,customer_last_name=NULL,contact_id=$1 WHERE id=$2',[id(80),id(1028)]);
  const own=handler({authenticate:async()=>({userId:'mark-user',orgId:'org-a'})});
  const response=await own(new Request('https://app.test/api/paragon-zip-confirm'));assert.equal(response.status,200);

@@ -1,3 +1,5 @@
+import {resolveDeploymentAccess} from '../lib/deploymentAccess.js';
+import {deploymentProfile} from '../lib/deploymentProfile.js';
 import { supabase } from "../supabase.js";
 import { requireClerkUser } from "../clerkAuth.js";
 import { outboundDncStatus } from "../outboundPolicy.js";
@@ -23,11 +25,7 @@ export const voiceOutboundRouter = Router();
 async function browserAgent(req, res) {
   const user = await requireClerkUser(req, res);
   if (!user) return null;
-  const { data, error } = await supabase.from("tenant_agents")
-    .select("agent_slug, tenant_id").eq("clerk_user_id", user.sub).eq("is_active", true).maybeSingle();
-  if (error) { res.status(503).json({ error: "Agent identity unavailable" }); return null; }
-  if (!data) { res.status(403).json({ error: "Active tenant agent required" }); return null; }
-  return data;
+  return user.deploymentIdentity;
 }
 voiceOutboundRouter.post("/api/voice/outbound-check", async (req, res) => {
   const agent = await browserAgent(req, res);
@@ -70,10 +68,12 @@ async function outboundGate(req, res, next) {
   const response = new VoiceResponse();
   try {
     const { data: agent, error } = await supabase.from("tenant_agents")
-      .select("tenant_id").eq("agent_slug", agentId).eq("is_active", true).maybeSingle();
+      .select("tenant_id,clerk_user_id").eq("tenant_id",deploymentProfile().tenantId).eq("agent_slug", agentId).eq("is_active", true).maybeSingle();
     if (error || !agent?.tenant_id || !String(req.body.From || "").startsWith("client:"))
       throw new Error("Active tenant agent required");
-    res.locals.outboundTenantId = agent.tenant_id;
+    const access = await resolveDeploymentAccess(supabase,agent.clerk_user_id);
+    if(access.agent_slug!==agentId || access.tenant_id!==agent.tenant_id)throw Error("Active deployment agent required");
+    res.locals.outboundTenantId = access.tenant_id;
     if (!(await outboundDncStatus(to, agent.tenant_id))) return next();
     response.say("Do Not Call. This number is on your tenant's Do Not Call list.");
   } catch {

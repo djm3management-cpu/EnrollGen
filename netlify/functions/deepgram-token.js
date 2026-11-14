@@ -36,7 +36,7 @@ export default async (request) => {
   }
 
   const supabase = getSupabase();
-  const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId);
+  const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId, auth.userId);
   const subscription = await requireActiveSubscription(supabase, tenantId);
   if (subscription.response) return subscription.response;
 

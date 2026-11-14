@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import {
   applyDeepgramRedactionParams,
@@ -293,7 +294,7 @@ async function fetchPage(supabase, from, to) {
   const { data, error } = await supabase
     .from("call_records")
     .select("id, recording_url, transcript_raw, dg_sentiment, metadata")
-    .not("transcript_raw", "is", null)
+    .eq("tenant_id",deploymentProfile().tenantId).not("transcript_raw", "is", null)
     .order("created_at", { ascending: true })
     .range(from, to);
 
@@ -357,7 +358,7 @@ export default async (request) => {
           const { error } = await supabase
             .from("call_records")
             .update(updatePayload)
-            .eq("id", row.id);
+            .eq("id", row.id).eq("tenant_id",deploymentProfile().tenantId);
 
           if (error) throw error;
           updated += 1;

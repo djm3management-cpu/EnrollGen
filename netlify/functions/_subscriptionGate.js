@@ -1,4 +1,4 @@
-import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
+import { resolveDeploymentAccess } from '../../telephony/src/lib/deploymentAccess.js';
 import { featureEnabled, billingDisabledEntitlement } from '../../telephony/src/lib/deploymentFeatures.js';
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -14,19 +14,8 @@ export function subscriptionError(status, detail, extra = {}) {
   });
 }
 
-export async function resolveTenantIdForOrg(supabase, orgId) {
-  if (orgId) {
-    const { data, error } = await supabase
-      .from("tenants")
-      .select("id")
-      .eq("clerk_org_id", orgId)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (data?.id) return data.id;
-  }
-
-  return null;
+export async function resolveTenantIdForOrg(supabase, orgId, userId) {
+  return (await resolveDeploymentAccess(supabase, userId, orgId)).tenant_id;
 }
 
 export async function requireActiveSubscription(supabase, tenantId) {

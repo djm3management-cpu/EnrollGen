@@ -348,7 +348,7 @@ export default async () => {
     const supabase = getSupabase();
     const { data: tenants, error } = await supabase
       .from("tenants")
-      .select("id, name")
+      .select("id, name").eq("id",deploymentProfile().tenantId)
       .order("name", { ascending: true });
 
     if (error) throw error;

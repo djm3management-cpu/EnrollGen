@@ -83,7 +83,7 @@ test('back-to-back inbound calls get different sessions, canonical records and t
 test('stale tab submitting old links and a new SID is queued only in the new verified session',async()=>{
  const pg=await fixture();try{
  await attempt(pg,SID1);const first=await start(pg,SID1);await attempt(pg,SID2);
- const base=evidenceDb(pg);const db={...base,async rpc(name,args){try{return{data:(await pg.query(`SELECT ${name}(${Object.keys(args).map((k,i)=>k+'=> $'+(i+1)).join(',')}) result`,Object.entries(args).map(([k,v])=>k==='p_payload'?JSON.stringify(v):v))).rows[0].result,error:null};}catch(error){return{data:null,error};}}};
+ const base=evidenceDb(pg);const db={...base,async rpc(name,args){if(name==='resolve_deployment_subject')return base.rpc(name,args);try{return{data:(await pg.query(`SELECT ${name}(${Object.keys(args).map((k,i)=>k+'=> $'+(i+1)).join(',')}) result`,Object.entries(args).map(([k,v])=>k==='p_payload'?JSON.stringify(v):v))).rows[0].result,error:null};}catch(error){return{data:null,error};}}};
  const handler=createPostCallQueueHandler({getDb:()=>db,authenticate:async()=>({userId:'user',orgId:'org'}),send:async()=>new Response(null,{status:202})});
  const response=await handler(new Request('https://test/api/post-call',{method:'POST',body:JSON.stringify({action:'finalize',session_id:first.session_id,call_record_id:first.call_record_id,twilio_call_sid:SID2,telephony_call:true,flow:'ma'})}));
  assert.equal(response.status,202,JSON.stringify(await response.clone().json()));

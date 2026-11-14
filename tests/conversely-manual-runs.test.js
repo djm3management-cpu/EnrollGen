@@ -20,7 +20,7 @@ const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const tenant=id(1),agent=id(2),mark=id(3),excluded=id(4),foreign=id(5),week=currentConverselyWeek();
 const account='AC'+'a'.repeat(32),parent='CA'+'b'.repeat(32),sid=n=>'RE'+String(n).padStart(32,'0');
 const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',CONVERSELY_AGENT_EXCLUSIONS:'{"pilot_agent_02":["Humana"]}',CONVERSELY_API_KEY:'test-key',CONVERSELY_SAMPLES_PER_AGENT:'5',CONVERSELY_CARRIERS:'UHC,Aetna,Humana',TELEPHONY_BASE_URL:'https://phone.test'};
-const admin={userId:'admin',orgId:'org-a',tokenPayload:{org_role:'org:admin'}};
+const admin={userId:'user-a',orgId:'org-a',tokenPayload:{org_role:'org:admin'}};
 const query=async(sql,args=[]) => (await pg.query(sql,args)).rows;
 const file=name=>readFileSync(new URL('../supabase/migrations/'+name,import.meta.url),'utf8');
 const sent=[];

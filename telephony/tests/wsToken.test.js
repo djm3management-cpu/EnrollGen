@@ -47,7 +47,7 @@ test('rotating the shared server signing secret invalidates old browser credenti
 test('valid agent websocket authenticates the owning subject and delivers live transcript messages',async()=>{
   const originalFetch=globalThis.fetch;
   globalThis.fetch=async url=>{
-    const payload=String(url).includes('/tenant_agents')?[{id:'fixture',agent_slug:'pilot_agent_01',clerk_user_id:'user_fixture',is_active:true}]:true;
+    const payload=String(url).includes('/rpc/resolve_deployment_subject')?[{tenant_id:'fixture',agent_id:'fixture',roster_id:'fixture',agent_slug:'pilot_agent_01',authority:'agent',team_agent_ids:[]}]:true;
     assert.ok(String(url).startsWith('https://example.test/rest/v1/'));
     return new Response(JSON.stringify(payload),{headers:{'Content-Type':'application/json'}});
   };

@@ -330,17 +330,16 @@ test("service import accepts own/admin target, rejects foreign IDs and unverifie
   assert.equal((await query("SELECT id FROM call_transcripts WHERE id=$1",[assigned.transcriptId])).length,0);
 });
 
-test("self provisioning needs a signed configured organization; inactive, duplicate and wrong-org identities fail closed", async () => {
+test("self provisioning is denied even with a signed configured organization; inactive, duplicate and wrong-org identities fail closed", async () => {
   await role("service_role");
   await call(handlers({userId:"new-user",orgId:null}).session,{action:"start",flow:"ma"},403);
   await call(handlers({...auth,userId:"new-user",orgId:"org-unknown"}).session,{action:"start",flow:"ma"},403);
   await call(handlers({...auth,userId:"user-inactive"}).session,{action:"start",flow:"ma"},403);
   await call(handlers({...auth,orgId:"org-b"}).session,{action:"start",flow:"ma"},403);
-  const provisioned = await call(handlers({...auth,userId:"new-user",tokenPayload:{name:"New Agent"}}).session,{action:"start",flow:"ma"});
-  const row = (await query("SELECT * FROM enrolled_agents WHERE id=$1",[provisioned.agent_id]))[0];
-  assert.equal(row.clerk_user_id,"new-user"); assert.equal(row.tenant_id,tenant); assert.equal(row.role,"agent");
+  await call(handlers({...auth,userId:"new-user",tokenPayload:{name:"New Agent"}}).session,{action:"start",flow:"ma"},403);
+  assert.equal((await query("SELECT * FROM enrolled_agents WHERE clerk_user_id='new-user'")).length,0);
   const duplicate = (await query("INSERT INTO enrolled_agents(clerk_user_id,name,tenant_id) VALUES('user-agent','Duplicate',$1) RETURNING id",[tenant]))[0];
-  await assert.rejects(()=>resolveEvidenceIdentity(db,auth),/ambiguous/);
+  await assert.rejects(()=>resolveEvidenceIdentity(db,auth),/membership/);
   await query("DELETE FROM enrolled_agents WHERE id=$1",[duplicate.id]); // fixture cleanup only
 });
 

@@ -191,11 +191,10 @@ smsRouter.post("/api/sms/send", async (req, res) => {
   }
 
   try {
-    const { data: contact, error: contactError } = await supabase
-      .from("contacts")
-      .select("id, tenant_id, phone, do_not_call")
-      .eq("id", contactId)
-      .maybeSingle();
+    const agent = clerkUser.deploymentIdentity;
+    let contactQuery = supabase.from("contacts").select("id,tenant_id,phone,do_not_call,assigned_agent_id").eq("tenant_id",agent.tenant_id).eq("id",contactId);
+    if (agent.authority !== "admin") contactQuery = contactQuery.eq("assigned_agent_id",agent.agent_slug);
+    const { data: contact, error: contactError } = await contactQuery.maybeSingle();
     if (contactError) throw contactError;
     if (!contact) return res.status(404).json({ error: "Contact not found" });
     if (!contact.phone) return res.status(422).json({ error: "Contact has no phone number" });
@@ -203,9 +202,6 @@ smsRouter.post("/api/sms/send", async (req, res) => {
       return res.status(403).json({ error: "Contact is flagged do not call" });
     }
 
-    const { data: agent } = await supabase.from("tenant_agents")
-      .select("tenant_id, agent_slug, role").eq("clerk_user_id", clerkUser.sub).eq("tenant_id", contact.tenant_id).maybeSingle();
-    if (!agent) return res.status(403).json({ error: "Contact is outside your workspace" });
     const phone = normalizePhoneE164(contact.phone);
     if (!phone) return res.status(422).json({ error: "Contact has an invalid phone number" });
     if (gifId) {

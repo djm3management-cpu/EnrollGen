@@ -1,3 +1,5 @@
+import { supabase } from './supabase.js';
+import { resolveDeploymentAccess,signedDeploymentAdmin } from './lib/deploymentAccess.js';
 import { verifyToken } from "@clerk/backend";
 import { config } from "./config.js";
 
@@ -14,8 +16,11 @@ export async function requireClerkUser(req, res) {
       secretKey: config.clerkSecretKey,
       jwtKey: config.clerkJwtKey,
     });
-    return payload;
-  } catch {
+    const deploymentIdentity = await resolveDeploymentAccess(supabase, payload.sub, payload.org_id || payload.o?.id || null);
+    const authority=deploymentIdentity.authority==='admin'||signedDeploymentAdmin(payload,payload.org_id)?'admin':deploymentIdentity.authority;
+    return { ...payload, deploymentIdentity:{...deploymentIdentity,authority} };
+  } catch (error) {
+    if (error.status) { res.status(error.status).json({ error: error.message }); return null; }
     console.error("Clerk token verification failed");
     res.status(401).json({ error: "Invalid or expired Clerk session token" });
     return null;

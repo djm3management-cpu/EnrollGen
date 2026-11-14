@@ -1,12 +1,11 @@
 import { requireClerkAuth } from './_clerkAuth.js';
-import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient } from './_evidenceAccess.js';
+import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient,scopeCallLogToIdentity } from './_evidenceAccess.js';
 import { recordingIdentity, authorizeRecordingTarget, listTargetRecordings, publicRecording, recordingMediaGrant } from './_recordingAccess.js';
 import { recordingComplianceGrant } from './_recordingCompliance.js';
 import { conferencePlayback } from './_conferencePlayback.js';
 
 async function availableRecordingCalls(db, identity, offset) {
-  const candidates = checked(await db.from('v_call_log').select('*')
-    .eq('tenant_id', identity.tenant.id).order('occurred_at', { ascending: false })
+  const candidates = checked(await scopeCallLogToIdentity(db.from('v_deployment_call_log').select('*'),identity).order('occurred_at', { ascending: false })
     .order('log_id', { ascending: false }).range(offset, offset + 99)) || [];
   const calls = [];
   // Use the same protected targets and legacy/provider fallbacks as playback.
@@ -52,8 +51,7 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
       if (request.method === 'GET' && params.get('missing') === '1') {
         const offset = Math.max(0, Math.min(100_000, Number(params.get('offset')) || 0));
         if (!Number.isInteger(offset)) throw new EvidenceError(400, 'Invalid offset.');
-        const candidates = checked(await db.from('calls_missing_recordings').select('*')
-          .eq('tenant_id', identity.tenant.id).order('occurred_at', { ascending: false }).range(offset, offset + 99)) || [];
+        const candidates = checked(await scopeCallLogToIdentity(db.from('v_deployment_missing_recordings').select('*'),identity).order('occurred_at', { ascending: false }).range(offset, offset + 99)) || [];
         const calls = [];
         for (const row of candidates) {
           if (!identity.admin) {

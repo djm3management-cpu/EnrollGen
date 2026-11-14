@@ -10,7 +10,7 @@ import {createParagonResidenceHandler} from '../netlify/functions/paragon-reside
 const pg=new PGlite(),base=evidenceDb(pg),id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`,T=id(1),S=id(3),A=id(4);
 const sql=async(q,args=[]) => (await pg.query(q,args)).rows;
 const migration=name=>readFileSync(new URL('../supabase/migrations/'+name,import.meta.url),'utf8');
-const db={...base,async rpc(name,args={}){try{const entries=Object.entries(args),rows=await sql(`SELECT public.${name}(${entries.map(([key],i)=>`${key}=>$${i+1}`).join(',')}) AS value`,entries.map(([key,v])=>['p_candidate','p_metadata'].includes(key)?JSON.stringify(v):v));return {data:name==='claim_paragon_residence_jobs'?rows.map(r=>r.value):rows[0]?.value,error:null};}catch(error){return {data:null,error};}}};
+const db={...base,async rpc(name,args={}){if(name==='resolve_deployment_subject')return base.rpc(name,args);try{const entries=Object.entries(args),rows=await sql(`SELECT public.${name}(${entries.map(([key],i)=>`${key}=>$${i+1}`).join(',')}) AS value`,entries.map(([key,v])=>['p_candidate','p_metadata'].includes(key)?JSON.stringify(v):v));return {data:name==='claim_paragon_residence_jobs'?rows.map(r=>r.value):rows[0]?.value,error:null};}catch(error){return {data:null,error};}}};
 const rpc=async(name,args)=>{const r=await db.rpc(name,args);if(r.error)throw r.error;return r.data;};
 before(async()=>{
  await pg.exec(readFileSync(new URL('./fixtures/paragon-billing-schema.sql',import.meta.url),'utf8'));

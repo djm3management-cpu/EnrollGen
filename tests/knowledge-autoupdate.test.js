@@ -10,6 +10,7 @@ import updateHandler,{createUpdateKnowledgeHandler} from '../netlify/functions/u
 import triggerHandler,{createTriggerKnowledgeUpdateHandler} from '../netlify/functions/trigger-knowledge-update.js';
 import {runKnowledgeUpdate,runAllKnowledgeCategoryUpdates} from '../netlify/functions/_knowledgeUpdate.js';
 const read=path=>readFileSync(new URL(`../${path}`,import.meta.url),'utf8');
+const resolveIdentity=async auth=>({admin:auth.userId==='admin',tenant:{id:'tenant'}});
 const request=body=>new Request('https://app.test/api/trigger-knowledge-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{category:'compliance_aca'})});
 async function withFlag(value,callback){
  const previous=process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED;
@@ -23,7 +24,7 @@ test('both real endpoints and shared runners default to disabled without auth, D
    const response=await handler(request());assert.equal(response.status,200);assert.deepEqual(await response.json(),{status:'disabled'});
   }
   const fail=()=>{throw Error('Disabled work executed');};
-  const manual=createTriggerKnowledgeUpdateHandler({authenticate:fail,run:fail});
+  const manual=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:fail,run:fail});
   const automatic=createUpdateKnowledgeHandler({run:fail,runAll:fail});
   assert.deepEqual(await (await manual(request())).json(),{status:'disabled'});
   assert.deepEqual(await (await automatic(request())).json(),{status:'disabled'});
@@ -34,13 +35,13 @@ test('both real endpoints and shared runners default to disabled without auth, D
 
 test('enabled manual trigger requires Clerk authentication and the existing admin check',async()=>withFlag('true',async()=>{
  let runs=0;const run=async()=>{runs++;return {checked:1,results:[{result:'pending_review'}]};};
- const unauthenticated=createTriggerKnowledgeUpdateHandler({authenticate:async()=>({response:Response.json({error:'Unauthorized'},{status:401})}),run});
+ const unauthenticated=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:async()=>({response:Response.json({error:'Unauthorized'},{status:401})}),run});
  assert.equal((await unauthenticated(request())).status,401);
  for(const auth of [{userId:'agent',tokenPayload:{}},{userId:'agent',tokenPayload:{org_role:'org:member'}},{userId:'agent',tokenPayload:{unsafe_metadata:{role:'admin'}}}]){
-  const handler=createTriggerKnowledgeUpdateHandler({authenticate:async()=>auth,run});assert.equal((await handler(request())).status,403);
+  const handler=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:async()=>auth,run});assert.equal((await handler(request())).status,403);
  }
  assert.equal(runs,0);
- const admin=createTriggerKnowledgeUpdateHandler({authenticate:async()=>({userId:'admin',tokenPayload:{org_role:'org:admin'}}),run});
+ const admin=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:async()=>({userId:'admin',tokenPayload:{org_role:'org:admin'}}),run});
  assert.equal((await admin(new Request('https://app.test/api',{method:'GET'}))).status,405);
  assert.equal((await admin(request({}))).status,400);
  assert.equal((await admin(request())).status,200);assert.equal(runs,1);
@@ -71,18 +72,18 @@ test('real enabled updater persists every confidence as pending review, preserve
   let sourceReads=0,aiCalls=0;
   for(const confidence of [0,0.2,0.59,0.6,0.84,0.85,0.99,1]){
    const run=options=>runKnowledgeUpdate(options,{getDb:()=>db,fetchSources:async()=>{sourceReads++;return 'Fixture source';},generateUpdate:async()=>{aiCalls++;return {changed:true,confidence,summary:'Detected change',updatedContent:`Proposed at ${confidence}`};}});
-   const handler=createTriggerKnowledgeUpdateHandler({authenticate:async()=>({userId:'admin',tokenPayload:{org_role:'org:admin'}}),run});
+   const handler=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:async()=>({userId:'admin',tokenPayload:{org_role:'org:admin'}}),run});
    const response=await handler(request({category:'compliance_aca',key:'fixture'}));assert.equal(response.status,200);
    assert.equal((await response.json()).results[0].result,'pending_review');
   }
-  await runKnowledgeUpdate({category:'compliance_aca'},{getDb:()=>db,fetchSources:async()=>'',generateUpdate:async()=>({changed:true,confidence:0.95,summary:'Malformed proposal',raw:'CHANGES_DETECTED\nSummary: review source'})});
+  await runKnowledgeUpdate({category:'compliance_aca',tenantId:'tenant'},{getDb:()=>db,fetchSources:async()=>'',generateUpdate:async()=>({changed:true,confidence:0.95,summary:'Malformed proposal',raw:'CHANGES_DETECTED\nSummary: review source'})});
   const rows=(await pg.query('SELECT * FROM knowledge_updates ORDER BY id')).rows;
   assert.equal(rows.length,beforeQueue.length+9);assert.deepEqual(rows.slice(0,beforeQueue.length),beforeQueue);
   assert.ok(rows.slice(beforeQueue.length).every(row=>row.status==='pending_review'&&row.reviewed_by===null));
   assert.deepEqual(rows.slice(2,10).map(row=>Number(row.confidence_score)),[0,0.2,0.59,0.6,0.84,0.85,0.99,1]);
   assert.deepEqual((await pg.query('SELECT * FROM knowledge_base ORDER BY id')).rows,beforeBase);
   assert.equal(sourceReads,8);assert.equal(aiCalls,8);
-  await runKnowledgeUpdate({},{getDb:()=>db,fetchSources:async()=>'',generateUpdate:async()=>({changed:false})});
+  await runKnowledgeUpdate({tenantId:'tenant'},{getDb:()=>db,fetchSources:async()=>'',generateUpdate:async()=>({changed:false})});
   assert.deepEqual((await pg.query('SELECT * FROM knowledge_updates ORDER BY id')).rows,rows);
  }finally{await pg.close();}
 }));

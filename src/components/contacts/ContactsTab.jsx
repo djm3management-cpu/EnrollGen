@@ -1,3 +1,4 @@
+import {fetchWithClerk} from '../../lib/clerkFetch';
 import {useTenantConfig} from "../../hooks/useTenantConfig";
 import EnrollmentSummary from '../enrollment/EnrollmentSummary';
 import {useAppAuth} from '../../context/AuthContext';
@@ -989,7 +990,10 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
       setSaving(true);
       setInlineError("");
       try {
-        if (field === 'zip' && features.PARAGON_ENABLED) await saveAgentContactZip(getToken,selectedContact.id,next);
+        if (field === 'assigned_agent_id') {
+          const response=await fetchWithClerk(getToken,'/api/contact-assignment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact_id:selectedContact.id,assigned_agent_id:next})});
+          if(!response.ok)throw Error((await response.json()).error || 'Assignment save failed.');
+        } else if (field === 'zip' && features.PARAGON_ENABLED) await saveAgentContactZip(getToken,selectedContact.id,next);
         else await updateContact(selectedContact.id, { [field]: next });
         if (PII_FIELD_SET.has(field)) patchField(field, field === "phone" ? normalizePhoneE164(next) : next);
         await refreshSelected();

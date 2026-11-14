@@ -43,8 +43,9 @@ export function createAgentStatusLogHandler({
       const identity = await recordingIdentity(db, auth);
       const slugs = [];
       for (let start = 0; ; start += 1000) {
-        const rows = checked(await db.from('availability_agent_subjects').select('agent_slug')
-          .eq('tenant_id', identity.tenant.id).order('agent_slug').range(start, start + 999)) || [];
+        let subjectQuery = db.from('availability_agent_subjects').select('agent_slug').eq('tenant_id', identity.tenant.id);
+        if (!identity.admin) subjectQuery = subjectQuery.eq('clerk_user_id',auth.userId).eq('is_active',true);
+        const rows = checked(await subjectQuery.order('agent_slug').range(start, start + 999)) || [];
         slugs.push(...rows.map(row => row.agent_slug));
         if (rows.length < 1000) break;
       }

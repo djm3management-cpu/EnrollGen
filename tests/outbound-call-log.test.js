@@ -12,7 +12,7 @@ const T=id(1),U=id(2),A=id(3),B=id(4),CONTACT=id(5),IN=id(6),INC=id(7),OUT=id(8)
 const sid=n=>'CA'+String(n).padStart(32,'0'), re=n=>'RE'+String(n).padStart(32,'0');
 const auth={userId:'user-a',orgId:'org-a',tokenPayload:{org_role:'org:member'}};
 const other={userId:'user-b',orgId:'org-a',tokenPayload:{org_role:'org:member'}};
-const admin={userId:'admin',orgId:'org-a',tokenPayload:{org_role:'org:admin'}};
+const admin={userId:'user-a',orgId:'org-a',tokenPayload:{org_role:'org:admin'}};
 const migration=readFileSync(new URL('../supabase/migrations/066_outbound_call_log.sql',import.meta.url),'utf8');
 async function log(identity=auth,params='',status=200) {
  const response=await createCallLogHandler({authenticate:async()=>identity,getDb:()=>db})(new Request('https://test/call-log?'+params));
@@ -63,7 +63,7 @@ test('endpoint works before 066; visible inbound duration uses measured talk, ne
  assert.equal((await recording(auth,{attempt_id:OUT})).recordings.length,1);
 });
 test('066 links only an existing protected record, preserves all rows and timer/billing durations',async()=>{
- const before=await sql('SELECT count(*)::int n FROM call_records');await pg.exec(migration);
+ const before=await sql('SELECT count(*)::int n FROM call_records');await pg.exec(migration);await pg.exec(readFileSync(new URL('../supabase/migrations/156_scoped_service_call_views.sql',import.meta.url),'utf8'));
  assert.equal((await sql('SELECT count(*)::int n FROM call_records'))[0].n,before[0].n);
  assert.equal((await sql('SELECT call_record_id FROM telephony_call_attempts WHERE id=$1',[BACK]))[0].call_record_id,BACKC);
  assert.equal((await sql('SELECT call_record_id FROM telephony_call_attempts WHERE id=$1',[OUT]))[0].call_record_id,null);
@@ -116,7 +116,7 @@ test('backfill reruns skip ambiguous records and preserve existing links',async(
   await sql("INSERT INTO call_records(id,tenant_id,session_id,contact_id,twilio_call_sid,call_direction) VALUES($1,$2,$3,$4,$5,'outbound')",[record,T,session,CONTACT,sid(7)]);
   await sql('INSERT INTO sessions VALUES($1,$2,$3,$4)',[session,A,T,record]);
  }
- await pg.exec(migration);assert.equal((await sql('SELECT call_record_id FROM telephony_call_attempts WHERE id=$1',[ATT]))[0].call_record_id,null);
+ await pg.exec(migration);await pg.exec(readFileSync(new URL('../supabase/migrations/156_scoped_service_call_views.sql',import.meta.url),'utf8'));assert.equal((await sql('SELECT call_record_id FROM telephony_call_attempts WHERE id=$1',[ATT]))[0].call_record_id,null);
  assert.equal((await sql('SELECT call_record_id FROM telephony_call_attempts WHERE id=$1',[BACK]))[0].call_record_id,BACKC);
 });
 test('CRM contact history returns the exact call-log rows, Talk and compliance state without tenant leakage', async () => {
@@ -166,7 +166,7 @@ test('outcome filtering uses saved records across batches before counts, sorting
   id: id(2000 + index), outcome: index < 205 ? 'enrolled' : index < 210 ? 'enrolled_pending_verification' : 'callback_scheduled',
   start: new Date(Date.UTC(2026, 0, 1, 0, index)).toISOString(),
  }));
- for (const record of records) await sql("INSERT INTO call_records(id,tenant_id,contact_id,agent_name,call_direction,call_outcome,call_start) VALUES($1,$2,$3,'Outcome Agent','outbound',$4,$5)",[record.id,T,CONTACT,record.outcome,record.start]);
+ for (const record of records) await sql("INSERT INTO call_records(id,tenant_id,contact_id,agent_name,call_direction,call_outcome,call_start,agent_id) VALUES($1,$2,$3,'Outcome Agent','outbound',$4,$5,$6)",[record.id,T,CONTACT,record.outcome,record.start,A]);
  await sql("INSERT INTO call_records(id,tenant_id,contact_id,agent_name,call_direction,call_outcome) VALUES($1,$2,$3,'Outcome Agent','outbound','enrolled')",[id(2500),U,id(998)]);
  const enrolled = await log(auth,'outcome=enrolled&agent=Outcome%20Agent&offset=99&limit=5');
  assert.equal(enrolled.count,205); assert.equal(enrolled.rows.length,5);

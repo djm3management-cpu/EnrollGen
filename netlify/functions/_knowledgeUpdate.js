@@ -178,13 +178,14 @@ async function processEntry(supabase, entry, { fetchSources, generateUpdate }) {
   return { id: entry.id, key: entry.key, result: "pending_review", confidence: parsed.confidence };
 }
 
-async function fetchEntries(supabase, { category, key, limit }) {
+async function fetchEntries(supabase, { category, key, limit, tenantId }) {
   let query = supabase
     .from("knowledge_base")
     .select("id, tenant_id, category, key, title, content, metadata, version, source_urls")
     .eq("is_active", true)
     .order("updated_at", { ascending: true });
 
+  query = tenantId ? query.eq('tenant_id',tenantId) : query.is('tenant_id',null);
   if (category) query = query.eq("category", category);
 
   if (key) query = query.eq("key", key);
@@ -199,7 +200,7 @@ export async function listKnowledgeCategories() {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("knowledge_base")
-    .select("category, source_urls")
+    .select("category, source_urls").is("tenant_id",null)
     .eq("is_active", true)
     .order("category", { ascending: true });
 
@@ -213,12 +214,12 @@ export async function listKnowledgeCategories() {
 }
 
 export async function runKnowledgeUpdate(
-  { category = null, key = null, limit = 12 } = {},
+  { category = null, key = null, limit = 12, tenantId = null } = {},
   { getDb = getSupabase, fetchSources = fetchSourceMaterial, generateUpdate = callClaude } = {},
 ) {
   if (process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED !== "true") return { status: "disabled" };
   const supabase = getDb();
-  const entries = await fetchEntries(supabase, { category, key, limit });
+  const entries = await fetchEntries(supabase, { category, key, limit, tenantId });
   const results = [];
 
   for (const entry of entries) {

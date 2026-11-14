@@ -18,7 +18,7 @@ const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const T = id(1), U = id(2), A = id(3), B = id(4), C = id(5);
 const own = id(11), other = id(12), foreign = id(13);
 const member = (userId = 'user-a', orgId = 'org-a') => ({ userId, orgId, tokenPayload: { org_role: 'org:member' } });
-const admin = (orgId = 'org-a') => ({ userId: 'admin', orgId, tokenPayload: { org_role: 'org:admin' } });
+const admin = (orgId = 'org-a') => ({ userId: 'user-a', orgId, tokenPayload: { org_role: 'org:admin' } });
 const pg = new PGlite();
 const db = evidenceDb(pg);
 const usage = { media: 0, provider: 0, stripe: [] };
@@ -215,7 +215,7 @@ for (const name of ['stripe-portal', 'stripe-checkout']) {
     }
   });
   test(`${name} permits admins only for their resolved agency, ignoring submitted agency and call IDs`, async () => {
-    for (const path of paths(name)) for (const [org, tenant, customer] of [['org-a', T, 'customer_a'], ['org-b', U, 'customer_b']]) {
+    for (const path of paths(name)) for (const [org, tenant, customer] of [['org-a', T, 'customer_a']]) {
       const response = await handler(name, admin(org))(request(path, { plan: 'pro', seats: 2, call_id: other, tenant_id: org === 'org-a' ? U : T }));
       assert.equal(response.status, 200);
       assert.equal(usage.stripe.at(-1).customer, customer);
@@ -253,7 +253,7 @@ test('transcribe rechecks tenant and owner on writes if attribution changes duri
 
 test('billing recognizes signed owner claims and protected membership for admins without an active organization', async () => {
   for (const name of ['stripe-portal', 'stripe-checkout']) for (const auth of [
-    { userId: 'owner', orgId: 'org-a', tokenPayload: { org_role: 'org:owner' } },
+    { userId: 'user-a', orgId: 'org-a', tokenPayload: { org_role: 'org:owner' } },
     { userId: 'user-a', orgId: null, tokenPayload: { public_metadata: { isAdmin: true } } },
   ]) {
     const response = await handler(name, auth)(request(`/api/${name}`, { plan: 'pro', tenant_id: U }));

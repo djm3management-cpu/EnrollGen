@@ -1,3 +1,5 @@
+import {useAppAuth} from '../context/AuthContext';
+import {fetchWithClerk} from '../lib/clerkFetch';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
@@ -60,6 +62,7 @@ function createSection(flow, order) {
 }
 
 function ScriptEditorPanel({ user = null }) {
+  const {getToken}=useAppAuth();
   const { tenantId, supabaseClient, loading: tenantLoading } = useTenantConfig();
   const [flow, setFlow] = useState("ma");
   const [template, setTemplate] = useState(null);
@@ -166,28 +169,9 @@ function ScriptEditorPanel({ user = null }) {
     );
 
     try {
-      if (template?.id) {
-        const { error } = await supabaseClient
-          .from("script_templates")
-          .update({ sections: payloadSections, updated_at: new Date().toISOString() })
-          .eq("id", template.id)
-          .eq("tenant_id", tenantId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabaseClient
-          .from("script_templates")
-          .insert({
-            tenant_id: tenantId,
-            flow_type: flow,
-            version: 1,
-            is_active: true,
-            sections: payloadSections,
-          })
-          .select("id, tenant_id, flow_type, version, is_active, sections, updated_at")
-          .single();
-        if (error) throw error;
-        setTemplate(data);
-      }
+      const response=await fetchWithClerk(getToken,'/api/script-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:template?.id||null,flow,sections:payloadSections})});
+      if(!response.ok)throw Error((await response.json()).error || 'Template save failed.');
+      setTemplate((await response.json()).template);
 
       setOriginalSections(payloadSections);
       setMessage("Saved.");

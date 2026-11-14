@@ -32,7 +32,7 @@ export function createTranscriptImportHandler({
     try {
       const db = getDb();
       const identity = await resolveEvidenceIdentity(db, auth);
-      const admin = canImportForOthers(auth, identity.tenant);
+      const admin = (identity.access.authority==='admin' || canImportForOthers(auth, identity.tenant));
       if (request.method === "GET") {
         const agents = admin
           ? checked(await db.from("enrolled_agents").select("id, name")

@@ -1,3 +1,5 @@
+import {useAppAuth} from '../../context/AuthContext';
+import {fetchWithClerk} from '../../lib/clerkFetch';
 import { useState } from 'react';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -18,6 +20,11 @@ function StageSettingsRow({ stage, index, count, disabled, onChange, onMove, onD
 }
 
 function SettingsEditor({ data, pipeline, onClose, onBusyChange }) {
+  const {getToken} = useAppAuth();
+  const mutate = async body => {
+    const response = await fetchWithClerk(getToken,'/api/pipeline-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!response.ok)throw Error((await response.json()).error || 'Pipeline save failed.');
+  };
   const [name, setName] = useState(pipeline?.name || 'New Pipeline');
   const [lob, setLob] = useState(pipeline?.line_of_business || '');
   const [stages, setStages] = useState(() => pipeline ? data.stages.filter((row) => row.pipeline_id === pipeline.id).map((row) => ({ ...row })) : [{ id: crypto.randomUUID(), name: 'New Lead', color: '#a78bfa', is_won: false, is_lost: false }]);
@@ -41,11 +48,7 @@ function SettingsEditor({ data, pipeline, onClose, onBusyChange }) {
   return <form className="opps-editor" onSubmit={(event) => {
     event.preventDefault();
     void withBusy(async () => {
-      const { error: err } = await data.supabaseClient.rpc('save_opportunity_pipeline', {
-        p_tenant_id: data.tenantId, p_requesting_agent_id: data.agentUuid, p_pipeline_id: pipeline?.id || null,
-        p_name: name, p_line_of_business: lob || null, p_stages: stages,
-      });
-      if (err) throw err;
+      await mutate({action:'save',pipeline_id:pipeline?.id||null,name,line_of_business:lob||null,stages});
       notifyOpportunitiesUpdated(); onClose();
     });
   }}>
@@ -63,8 +66,7 @@ function SettingsEditor({ data, pipeline, onClose, onBusyChange }) {
         <p>{stageCount ? `${stageCount} opportunities must be moved first. The move and deletion are saved together.` : 'Any opportunities added since loading must be moved first.'}</p>
         <label className="contacts-edit-field"><span>MOVE OPPORTUNITIES TO</span><select className="contacts-edit-input" value={moveTo} onChange={(event) => setMoveTo(event.target.value)}><option value="">Choose a stage</option>{stages.filter((row) => row.id !== deleting.id && data.stages.some((item) => item.id === row.id)).map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
         <div className="opps-actions"><button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={saving || (stageCount > 0 && !moveTo)} onClick={() => { void withBusy(async () => {
-          const { error: err } = await data.supabaseClient.rpc('delete_opportunity_stage', { p_stage_id: deleting.id, p_requesting_agent_id: data.agentUuid, p_move_to_stage_id: moveTo || null });
-          if (err) throw err;
+          await mutate({action:'delete_stage',stage_id:deleting.id,move_to_stage_id:moveTo||null});
           setStages((rows) => rows.filter((row) => row.id !== deleting.id)); setDeleting(null); notifyOpportunitiesUpdated();
         }); }}> {moveTo ? 'MOVE & DELETE' : 'DELETE EMPTY STAGE'}</button><button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => setDeleting(null)}>CANCEL</button></div>
       </div>}

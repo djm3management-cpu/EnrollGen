@@ -1,3 +1,4 @@
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -69,7 +70,7 @@ async function fetchPage(supabase, from, to) {
   const { data, error } = await supabase
     .from("call_records")
     .select("id, tenant_id, agent_name, writing_agent, beneficiary_name, customer_first_name, customer_last_name, carrier_name, plan_name, effective_date, call_start, created_at, beneficiary_risk")
-    .not("tenant_id", "is", null)
+    .eq("tenant_id",deploymentProfile().tenantId)
     .order("created_at", { ascending: true })
     .range(from, to);
 

@@ -88,16 +88,16 @@ test('Callbacks Only round-trips through the authenticated API without advertisi
 });
 
 test('verified organization admin override works and cannot cross organizations', async () => {
-  const admin = { ...auth, userId: 'admin-without-agent-row', tokenPayload: { org_role: 'org:admin' } };
+  const admin = { ...auth, userId: 'alice', tokenPayload: { org_role: 'org:admin' } };
   assert.equal((await call(admin, { agent_id: 'bob', status: 'busy' })).status, 'busy');
   await call(admin, { agent_id: 'foreign', status: 'offline' }, 403);
   const v2 = { ...admin, orgId: null, tokenPayload: { o: { id: 'org-a', rol: 'admin' } } };
   assert.equal((await call(v2, { agent_id: 'bob', status: 'offline' })).status, 'offline');
 });
 
-test('verified server-managed global admin override works across organizations', async () => {
+test('global admin claims without provisioned deployment membership cannot cross organizations', async () => {
   const admin = { ...auth, userId: 'global-admin', orgId: null, tokenPayload: { public_metadata: { isAdmin: true } } };
-  assert.equal((await call(admin, { agent_id: 'foreign', status: 'busy' })).status, 'busy');
+  await call(admin, { agent_id: 'foreign', status: 'busy' },403);
 });
 
 test('inactive, unlinked, wrong-org and bypass identities cannot write', async () => {

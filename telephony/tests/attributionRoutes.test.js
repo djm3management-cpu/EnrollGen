@@ -15,7 +15,7 @@ const { verifyMediaStreamToken } = await import('../src/media/streamToken.js');
 const originalFetch=globalThis.fetch;
 after(()=>{globalThis.fetch=originalFetch;});
 function database(agents = ['a', 'b']) {
-  const tables = { tenant_agents: agents.map(agent_slug => ({ agent_slug, is_active: true, tenant_id: config.defaultTenantId })), contacts: [], inbound_calls: [], telephony_events: [], contact_activities: [],
+  const tables = { tenant_agents: agents.map(agent_slug => ({ agent_slug, clerk_user_id:`user_${agent_slug}`, is_active: true, tenant_id: config.defaultTenantId })), contacts: [], inbound_calls: [], telephony_events: [], contact_activities: [],
     contact_lead_intel: [], telephony_call_attempts: [], telephony_routing_responses: [] };
   const claims = []; const evidence = []; const releases = []; const finishes = [];
   const reservations = new Map();
@@ -55,6 +55,10 @@ function database(agents = ['a', 'b']) {
     return q;
   };
   supabase.rpc = async (name, args) => {
+    if(name==='resolve_deployment_subject') {
+      const agent=tables.tenant_agents.find(a=>a.clerk_user_id===args.p_subject && a.is_active);
+      return {data:agent&&!state.subjectRevoked?[{tenant_id:agent.tenant_id,agent_id:'enrolled_'+agent.agent_slug,roster_id:'roster_'+agent.agent_slug,agent_slug:agent.agent_slug,authority:'agent',team_agent_ids:[]}]:[]};
+    }
     if (name === 'outbound_dnc_status') {
       if (state.failDnc) return { error: { message: 'unavailable' } };
       return { data: tables.contacts.some(c => c.tenant_id === args.p_tenant_id && c.do_not_call &&
@@ -132,6 +136,10 @@ test('terminal callback evidence is durable before releasing an existing reserva
   await request(twilioVoiceRouter, '/twilio/voice', incoming);
   const originalRpc = supabase.rpc;
   supabase.rpc = async (name, args) => {
+    if(name==='resolve_deployment_subject') {
+      const agent=tables.tenant_agents.find(a=>a.clerk_user_id===args.p_subject && a.is_active);
+      return {data:agent&&!state.subjectRevoked?[{tenant_id:agent.tenant_id,agent_id:'enrolled_'+agent.agent_slug,roster_id:'roster_'+agent.agent_slug,agent_slug:agent.agent_slug,authority:'agent',team_agent_ids:[]}]:[]};
+    }
     if (name === 'release_call_agent') {
       assert.ok(db.tables.telephony_events.some(e => e.event === 'call_no-answer' && e.twilio_call_sid === 'PARENT'));
     }
@@ -430,6 +438,12 @@ test('DNC lookup errors fail closed and another tenant DNC does not block', asyn
   db.failDnc = false;
   db.tables.contacts.push({ id: 'other', tenant_id: 'other-tenant', phone: '+16097787669', do_not_call: true });
   assert.match((await request(voiceOutboundRouter, '/api/voice/outbound', body)).body, /<Dial/);
+});
+
+test('outbound rechecks protected membership and never routes a stale token after revocation',async()=>{
+ const db=database(['a']);db.subjectRevoked=true;
+ const result=await request(voiceOutboundRouter,'/api/voice/outbound',{CallSid:'REVOKED',From:'client:a',PhoneNumber:'+16097787669',tenant_id:'forged',actor:'peer',role:'admin'});
+ assert.doesNotMatch(result.body,/<Dial/);assert.equal(db.claims.length,0);
 });
 
 test('terminal child-shaped or stale active-parent callbacks cannot finalize or stop a live parent',async()=>{

@@ -55,8 +55,8 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
     const writer=writingAgent(roster,data.writingAgentId||data.aor);
     data.writingAgentId=writer.id;data.writingAgentSlug=writer.agent_slug;data.agency=profile.agencyName;
     const contactId=input.contact_id||call.contact_id;
-    const contact=checked(await db.from('contacts').select('id').eq('id',contactId).eq('tenant_id',tenant.id).maybeSingle());
-    if(!contact)throw new EvidenceError(400,'Link a contact before saving the enrollment intake.');
+    const contact=checked(await db.from('contacts').select('id,assigned_agent_id').eq('id',contactId).eq('tenant_id',tenant.id).maybeSingle());
+    if(!contact || (!identity.admin && contact.assigned_agent_id!==identity.access.agent_slug))throw new EvidenceError(400,'Link a contact before saving the enrollment intake.');
     let previous=null;
     if(input.id){
      previous=checked(await db.from('enrollment_intakes').select('id,submitted_at,is_test_enrollment,data').eq('id',input.id).eq('call_id',callId).eq('tenant_id',tenant.id).maybeSingle());
@@ -73,7 +73,9 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
    const intakes=await readIntakes(db,rows);
    let contact={};
    if(call.contact_id){
-    const row=checked(await db.from('contacts').select('*').eq('id',call.contact_id).eq('tenant_id',tenant.id).maybeSingle());
+    let contactQuery=db.from('contacts').select('*').eq('id',call.contact_id).eq('tenant_id',tenant.id);
+    if(!identity.admin)contactQuery=contactQuery.eq('assigned_agent_id',identity.access.agent_slug);
+    const row=checked(await contactQuery.maybeSingle());
     contact={...row};
     for(const key of ['first_name','last_name','dob','phone','email','mbi_full'])if(row?.pii_encrypted?.[key])contact[key]=checked(await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]}));
    }

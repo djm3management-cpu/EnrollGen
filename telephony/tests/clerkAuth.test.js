@@ -21,12 +21,18 @@ function jwt(keys, claims = {}) {
 }
 test('voice token handler rejects missing, expired, foreign-issuer and malformed credentials before provider or DB access', async () => {
   const app = express();
+  app.use(express.json());
   app.use(voiceTokenRouter);
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   const originalFetch = globalThis.fetch;
   const origin = `http://127.0.0.1:${server.address().port}`;
   globalThis.fetch = (url, options) => {
+    if(String(url)==='https://offline.example/rest/v1/rpc/resolve_deployment_subject') {
+      assert.deepEqual(JSON.parse(options.body),{p_subject:'user-fixture',p_org:null});
+      return Promise.resolve(Response.json([{tenant_id:'fixture-tenant',agent_id:'fixture-agent',roster_id:'fixture-roster',agent_slug:'fixture_agent',authority:'agent',team_agent_ids:[]}]));
+    }
+    if(String(url).startsWith('https://offline.example/rest/v1/agent_availability'))return Promise.resolve(Response.json({agent_id:'fixture_agent'}));
     assert.ok(String(url).startsWith(origin), 'External network access is forbidden');
     return originalFetch(url, options);
   };
@@ -37,6 +43,9 @@ test('voice token handler rejects missing, expired, foreign-issuer and malformed
     }
     const result = await requireClerkUser({ header: () => `Bearer ${jwt(trusted)}` }, { status: () => { throw new Error('Valid session rejected'); } });
     assert.equal(result.sub, 'user-fixture');
+    const issued=await fetch(origin+'/api/voice/token',{method:'POST',headers:{Authorization:`Bearer ${jwt(trusted)}`,'Content-Type':'application/json'},body:JSON.stringify({agent_id:'peer',tenant_id:'forged',actor:'attacker',role:'admin'})});
+    assert.equal(issued.status,200);
+    assert.equal((await issued.json()).identity,'fixture_agent');
   } finally {
     globalThis.fetch = originalFetch;
     await new Promise(resolve => server.close(resolve));

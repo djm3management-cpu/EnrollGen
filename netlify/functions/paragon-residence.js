@@ -22,7 +22,7 @@ export function createParagonResidenceHandler({authenticate=r=>requireClerkAuth(
    if(body.action==='contact_zip_edit'){
     if(!uuid(body.contact_id)||(body.zip!==null&&!/^\d{5}$/.test(body.zip||'')))throw new EvidenceError(400,'Enter a five-digit ZIP or clear the field.');
     const contact=checked(await db.from('contacts').select('id,assigned_agent_id').eq('tenant_id',identity.tenant.id).eq('id',body.contact_id).maybeSingle());
-    if(!contact||(!identity.admin&&contact.assigned_agent_id&&contact.assigned_agent_id!==agent?.agent_slug))throw new EvidenceError(403,'Contact unavailable.');
+    if(!contact||(!identity.admin&&contact.assigned_agent_id!==agent?.agent_slug))throw new EvidenceError(403,'Contact unavailable.');
     checked(await db.rpc('save_paragon_contact_zip',{p_contact:contact.id,p_tenant:identity.tenant.id,p_zip:body.zip,p_user:auth.userId}));
     return evidenceJson(200,{saved:true});
    }

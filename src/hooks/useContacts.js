@@ -306,33 +306,24 @@ export function useContactMutations(requestingAgentId) {
     async (fields) => {
       fields = normalizeContactPhone(fields);
       const { data, error } = await supabaseClient
-        .from("contacts")
-        .insert({ tenant_id: tenant?.id, source: "manual", ...fields })
-        .select(CONTACT_SAFE_COLUMNS)
-        .single();
+        .rpc("create_workspace_record", { p_table: "contacts", p_fields: Object.fromEntries(Object.entries(fields).filter(([key]) => !["tenant_id","assigned_agent_id","source"].includes(key))) });
       if (error) await contactError(error, fields.phone);
       return data;
     },
-    [supabaseClient, tenant, contactError]
+    [supabaseClient, contactError]
   );
 
   const addNote = useCallback(
-    async ({ contactId, agentId, body }) => {
-      const { error } = await supabaseClient.from("contact_notes").insert({
-        tenant_id: tenant?.id,
-        contact_id: contactId,
-        agent_id: agentId || null,
-        body,
+    async ({ contactId, body }) => {
+      const { error } = await supabaseClient.rpc('create_workspace_record', {
+        p_table: 'contact_notes', p_fields: { contact_id: contactId, body },
       });
       if (error) throw error;
-      await supabaseClient.from("contact_activities").insert({
-        tenant_id: tenant?.id,
-        contact_id: contactId,
-        type: "note",
-        summary: body.slice(0, 120),
+      await supabaseClient.rpc('create_workspace_record', {
+        p_table: 'contact_activities', p_fields: { contact_id: contactId, type: 'note', summary: body.slice(0,120) },
       });
     },
-    [supabaseClient, tenant]
+    [supabaseClient]
   );
 
   const toggleNotePin = useCallback(
@@ -363,24 +354,20 @@ export function useContactMutations(requestingAgentId) {
   const addPolicy = useCallback(
     async ({ contactId, fields }) => {
       const { data, error } = await supabaseClient
-        .from("policies")
-        .insert({ tenant_id: tenant?.id, contact_id: contactId, ...fields })
-        .select("*")
-        .single();
+        .rpc('create_workspace_record', { p_table: 'policies', p_fields: { contact_id: contactId, ...Object.fromEntries(Object.entries(fields).filter(([key]) => !['tenant_id','writing_agent_id'].includes(key))) } });
       if (error) throw error;
 
       const policyLabel =
         [fields.product_line, fields.carrier, fields.plan_name].filter(Boolean).join(" ") || "Policy";
-      await supabaseClient.from("contact_activities").insert({
-        tenant_id: tenant?.id,
+      await supabaseClient.rpc('create_workspace_record', { p_table: 'contact_activities', p_fields: {
         contact_id: contactId,
         type: "enrollment",
         ref_id: data.id,
         summary: `Policy added: ${policyLabel.slice(0, 120)}`,
-      });
+      } });
       return data;
     },
-    [supabaseClient, tenant]
+    [supabaseClient]
   );
 
   const updatePolicy = useCallback(

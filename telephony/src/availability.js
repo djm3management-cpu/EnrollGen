@@ -1,3 +1,4 @@
+import { resolveDeploymentAccess } from './lib/deploymentAccess.js';
 import { supabase } from "./supabase.js";
 
 export async function agentExists(agentId) {
@@ -8,15 +9,10 @@ export async function agentExists(agentId) {
 }
 
 export async function activeTenantAgent(agentId, clerkSubject) {
-  const { data, error } = await supabase.from("tenant_agents")
-    .select("id, agent_slug, clerk_user_id, is_active")
-    .eq("clerk_user_id", clerkSubject)
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
-  if (error) throw new Error(`Active agent lookup failed: ${error.message}`);
-  if (!data || data.agent_slug !== agentId) return null;
-  return data;
+  try {
+    const identity = await resolveDeploymentAccess(supabase, clerkSubject);
+    return identity.agent_slug === agentId ? { ...identity, clerk_user_id: clerkSubject, is_active: true } : null;
+  } catch (error) { if (error.status === 403 || error.status === 401) return null; throw error; }
 }
 
 // PostgreSQL owns the reservation, across browsers and service instances.

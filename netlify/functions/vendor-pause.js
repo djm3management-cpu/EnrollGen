@@ -1,20 +1,25 @@
+import {resolveCallAccessIdentity,evidenceFailure} from './_evidenceAccess.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { requireClerkAuth } from './_clerkAuth.js';
-import { isAdminAuth, DEPLOYMENT_TENANT_ID, JSON_HEADERS, getSupabase } from './_tenantSettings.js';
+import { JSON_HEADERS, getSupabase } from './_tenantSettings.js';
 
-export default async request => {
+export function createVendorPauseHandler({authenticate=requireClerkAuth,getDb=getSupabase}={}) {
+ return async request => {
   if (!featureEnabled('PARAGON_ENABLED')) return disabledResponse('PARAGON_ENABLED');
   if (!['GET','POST'].includes(request.method)) return new Response('Method Not Allowed',{status:405});
-  const auth=await requireClerkAuth(request); if(auth.response)return auth.response;
-  if(!isAdminAuth(auth)) return new Response(JSON.stringify({error:'Forbidden'}),{status:403,headers:JSON_HEADERS});
-  const db=getSupabase();
+  const auth=await authenticate(request); if(auth.response)return auth.response;
+  const db=getDb();
+  let identity; try { identity=await resolveCallAccessIdentity(db,auth); } catch(error) { return evidenceFailure(error); }
+  if(!identity.admin) return new Response(JSON.stringify({error:'Forbidden'}),{status:403,headers:JSON_HEADERS});
   if(request.method==='POST'){
     const body=await request.json().catch(()=>({}));
     const paused=body.paused===true;
-    const {error}=await db.rpc('set_vendor_pause',{p_tenant_id:DEPLOYMENT_TENANT_ID,p_paused:paused,p_actor:auth.userId||auth.user?.id||'admin'});
+    const {error}=await db.rpc('set_vendor_pause',{p_tenant_id:identity.tenant.id,p_paused:paused,p_actor:auth.userId||auth.user?.id||'admin'});
     if(error)return new Response(JSON.stringify({error:error.message}),{status:500,headers:JSON_HEADERS});
   }
-  const {data,error}=await db.from('vendor_controls').select('vendor_pause,updated_at,updated_by').eq('tenant_id',DEPLOYMENT_TENANT_ID).maybeSingle();
+  const {data,error}=await db.from('vendor_controls').select('vendor_pause,updated_at,updated_by').eq('tenant_id',identity.tenant.id).maybeSingle();
   if(error)return new Response(JSON.stringify({error:error.message}),{status:500,headers:JSON_HEADERS});
   return new Response(JSON.stringify(data||{vendor_pause:false}),{status:200,headers:JSON_HEADERS});
 };
+}
+export default createVendorPauseHandler();

@@ -11,6 +11,7 @@ const pg=new PGlite();
 const T='00000000-0000-4000-8000-000000000001',A='10000000-0000-4000-8000-000000000001';
 const S='20000000-0000-4000-8000-000000000001',OTHER='20000000-0000-4000-8000-000000000002';
 const base=evidenceDb(pg),db={...base,async rpc(name,args){
+ if(name==='resolve_deployment_subject')return base.rpc(name,args);
  const params=Object.entries(args);
  try { const {rows}=await pg.query(`SELECT public.${name}(${params.map(([key],i)=>`${key}=>$${i+1}`).join(',')}) AS data`,params.map(([key,value])=>['p_payload','p_result'].includes(key)?JSON.stringify(value):value));return {data:rows[0].data,error:null}; }
  catch(error){return {data:null,error};}

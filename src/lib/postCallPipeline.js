@@ -1,5 +1,4 @@
 import { deploymentPublic } from './deploymentPublic.js';
-import { debugLog } from "./debugLog.js";
 import { fetchWithClerk } from "./clerkFetch.js";
 import { redactSensitiveText, redactTranscriptEntries } from "./redaction.js";
 import { normalizeDateInput as dateInputValue } from './dateInput.js';
@@ -103,10 +102,6 @@ export const US_STATE_OPTIONS = [
   "DC",
 ];
 
-function normalizeLookup(value) {
-  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 function normalizeTenantConfig(row) {
   if (!row) return null;
   return {
@@ -150,7 +145,7 @@ export async function fetchTenantAgents(supabaseClient, tenantId) {
   if (!supabaseClient?.from || !tenantId) return [];
   const { data, error } = await supabaseClient
     .from("tenant_agents")
-    .select("id, name, ghl_user_id, npn, clerk_user_id, agent_slug, is_active, identity_aliases")
+    .select("id, name, npn, clerk_user_id, agent_slug, is_active, identity_aliases")
     .eq("tenant_id", tenantId)
     .eq("is_active", true)
     .order("name", { ascending: true });

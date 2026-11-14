@@ -98,15 +98,7 @@ async function getSupabaseToken(getToken) {
 
 async function saveRemoteTheme(client, clerkUserId, theme) {
   if (!client || !clerkUserId || !theme) return;
-  const { error } = await client
-    .from("user_preferences")
-    .upsert(
-      {
-        clerk_user_id: clerkUserId,
-        theme_preference: theme,
-      },
-      { onConflict: "clerk_user_id" }
-    );
+  const { error } = await client.rpc('create_workspace_record', { p_table: 'user_preferences', p_fields: { theme_preference: theme } });
 
   if (error) throw error;
 }

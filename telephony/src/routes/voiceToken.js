@@ -4,7 +4,6 @@ import { config } from "../config.js";
 import { agentExists } from "../availability.js";
 import { mintAgentWsToken } from "../wsToken.js";
 import { requireClerkUser } from "../clerkAuth.js";
-import { supabase } from "../supabase.js";
 
 export const voiceTokenRouter = Router();
 
@@ -31,19 +30,7 @@ voiceTokenRouter.post("/api/voice/token", async (req, res) => {
 
   // Never trust an agent identity supplied by the browser. Resolve the
   // telephony identity from the verified Clerk subject instead.
-  const { data: tenantAgent, error: agentError } = await supabase
-    .from("tenant_agents")
-    .select("agent_slug, is_active")
-    .eq("clerk_user_id", clerkSubject)
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
-  if (agentError) {
-    console.error("Agent identity lookup failed:", agentError.message);
-    return res.status(503).json({ error: "Agent identity unavailable" });
-  }
-
-  const agentId = tenantAgent?.agent_slug;
+  const agentId = clerkUser.deploymentIdentity.agent_slug;
   if (!agentId || !/^[a-z0-9_]+$/.test(agentId)) {
     return res.status(403).json({ error: "No active telephony agent is linked to this Clerk user" });
   }

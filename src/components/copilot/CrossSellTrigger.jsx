@@ -169,8 +169,6 @@ export default function CrossSellTrigger({
       const session = getActiveSessionMetadata();
       const sb = getAuthSupabase(token);
       const payload = rows.map((row) => ({
-        tenant_id: tenantId || undefined,
-        agent_id: session.agentId || null,
         call_transcript_id: session.transcriptId || null,
         session_id: session.sessionId || null,
         primary_product: primaryProduct,
@@ -186,8 +184,10 @@ export default function CrossSellTrigger({
         },
       }));
 
-      const { error } = await sb.from("cross_sell_attempts").insert(payload);
-      if (error) throw error;
+      for (const fields of payload) {
+        const { error } = await sb.rpc('create_workspace_record', { p_table: 'cross_sell_attempts', p_fields: fields });
+        if (error) throw error;
+      }
     },
     [
       clientAge,

@@ -19,9 +19,7 @@ voiceEventsRouter.post('/api/voice/events', async (req, res) => {
   const user = await requireClerkUser(req, res);
   if (!user) return;
   try {
-    const { data: agent, error } = await supabase.from('tenant_agents')
-      .select('agent_slug,tenant_id').eq('clerk_user_id', user.sub).eq('is_active', true).maybeSingle();
-    if (error) throw error;
+    const agent = user.deploymentIdentity;
     if (!agent || req.body?.agent_id !== agent.agent_slug) return res.status(403).end();
     const events = req.body?.events;
     if (!Array.isArray(events) || !events.length || events.length > 20) return res.status(400).end();

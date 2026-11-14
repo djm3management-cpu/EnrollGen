@@ -13,7 +13,7 @@ export default async (request) => {
   if (!validSkipCounter(body)) return new Response('Invalid skip counter', { status: 400 });
   try {
     const supabase = createClient(process.env.SUPABASE_URL, supabaseSecretKey());
-    const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId);
+    const tenantId = await resolveTenantIdForOrg(supabase, auth.orgId, auth.userId);
     const subscription = await requireActiveSubscription(supabase, tenantId);
     if (subscription.response) return subscription.response;
     const plan = requirePlan(subscription, 'pro');

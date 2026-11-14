@@ -350,21 +350,12 @@ export default function TenantSettings({ currentUser = null }) {
     setSaving(true);
     setMessage("");
     try {
-      const { error } = await supabaseClient
-        .from("tenants")
-        .update({
-
-          agency_npn: profile.agency_npn,
-          licensed_states: profile.licensed_states,
-
-
-
-          carrier_options: carriers.filter(Boolean),
-          coop_rates: rowsToCoopRates(coopRows),
-          compliance_config: complianceConfig,
-        })
-        .eq("id", tenantId);
-      if (error) throw error;
+      const response = await fetchWithClerk(getToken, '/api/tenant-settings', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({agency_npn:profile.agency_npn,licensed_states:profile.licensed_states,
+          carrier_options:carriers.filter(Boolean),coop_rates:rowsToCoopRates(coopRows),compliance_config:complianceConfig}),
+      });
+      if (!response.ok) throw Error((await response.json()).error || 'Settings save failed.');
       await refetchTenant();
       setMessage("Settings saved.");
     } catch (error) {

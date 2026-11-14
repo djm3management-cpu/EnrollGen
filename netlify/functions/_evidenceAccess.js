@@ -1,3 +1,4 @@
+import { resolveDeploymentAccess,signedDeploymentAdmin } from '../../telephony/src/lib/deploymentAccess.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 export class EvidenceError extends Error {
@@ -35,65 +36,38 @@ export function checked(result) {
   return result.data;
 }
 
-export async function resolveEvidenceIdentity(db, auth, { provision = false } = {}) {
-  if (!auth.userId || auth.userId === "dev-bypass") {
-    throw new EvidenceError(401, "Sign in to access evidence.");
-  }
-  const rows = checked(await db.from("enrolled_agents")
-    .select("id, tenant_id, clerk_user_id, name, npn, is_active")
-    .eq("clerk_user_id", auth.userId).limit(2)) || [];
-  if (rows.length > 1) throw new EvidenceError(403, "Agent identity is ambiguous. Contact your administrator.");
-
-  let agent = rows[0];
-  if (agent && agent.is_active !== true) throw new EvidenceError(403, "Agent is inactive.");
-  let tenant;
-  if (agent) {
-    tenant = checked(await db.from("tenants").select("*").eq("id", agent.tenant_id).maybeSingle());
-    if (!tenant || (auth.orgId && tenant.clerk_org_id !== auth.orgId)) {
-      throw new EvidenceError(403, "Agent does not belong to the signed-in organization.");
-    }
-  } else {
-    // A signed Clerk organization claim is required for self-provisioning.
-    // No default agency tenant, body-supplied identity, roster role, or name fallback.
-    if (!provision || !auth.orgId) throw new EvidenceError(403, "Agent membership has not been provisioned.");
-    tenant = checked(await db.from("tenants").select("*").eq("clerk_org_id", auth.orgId).maybeSingle());
-    if (!tenant) throw new EvidenceError(403, "Organization is not configured.");
-    agent = checked(await db.from("enrolled_agents").insert({
-      tenant_id: tenant.id, clerk_user_id: auth.userId,
-      name: auth.tokenPayload?.name || "Agent", role: "agent", is_active: true,
-    }).select("id, tenant_id, clerk_user_id, name, npn, is_active").single());
-  }
-  return { agent, tenant };
+export async function resolveEvidenceIdentity(db, auth) {
+  let access;
+  try { access = await resolveDeploymentAccess(db, auth.userId, auth.orgId || auth.tokenPayload?.o?.id || null); }
+  catch (error) { throw new EvidenceError(error.status || 503, error.message); }
+  const agent = checked(await db.from('enrolled_agents').select('id,tenant_id,clerk_user_id,name,npn,is_active')
+    .eq('tenant_id',access.tenant_id).eq('id',access.agent_id).eq('clerk_user_id',auth.userId).eq('is_active',true).single());
+  const tenant = checked(await db.from('tenants').select('*').eq('id',access.tenant_id).single());
+  if (!agent || !tenant) throw new EvidenceError(403, 'Agency membership unavailable.');
+  return { agent, tenant, access };
 }
 
 // Admin authority comes from verified Clerk claims, never a submitted role,
 // display name, NPN, or the browser-writable CRM roster.
 export function hasTenantAdminRole(auth) {
-  const payload=auth?.tokenPayload || {};
-  const orgId=auth?.orgId || payload.o?.id;
-  const isAdmin=roles=>roles.filter(Boolean).some(value=>['admin','org:admin','owner','org:owner'].includes(String(value).toLowerCase()));
-  return Boolean((orgId && isAdmin([payload.org_role,payload.o?.rol]))
-    || isAdmin([payload.role,payload.public_metadata?.role,payload.private_metadata?.role,payload.metadata?.role])
-    || payload.public_metadata?.isAdmin===true || payload.metadata?.isAdmin===true);
+  return signedDeploymentAdmin(auth?.tokenPayload || {},auth?.orgId);
 }
 
 export async function resolveCallAccessIdentity(db, auth) {
-  if(!auth.userId || auth.userId==='dev-bypass')throw new EvidenceError(401,'Sign in to access calls.');
-  auth={...auth,orgId:auth.orgId || auth.tokenPayload?.o?.id || null};
-  if(hasTenantAdminRole(auth)) {
-    // Global Clerk admin metadata can be used without an active organization,
-    // but only the protected active enrolled membership supplies the tenant.
-    if(!auth.orgId)return {...await resolveEvidenceIdentity(db,auth),admin:true,auth};
-    const tenant=checked(await db.from('tenants').select('*').eq('clerk_org_id',auth.orgId).maybeSingle());
-    if(!tenant || tenant.clerk_org_id!==auth.orgId)throw new EvidenceError(403,'Organization is unavailable.');
-    return {tenant,admin:true,auth};
-  }
-  return {...await resolveEvidenceIdentity(db,auth),admin:false,auth};
+  const identity = await resolveEvidenceIdentity(db, auth);
+  return { ...identity, admin: identity.access.authority === 'admin' || hasTenantAdminRole(auth), auth };
 }
 
 export function scopeCallToIdentity(query, identity) {
   query=query.eq('tenant_id',identity.tenant.id);
   return identity.admin ? query : query.eq('agent_id',identity.agent.id);
+}
+
+// For service-only timeline views carrying a protected enrolled-agent UUID.
+// Tenant/admin flags come only from resolveCallAccessIdentity above.
+export function scopeCallLogToIdentity(query,identity) {
+ query=query.eq('tenant_id',identity.tenant.id);
+ return identity.admin ? query : query.eq('owner_agent_id',identity.agent.id);
 }
 
 export function canImportForOthers(auth, tenant) {
@@ -157,9 +131,9 @@ export async function bindPostCallPayload(db, payload, identity) {
     if (transcript.session_id !== session.id) throw new EvidenceError(403, "Transcript does not belong to this session.");
   }
   if (payload.contact_id) {
-    const contact = checked(await db.from("contacts").select("id")
+    const contact = checked(await db.from("contacts").select("id,assigned_agent_id")
       .eq("id", payload.contact_id).eq("tenant_id", identity.tenant.id).maybeSingle());
-    if (!contact) throw new EvidenceError(403, "Contact is unavailable in this tenant.");
+    if (!contact || (!identity.admin && contact.assigned_agent_id !== identity.access.agent_slug)) throw new EvidenceError(403, "Contact is unavailable for this agent.");
   }
   return { ...payload, call_record_id: record?.id || null, session_id: session.id, agent_id: identity.agent.id,
     writing_agent: identity.agent.name, agent_name: identity.agent.name };

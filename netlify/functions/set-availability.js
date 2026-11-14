@@ -1,28 +1,21 @@
 import { requireClerkAuth } from './_clerkAuth.js';
-import { EvidenceError, checked, evidenceJson, evidenceFailure, getEvidenceServiceClient } from './_evidenceAccess.js';
+import { EvidenceError, checked, evidenceJson, evidenceFailure, getEvidenceServiceClient, resolveCallAccessIdentity } from './_evidenceAccess.js';
 
 const STATUSES = ['available', 'callbacks_only', 'busy', 'offline'];
 const COLUMNS = 'agent_id, agent_name, status, available, toggled_at, active_call_sid, wrap_up_call_sid';
-
-// Only verified Clerk claims grant admin access. Browser metadata and CRM
-// roster roles are never authority. Organization admins stay in their org.
-function adminScope(auth) {
-  if (auth.tokenPayload?.public_metadata?.isAdmin === true) return 'global';
-  const role = auth.tokenPayload?.org_role ?? (auth.tokenPayload?.o?.rol === 'admin' ? 'org:admin' : null);
-  return auth.orgId && ['admin', 'org:admin'].includes(role) ? 'organization' : null;
-}
 
 export async function availabilityTarget(db, auth, requestedId) {
   if (!auth.userId || !auth.sessionId || auth.userId === 'dev-bypass') {
     throw new EvidenceError(401, 'Sign in to change availability.');
   }
   auth = { ...auth, orgId: auth.orgId ?? auth.tokenPayload?.o?.id ?? null };
-  const admin = adminScope(auth);
+  const identity = await resolveCallAccessIdentity(db,auth);
+  const admin = identity.admin ? 'organization' : null;
   let query = db.from('availability_agent_subjects')
-    .select('tenant_id, clerk_org_id, clerk_user_id, agent_slug, is_active');
+    .select('tenant_id, clerk_org_id, clerk_user_id, agent_slug, is_active').eq('tenant_id',identity.tenant.id);
   if (admin && requestedId) {
     query = query.eq('agent_slug', requestedId);
-    if (admin === 'organization') query = query.eq('clerk_org_id', auth.orgId);
+    query = query.eq('clerk_org_id', identity.tenant.clerk_org_id);
   } else {
     query = query.eq('clerk_user_id', auth.userId);
     if (auth.orgId) query = query.eq('clerk_org_id', auth.orgId);

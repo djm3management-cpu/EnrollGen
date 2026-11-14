@@ -1,6 +1,6 @@
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
-import { findTenantByOrg, isAdminAuth } from "./_tenantSettings.js";
+import { resolveCallAccessIdentity, checked } from "./_evidenceAccess.js";
 import {
   RTS_CHUNK_SIZE,
   RTS_INGESTION_SYSTEM_PROMPT,
@@ -48,53 +48,10 @@ function isMissingIngestionSchema(error) {
 }
 
 async function resolveTenantContext(supabase, auth) {
-  let tenant = auth.orgId ? await findTenantByOrg(supabase, auth.orgId) : null;
-  let actor = null;
-
-  if (tenant?.id) {
-    const { data, error } = await supabase
-      .from("tenant_agents")
-      .select("id, tenant_id, name, npn, clerk_user_id, role, is_active")
-      .eq("tenant_id", tenant.id)
-      .eq("clerk_user_id", auth.userId)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (error) throw error;
-    actor = data || null;
-  }
-
-  if (!tenant) {
-    const { data, error } = await supabase
-      .from("tenant_agents")
-      .select("id, tenant_id, name, npn, clerk_user_id, role, is_active")
-      .eq("clerk_user_id", auth.userId)
-      .eq("is_active", true)
-      .limit(1)
-      .maybeSingle();
-    if (error) throw error;
-    actor = data || null;
-    if (actor?.tenant_id) {
-      const { data: tenantRow, error: tenantError } = await supabase
-        .from("tenants")
-        .select("*")
-        .eq("id", actor.tenant_id)
-        .single();
-      if (tenantError) throw tenantError;
-      tenant = tenantRow;
-    }
-  }
-
-  if (!tenant?.id) {
-    const error = new Error("No EnrollGen tenant is linked to this Clerk organization.");
-    error.status = 403;
-    throw error;
-  }
-  if (!actor?.id) {
-    const error = new Error("Your Clerk user is not linked to an active agent in this tenant.");
-    error.status = 403;
-    throw error;
-  }
-  return { tenant, actor };
+  const identity = await resolveCallAccessIdentity(supabase, auth);
+  const actor = checked(await supabase.from('tenant_agents').select('id,tenant_id,name,npn,clerk_user_id,is_active')
+    .eq('tenant_id',identity.tenant.id).eq('id',identity.access.roster_id).eq('is_active',true).single());
+  return { ...identity, actor };
 }
 
 async function getKnownData(supabase, tenantId) {
@@ -310,7 +267,7 @@ function channelForSource(sourceType) {
 }
 
 async function handleCommit(supabase, context, body) {
-  const admin = isAdminAuth(context.auth);
+  const admin = context.admin;
   if (!admin) return json(403, { error: "Only a tenant admin can commit an RTS ingestion." });
 
   const filename = clean(body.source_filename || body.ingestion?.filename, 255);
@@ -489,13 +446,14 @@ async function handleCommit(supabase, context, body) {
   });
 }
 
-export default async (request) => {
+export function createRtsIngestHandler({authenticate=requireClerkAuth,getDb=getSupabase}={}) {
+ return async (request) => {
   if (request.method !== "POST") return json(405, { error: "Method not allowed" });
-  const auth = await requireClerkAuth(request);
+  const auth = await authenticate(request);
   if (auth.response) return auth.response;
 
   try {
-    const supabase = getSupabase();
+    const supabase = getDb();
     const context = { ...(await resolveTenantContext(supabase, auth)), auth };
     const contentType = request.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
@@ -507,11 +465,14 @@ export default async (request) => {
     }
     return await handleUpload(request, supabase, context);
   } catch (error) {
-    console.error("[rts-ingest] failed:", error);
+    console.error("[rts-ingest] failed", {status:error.status || 500,code:error.code || null});
     return json(error.status || 500, {
       error: error.message || "RTS ingestion failed.",
     });
   }
 };
+
+}
+export default createRtsIngestHandler();
 
 export const config = { path: "/api/rts-ingest" };

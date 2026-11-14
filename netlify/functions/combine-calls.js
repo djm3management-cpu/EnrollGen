@@ -1,5 +1,5 @@
 import { requireClerkAuth } from './_clerkAuth.js';
-import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient } from './_evidenceAccess.js';
+import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient,scopeCallLogToIdentity } from './_evidenceAccess.js';
 import { authorizeRecordingTarget, listTargetRecordings, publicRecording, recordingIdentity, UUID } from './_recordingAccess.js';
 
 export function createCombineCallsHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient } = {}) {
@@ -18,7 +18,7 @@ export function createCombineCallsHandler({ authenticate = requireClerkAuth, get
         const { record } = await authorizeRecordingTarget(db, identity, { call_record_id: id });
         if (params.get('mode') === 'candidates') {
           if (!record.contact_id) return evidenceJson(200, { rows: [] });
-          const rows = checked(await db.from('v_call_log').select('*').eq('tenant_id', tenantId)
+          const rows = checked(await scopeCallLogToIdentity(db.from('v_deployment_call_log').select('*'),identity)
             .eq('contact_id', record.contact_id).order('occurred_at', { ascending: false }).limit(100)) || [];
           return evidenceJson(200, { rows: rows.filter(row => row.call_record_id && row.call_record_id !== id) });
         }
@@ -28,8 +28,7 @@ export function createCombineCallsHandler({ authenticate = requireClerkAuth, get
         const rows = [];
         for (const child of children) {
           const target = await authorizeRecordingTarget(db, identity, { call_record_id: child.id });
-          const entries = checked(await db.from('v_call_log_entries').select('*')
-            .eq('tenant_id', tenantId).eq('call_record_id', child.id).limit(100)) || [];
+          const entries = checked(await scopeCallLogToIdentity(db.from('v_deployment_call_log_entries').select('*'),identity).eq('call_record_id', child.id).limit(100)) || [];
           const facts = checked(await db.from('v_call_combine_facts').select('talk_seconds')
             .eq('tenant_id', tenantId).eq('id', child.id).single());
           const recording = (await listTargetRecordings(db, identity, target)).find(row => publicRecording(row).available);

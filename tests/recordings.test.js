@@ -22,7 +22,7 @@ const AC='AC'+'a'.repeat(32), CA='CA'+'b'.repeat(32), OC='CA'+'c'.repeat(32), CH
 const re=n=>'RE'+String(n).padStart(32,'0');
 const config={twilioAccountSid:AC,twilioAuthToken:'test'};
 const auth={userId:'user-a',orgId:'org-a',tokenPayload:{org_role:'org:member'}};
-const admin={userId:'user-admin',orgId:'org-a',tokenPayload:{org_role:'org:admin'}};
+const admin={userId:'user-a',orgId:'org-a',tokenPayload:{org_role:'org:admin'}};
 const payload=(n,extra={})=>({AccountSid:AC,CallSid:CA,RecordingSid:re(n),RecordingStatus:'completed',RecordingChannels:'2',RecordingDuration:'5',...extra});
 const enqueue=async(n,extra={},attempt=ATT)=> {
   const rows=await sql('SELECT enqueue_recording($1::jsonb,$2::uuid) AS id',[JSON.stringify(payload(n,extra)),attempt]); return rows[0].id;
@@ -181,7 +181,8 @@ test('missing Storage copy yields a short-lived provider capability, not credent
 
 test('mutable roster, CRM session/URL and inbound ownership claims cannot grant peer recordings',async()=>{
   await sql("UPDATE tenant_agents SET agent_slug='agent_b' WHERE clerk_user_id='user-a'");
-  const identity=await recordingIdentity(db,auth);assert.equal(identity.slug,'agent_a');
+  await assert.rejects(()=>recordingIdentity(db,auth),/membership/);
+  await sql('UPDATE tenant_agents SET agent_slug=$1 WHERE clerk_user_id=$2',['agent_a','user-a']);
   await sql('UPDATE call_records SET session_id=$1 WHERE id=$2',[S,D]);
   await call(auth,`call_record_id=${D}`,403);await sql('UPDATE call_records SET session_id=$1 WHERE id=$2',[P,D]);
   const peerInbound='40000000-0000-4000-8000-000000000003',peerAttempt='50000000-0000-4000-8000-000000000003',peerSid='CA'+'f'.repeat(32);
@@ -220,7 +221,7 @@ test('recording playback allows the call agent or same-tenant admin/owner only',
   }
   const own=await call(auth,{action:'media',call_record_id:C,recording_id:ownId});assert.equal(own.source,'storage');
   await call(auth,{action:'media',call_record_id:D,recording_id:peerId},403);
-  const owner={userId:'user-owner',tokenPayload:{o:{id:'org-a',rol:'owner'}}};
+  const owner={userId:'user-a',tokenPayload:{o:{id:'org-a',rol:'owner'}}};
   const peer=await call(owner,{action:'media',call_record_id:D,recording_id:peerId});assert.equal(peer.source,'storage');
   await call(owner,{action:'media',call_record_id:'30000000-0000-4000-8000-000000000003',recording_id:peerId},403);
 });

@@ -1,5 +1,5 @@
 import { requireClerkAuth } from './_clerkAuth.js';
-import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient } from './_evidenceAccess.js';
+import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient,scopeCallLogToIdentity,scopeCallToIdentity } from './_evidenceAccess.js';
 import { recordingIdentity } from './_recordingAccess.js';
 
 const terminal = new Set(['completed', 'canceled', 'failed', 'busy', 'no-answer']);
@@ -41,7 +41,7 @@ export async function measuredCallLogRows(db, tenantId, rows) {
 // v_call_log supports older schemas without a call_outcome column. Resolve the
 // saved outcome from call_records first, in bounded batches to keep REST URLs
 // small, then merge the matching calls before applying the requested page.
-async function outcomeCallLogResult(db, tenantId, outcome, query, offset, limit, ascending) {
+async function outcomeCallLogResult(db, identity, outcome, query, offset, limit, ascending) {
   const needed = offset + limit;
   const compare = (a, b) => {
     const dateOrder = (Date.parse(a.occurred_at) || 0) - (Date.parse(b.occurred_at) || 0);
@@ -50,8 +50,7 @@ async function outcomeCallLogResult(db, tenantId, outcome, query, offset, limit,
   };
   let candidates = [], count = 0;
   for (let recordOffset = 0; ; recordOffset += 100) {
-    const records = checked(await db.from('call_records').select('id')
-      .eq('tenant_id', tenantId).eq('call_outcome', outcome).order('id')
+    const records = checked(await scopeCallToIdentity(db.from('call_records').select('id'),identity).eq('call_outcome', outcome).order('id')
       .range(recordOffset, recordOffset + 99)) || [];
     if (!records.length) break;
     const ids = records.map(record => record.id);
@@ -84,8 +83,7 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
       const ascending = params.get('ascending');
       if (ascending != null && !['0', '1'].includes(ascending)) throw new EvidenceError(400, 'Invalid sort.');
       const filters = [];
-      const query = () => filters.reduce((current, apply) => apply(current), db.from('v_call_log').select('*', { count: 'exact' })
-        .eq('tenant_id', identity.tenant.id)
+      const query = () => filters.reduce((current, apply) => apply(current), scopeCallLogToIdentity(db.from('v_deployment_call_log').select('*', { count: 'exact' }),identity)
         .order('occurred_at', { ascending: ascending === '1' }).order('log_id', { ascending: ascending === '1' }));
       const inboundId=params.get('inbound_call_id');
       if(inboundId){if(!validUuid(inboundId))throw new EvidenceError(400,'Invalid original call.');filters.push(query=>query.eq('inbound_call_id',inboundId));}
@@ -126,7 +124,7 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
       const outcome = params.get('outcome');
       if (outcome && !/^[a-z][a-z0-9_]{0,79}$/.test(outcome)) throw new EvidenceError(400, 'Invalid outcome.');
       const result = outcome
-        ? await outcomeCallLogResult(db, identity.tenant.id, outcome, query, offset, limit, ascending === '1')
+        ? await outcomeCallLogResult(db, identity, outcome, query, offset, limit, ascending === '1')
         : await query().range(offset, offset + limit - 1);
       const rows = await measuredCallLogRows(db, identity.tenant.id, checked(result) || []);
       const recordIds = [...new Set(rows.map(row => row.call_record_id).filter(Boolean))];

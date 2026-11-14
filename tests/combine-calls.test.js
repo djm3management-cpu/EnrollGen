@@ -12,7 +12,7 @@ const file = name => readFileSync(new URL('../supabase/migrations/' + name, impo
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const T = id(1), OTHER = id(2), AGENT = id(3), CONTACT = id(4), CONTACT2 = id(5);
 const auth = { userId: 'user-a', orgId: 'org-a', tokenPayload: { org_role: 'org:member' } };
-const admin = { userId: 'admin', orgId: 'org-a', tokenPayload: { org_role: 'org:admin' } };
+const admin = { userId: 'user-a', orgId: 'org-a', tokenPayload: { org_role: 'org:admin' } };
 const handler = createCombineCallsHandler({ authenticate: async request => request.headers.get('x-test-admin') ? admin : auth, getDb: () => db });
 async function action(body, { status = 200, asAdmin = false } = {}) {
   const response = await handler(new Request('https://test/combine-calls', {

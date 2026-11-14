@@ -6,7 +6,7 @@ import { createAgentStatusLogHandler } from '../netlify/functions/agent-status-l
 
 const pg = new PGlite();
 const db = evidenceDb(pg);
-const auth = { userId: 'alice', sessionId: 'sess-alice', orgId: 'org-a', tokenPayload: {} };
+const auth = { userId: 'alice', sessionId: 'sess-alice', orgId: 'org-a', tokenPayload: {org_role:'org:admin'} };
 const filters = { from: '2026-10-29T04:00:00Z', to: '2026-10-30T04:00:00Z' };
 async function call(params = {}, identity = auth, expected = 200, method = 'GET') {
   const handler = createAgentStatusLogHandler({ authenticate: async () => identity, getDb: () => db });
@@ -18,15 +18,15 @@ async function call(params = {}, identity = auth, expected = 200, method = 'GET'
 
 before(async () => {
   await pg.exec(`
-    CREATE TABLE tenants(id text PRIMARY KEY, clerk_org_id text);
-    CREATE TABLE enrolled_agents(id text, tenant_id text, clerk_user_id text, name text, npn text, is_active boolean);
-    CREATE TABLE recording_agent_subjects(tenant_id text, clerk_user_id text, agent_slug text);
-    CREATE TABLE availability_agent_subjects(tenant_id text, agent_slug text);
+    CREATE TABLE tenants(id uuid PRIMARY KEY, clerk_org_id text);
+    CREATE TABLE enrolled_agents(id uuid, tenant_id uuid, clerk_user_id text, name text, npn text, is_active boolean);
+    CREATE TABLE recording_agent_subjects(tenant_id uuid, clerk_user_id text, agent_slug text);
+    CREATE TABLE availability_agent_subjects(tenant_id uuid, agent_slug text);
     CREATE TABLE agent_availability(agent_id text, agent_name text);
     CREATE TABLE agent_availability_log(id text, agent_id text, agent_name text, status text, available boolean, changed_at timestamptz);
-    INSERT INTO tenants VALUES('a','org-a'),('b','org-b');
-    INSERT INTO enrolled_agents VALUES('1','a','alice','Alice',NULL,true),('2','b','foreign','Foreign',NULL,true),('3','a','inactive','Inactive',NULL,false);
-    INSERT INTO availability_agent_subjects VALUES('a','alice'),('a','bob'),('b','foreign');
+    INSERT INTO tenants VALUES('00000000-0000-4000-8000-000000000001','org-a'),('00000000-0000-4000-8000-000000000002','org-b');
+    INSERT INTO enrolled_agents VALUES('10000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000001','alice','Alice',NULL,true),('10000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000002','foreign','Foreign',NULL,true),('10000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000001','inactive','Inactive',NULL,false);
+    INSERT INTO availability_agent_subjects VALUES('00000000-0000-4000-8000-000000000001','alice'),('00000000-0000-4000-8000-000000000001','bob'),('00000000-0000-4000-8000-000000000002','foreign');
     INSERT INTO agent_availability VALUES('alice','Alice'),('bob','Bob'),('foreign','Foreign');
     INSERT INTO agent_availability_log VALUES
       ('01','alice','Alice','available',true,'2026-10-29T13:00:00Z'),
@@ -58,19 +58,18 @@ test('filters apply before pagination and preserve exact timestamps', async () =
 
 test('foreign agents, injected tenants and untrusted identities cannot expose another agency', async () => {
   await call({ agent: 'foreign' }, auth, 403);
-  await call({ tenant_id: 'b' }, auth, 400);
+  await call({ tenant_id: '00000000-0000-4000-8000-000000000002' }, auth, 400);
   await call({}, { ...auth, userId: 'inactive' }, 403);
   await call({}, { ...auth, userId: 'unlinked' }, 403);
   await call({}, { ...auth, orgId: 'org-b' }, 403);
   await call({}, { ...auth, userId: 'dev-bypass' }, 401);
   await call({}, { ...auth, sessionId: null }, 401);
-  const foreign = await call({}, { ...auth, userId: 'foreign', orgId: 'org-b' });
-  assert.deepEqual(foreign.rows.map(row => row.id), ['04']);
+  await call({}, { ...auth, userId: 'foreign', orgId: 'org-b' },403);
 });
 
-test('organization admins without agent rows can see only their organization', async () => {
+test('organization admins without active provisioned membership are denied', async () => {
   const admin = { ...auth, userId: 'admin', tokenPayload: { org_role: 'org:admin' } };
-  assert.equal((await call({}, admin)).count, 3);
+  await call({}, admin,403);
   await call({ agent: 'foreign' }, admin, 403);
 });
 

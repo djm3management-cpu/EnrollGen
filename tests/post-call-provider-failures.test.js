@@ -11,7 +11,7 @@ import {recordProviderStatus} from '../netlify/lib/postCallProvider.js';
 import {postCallFailureMessage,observePostCallStatus} from '../src/lib/postCallStatus.js';
 import {createPostCallQueueHandler} from '../netlify/functions/post-call.js';
 const pg=new PGlite(),base=evidenceDb(pg);
-const db={...base,async rpc(name,args={}){try{const entries=Object.entries(args);const {rows}=await pg.query(`SELECT ${name}(${entries.map(([k],i)=>`${k}=>$${i+1}`).join(',')}) AS data`,entries.map(([k,v])=>['p_payload','p_result'].includes(k)?JSON.stringify(v):v));return{data:rows[0].data,error:null};}catch(error){return{data:null,error};}}};
+const db={...base,async rpc(name,args={}){if(name==='resolve_deployment_subject')return base.rpc(name,args);try{const entries=Object.entries(args);const {rows}=await pg.query(`SELECT ${name}(${entries.map(([k],i)=>`${k}=>$${i+1}`).join(',')}) AS data`,entries.map(([k,v])=>['p_payload','p_result'].includes(k)?JSON.stringify(v):v));return{data:rows[0].data,error:null};}catch(error){return{data:null,error};}}};
 const T='00000000-0000-4000-8000-000000000001',A='10000000-0000-4000-8000-000000000001',S='20000000-0000-4000-8000-000000000001',K='a'.repeat(64);
 const auth={userId:'agent',orgId:'org',tokenPayload:{}};
 const getJob=async()=> (await pg.query('SELECT * FROM post_call_jobs WHERE session_id=$1',[S])).rows[0];

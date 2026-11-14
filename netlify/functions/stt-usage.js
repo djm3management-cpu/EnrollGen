@@ -21,7 +21,7 @@ export function createSttUsageHandler({ authenticate = requireClerkAuth,
     if (!row) return new Response('Invalid STT usage', { status: 400 });
     try {
       const db = getDb();
-      const tenantId = await resolveTenant(db, auth.orgId);
+      const tenantId = await resolveTenant(db, auth.orgId, auth.userId);
       if (!tenantId) return new Response('Tenant required', { status: 403 });
       const { error } = await db.from('usage_records').upsert({ ...row, tenant_id: tenantId,
         metadata: { ...row.metadata, user_id: auth.userId, reported_by: 'client' } }, { onConflict: 'id', ignoreDuplicates: true });

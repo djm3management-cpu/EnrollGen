@@ -1,14 +1,11 @@
+import {resolveCallAccessIdentity,EvidenceError} from './_evidenceAccess.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import {
-  findTenantByOrg,
   getSupabase,
-  isAdminAuth,
   json,
   postJsonWithTimeout,
-  readFirst,
-  safeText,
   validateWebhookUrl,
 } from "./_tenantSettings.js";
 
@@ -17,7 +14,9 @@ function resolveWebhookUrl() { return deploymentProfile().ghl.postCallUrl; }
 function buildTestPayload(body, tenant, auth) {
   const providedPayload = body?.payload && typeof body.payload === "object" ? body.payload : {};
 
+  const safePayload=Object.fromEntries(Object.entries(providedPayload).filter(([key])=>!['tenant_id','actor','role','requested_by'].includes(key)));
   return {
+    ...safePayload,
     event: "enrollgen.webhook_test",
     source: "EnrollGen Tenant Settings",
     test: true,
@@ -26,7 +25,6 @@ function buildTestPayload(body, tenant, auth) {
     clerk_org_id: tenant.clerk_org_id,
     requested_by: auth.userId,
     sent_at: new Date().toISOString(),
-    ...providedPayload,
   };
 }
 
@@ -39,20 +37,6 @@ export default async (request) => {
   const auth = await requireClerkAuth(request);
   if (auth.response) return auth.response;
 
-  if (!auth.orgId) {
-    return json(400, {
-      error: "Missing Clerk organization",
-      detail: "Select an organization before testing a CRM webhook.",
-    });
-  }
-
-  if (!isAdminAuth(auth)) {
-    return json(403, {
-      error: "Forbidden",
-      detail: "Only organization admins can test CRM webhooks.",
-    });
-  }
-
   let body;
   try {
     body = await request.json();
@@ -62,13 +46,9 @@ export default async (request) => {
 
   try {
     const supabase = getSupabase();
-    const tenant = await findTenantByOrg(supabase, auth.orgId);
-    if (!tenant) {
-      return json(404, {
-        error: "Tenant not found",
-        detail: "Create tenant settings before testing a CRM webhook.",
-      });
-    }
+    const identity = await resolveCallAccessIdentity(supabase,auth);
+    if(!identity.admin)throw new EvidenceError(403,'Administrator required.');
+    const tenant = identity.tenant;
 
     const webhookUrl = validateWebhookUrl(resolveWebhookUrl(body, tenant));
     const payload = buildTestPayload(body, tenant, auth);

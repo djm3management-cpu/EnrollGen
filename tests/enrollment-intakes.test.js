@@ -27,7 +27,7 @@ const db={...base,async rpc(name,args={}){
 }};
 const query=async(sql,args=[]) => (await pg.query(sql,args)).rows;
 const valid=(extra={})=>normalizeIntake({writingAgentId:roster[0].id,...emptyIntake('Pilot Agent 01',roster),firstName:'Jane',lastName:'Doe',dob:'1955-02-28',phone:'2125550101',state:'NY',zip:'10001',mbi:'1ab2cd3ef45',prevCarrier:'Original Medicare',newCarrier:'UnitedHealthcare',planName:'Test Plan',enrollCode:'AEP',premium:'0',contractId:'H1234',planId:'001',sunfireCode:'SF-123',effectiveDate:'2027-01-01',sixtyDayDate:'2027-03-02',...extra});
-const authenticate=async()=>({userId:'user-a',orgId:'org-a'});
+const authenticate=async()=>({userId:'user_pilot01',orgId:'org-a'});
 const handler=(options={})=>createEnrollmentIntakesHandler({authenticate,getDb:()=>db,deliver:async()=>{},now:()=> '2026-10-29T16:00:00.000Z',...options});
 const req=(data,extras={})=>new Request(`https://app.test/api/enrollment-intakes?call_id=${call}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data,...extras})});
 let intakeId;
@@ -46,7 +46,7 @@ before(async()=>{
  INSERT INTO cms_plans_py2027 VALUES(1002,2027,'NY','MA','Humana','Landscape Humana Plan','H8888','012','0',0,'County'),(1003,2027,'NY','PDP','Aetna','Landscape PDP','H7777','012','0',0,'County'),(1004,2027,'NJ','MA','Aetna','Landscape NJ','H6666','012','0',0,'County');
  CREATE TABLE tenants(id uuid PRIMARY KEY,clerk_org_id text);
  CREATE TABLE enrolled_agents(id uuid PRIMARY KEY,tenant_id uuid,clerk_user_id text,is_active boolean,name text,npn text);
- CREATE TABLE contacts(id uuid PRIMARY KEY,tenant_id uuid,pii_encrypted jsonb,state text,zip text,current_carrier text);
+ CREATE TABLE contacts(id uuid PRIMARY KEY,tenant_id uuid,pii_encrypted jsonb,state text,zip text,current_carrier text,assigned_agent_id text DEFAULT 'pilot_agent_01');
  CREATE TABLE follow_ups(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,contact_id uuid,agent_id text,due_at timestamptz,reason text,status text DEFAULT 'open',updated_at timestamptz DEFAULT now());
  CREATE TABLE call_records(id uuid PRIMARY KEY,tenant_id uuid,agent_id uuid,contact_id uuid,call_outcome text,carrier_name text,product_type text,sunfire_code text,call_start timestamptz,agent_name text,
  enrollment_confirmation_number text,compliance_status text,compliance_scorecard_id uuid,metadata jsonb,call_type text,created_at timestamptz,call_duration_seconds integer);
@@ -57,7 +57,7 @@ before(async()=>{
  CREATE TABLE compliance_scorecards(id uuid,tenant_id uuid,call_id uuid,overall_score numeric,is_thread_composite boolean);
  CREATE TABLE recording_ingestion(id uuid DEFAULT gen_random_uuid(),tenant_id uuid,call_record_id uuid,recording_sid text,account_sid text,callback_call_sid text,recording_channels smallint,copy_status text DEFAULT 'stored',provider_status text,recording_duration_seconds integer,first_seen_at timestamptz DEFAULT now());
  INSERT INTO tenants VALUES('${tenant}','org-a');
- INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user-a',true,'Pilot Agent 01',NULL);
+ INSERT INTO enrolled_agents VALUES('${agent}','${tenant}','user_pilot01',true,'Pilot Agent 01',NULL);
  INSERT INTO contacts(id,tenant_id,state,zip,current_carrier) VALUES('${contact}','${tenant}','NY','10001','Original Medicare'),('${household}','${tenant}','NY','10001','Aetna');
  INSERT INTO call_records VALUES('${call}','${tenant}','${agent}','${contact}','incomplete','Aetna','MA',NULL,'2026-10-20T15:00:00Z','Pilot Agent 01','OLD','complete',NULL,'{}','inbound',now(),120);
  INSERT INTO recording_ingestion(tenant_id,call_record_id,recording_sid,account_sid,callback_call_sid,recording_channels,provider_status) VALUES('${tenant}','${call}','REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb','ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','CAcccccccccccccccccccccccccccccccc',2,'completed');`);
@@ -130,7 +130,7 @@ test('GET decrypts only owned intakes and shows sync status; foreign call and or
  const response=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${call}`));assert.equal(response.status,200);
  const body=await response.json();assert.equal(body.intakes[0].data.mbi,'1AB2-CD3-EF45');assert.equal(body.intakes[0].sync.status,'pending');assert.equal(body.prefill.aor,'Pilot Agent 01');
  const foreign=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(99)}`));assert.equal(foreign.status,403);
- assert.equal((await handler({authenticate:async()=>({userId:'user-a',orgId:'org-b'})})(req(valid()))).status,403);
+ assert.equal((await handler({authenticate:async()=>({userId:'user_pilot01',orgId:'org-b'})})(req(valid()))).status,403);
 });
 test('editing reuses the follow-up task and preserves submission time; household enrollments have separate rows and contacts',async()=>{
  const first=(await query('SELECT * FROM enrollment_intakes WHERE id=$1',[intakeId]))[0];
@@ -206,12 +206,14 @@ test('UHC requirements use the intake carrier even when legacy call carrier meta
 });
 
 const dylanAgent=id(70),dylanCall=id(71);
-const dylanAuth={userId:'user-dylan',orgId:'org-a',tokenPayload:{org_role:'org:member'}};
-const mikeAdminAuth={userId:'user-a',orgId:'org-a',tokenPayload:{public_metadata:{isAdmin:true}}};
+const dylanAuth={userId:'user_pilot03',orgId:'org-a',tokenPayload:{org_role:'org:member'}};
+const mikeAdminAuth={userId:'user_pilot01',orgId:'org-a',tokenPayload:{public_metadata:{isAdmin:true}}};
 async function withDylanCall(work){
  await pg.exec('BEGIN');
  try{
-  await query(`INSERT INTO enrolled_agents VALUES($1,$2,'user-dylan',true,'Pilot Agent 03',NULL)`,[dylanAgent,tenant]);
+  await query(`INSERT INTO enrolled_agents(id,tenant_id,clerk_user_id,is_active,name,npn) VALUES($1,$2,'user_pilot03',true,'Pilot Agent 03',NULL)`,[dylanAgent,tenant]);
+  await query("INSERT INTO availability_agent_subjects(tenant_id,agent_slug,clerk_user_id,clerk_org_id,is_active) VALUES($1,'pilot_agent_03','user_pilot03','org-a',true)",[tenant]);
+  await query("UPDATE contacts SET assigned_agent_id='pilot_agent_03' WHERE id=$1",[contact]);
   await query(`INSERT INTO call_records(id,tenant_id,agent_id,contact_id,call_outcome,product_type,agent_name) VALUES($1,$2,$3,$4,'incomplete','MA','Pilot Agent 03')`,[dylanCall,tenant,dylanAgent,contact]);
   await work();
  }finally{await pg.exec('ROLLBACK');}
@@ -230,7 +232,7 @@ for(const [label,identity] of [['agent-own',dylanAuth],['admin-other',mikeAdminA
  assert.equal((await (await api(intakeRequest())).json()).intakes[0].data.planName,'Updated by authorized user');
 }));
 test('non-admin Mike remains denied on Dylan calls, even with forged body or unsafe metadata admin fields',()=>withDylanCall(async()=>{
- for(const identity of [{userId:'user-a',orgId:'org-a'},{userId:'user-a',orgId:'org-a',tokenPayload:{unsafe_metadata:{role:'admin',isAdmin:true}}}]){
+ for(const identity of [{userId:'user_pilot01',orgId:'org-a'},{userId:'user_pilot01',orgId:'org-a',tokenPayload:{unsafe_metadata:{role:'admin',isAdmin:true}}}]){
   const api=handler({authenticate:async()=>identity});
   assert.equal((await api(intakeRequest())).status,403);
   assert.equal((await api(intakeRequest('GET',null,'&plans=1&state=NY&carrier=Aetna'))).status,403);
@@ -240,9 +242,9 @@ test('non-admin Mike remains denied on Dylan calls, even with forged body or uns
 }));
 test('admin claims require the matching organization and support Clerk role and compact owner claims',()=>withDylanCall(async()=>{
  for(const tokenPayload of [{org_role:'org:admin'},{public_metadata:{role:'admin'}},{o:{id:'org-a',rol:'owner'}}]){
-  const api=handler({authenticate:async()=>({userId:'user-a',orgId:tokenPayload.o?null:'org-a',tokenPayload})});assert.equal((await api(intakeRequest())).status,200);
+  const api=handler({authenticate:async()=>({userId:'user_pilot01',orgId:tokenPayload.o?null:'org-a',tokenPayload})});assert.equal((await api(intakeRequest())).status,200);
  }
- for(const identity of [{...mikeAdminAuth,orgId:'org-b'},{userId:'user-a',orgId:null,tokenPayload:{org_role:'org:admin'}},{userId:'unknown-admin',orgId:null,tokenPayload:{public_metadata:{isAdmin:true}}}])assert.equal((await handler({authenticate:async()=>identity})(intakeRequest())).status,403);
+ for(const identity of [{...mikeAdminAuth,orgId:'org-b'},{userId:'user_pilot01',orgId:null,tokenPayload:{org_role:'org:admin'}},{userId:'unknown-admin',orgId:null,tokenPayload:{public_metadata:{isAdmin:true}}}])assert.equal((await handler({authenticate:async()=>identity})(intakeRequest())).status,403);
  await query(`INSERT INTO tenants VALUES($1,'org-b')`,[id(73)]);
  await query(`INSERT INTO call_records(id,tenant_id,agent_id,call_outcome,product_type) VALUES($1,$2,$3,'incomplete','MA')`,[id(74),id(73),id(75)]);
  assert.equal((await handler({authenticate:async()=>mikeAdminAuth})(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(74)}`))).status,403);
@@ -271,7 +273,7 @@ for(const [http,status,error,retryable] of [[404,'needs_attention','invalid_sunf
    let [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[intake]);
    assert.equal(row.status,status);assert.equal(row.last_error,error);assert.equal(row.retryable,retryable);assert.equal(row.attempts,1);
    assert.ok(row.provider_message.includes('[redacted]'));assert.ok(!JSON.stringify(logs).includes('private-token'));assert.ok(!JSON.stringify(logs).includes('Provider says'));
-   const admin=createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>({userId:'user-a',orgId:'org-a',tokenPayload:{org_role:'org:admin'}})});
+   const admin=createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>({userId:'user_pilot01',orgId:'org-a',tokenPayload:{org_role:'org:admin'}})});
    const response=await admin(new Request('https://app.test/compliance-uploads'));assert.equal(response.status,200);
    const data=await response.json();assert.ok(data.failures.some(item=>item.id===row.id&&item.status===status));
    assert.ok(!JSON.stringify(data).includes('presignedUrl'));
@@ -465,7 +467,7 @@ test('admin retry clears unfinalized registration and targets and records actor/
   const [reset]=await query('SELECT * FROM ix_uploads WHERE id=$1',[row.id]);
   assert.equal(reset.status,'pending');assert.equal(reset.attempts,0);assert.equal(reset.retryable,true);assert.deepEqual(reset.ix_state,{});assert.equal(reset.last_error,null);assert.equal(reset.lease_token,null);
  }
- const audit=await query('SELECT * FROM ix_upload_retries WHERE upload_id=$1',[row.id]);assert.equal(audit.length,2);assert.ok(audit.every(r=>r.actor==='user-a'&&r.retried_at));
+ const audit=await query('SELECT * FROM ix_upload_retries WHERE upload_id=$1',[row.id]);assert.equal(audit.length,2);assert.ok(audit.every(r=>r.actor==='user_pilot01'&&r.retried_at));
  await query(`UPDATE ix_uploads SET status='failed',finalized_at=now(),finalize_receipt='{"status":"finalized"}' WHERE id=$1`,[row.id]);
  assert.equal((await adminUploads()(retryRequest(row.id))).status,409);
  assert.equal((await query(`SELECT retry_ix_upload($1,$2,'actor') AS ok`,[row.id,id(999)]))[0].ok,false);
