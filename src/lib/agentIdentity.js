@@ -6,7 +6,6 @@ import { debugLog } from "./debugLog.js";
 import { getAuthToken } from '../context/AuthContext';
 import { availabilityRequest } from './availabilityApi';
 
-const AUTH_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const LOCAL_AGENT_ID = import.meta.env.VITE_AGENT_AVAILABILITY_AGENT_ID;
 
 export const KNOWN_AGENT_ID_MAP = new Map([
@@ -120,7 +119,7 @@ export function readLocalAgentId() {
 }
 
 export function isAuthDisabled() {
-  return AUTH_DISABLED;
+  return false;
 }
 
 // Maps the resolved agent_id slug (e.g. "mark_endres") to the

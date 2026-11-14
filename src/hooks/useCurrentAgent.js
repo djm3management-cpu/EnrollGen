@@ -10,7 +10,7 @@ import { resolveRequestingAgentUuid } from "../lib/agentIdentity";
 // Clerk user id or the agent_id slug used elsewhere in the app.
 //
 // Reuses AvailabilityContext's already-correct Clerk/local agent_id
-// resolution (it handles the VITE_DISABLE_CLERK_AUTH split) rather
+// resolution rather
 // than calling useUser() directly, which throws outside <ClerkProvider>.
 export function useCurrentAgent() {
   const { agents } = useTenantConfig();

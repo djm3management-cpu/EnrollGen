@@ -1,3 +1,4 @@
+import "./authSafety.js";
 import {deliverEnrollmentWebhooks} from './enrollmentWebhook.js';
 import { createSupabaseClient as createClient, supabaseSecretKey, reportSupabaseKeySelection } from "./supabase.js";
 import { pathToFileURL } from 'node:url';

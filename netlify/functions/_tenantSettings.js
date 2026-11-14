@@ -1,3 +1,4 @@
+import "../../integrations/authSafety.js";
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 export const NGHS_TENANT_ID = "00000000-0000-4000-8000-000000000001";
@@ -407,7 +408,7 @@ export function normalizeAgents(value) {
 }
 
 export function isAdminAuth(auth) {
-  if (auth?.userId === "dev-bypass") return true;
+  if (auth?.userId === "dev-bypass") return false;
 
   const payload = auth?.tokenPayload || {};
   const candidates = [

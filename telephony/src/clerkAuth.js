@@ -12,10 +12,11 @@ export async function requireClerkUser(req, res) {
   try {
     const payload = await verifyToken(header.slice(7).trim(), {
       secretKey: config.clerkSecretKey,
+      jwtKey: config.clerkJwtKey,
     });
     return payload;
-  } catch (err) {
-    console.error("Clerk token verification failed:", err.message);
+  } catch {
+    console.error("Clerk token verification failed");
     res.status(401).json({ error: "Invalid or expired Clerk session token" });
     return null;
   }

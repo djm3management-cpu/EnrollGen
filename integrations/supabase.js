@@ -1,3 +1,4 @@
+import "./authSafety.js";
 import { createClient } from '@supabase/supabase-js';
 
 // This module ships inside the independent integrations-worker Docker image.

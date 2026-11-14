@@ -14,7 +14,6 @@ import { createCallSafeClerkRouter } from "./lib/callContinuity.js";
 
 const clerkNavigation = createCallSafeClerkRouter();
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-const CLERK_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const LEGACY_TRAINING_MODE_STORAGE_KEY = "enrollgen_training_mode_v1";
 
 preloadRecovery.install();
@@ -114,9 +113,7 @@ function MissingClerkKey() {
           Clerk is not configured
         </h1>
         <p style={{ marginBottom: 0, color: "var(--text-secondary)" }}>
-          Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> in your Vite environment,
-          or set <code>VITE_DISABLE_CLERK_AUTH=true</code> if you intentionally
-          want to bypass auth.
+          Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> in your Vite environment.
         </p>
       </div>
     </div>
@@ -125,9 +122,7 @@ function MissingClerkKey() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {CLERK_DISABLED ? (
-      <RootProviders />
-    ) : PUBLISHABLE_KEY ? (
+    {PUBLISHABLE_KEY ? (
       <ClerkProvider publishableKey={PUBLISHABLE_KEY} {...clerkNavigation}>
         <RootProviders />
       </ClerkProvider>

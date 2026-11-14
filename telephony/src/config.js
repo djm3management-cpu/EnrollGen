@@ -1,3 +1,4 @@
+import "./authSafety.js";
 import { supabaseSecretKey } from "./lib/supabaseKeys.js";
 import { parseDirectAgentNumbers } from "./directRouting.js";
 
@@ -58,6 +59,7 @@ export const config = {
   deepgramApiKey: process.env.DEEPGRAM_API_KEY,
   inboundVendorApiKey: process.env.INBOUND_VENDOR_API_KEY,
   clerkSecretKey: process.env.CLERK_SECRET_KEY,
+  clerkJwtKey: process.env.CLERK_JWT_KEY,
   agentWsSigningSecret: process.env.AGENT_WS_SIGNING_SECRET,
   // Inbound routing is single tenant (NGHS) in v1. Multi-tenant
   // number-to-tenant mapping is a follow-up; see README.

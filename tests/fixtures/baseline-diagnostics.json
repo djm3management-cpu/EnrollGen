@@ -1,0 +1,25 @@
+{
+  "CallDispositionBox.jsx": [
+    "console.error('No dispositions configured for Call disposition.');"
+  ],
+  "useSpeechRecognition.js": [
+    "console.info(`[waveform] agent source=local-mic-analyser sample=${waveformSamples} level=${level.toFixed(3)}`);"
+  ],
+  "InboundCallContext.jsx": [
+    "console.info(\"[waveform] customer source=remote-analyser unavailable (no remote audio track)\");",
+    "console.info(\"[waveform] customer source=remote-analyser unavailable (AudioContext)\");",
+    "console.info(`[waveform] customer source=remote-analyser sample=${sampleCount} level=${level.toFixed(3)}`);",
+    "console.info(\"[waveform] customer source=remote-analyser failed to initialize\");",
+    "console.info(`[waveform] agent source=Twilio Call volume waiting callSid=${call.parameters?.CallSid || 'unknown'}`);",
+    "console.info(`[waveform] customer source=Twilio Call volume waiting callSid=${call.parameters?.CallSid || 'unknown'}`);",
+    "console.info(\"[waveform] agent source=local-mic-analyser fallback=no Twilio volume event within 2s\");",
+    "console.info(\"[waveform] customer source=remote-analyser fallback=no Twilio volume event within 2s\");",
+    "console.info(\"[waveform] agent source=Twilio Call volume active\");",
+    "console.info(\"[waveform] customer source=Twilio Call volume active\");",
+    "console.info(`[waveform] agent source=Twilio Call volume sample=${agentSamples} inputVolume=${inputVolume} displayed=${input.toFixed(3)}`);",
+    "console.info(`[waveform] customer source=Twilio Call volume sample=${customerSamples} outputVolume=${outputVolume} displayed=${output.toFixed(3)}`);"
+  ],
+  "recoveringSttSocket.js": [
+    "debugLog(JSON.stringify({event:`browser_stt_${event}`,call_id:this.callId,...extra}));"
+  ]
+}

@@ -1,3 +1,4 @@
+import { assertSafeAuthEnvironment } from "../../integrations/authSafety.js";
 import { verifyToken } from "@clerk/backend";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -26,18 +27,8 @@ function getBearerToken(request) {
   return header.slice(7).trim() || null;
 }
 
-function isAuthBypassed() {
-  return (
-    process.env.DISABLE_CLERK_AUTH === "true" ||
-    process.env.VITE_DISABLE_CLERK_AUTH === "true"
-  );
-}
-
-export async function requireClerkAuth(request, { allowBypass = true } = {}) {
-  if (allowBypass && isAuthBypassed()) {
-    return { userId: "dev-bypass", sessionId: null, orgId: null, tokenPayload: {} };
-  }
-
+export async function requireClerkAuth(request) {
+  assertSafeAuthEnvironment();
   const secretKey = process.env.CLERK_SECRET_KEY;
   const jwtKey = process.env.CLERK_JWT_KEY;
 
@@ -78,8 +69,8 @@ export async function requireClerkAuth(request, { allowBypass = true } = {}) {
       orgId: payload.org_id ?? null,
       tokenPayload: payload,
     };
-  } catch (error) {
-    console.error("Clerk token verification failed:", error);
+  } catch {
+    console.error("Clerk token verification failed");
     return {
       response: jsonResponse(401, {
         error: "Unauthorized",

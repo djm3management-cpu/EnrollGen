@@ -4,7 +4,6 @@ import { useAppAuth } from "../context/AuthContext";
 import { evidenceRequest } from "../lib/evidenceApi";
 import { runSessionTrackingDiagnostic } from "../lib/sessionTrackingDiagnostic";
 
-const DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const EMPTY_SESSION_METADATA = {
   agentId: null,
   agentName: null,
@@ -17,15 +16,6 @@ const EMPTY_SESSION_METADATA = {
   contactId: null,
 };
 
-const noop = () => {};
-const STUB = {
-  sessionId: null,
-  startSession: noop,
-  endSession: noop,
-  completeSession: noop,
-  logComplianceFlag: noop,
-  logSectionScore: noop,
-};
 let activeSessionMetadata = { ...EMPTY_SESSION_METADATA };
 let pendingSessionStart = null;
 let activeStartOwner = null;
@@ -69,11 +59,10 @@ export function useSessionTracker() {
   const closedRef = useRef(false);
 
   useEffect(() => {
-    if (import.meta.env.DEV && !DISABLED) void runSessionTrackingDiagnostic(getToken);
+    if (import.meta.env.DEV) void runSessionTrackingDiagnostic(getToken);
   }, [getToken]);
 
   const startSession = useCallback((flow = "ma", identity = {}) => {
-    if (DISABLED) return Promise.resolve();
     if (startingRef.current && identityRef.current === (identity.twilioCallSid || null)) return startingRef.current;
     if (sessionIdRef.current && !closedRef.current && identityRef.current === (identity.twilioCallSid || null)) return Promise.resolve(activeSessionMetadata);
     identityRef.current = identity.twilioCallSid || null;
@@ -109,7 +98,6 @@ export function useSessionTracker() {
   }, [getToken]);
 
   const send = useCallback(async (action, fields) => {
-    if (DISABLED) return false;
     await startingRef.current;
     const sessionId = sessionIdRef.current;
     if (!sessionId || closedRef.current) return false;
@@ -150,9 +138,5 @@ export function useSessionTracker() {
     send("section", { section_number: sectionNumber, section_label: sectionLabel, completed,
       duration_seconds: durationSeconds, checklist_total: checklistTotal, checklist_done: checklistDone }), [send]);
 
-  if (DISABLED) {
-    activeSessionMetadata = { ...EMPTY_SESSION_METADATA };
-    return STUB;
-  }
   return { sessionId: sessionIdRef.current, startSession, endSession, completeSession, logComplianceFlag, logSectionScore };
 }

@@ -15,7 +15,6 @@ const FLOWS = [
   ["u65", "U65"],
   ["ancillary", "ANCILLARY"],
 ];
-const AUTH_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
 function isAdminUser(user) {
   const role =
@@ -60,7 +59,7 @@ function createSection(flow, order) {
   };
 }
 
-function ScriptEditorPanel({ user = null, authDisabled = false }) {
+function ScriptEditorPanel({ user = null }) {
   const { tenantId, supabaseClient, loading: tenantLoading } = useTenantConfig();
   const [flow, setFlow] = useState("ma");
   const [template, setTemplate] = useState(null);
@@ -69,7 +68,7 @@ function ScriptEditorPanel({ user = null, authDisabled = false }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const canAdmin = authDisabled || isAdminUser(user);
+  const canAdmin = isAdminUser(user);
 
   const loadTemplate = useCallback(async () => {
     if (tenantLoading) return;
@@ -335,9 +334,5 @@ function ScriptEditorWithUser() {
 }
 
 export default function ScriptEditor() {
-  if (AUTH_DISABLED) {
-    return <ScriptEditorPanel authDisabled />;
-  }
-
   return <ScriptEditorWithUser />;
 }

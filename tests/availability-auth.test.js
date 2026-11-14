@@ -161,14 +161,13 @@ test('073 denies direct availability CRUD and identity-map access, including col
   assert.ok((await query('SELECT * FROM agent_availability')).length);
 });
 
-test('Clerk signature verification is mandatory even when development bypass flags are enabled', async () => {
+test('Clerk signature verification is mandatory for availability', async () => {
   const names = ['CLERK_JWT_KEY','CLERK_SECRET_KEY','DISABLE_CLERK_AUTH','VITE_DISABLE_CLERK_AUTH','CLERK_AUTHORIZED_PARTIES','CLERK_AUDIENCE'];
   const original = Object.fromEntries(names.map(name => [name, process.env[name]]));
   const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
   try {
     for (const name of names) delete process.env[name];
     process.env.CLERK_JWT_KEY = publicKey.export({ type: 'spki', format: 'pem' });
-    process.env.DISABLE_CLERK_AUTH = process.env.VITE_DISABLE_CLERK_AUTH = 'true';
     const now = Math.floor(Date.now()/1000);
     const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
     const unsigned = encode({ alg: 'RS256', typ: 'JWT', kid: 'fixture' }) + '.' + encode({

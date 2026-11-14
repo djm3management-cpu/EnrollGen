@@ -56,7 +56,7 @@ export async function readErrorDetail(response) {
 
 export function getCopilotHttpErrorMessage(status, detail) {
   if (status === 401)
-    return "Co-Pilot is not authorized. Sign in with Clerk, or if you are running locally with auth disabled set DISABLE_CLERK_AUTH=true for Netlify functions too.";
+    return "Co-Pilot is not authorized. Sign in with Clerk.";
   if (status === 500 && /api key/i.test(detail || ""))
     return "Co-Pilot is not configured yet. Set the selected provider API key for the Netlify function runtime.";
   if (detail) return `Co-Pilot returned an error (HTTP ${status}): ${detail}`;

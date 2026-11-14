@@ -51,7 +51,7 @@ async function resolveTenantContext(supabase, auth) {
   let tenant = auth.orgId ? await findTenantByOrg(supabase, auth.orgId) : null;
   let actor = null;
 
-  if (tenant?.id && auth.userId !== "dev-bypass") {
+  if (tenant?.id) {
     const { data, error } = await supabase
       .from("tenant_agents")
       .select("id, tenant_id, name, npn, clerk_user_id, role, is_active")
@@ -63,7 +63,7 @@ async function resolveTenantContext(supabase, auth) {
     actor = data || null;
   }
 
-  if (!tenant && auth.userId !== "dev-bypass") {
+  if (!tenant) {
     const { data, error } = await supabase
       .from("tenant_agents")
       .select("id, tenant_id, name, npn, clerk_user_id, role, is_active")
@@ -81,29 +81,6 @@ async function resolveTenantContext(supabase, auth) {
         .single();
       if (tenantError) throw tenantError;
       tenant = tenantRow;
-    }
-  }
-
-  if (auth.userId === "dev-bypass") {
-    const { data: tenantRow, error: tenantError } = await supabase
-      .from("tenants")
-      .select("*")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (tenantError) throw tenantError;
-    tenant = tenant || tenantRow;
-    if (tenant?.id) {
-      const { data: actorRow, error: actorError } = await supabase
-        .from("tenant_agents")
-        .select("id, tenant_id, name, npn, clerk_user_id, role, is_active")
-        .eq("tenant_id", tenant.id)
-        .eq("is_active", true)
-        .order("role", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (actorError) throw actorError;
-      actor = actor || actorRow;
     }
   }
 

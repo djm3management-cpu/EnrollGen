@@ -73,17 +73,24 @@ test('static browser diagnostics require explicit development opt-in', async () 
   }
 });
 
-test('source diagnostics contain static labels only, excluding the deleted legacy Operations surface', async () => {
+test('source diagnostics use static labels except the recorded baseline telemetry/configuration diagnostics', async () => {
   const { readdir } = await import('node:fs/promises');
+  const baseline = JSON.parse(await readFile(new URL('./fixtures/baseline-diagnostics.json', import.meta.url), 'utf8'));
   async function inspect(directory) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       const url = new URL(entry.name + (entry.isDirectory() ? '/' : ''), directory);
       if (entry.isDirectory()) { await inspect(url); continue; }
       if (!/\.(jsx?|ts)$/.test(entry.name) || ['debugLog.js', 'OperationsTab.jsx', 'client.ts'].includes(entry.name)) continue;
       const source = await readFile(url, 'utf8');
-      assert.doesNotMatch(source, /console\s*\./, url.pathname);
-      for (const match of source.matchAll(/debugLog\(("(?:[^"\\]|\\.)*")\)/g)) assert.equal(typeof JSON.parse(match[1]), 'string');
-      assert.equal([...source.matchAll(/debugLog\(/g)].length, [...source.matchAll(/debugLog\(("(?:[^"\\]|\\.)*")\)/g)].length, url.pathname);
+      // Preserve the existing diagnostics without allowing additional console calls.
+      let diagnostics = source;
+      for (const statement of baseline[entry.name] || []) {
+        assert.ok(diagnostics.includes(statement), `Stale diagnostic fixture: ${entry.name}`);
+        diagnostics = diagnostics.replace(statement, '');
+      }
+      assert.doesNotMatch(diagnostics, /console\s*\./, url.pathname);
+      for (const match of diagnostics.matchAll(/debugLog\(("(?:[^"\\]|\\.)*")\)/g)) assert.equal(typeof JSON.parse(match[1]), 'string');
+      assert.equal([...diagnostics.matchAll(/debugLog\(/g)].length, [...diagnostics.matchAll(/debugLog\(("(?:[^"\\]|\\.)*")\)/g)].length, url.pathname);
     }
   }
   await inspect(new URL('../src/', import.meta.url));

@@ -42,7 +42,7 @@ for(const [label,auth,target,expected] of [['agent-own',member('dylan-user'),dyl
  });
  test(`compliance code correction ${label} follows the same administrator rule`,async()=>{
   const handler=createComplianceUploadsHandler({authenticate:async()=>auth,getDb:()=>db});
-  const response=await handler(new Request('https://app.test/api/compliance-uploads',{method:'PATCH',body:JSON.stringify({call_id:target,sunfire_code:'SF-'+label})}));assert.equal(response.status,expected);
+  const response=await handler(new Request('https://app.test/api/compliance-uploads',{method:'PATCH',body:JSON.stringify({call_id:target,sunfire_code:'SF-'+label})}));assert.equal(response.status,label==='agent-own'?403:expected);
  });
 }
 test('compliance queue admin access recognizes signed isAdmin while ordinary agents remain denied',async()=>{

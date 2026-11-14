@@ -56,7 +56,7 @@ before(async()=>{
  const pii=readFileSync(new URL('../supabase/migrations/022_pii_protection_phase1.sql',import.meta.url),'utf8');
  await pg.exec(pii.slice(pii.indexOf('CREATE OR REPLACE FUNCTION pii_vault.get_active_key()'),pii.indexOf('-- Blind-index HMAC key')));
  await pg.exec(readFileSync(new URL('../supabase/migrations/071_contacts_pii_json_null.sql',import.meta.url),'utf8'));
- for(const migration of ['123_compliance_uploads.sql','124_ix_uploads.sql','125_enrollment_intakes.sql','127_conversely_manual_runs.sql','128_sunfire_ix_api.sql','132_ix_test_enrollment_safeguards.sql'])await pg.exec(readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),'utf8'));
+ for(const migration of ['123_compliance_uploads.sql','124_ix_uploads.sql','125_enrollment_intakes.sql','127_conversely_manual_runs.sql','128_sunfire_ix_api.sql','132_ix_test_enrollment_safeguards.sql','149_conversely_run_events.sql'])await pg.exec(readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),'utf8'));
 });
 after(()=>pg.close());
 test('every required field and UHC-only confirmation rule are enforced; defaults are valid',()=>{

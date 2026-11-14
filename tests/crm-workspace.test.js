@@ -166,7 +166,7 @@ test('short call chips and review banners show neutral N/A while a real zero rem
   const view=complianceViewModel({scorecard:{overall_score:0,...fields},items:[],coverage:{complete:false,ratio:.66,endMs:1998000,durationMs:3026000}});
   assert.equal(view.score,null);assert.equal(view.status,'N/A');
  }
- assert.match(Chip({score:0,status:'complete',grade:'F',passFail:'FAIL'}).props.className,/compliance-low/);
+ assert.match(Chip({score:0,status:'complete',grade:'F',passFail:'FAIL'}).props.className,/compliance-red/);
 });
 
 test('background refresh retains mounted call rows while updating compliance and errors stay visible', async () => {
@@ -224,7 +224,7 @@ test('call status combines the saved outcome without a disposition pill and miss
   const Chip = componentSource('../src/components/callLog/CallRowParts.jsx', 'ComplianceChip', { COMPLIANCE_WARNING_THRESHOLD: 80, isUnscoredCompliance });
   assert.deepEqual(Chip({ score: 73, grade: 'C', duration: 119 }).children, ['N/A']);
   assert.deepEqual(Chip({ score: null, status: 'queued', duration: 180 }).children, ['Not scored']);
-  assert.match(Chip({ score: 73, grade: 'C', duration: 120 }).props.className, /compliance-low/);
+  assert.match(Chip({ score: 73, grade: 'C', duration: 120 }).props.className, /compliance-orange/);
 });
 
 test('notes retain existing data, save only on blur, keep failed drafts and retry through the protected endpoint', async () => {

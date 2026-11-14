@@ -8,7 +8,6 @@ const AuthContext = createContext({ getToken: async () => null });
 let authTokenGetter = async () => null;
 export const useAppAuth = () => useContext(AuthContext);
 export const getAuthToken = async options => authTokenGetter(options);
-const DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 
 function ClerkAuthBridge({ children }) {
   const auth = useAuth();
@@ -78,9 +77,5 @@ function ClerkAuthBridge({ children }) {
 }
 
 export function AuthProvider({ children }) {
-  if (DISABLED) {
-    authTokenGetter = async () => null;
-    return <AuthContext.Provider value={{getToken: authTokenGetter, identityLoaded: true, isSignedIn: true}}>{children}</AuthContext.Provider>;
-  }
   return <ClerkAuthBridge>{children}</ClerkAuthBridge>;
 }

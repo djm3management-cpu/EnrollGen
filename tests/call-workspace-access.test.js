@@ -63,7 +63,7 @@ test('residence outbox renders nothing and unavailable browser storage cannot bl
 });
 test('ordinary agent cannot see residence admin review and its request never blocks call UI',async()=>{
  const harness=hookHarness(),getToken=async()=>'';
- const context=vm.createContext({...harness.hooks,useAppAuth:()=>({getToken}),fetchWithClerk:async()=>new Response('{}',{status:403}),setInterval:()=>1,clearInterval(){},h:(type,props,...children)=>({type,props,children})});
+ const context=vm.createContext({...harness.hooks,useAppAuth:()=>({getToken}),useAdminReviewAccess:()=>({identity:'agent:org',canReview:false}),fetchWithClerk:async()=>new Response('{}',{status:403}),setInterval:()=>1,clearInterval(){},h:(type,props,...children)=>({type,props,children})});
  vm.runInContext(transformSync(stripImports(read('src/components/callLog/ParagonResidenceReview.jsx')),{loader:'jsx',jsxFactory:'h',format:'cjs'}).code+';globalThis.Component=ParagonResidenceReview;',context);
  try{harness.mount(()=>context.Component());assert.equal(harness.value,null);await harness.flush();assert.equal(harness.value,null);}finally{harness.unmount();}
 });

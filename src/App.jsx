@@ -92,7 +92,6 @@ const SEPQualifier = lazyWithRetry(loadSEPQualifier);
 const AuthenticatedStyleGate = lazyWithRetry(loadAuthenticatedStyleGate);
 const RTSTab = lazyWithRetry(loadRTSTab);
 const SYSTEM_MONO_STACK = "ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace";
-const LOGIN_DISABLED = import.meta.env.VITE_DISABLE_CLERK_AUTH === "true";
 const tenantBootstrapAttempts = new Set();
 
 function SettingsIcon({ size = 14 }) {
@@ -575,7 +574,7 @@ function AppShell({ currentUser = null }) {
     return preloadWorkspace([...common, ...flow, loadRTSTab]);
   }, [mode]);
 
-  const canAdmin = LOGIN_DISABLED || isAdminUser(currentUser);
+  const canAdmin = isAdminUser(currentUser);
   const navTabs = useMemo(() => getTabsForMode(mode), [mode]);
   const visibleLeftRailIds = LEFT_RAIL_IDS_BY_MODE[mode] || EMPTY_LEFT_RAIL_IDS;
   const visibleRailWidth = visibleLeftRailIds.includes(expandedItem?.id)
@@ -996,7 +995,7 @@ function AppShell({ currentUser = null }) {
             >
               {isDark ? <Sun size={14} /> : <SquareTerminal size={14} />}
             </button>
-            {!LOGIN_DISABLED ? <ProfileMenu /> : null}
+            <ProfileMenu />
               <button data-key-role="secondary"
                 type="button"
                 className={`top-bar-settings-button${openPanel === "settings" ? " is-active" : ""}`}
@@ -1357,7 +1356,7 @@ function AuthedCallAuthBanner() {
 }
 
 function CallAuthBanner() {
-  return LOGIN_DISABLED ? null : <AuthedCallAuthBanner />;
+  return <AuthedCallAuthBanner />;
 }
 
 export default function App() {
@@ -1384,14 +1383,6 @@ export default function App() {
     window.addEventListener("popstate", updatePathname);
     return () => { stop(); window.removeEventListener("popstate", updatePathname); };
   }, []);
-
-  if (LOGIN_DISABLED) {
-    return (
-      <AuthenticatedProviders>
-        <AppContent />
-      </AuthenticatedProviders>
-    );
-  }
 
   // Clerk may report signed-out while an already-authorized Twilio call is
   // alive. Preserve the same provider tree and frozen UI identity until it ends.
