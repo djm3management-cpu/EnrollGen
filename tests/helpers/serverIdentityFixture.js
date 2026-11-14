@@ -1,3 +1,4 @@
+import {installEvidenceAuditFixture} from './evidenceAuditFixture.js';
 import {readFileSync} from 'node:fs';
 // Older handler suites reconstruct only the tables they need. Extend those
 // explicit synthetic fixtures with the new protected maps, then execute the REAL
@@ -42,6 +43,7 @@ export function prepareServerIdentity(pg) {
   await pg.exec(source.slice(start,end));
   await pg.exec('GRANT SELECT ON tenants TO service_role');
   await pg.exec(readFileSync(new URL('../../supabase/migrations/156_scoped_service_call_views.sql',import.meta.url),'utf8').replace(/^BEGIN;$/m,'').replace(/^COMMIT;$/m,''));
+  await installEvidenceAuditFixture(pg);
   } finally { if(savedRole!=='none')await pg.exec('SET ROLE '+savedRole); }
  })();prepared.set(pg,work);return work;
 }

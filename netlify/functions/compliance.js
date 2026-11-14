@@ -1,4 +1,3 @@
-import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
 /**
  * Compliance Engine API — Netlify serverless function.
  * Handles all compliance-related API routes via path-based routing.
@@ -446,6 +445,7 @@ export default function retiredComplianceApi() {
   return json(410, { error: "Legacy compliance API retired. Use the protected call and Compliance Review APIs." });
 }
 
+// eslint-disable-next-line no-unused-vars -- Retained retired implementation for P0-3 historical review.
 async function legacyComplianceHandler(request) {
   const auth = await requireClerkAuth(request);
   if (auth.response) return auth.response;
@@ -469,7 +469,7 @@ async function legacyComplianceHandler(request) {
         .insert({ ...body, tenant_id: body.tenant_id || tenantId })
         .select()
         .single();
-      if (error) return json(400, { error: error.message });
+      if (error) return json(400, { error: 'request_failed' });
       return json(201, data);
     }
 
@@ -661,7 +661,7 @@ async function legacyComplianceHandler(request) {
 
       const { data, error } = await sb
         .from("corrective_actions").update(updates).eq("id", parts[1]).select().single();
-      if (error) return json(400, { error: error.message });
+      if (error) return json(400, { error: 'request_failed' });
       return json(200, data);
     }
 
@@ -810,7 +810,7 @@ async function legacyComplianceHandler(request) {
         calibration_run_id: parts[1],
         ...body,
       }).select().single();
-      if (error) return json(400, { error: error.message });
+      if (error) return json(400, { error: 'request_failed' });
 
       // Increment override count on the run
       await sb.rpc("increment_calibration_overrides", { run_id: parts[1] });
@@ -1380,7 +1380,7 @@ async function legacyComplianceHandler(request) {
     return json(404, { error: "Not found", path: parts.join("/") });
 
   } catch (err) {
-    console.error("compliance function error:", err);
+    console.error("compliance function error:", 'request_failed');
     return json(500, { error: err.message || "Internal server error" });
   }
 }

@@ -18,12 +18,8 @@ export class IxError extends Error {
 }
 
 // Vendor messages are stored separately from machine error codes and never logged.
-export function safeIxMessage(message, secrets = []) {
-  let text = typeof message === 'string' ? message : '';
-  for (const secret of secrets.filter(Boolean)) text = text.split(secret).join('[redacted]');
-  return text.replace(/https?:\/\/\S+/gi, '[url]').replace(/Bearer\s+\S+/gi, 'Bearer [redacted]')
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\r\n\x00-\x1f]/g, ' ').slice(0, 500);
+export function safeIxMessage(message) {
+  return typeof message==='string' && message ? 'Provider message withheld' : '';
 }
 
 export class SunfireIxClient {

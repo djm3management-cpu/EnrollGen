@@ -1,3 +1,5 @@
+import { auditedEvidenceAccess, EvidenceAuditError } from '../../telephony/src/lib/evidenceAudit.js';
+import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
 import { resolveDeploymentAccess,signedDeploymentAdmin } from '../../telephony/src/lib/deploymentAccess.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
@@ -26,8 +28,8 @@ export function evidenceJson(status, body) {
 
 export function evidenceFailure(error) {
   // SQL errors can contain submitted transcript/flag text. Never expose or log it.
-  return evidenceJson(error instanceof EvidenceError ? error.status : 503, {
-    error: error instanceof EvidenceError ? error.message : "Evidence request failed. Please retry.",
+  return evidenceJson(error instanceof EvidenceError || error instanceof EvidenceAuditError ? error.status : 503, {
+    error: error instanceof EvidenceError || error instanceof EvidenceAuditError ? error.message : "Evidence request failed. Please retry.",
   });
 }
 
@@ -159,4 +161,15 @@ export async function writeOwnedTranscript(db, payload, ownerId, transcriptId = 
     result = await write(payload);
   }
   return checked(result);
+}
+
+export async function auditedEvidenceRequest(db,auth,request,resource,resolve,work) {
+ const url=new URL(request.url);
+ let action=url.searchParams.get('export')==='1'?'export':request.method==='GET'?'list':'read',resourceId=url.searchParams.get('id') || url.searchParams.get('call_id') || url.searchParams.get('contact_id') || url.searchParams.get('call_record_id') || url.searchParams.get('inbound_call_id') || url.searchParams.get('attempt_id');
+ if(request.method==='POST'){
+  try {const input=await request.clone().json();resourceId=input.session_id || input.recordingId || input.callId || input.recording_id || input.call_record_id || input.inbound_call_id || input.attempt_id || input.call_id || resourceId;
+   action=['conversly','export'].includes(input.action)?'export':input.action==='media'?(input.download?'download':'play'):action;
+  }catch{ /* The handler returns its bounded validation error. */ }
+ }
+ return auditedEvidenceAccess(db,{actor:auth.userId,tenant:deploymentProfile().tenantId,resource,resourceId,action},async()=>work(await resolve(db,auth)));
 }

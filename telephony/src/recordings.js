@@ -1,3 +1,4 @@
+import { auditedEvidenceAccess, evidenceCheckpoint } from './lib/evidenceAudit.js';
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
@@ -132,6 +133,7 @@ export async function downloadRecording({ job, config, fetchImpl = fetch, maxByt
 }
 
 export async function verifyStoredRecording({ db, storagePath, bytes, sha256 }) {
+  await evidenceCheckpoint(db,{actor:'service:recording_verify',tenant:storagePath.split('/')[0],resource:'recording',resourceId:storagePath,action:'read'});
   const result = await db.storage.from('call-recordings').download(storagePath);
   if (result.error || !result.data || result.data.size !== Number(bytes)) throw new RecordingError('storage_verification_failed');
   const hash = createHash('sha256').update(Buffer.from(await result.data.arrayBuffer())).digest('hex');
@@ -168,7 +170,7 @@ export async function deleteVerifiedTwilioRecording({ db, job, config, fetchImpl
   }
 }
 
-export async function processRecording({ db, job, config, fetchImpl, maxBytes, timeoutMs, log = console.error }) {
+async function rawProcessRecording({ db, job, config, fetchImpl, maxBytes, timeoutMs, log = console.error }) {
   let audio;
   try {
     if (job.account_sid !== config.twilioAccountSid) throw new RecordingError('account_mismatch');
@@ -281,4 +283,8 @@ export function startRecordingWorker({ db, config, log = console.error }) {
   };
   const timer = setInterval(() => void tick(), 15_000); timer.unref(); void tick();
   return () => clearInterval(timer);
+}
+
+export async function processRecording(options) {
+ return auditedEvidenceAccess(options.db,{actor:'service:recording_copy',tenant:options.job.tenant_id,resource:'recording',resourceId:options.job.id,action:'read'},()=>rawProcessRecording(options),{before:true});
 }

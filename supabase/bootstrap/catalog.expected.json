@@ -739,6 +739,15 @@
     },
     {
       "schema": "public",
+      "name": "evidence_access_log",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "fema_disasters",
       "kind": "r",
       "owner": "postgres",
@@ -11482,6 +11491,105 @@
     },
     {
       "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "actor_id",
+      "position": 2,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "tenant_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "resource_type",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "resource_id",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "action",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "result",
+      "position": 7,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "occurred_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "grant_id",
+      "position": 9,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "name": "id",
       "position": 1,
@@ -18181,6 +18289,17 @@
     },
     {
       "schema": "public",
+      "relation": "recording_compliance_tickets",
+      "name": "grant_id",
+      "position": 13,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
       "relation": "recording_download_tickets",
       "name": "token_hash",
       "position": 1,
@@ -18207,7 +18326,7 @@
       "name": "recording_sid",
       "position": 3,
       "type": "text",
-      "not_null": true,
+      "not_null": false,
       "identity": "",
       "generated": "",
       "default_expression": null
@@ -18218,7 +18337,7 @@
       "name": "account_sid",
       "position": 4,
       "type": "text",
-      "not_null": true,
+      "not_null": false,
       "identity": "",
       "generated": "",
       "default_expression": null
@@ -18240,7 +18359,7 @@
       "name": "expected_call_sid",
       "position": 6,
       "type": "text",
-      "not_null": true,
+      "not_null": false,
       "identity": "",
       "generated": "",
       "default_expression": null
@@ -18277,6 +18396,50 @@
       "identity": "",
       "generated": "",
       "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "recording_download_tickets",
+      "name": "actor_id",
+      "position": 10,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "recording_download_tickets",
+      "name": "grant_id",
+      "position": 11,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "recording_download_tickets",
+      "name": "storage_path",
+      "position": 12,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "recording_download_tickets",
+      "name": "recording_id",
+      "position": 13,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
     },
     {
       "schema": "public",
@@ -25696,6 +25859,18 @@
     },
     {
       "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_audit_admin_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "deployment_is_admin(tenant_id)",
+      "with_check": null
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "name": "pilot_public_reference",
       "permissive": "PERMISSIVE",
@@ -26279,18 +26454,6 @@
       ],
       "cmd": "SELECT",
       "qual": "true",
-      "with_check": null
-    },
-    {
-      "schema": "storage",
-      "relation": "objects",
-      "name": "pilot_message_media_read",
-      "permissive": "PERMISSIVE",
-      "roles": [
-        "authenticated"
-      ],
-      "cmd": "SELECT",
-      "qual": "((bucket_id = 'message-media'::text) AND (EXISTS ( SELECT 1\n   FROM (message_media m\n     JOIN messages msg ON (((msg.id = m.message_id) AND (msg.tenant_id = m.tenant_id))))\n  WHERE ((m.storage_path = objects.name) AND deployment_can_access_contact(msg.contact_id)))))",
       "with_check": null
     }
   ],
@@ -27083,14 +27246,6 @@
       "schema": "public",
       "relation": "agent_coaching",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "agent_coaching",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -28835,14 +28990,6 @@
       "schema": "public",
       "relation": "call_insights",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "call_insights",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -28949,14 +29096,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "call_logs",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -29187,14 +29326,6 @@
       "schema": "public",
       "relation": "call_records",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "call_records",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -29307,14 +29438,6 @@
       "schema": "public",
       "relation": "call_threads",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "call_threads",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -29421,14 +29544,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "call_transcripts",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -30851,14 +30966,6 @@
       "schema": "public",
       "relation": "compliance_flags",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "compliance_flags",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -31763,14 +31870,6 @@
       "schema": "public",
       "relation": "compliance_scorecards",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "compliance_scorecards",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -31877,14 +31976,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "compliance_scores",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -32227,14 +32318,6 @@
       "schema": "public",
       "relation": "contact_activities",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "contact_activities",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -32341,14 +32424,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "contact_lead_intel",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -32573,14 +32648,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "contact_notes",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -34889,6 +34956,86 @@
     },
     {
       "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "authenticated",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "grantor": "postgres",
       "grantee": "anon",
@@ -35131,14 +35278,6 @@
       "schema": "public",
       "relation": "follow_ups",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "follow_ups",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -35245,14 +35384,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "followup_queue",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -35477,14 +35608,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "inbound_calls",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -36157,14 +36280,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "intent_detections",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -37539,14 +37654,6 @@
       "schema": "public",
       "relation": "messages",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "messages",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -37653,14 +37760,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "opportunities",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -37779,14 +37878,6 @@
       "schema": "public",
       "relation": "opportunity_events",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "opportunity_events",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -37893,14 +37984,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "opportunity_stage_history",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -39805,14 +39888,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "phi_redactions",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -42019,14 +42094,6 @@
       "schema": "public",
       "relation": "sales_log",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "sales_log",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -42523,14 +42590,6 @@
       "schema": "public",
       "relation": "scorecard_items",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "scorecard_items",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -43339,14 +43398,6 @@
       "schema": "public",
       "relation": "section_scores",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "section_scores",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -43453,14 +43504,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "sessions",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -44435,14 +44478,6 @@
       "schema": "public",
       "relation": "telephony_events",
       "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "telephony_events",
-      "grantor": "postgres",
       "grantee": "postgres",
       "privilege": "DELETE",
       "grantable": "YES"
@@ -45341,14 +45376,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "public",
-      "relation": "transcript_chunks",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -48109,14 +48136,6 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "storage",
-      "relation": "objects",
-      "grantor": "postgres",
-      "grantee": "authenticated",
-      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -49106,6 +49125,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.apply_transcript_wrap_up()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nBEGIN\n IF EXISTS(SELECT 1 FROM call_records WHERE id=NEW.call_record_id AND tenant_id=NEW.tenant_id\n  AND call_outcome='short_call_hangup' AND metadata->>'auto_disposition'='short_call_hangup') THEN\n  NEW.disposition:='short_call_hangup';\n END IF;\n RETURN NEW;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "audit_browser_evidence",
+      "arguments": "p_type text, p_resource uuid, p_action text, p_allowed boolean",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.audit_browser_evidence(p_type text, p_resource uuid, p_action text, p_allowed boolean)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE i record;\nBEGIN\n SELECT * INTO i FROM public.current_deployment_identity();\n INSERT INTO public.evidence_access_log(actor_id,tenant_id,resource_type,resource_id,action,result,grant_id)\n VALUES(coalesce(nullif(auth.jwt()->>'sub',''),'anonymous'),\n coalesce(i.tenant_id,(SELECT tenant_id FROM public.deployment_settings LIMIT 1)),\n p_type,coalesce(p_resource::text,'collection'),p_action,CASE WHEN p_allowed THEN 'allowed' ELSE 'denied' END,gen_random_uuid());\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -50136,6 +50168,19 @@
     },
     {
       "schema": "public",
+      "name": "export_evidence_calls",
+      "arguments": "",
+      "result": "SETOF call_records",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.export_evidence_calls()\n RETURNS SETOF call_records\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid;\nBEGIN\n SELECT tenant_id INTO STRICT tenant FROM public.deployment_settings WHERE singleton;\n INSERT INTO public.evidence_access_log(actor_id,tenant_id,resource_type,resource_id,action,result,grant_id)\n VALUES('service:nextcloud',tenant,'call_evidence','collection','list','allowed',gen_random_uuid());\n RETURN QUERY SELECT projected.* FROM public.call_records c\n CROSS JOIN LATERAL jsonb_populate_record(NULL::public.call_records,to_jsonb(c)||jsonb_build_object('metadata',\n jsonb_build_object('summary_pdf_path',c.metadata->'summary_pdf_path','call_summary_pdf_path',c.metadata->'call_summary_pdf_path',\n 'summaryPdfPath',c.metadata->'summaryPdfPath','summary_pdf',jsonb_build_object('storage_path',c.metadata#>'{summary_pdf,storage_path}'),\n 'summaryPdf',jsonb_build_object('storagePath',c.metadata#>'{summaryPdf,storagePath}'),\n 'transcript_storage_path',c.metadata->'transcript_storage_path','transcript_txt_path',c.metadata->'transcript_txt_path',\n 'raw_transcript_path',c.metadata->'raw_transcript_path','transcript',jsonb_build_object('storage_path',c.metadata#>'{transcript,storage_path}','storagePath',c.metadata#>'{transcript,storagePath}'),\n 'transcript_raw',c.metadata->'transcript_raw','transcript_text',c.metadata->'transcript_text',\n 'customer_first_name',c.metadata->'customer_first_name','customer_last_name',c.metadata->'customer_last_name',\n 'contact_name',c.metadata->'contact_name','agent_name',c.metadata->'agent_name'))) projected\n WHERE c.tenant_id=tenant;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "fail_conversely_run",
       "arguments": "p_id uuid, p_token uuid, p_error text, p_disabled boolean",
       "result": "void",
@@ -50630,6 +50675,19 @@
     },
     {
       "schema": "public",
+      "name": "mark_evidence_messages_read",
+      "arguments": "p_contact uuid, p_read_at timestamp with time zone",
+      "result": "SETOF messages",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.mark_evidence_messages_read(p_contact uuid, p_read_at timestamp with time zone)\n RETURNS SETOF messages\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n allowed:=public.deployment_can_access_contact(p_contact);\n PERFORM public.audit_browser_evidence('messages',p_contact,'read',allowed);\n IF NOT allowed THEN PERFORM set_config('response.status','403',true); RETURN; END IF;\n RETURN QUERY UPDATE public.messages m SET read_at=p_read_at WHERE m.contact_id=p_contact\n AND m.direction='inbound' AND m.read_at IS NULL AND public.deployment_row_writable('messages',to_jsonb(m)) RETURNING m.*;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "mark_manual_opportunity_stage",
       "arguments": "",
       "result": "trigger",
@@ -51085,6 +51143,32 @@
     },
     {
       "schema": "public",
+      "name": "private_search_transcript_chunks",
+      "arguments": "query_embedding vector, match_count integer, filter_product_line text, filter_carrier text, filter_disposition text, filter_topics text[], similarity_threshold double precision",
+      "result": "TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public, extensions, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.private_search_transcript_chunks(query_embedding vector, match_count integer DEFAULT 5, filter_product_line text DEFAULT NULL::text, filter_carrier text DEFAULT NULL::text, filter_disposition text DEFAULT NULL::text, filter_topics text[] DEFAULT NULL::text[], similarity_threshold double precision DEFAULT 0.7)\n RETURNS TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nbegin\n  return query\n  select\n    tc.id as chunk_id,\n    tc.transcript_id,\n    tc.chunk_text,\n    tc.speaker,\n    tc.topics,\n    1 - (tc.embedding <=> query_embedding) as similarity,\n    a.name as agent_name,\n    ct.call_date,\n    ct.product_line,\n    ct.carrier,\n    ct.disposition,\n    ct.compliance_passed\n  from public.transcript_chunks tc\n  join public.call_transcripts ct on tc.transcript_id = ct.id\n  join public.agents a on ct.agent_id = a.id\n  where\n    1 - (tc.embedding <=> query_embedding) > similarity_threshold\n    and (filter_product_line is null or ct.product_line = filter_product_line)\n    and (filter_carrier is null or ct.carrier = filter_carrier)\n    and (filter_disposition is null or ct.disposition = filter_disposition)\n    and (filter_topics is null or tc.topics && filter_topics) -- array overlap\n    and ct.phi_scrubbed = true AND public.deployment_row_visible('call_transcripts',to_jsonb(ct))  -- safety: only return scrubbed transcripts\n  order by tc.embedding <=> query_embedding\n  limit match_count;\nend;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "private_search_transcript_chunks",
+      "arguments": "query_embedding vector, similarity_threshold double precision, match_count integer",
+      "result": "TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public, extensions, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.private_search_transcript_chunks(query_embedding vector, similarity_threshold double precision, match_count integer)\n RETURNS TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)\n LANGUAGE sql\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$ SELECT * FROM public.private_search_transcript_chunks(query_embedding,match_count,NULL::text,NULL::text,NULL::text,NULL::text[],similarity_threshold) $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "protect_agent_call_reservation",
       "arguments": "",
       "result": "trigger",
@@ -51173,6 +51257,422 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.read_contact_tags(p_tenant_id uuid, p_requesting_agent_id uuid, p_contact_ids uuid[])\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE cid uuid; result jsonb;\nBEGIN\n  PERFORM public.opportunities_assert_agent(p_tenant_id,p_requesting_agent_id);\n  IF coalesce(cardinality(p_contact_ids),0) > 200 THEN RAISE EXCEPTION 'Request up to 200 contacts at a time'; END IF;\n  -- Same audited, encrypted read pattern as contacts and opportunities.\n  FOR cid IN SELECT DISTINCT contact_id FROM public.contact_tags\n    WHERE tenant_id = p_tenant_id AND contact_id = ANY(p_contact_ids) AND (current_setting('role',true)='service_role' OR public.deployment_can_access_contact(contact_id)) LOOP\n    INSERT INTO public.pii_access_log(contact_id,agent_id,clerk_user_id,action)\n      VALUES(cid,p_requesting_agent_id,auth.jwt()->>'sub','view');\n  END LOOP;\n  SELECT coalesce(jsonb_agg(jsonb_build_object('id',id,'contact_id',contact_id,\n    'name',public.decrypt_pii_value(name_encrypted)) ORDER BY created_at,id),'[]') INTO result\n    FROM public.contact_tags WHERE tenant_id = p_tenant_id AND contact_id = ANY(p_contact_ids) AND (current_setting('role',true)='service_role' OR public.deployment_can_access_contact(contact_id));\n  RETURN result;\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_agent_coaching",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF agent_coaching",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_agent_coaching(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF agent_coaching\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.agent_coaching r WHERE r.id=p_resource AND public.deployment_row_visible('agent_coaching',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('agent_coaching',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.agent_coaching r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('agent_coaching',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_insights",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF call_insights",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_call_insights(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF call_insights\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.call_insights r WHERE r.id=p_resource AND public.deployment_row_visible('call_insights',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('call_insights',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.call_insights r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('call_insights',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_logs",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF call_logs",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_call_logs(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF call_logs\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.call_logs r WHERE r.id=p_resource AND public.deployment_row_visible('call_logs',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('call_logs',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.call_logs r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('call_logs',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_records",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF call_records",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_call_records(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF call_records\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.call_records r WHERE r.id=p_resource AND public.deployment_row_visible('call_records',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('call_records',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.call_records r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('call_records',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_threads",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF call_threads",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_call_threads(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF call_threads\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.call_threads r WHERE r.id=p_resource AND public.deployment_row_visible('call_threads',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('call_threads',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.call_threads r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('call_threads',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_transcripts",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF call_transcripts",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_call_transcripts(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF call_transcripts\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.call_transcripts r WHERE r.id=p_resource AND public.deployment_row_visible('call_transcripts',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('call_transcripts',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.call_transcripts r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('call_transcripts',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_compliance_flags",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF compliance_flags",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_compliance_flags(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF compliance_flags\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.compliance_flags r WHERE r.id=p_resource AND public.deployment_row_visible('compliance_flags',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('compliance_flags',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.compliance_flags r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('compliance_flags',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_compliance_scorecards",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF compliance_scorecards",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_compliance_scorecards(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF compliance_scorecards\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.compliance_scorecards r WHERE r.id=p_resource AND public.deployment_row_visible('compliance_scorecards',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('compliance_scorecards',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.compliance_scorecards r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('compliance_scorecards',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_compliance_scores",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF compliance_scores",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_compliance_scores(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF compliance_scores\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.compliance_scores r WHERE r.id=p_resource AND public.deployment_row_visible('compliance_scores',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('compliance_scores',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.compliance_scores r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('compliance_scores',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_contact_activities",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF contact_activities",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_contact_activities(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF contact_activities\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.contact_activities r WHERE r.id=p_resource AND public.deployment_row_visible('contact_activities',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('contact_activities',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.contact_activities r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('contact_activities',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_contact_lead_intel",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF contact_lead_intel",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_contact_lead_intel(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF contact_lead_intel\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.contact_lead_intel r WHERE r.id=p_resource AND public.deployment_row_visible('contact_lead_intel',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('contact_lead_intel',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.contact_lead_intel r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('contact_lead_intel',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_contact_notes",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF contact_notes",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_contact_notes(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF contact_notes\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.contact_notes r WHERE r.id=p_resource AND public.deployment_row_visible('contact_notes',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('contact_notes',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.contact_notes r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('contact_notes',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_follow_ups",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF follow_ups",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_follow_ups(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF follow_ups\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.follow_ups r WHERE r.id=p_resource AND public.deployment_row_visible('follow_ups',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('follow_ups',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.follow_ups r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('follow_ups',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_followup_queue",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF followup_queue",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_followup_queue(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF followup_queue\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.followup_queue r WHERE r.id=p_resource AND public.deployment_row_visible('followup_queue',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('followup_queue',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.followup_queue r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('followup_queue',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_inbound_calls",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF inbound_calls",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_inbound_calls(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF inbound_calls\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.inbound_calls r WHERE r.id=p_resource AND public.deployment_row_visible('inbound_calls',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('inbound_calls',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.inbound_calls r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('inbound_calls',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_intent_detections",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF intent_detections",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_intent_detections(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF intent_detections\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.intent_detections r WHERE r.id=p_resource AND public.deployment_row_visible('intent_detections',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('intent_detections',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.intent_detections r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('intent_detections',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_messages",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF messages",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_messages(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF messages\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.messages r WHERE r.id=p_resource AND public.deployment_row_visible('messages',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('messages',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.messages r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('messages',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_opportunities",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF opportunities",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_opportunities(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF opportunities\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.opportunities r WHERE r.id=p_resource AND public.deployment_row_visible('opportunities',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('opportunities',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.opportunities r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('opportunities',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_opportunity_events",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF opportunity_events",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_opportunity_events(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF opportunity_events\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.opportunity_events r WHERE r.id=p_resource AND public.deployment_row_visible('opportunity_events',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('opportunity_events',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.opportunity_events r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('opportunity_events',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_opportunity_stage_history",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF opportunity_stage_history",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_opportunity_stage_history(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF opportunity_stage_history\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.opportunity_stage_history r WHERE r.id=p_resource AND public.deployment_row_visible('opportunity_stage_history',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('opportunity_stage_history',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.opportunity_stage_history r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('opportunity_stage_history',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_phi_redactions",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF phi_redactions",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_phi_redactions(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF phi_redactions\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.phi_redactions r WHERE r.id=p_resource AND public.deployment_row_visible('phi_redactions',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('phi_redactions',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.phi_redactions r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('phi_redactions',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_sales_log",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF sales_log",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_sales_log(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF sales_log\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.sales_log r WHERE r.id=p_resource AND public.deployment_row_visible('sales_log',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('sales_log',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.sales_log r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('sales_log',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_scorecard_items",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF scorecard_items",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_scorecard_items(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF scorecard_items\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.scorecard_items r WHERE r.id=p_resource AND public.deployment_row_visible('scorecard_items',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('scorecard_items',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.scorecard_items r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('scorecard_items',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_section_scores",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF section_scores",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_section_scores(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF section_scores\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.section_scores r WHERE r.id=p_resource AND public.deployment_row_visible('section_scores',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('section_scores',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.section_scores r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('section_scores',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_sessions",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF sessions",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_sessions(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF sessions\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.sessions r WHERE r.id=p_resource AND public.deployment_row_visible('sessions',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('sessions',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.sessions r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('sessions',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_telephony_events",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF telephony_events",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_telephony_events(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF telephony_events\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.telephony_events r WHERE r.id=p_resource AND public.deployment_row_visible('telephony_events',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('telephony_events',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.telephony_events r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('telephony_events',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_transcript_chunks",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF transcript_chunks",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_transcript_chunks(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF transcript_chunks\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean;\nBEGIN\n IF p_action NOT IN ('list','read','export') THEN p_action:='read'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.current_deployment_identity()) AND\n (p_resource IS NULL OR EXISTS(SELECT 1 FROM public.transcript_chunks r WHERE r.id=p_resource AND public.deployment_row_visible('transcript_chunks',to_jsonb(r)))) INTO allowed;\n PERFORM public.audit_browser_evidence('transcript_chunks',p_resource,p_action,allowed);\n IF allowed THEN RETURN QUERY SELECT r.* FROM public.transcript_chunks r\n WHERE (p_resource IS NULL OR r.id=p_resource) AND public.deployment_row_visible('transcript_chunks',to_jsonb(r)); END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_agent_performance",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF v_agent_performance",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_v_agent_performance(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF v_agent_performance\n LANGUAGE sql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$SELECT * FROM public.v_agent_performance$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_compliance_overview",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF v_compliance_overview",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_v_compliance_overview(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF v_compliance_overview\n LANGUAGE sql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$SELECT * FROM public.v_compliance_overview$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_daily_activity",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF v_daily_activity",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_v_daily_activity(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF v_daily_activity\n LANGUAGE sql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$SELECT * FROM public.v_daily_activity$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_enrollment_summary",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF v_enrollment_summary",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_v_enrollment_summary(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF v_enrollment_summary\n LANGUAGE sql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$SELECT * FROM public.v_enrollment_summary$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_pipeline_status",
+      "arguments": "p_resource uuid, p_action text",
+      "result": "SETOF v_pipeline_status",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_evidence_v_pipeline_status(p_resource uuid DEFAULT NULL::uuid, p_action text DEFAULT 'list'::text)\n RETURNS SETOF v_pipeline_status\n LANGUAGE sql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$SELECT * FROM public.v_pipeline_status$function$\n"
     },
     {
       "schema": "public",
@@ -51394,6 +51894,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.register_stt_stream(p_tenant_id uuid, p_call_sid text, p_channel text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE budget stt_call_reconnects; prior integer;\nBEGIN\n IF length(p_channel)>100 OR NOT (EXISTS(SELECT 1 FROM telephony_call_attempts WHERE tenant_id=p_tenant_id AND parent_call_sid=p_call_sid AND ended_at IS NULL AND answered_at IS NOT NULL) OR EXISTS(SELECT 1 FROM call_conferences WHERE tenant_id=p_tenant_id AND parent_call_sid=p_call_sid AND ended_at IS NULL)) THEN RETURN false; END IF;\n INSERT INTO stt_call_reconnects(tenant_id,call_sid) VALUES(p_tenant_id,p_call_sid) ON CONFLICT DO NOTHING;\n SELECT * INTO STRICT budget FROM stt_call_reconnects WHERE tenant_id=p_tenant_id AND call_sid=p_call_sid FOR UPDATE;\n prior:=coalesce((budget.channels->>p_channel)::integer,0);\n IF prior>0 AND budget.reconnects>=20 THEN RETURN false; END IF;\n UPDATE stt_call_reconnects SET channels=jsonb_set(channels,ARRAY[p_channel],to_jsonb(prior+1)),reconnects=reconnects+CASE WHEN prior>0 THEN 1 ELSE 0 END,updated_at=clock_timestamp() WHERE tenant_id=p_tenant_id AND call_sid=p_call_sid;\n RETURN true;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "reject_evidence_audit_mutation",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.reject_evidence_audit_mutation()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog'\nAS $function$\nBEGIN RAISE EXCEPTION 'Evidence audit is append only' USING ERRCODE='42501'; END $function$\n"
     },
     {
       "schema": "public",
@@ -51895,12 +52408,12 @@
       "arguments": "query_embedding vector, match_count integer, filter_product_line text, filter_carrier text, filter_disposition text, filter_topics text[], similarity_threshold double precision",
       "result": "TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)",
       "owner": "postgres",
-      "security_definer": false,
+      "security_definer": true,
       "settings": [
-        "search_path=pg_catalog, public, extensions, pg_temp"
+        "search_path=pg_catalog, public, extensions"
       ],
-      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.search_transcript_chunks(query_embedding vector, match_count integer DEFAULT 5, filter_product_line text DEFAULT NULL::text, filter_carrier text DEFAULT NULL::text, filter_disposition text DEFAULT NULL::text, filter_topics text[] DEFAULT NULL::text[], similarity_threshold double precision DEFAULT 0.7)\n RETURNS TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nbegin\n  return query\n  select\n    tc.id as chunk_id,\n    tc.transcript_id,\n    tc.chunk_text,\n    tc.speaker,\n    tc.topics,\n    1 - (tc.embedding <=> query_embedding) as similarity,\n    a.name as agent_name,\n    ct.call_date,\n    ct.product_line,\n    ct.carrier,\n    ct.disposition,\n    ct.compliance_passed\n  from public.transcript_chunks tc\n  join public.call_transcripts ct on tc.transcript_id = ct.id\n  join public.agents a on ct.agent_id = a.id\n  where\n    1 - (tc.embedding <=> query_embedding) > similarity_threshold\n    and (filter_product_line is null or ct.product_line = filter_product_line)\n    and (filter_carrier is null or ct.carrier = filter_carrier)\n    and (filter_disposition is null or ct.disposition = filter_disposition)\n    and (filter_topics is null or tc.topics && filter_topics) -- array overlap\n    and ct.phi_scrubbed = true  -- safety: only return scrubbed transcripts\n  order by tc.embedding <=> query_embedding\n  limit match_count;\nend;\n$function$\n"
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.search_transcript_chunks(query_embedding vector, match_count integer DEFAULT 5, filter_product_line text DEFAULT NULL::text, filter_carrier text DEFAULT NULL::text, filter_disposition text DEFAULT NULL::text, filter_topics text[] DEFAULT NULL::text[], similarity_threshold double precision DEFAULT 0.7)\n RETURNS TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions'\nAS $function$ BEGIN\n PERFORM public.audit_browser_evidence('transcript_chunks',NULL,'list',EXISTS(SELECT 1 FROM public.current_deployment_identity()));\n RETURN QUERY SELECT * FROM public.private_search_transcript_chunks(query_embedding,match_count,filter_product_line,filter_carrier,filter_disposition,filter_topics,similarity_threshold); END $function$\n"
     },
     {
       "schema": "public",
@@ -51908,12 +52421,12 @@
       "arguments": "query_embedding vector, similarity_threshold double precision, match_count integer",
       "result": "TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)",
       "owner": "postgres",
-      "security_definer": false,
+      "security_definer": true,
       "settings": [
-        "search_path=pg_catalog, public, extensions, pg_temp"
+        "search_path=pg_catalog, public, extensions"
       ],
-      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.search_transcript_chunks(query_embedding vector, similarity_threshold double precision, match_count integer)\n RETURNS TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)\n LANGUAGE sql\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$ SELECT * FROM public.search_transcript_chunks(query_embedding,match_count,NULL::text,NULL::text,NULL::text,NULL::text[],similarity_threshold) $function$\n"
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.search_transcript_chunks(query_embedding vector, similarity_threshold double precision, match_count integer)\n RETURNS TABLE(chunk_id uuid, transcript_id uuid, chunk_text text, speaker text, topics text[], similarity double precision, agent_name text, call_date timestamp with time zone, product_line text, carrier text, disposition text, compliance_passed boolean)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions'\nAS $function$ BEGIN\n PERFORM public.audit_browser_evidence('transcript_chunks',NULL,'list',EXISTS(SELECT 1 FROM public.current_deployment_identity()));\n RETURN QUERY SELECT * FROM public.private_search_transcript_chunks(query_embedding,similarity_threshold,match_count); END $function$\n"
     },
     {
       "schema": "public",
@@ -52229,6 +52742,71 @@
     },
     {
       "schema": "public",
+      "name": "update_evidence_call_records",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb",
+      "result": "SETOF call_records",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.update_evidence_call_records(p_resource uuid, p_patch jsonb, p_expected jsonb DEFAULT '{}'::jsonb)\n RETURNS SETOF call_records\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean; assignments text;\nBEGIN\n IF jsonb_typeof(p_patch)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(p_patch) k WHERE k<>ALL(string_to_array('call_outcome,ancillary_product_type,sunfire_code',','))) THEN\n  RAISE EXCEPTION 'Unsupported content update' USING ERRCODE='42501'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.call_records r WHERE r.id=p_resource AND to_jsonb(r) @> p_expected AND public.deployment_row_writable('call_records',to_jsonb(r))) INTO allowed;\n PERFORM public.audit_browser_evidence('call_records',p_resource,'read',allowed);\n IF NOT allowed THEN PERFORM set_config('response.status','403',true); RETURN; END IF;\n IF p_patch='{}'::jsonb THEN RETURN; END IF;\n SELECT string_agg(format('%I=v.%I',k,k),',') INTO assignments FROM jsonb_object_keys(p_patch) k;\n RETURN QUERY EXECUTE format('UPDATE public.call_records r SET %s FROM jsonb_populate_record(NULL::public.call_records,$1) v WHERE r.id=$2 AND to_jsonb(r) @> $3 AND public.deployment_row_writable(''call_records'',to_jsonb(r)) RETURNING r.*',assignments)\n USING p_patch,p_resource,p_expected;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "update_evidence_contact_notes",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb",
+      "result": "SETOF contact_notes",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.update_evidence_contact_notes(p_resource uuid, p_patch jsonb, p_expected jsonb DEFAULT '{}'::jsonb)\n RETURNS SETOF contact_notes\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean; assignments text;\nBEGIN\n IF jsonb_typeof(p_patch)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(p_patch) k WHERE k<>ALL(string_to_array('body,pinned',','))) THEN\n  RAISE EXCEPTION 'Unsupported content update' USING ERRCODE='42501'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.contact_notes r WHERE r.id=p_resource AND to_jsonb(r) @> p_expected AND public.deployment_row_writable('contact_notes',to_jsonb(r))) INTO allowed;\n PERFORM public.audit_browser_evidence('contact_notes',p_resource,'read',allowed);\n IF NOT allowed THEN PERFORM set_config('response.status','403',true); RETURN; END IF;\n IF p_patch='{}'::jsonb THEN RETURN; END IF;\n SELECT string_agg(format('%I=v.%I',k,k),',') INTO assignments FROM jsonb_object_keys(p_patch) k;\n RETURN QUERY EXECUTE format('UPDATE public.contact_notes r SET %s FROM jsonb_populate_record(NULL::public.contact_notes,$1) v WHERE r.id=$2 AND to_jsonb(r) @> $3 AND public.deployment_row_writable(''contact_notes'',to_jsonb(r)) RETURNING r.*',assignments)\n USING p_patch,p_resource,p_expected;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "update_evidence_follow_ups",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb",
+      "result": "SETOF follow_ups",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.update_evidence_follow_ups(p_resource uuid, p_patch jsonb, p_expected jsonb DEFAULT '{}'::jsonb)\n RETURNS SETOF follow_ups\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean; assignments text;\nBEGIN\n IF jsonb_typeof(p_patch)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(p_patch) k WHERE k<>ALL(string_to_array('due_at,reason,status',','))) THEN\n  RAISE EXCEPTION 'Unsupported content update' USING ERRCODE='42501'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.follow_ups r WHERE r.id=p_resource AND to_jsonb(r) @> p_expected AND public.deployment_row_writable('follow_ups',to_jsonb(r))) INTO allowed;\n PERFORM public.audit_browser_evidence('follow_ups',p_resource,'read',allowed);\n IF NOT allowed THEN PERFORM set_config('response.status','403',true); RETURN; END IF;\n IF p_patch='{}'::jsonb THEN RETURN; END IF;\n SELECT string_agg(format('%I=v.%I',k,k),',') INTO assignments FROM jsonb_object_keys(p_patch) k;\n RETURN QUERY EXECUTE format('UPDATE public.follow_ups r SET %s FROM jsonb_populate_record(NULL::public.follow_ups,$1) v WHERE r.id=$2 AND to_jsonb(r) @> $3 AND public.deployment_row_writable(''follow_ups'',to_jsonb(r)) RETURNING r.*',assignments)\n USING p_patch,p_resource,p_expected;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "update_evidence_followup_queue",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb",
+      "result": "SETOF followup_queue",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.update_evidence_followup_queue(p_resource uuid, p_patch jsonb, p_expected jsonb DEFAULT '{}'::jsonb)\n RETURNS SETOF followup_queue\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean; assignments text;\nBEGIN\n IF jsonb_typeof(p_patch)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(p_patch) k WHERE k<>ALL(string_to_array('followup_status,notes',','))) THEN\n  RAISE EXCEPTION 'Unsupported content update' USING ERRCODE='42501'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.followup_queue r WHERE r.id=p_resource AND to_jsonb(r) @> p_expected AND public.deployment_row_writable('followup_queue',to_jsonb(r))) INTO allowed;\n PERFORM public.audit_browser_evidence('followup_queue',p_resource,'read',allowed);\n IF NOT allowed THEN PERFORM set_config('response.status','403',true); RETURN; END IF;\n IF p_patch='{}'::jsonb THEN RETURN; END IF;\n SELECT string_agg(format('%I=v.%I',k,k),',') INTO assignments FROM jsonb_object_keys(p_patch) k;\n RETURN QUERY EXECUTE format('UPDATE public.followup_queue r SET %s FROM jsonb_populate_record(NULL::public.followup_queue,$1) v WHERE r.id=$2 AND to_jsonb(r) @> $3 AND public.deployment_row_writable(''followup_queue'',to_jsonb(r)) RETURNING r.*',assignments)\n USING p_patch,p_resource,p_expected;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "update_evidence_messages",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb",
+      "result": "SETOF messages",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.update_evidence_messages(p_resource uuid, p_patch jsonb, p_expected jsonb DEFAULT '{}'::jsonb)\n RETURNS SETOF messages\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE allowed boolean; assignments text;\nBEGIN\n IF jsonb_typeof(p_patch)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(p_patch) k WHERE k<>ALL(string_to_array('read_at',','))) THEN\n  RAISE EXCEPTION 'Unsupported content update' USING ERRCODE='42501'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.messages r WHERE r.id=p_resource AND to_jsonb(r) @> p_expected AND public.deployment_row_writable('messages',to_jsonb(r))) INTO allowed;\n PERFORM public.audit_browser_evidence('messages',p_resource,'read',allowed);\n IF NOT allowed THEN PERFORM set_config('response.status','403',true); RETURN; END IF;\n IF p_patch='{}'::jsonb THEN RETURN; END IF;\n SELECT string_agg(format('%I=v.%I',k,k),',') INTO assignments FROM jsonb_object_keys(p_patch) k;\n RETURN QUERY EXECUTE format('UPDATE public.messages r SET %s FROM jsonb_populate_record(NULL::public.messages,$1) v WHERE r.id=$2 AND to_jsonb(r) @> $3 AND public.deployment_row_writable(''messages'',to_jsonb(r)) RETURNING r.*',assignments)\n USING p_patch,p_resource,p_expected;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "update_pii_field",
       "arguments": "p_contact_id uuid, p_requesting_agent_id uuid, p_field text, p_value text",
       "result": "jsonb",
@@ -52347,7 +52925,7 @@
       "options": [
         "security_invoker=true"
       ],
-      "definition": " WITH carrier_counts AS (\n         SELECT cr_1.tenant_id,\n            cr_1.agent_id,\n            COALESCE(cr_1.writing_agent, (cr_1.agent_name)::text, 'Unknown'::text) AS writing_agent,\n            COALESCE(cr_1.carrier_name, 'Unknown'::character varying) AS carrier_name,\n            count(*) FILTER (WHERE ((cr_1.call_outcome = 'enrolled'::text) OR (cr_1.enrollment_completed IS TRUE))) AS enrolled_count\n           FROM ( SELECT call_records.id,\n                    call_records.external_call_id,\n                    call_records.thread_id,\n                    call_records.agent_id,\n                    call_records.agent_name,\n                    call_records.agent_npn,\n                    call_records.beneficiary_id,\n                    call_records.beneficiary_name,\n                    call_records.call_direction,\n                    call_records.call_type,\n                    call_records.product_type,\n                    call_records.carrier_name,\n                    call_records.plan_name,\n                    call_records.plan_id,\n                    call_records.call_start,\n                    call_records.call_end,\n                    call_records.call_duration_seconds,\n                    call_records.recording_url,\n                    call_records.recording_storage_path,\n                    call_records.transcript_raw,\n                    call_records.transcript_diarized,\n                    call_records.election_period,\n                    call_records.enrollment_completed,\n                    call_records.enrollment_confirmation_number,\n                    call_records.state_code,\n                    call_records.county,\n                    call_records.zip_code,\n                    call_records.lead_source,\n                    call_records.lead_id,\n                    call_records.soa_on_file,\n                    call_records.soa_date,\n                    call_records.ptc_on_file,\n                    call_records.ptc_date,\n                    call_records.ptc_expiry,\n                    call_records.metadata,\n                    call_records.created_at,\n                    call_records.updated_at,\n                    call_records.effective_date,\n                    call_records.application_id,\n                    call_records.call_outcome,\n                    call_records.agent_notes,\n                    call_records.session_id,\n                    call_records.compliance_scorecard_id,\n                    call_records.transcript_id,\n                    call_records.customer_first_name,\n                    call_records.customer_last_name,\n                    call_records.customer_phone,\n                    call_records.customer_email,\n                    call_records.customer_dob,\n                    call_records.customer_state,\n                    call_records.customer_mbi,\n                    call_records.medicaid,\n                    call_records.medicaid_number,\n                    call_records.previous_carrier,\n                    call_records.enrollment_code,\n                    call_records.premium,\n                    call_records.sunfire_code,\n                    call_records.sixty_day_date,\n                    call_records.sixty_day_status,\n                    call_records.sixty_day_contacted_at,\n                    call_records.sep,\n                    call_records.agency,\n                    call_records.writing_agent,\n                    call_records.hra,\n                    call_records.hra_date,\n                    call_records.webhook_sent,\n                    call_records.webhook_sent_at,\n                    call_records.webhook_error,\n                    call_records.tenant_id,\n                    call_records.dg_sentiment,\n                    call_records.dg_intents,\n                    call_records.dg_topics,\n                    call_records.dg_summary,\n                    call_records.call_analytics,\n                    call_records.agent_assessment,\n                    call_records.beneficiary_risk,\n                    call_records.contact_id,\n                    call_records.twilio_call_sid,\n                    call_records.app_written,\n                    call_records.billable,\n                    call_records.duplicate_flag,\n                    call_records.vendor_disposition,\n                    call_records.ancillary_product_type,\n                    call_records.compliance_requested_at,\n                    call_records.compliance_run_at,\n                    call_records.compliance_transcript_hash,\n                    call_records.compliance_dispo_changed_at,\n                    call_records.compliance_status,\n                    call_records.compliance_eligible,\n                    call_records.parent_call_id\n                   FROM call_records\n                  WHERE (call_records.parent_call_id IS NULL)) cr_1\n          GROUP BY cr_1.tenant_id, cr_1.agent_id, COALESCE(cr_1.writing_agent, (cr_1.agent_name)::text, 'Unknown'::text), COALESCE(cr_1.carrier_name, 'Unknown'::character varying)\n        ), top_carriers AS (\n         SELECT carrier_counts.tenant_id,\n            carrier_counts.agent_id,\n            carrier_counts.writing_agent,\n            jsonb_agg(jsonb_build_object('carrier', carrier_counts.carrier_name, 'enrollments', carrier_counts.enrolled_count) ORDER BY carrier_counts.enrolled_count DESC, carrier_counts.carrier_name) FILTER (WHERE (carrier_counts.enrolled_count > 0)) AS top_carriers\n           FROM carrier_counts\n          GROUP BY carrier_counts.tenant_id, carrier_counts.agent_id, carrier_counts.writing_agent\n        )\n SELECT cr.tenant_id,\n    cr.agent_id,\n    cr.agent_name,\n    COALESCE(cr.writing_agent, (cr.agent_name)::text, 'Unknown'::text) AS writing_agent,\n    count(*) AS calls_completed,\n    count(*) FILTER (WHERE ((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE))) AS enrollment_count,\n    round(((100.0 * (count(*) FILTER (WHERE ((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE))))::numeric) / (NULLIF(count(*), 0))::numeric), 2) AS enrollment_rate,\n    round(avg(cs.overall_score), 2) AS average_compliance_score,\n    round(avg(cr.call_duration_seconds), 2) AS average_call_duration_seconds,\n    COALESCE(tc.top_carriers, '[]'::jsonb) AS top_carriers,\n    round(((100.0 * (count(*) FILTER (WHERE (((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE)) AND (cr.webhook_sent IS TRUE))))::numeric) / (NULLIF(count(*) FILTER (WHERE ((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE))), 0))::numeric), 2) AS webhook_success_rate,\n    sum(\n        CASE\n            WHEN ((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE)) THEN COALESCE(((t.coop_rates ->> lower(TRIM(BOTH FROM COALESCE(cr.carrier_name, ''::character varying)))))::numeric, (0)::numeric)\n            ELSE (0)::numeric\n        END) AS coop_earnings_estimate\n   FROM (((( SELECT call_records.id,\n            call_records.external_call_id,\n            call_records.thread_id,\n            call_records.agent_id,\n            call_records.agent_name,\n            call_records.agent_npn,\n            call_records.beneficiary_id,\n            call_records.beneficiary_name,\n            call_records.call_direction,\n            call_records.call_type,\n            call_records.product_type,\n            call_records.carrier_name,\n            call_records.plan_name,\n            call_records.plan_id,\n            call_records.call_start,\n            call_records.call_end,\n            call_records.call_duration_seconds,\n            call_records.recording_url,\n            call_records.recording_storage_path,\n            call_records.transcript_raw,\n            call_records.transcript_diarized,\n            call_records.election_period,\n            call_records.enrollment_completed,\n            call_records.enrollment_confirmation_number,\n            call_records.state_code,\n            call_records.county,\n            call_records.zip_code,\n            call_records.lead_source,\n            call_records.lead_id,\n            call_records.soa_on_file,\n            call_records.soa_date,\n            call_records.ptc_on_file,\n            call_records.ptc_date,\n            call_records.ptc_expiry,\n            call_records.metadata,\n            call_records.created_at,\n            call_records.updated_at,\n            call_records.effective_date,\n            call_records.application_id,\n            call_records.call_outcome,\n            call_records.agent_notes,\n            call_records.session_id,\n            call_records.compliance_scorecard_id,\n            call_records.transcript_id,\n            call_records.customer_first_name,\n            call_records.customer_last_name,\n            call_records.customer_phone,\n            call_records.customer_email,\n            call_records.customer_dob,\n            call_records.customer_state,\n            call_records.customer_mbi,\n            call_records.medicaid,\n            call_records.medicaid_number,\n            call_records.previous_carrier,\n            call_records.enrollment_code,\n            call_records.premium,\n            call_records.sunfire_code,\n            call_records.sixty_day_date,\n            call_records.sixty_day_status,\n            call_records.sixty_day_contacted_at,\n            call_records.sep,\n            call_records.agency,\n            call_records.writing_agent,\n            call_records.hra,\n            call_records.hra_date,\n            call_records.webhook_sent,\n            call_records.webhook_sent_at,\n            call_records.webhook_error,\n            call_records.tenant_id,\n            call_records.dg_sentiment,\n            call_records.dg_intents,\n            call_records.dg_topics,\n            call_records.dg_summary,\n            call_records.call_analytics,\n            call_records.agent_assessment,\n            call_records.beneficiary_risk,\n            call_records.contact_id,\n            call_records.twilio_call_sid,\n            call_records.app_written,\n            call_records.billable,\n            call_records.duplicate_flag,\n            call_records.vendor_disposition,\n            call_records.ancillary_product_type,\n            call_records.compliance_requested_at,\n            call_records.compliance_run_at,\n            call_records.compliance_transcript_hash,\n            call_records.compliance_dispo_changed_at,\n            call_records.compliance_status,\n            call_records.compliance_eligible,\n            call_records.parent_call_id\n           FROM call_records\n          WHERE (call_records.parent_call_id IS NULL)) cr\n     JOIN tenants t ON ((t.id = cr.tenant_id)))\n     LEFT JOIN compliance_scorecards cs ON ((cs.id = cr.compliance_scorecard_id)))\n     LEFT JOIN top_carriers tc ON (((tc.tenant_id = cr.tenant_id) AND (tc.agent_id = cr.agent_id) AND (tc.writing_agent = COALESCE(cr.writing_agent, (cr.agent_name)::text, 'Unknown'::text)))))\n  GROUP BY cr.tenant_id, cr.agent_id, cr.agent_name, COALESCE(cr.writing_agent, (cr.agent_name)::text, 'Unknown'::text), tc.top_carriers;"
+      "definition": " WITH carrier_counts AS (\n         SELECT cr_1.tenant_id,\n            cr_1.agent_id,\n            COALESCE(cr_1.writing_agent, (cr_1.agent_name)::text, 'Unknown'::text) AS writing_agent,\n            COALESCE(cr_1.carrier_name, 'Unknown'::character varying) AS carrier_name,\n            count(*) FILTER (WHERE ((cr_1.call_outcome = 'enrolled'::text) OR (cr_1.enrollment_completed IS TRUE))) AS enrolled_count\n           FROM ( SELECT call_records.id,\n                    call_records.external_call_id,\n                    call_records.thread_id,\n                    call_records.agent_id,\n                    call_records.agent_name,\n                    call_records.agent_npn,\n                    call_records.beneficiary_id,\n                    call_records.beneficiary_name,\n                    call_records.call_direction,\n                    call_records.call_type,\n                    call_records.product_type,\n                    call_records.carrier_name,\n                    call_records.plan_name,\n                    call_records.plan_id,\n                    call_records.call_start,\n                    call_records.call_end,\n                    call_records.call_duration_seconds,\n                    call_records.recording_url,\n                    call_records.recording_storage_path,\n                    call_records.transcript_raw,\n                    call_records.transcript_diarized,\n                    call_records.election_period,\n                    call_records.enrollment_completed,\n                    call_records.enrollment_confirmation_number,\n                    call_records.state_code,\n                    call_records.county,\n                    call_records.zip_code,\n                    call_records.lead_source,\n                    call_records.lead_id,\n                    call_records.soa_on_file,\n                    call_records.soa_date,\n                    call_records.ptc_on_file,\n                    call_records.ptc_date,\n                    call_records.ptc_expiry,\n                    call_records.metadata,\n                    call_records.created_at,\n                    call_records.updated_at,\n                    call_records.effective_date,\n                    call_records.application_id,\n                    call_records.call_outcome,\n                    call_records.agent_notes,\n                    call_records.session_id,\n                    call_records.compliance_scorecard_id,\n                    call_records.transcript_id,\n                    call_records.customer_first_name,\n                    call_records.customer_last_name,\n                    call_records.customer_phone,\n                    call_records.customer_email,\n                    call_records.customer_dob,\n                    call_records.customer_state,\n                    call_records.customer_mbi,\n                    call_records.medicaid,\n                    call_records.medicaid_number,\n                    call_records.previous_carrier,\n                    call_records.enrollment_code,\n                    call_records.premium,\n                    call_records.sunfire_code,\n                    call_records.sixty_day_date,\n                    call_records.sixty_day_status,\n                    call_records.sixty_day_contacted_at,\n                    call_records.sep,\n                    call_records.agency,\n                    call_records.writing_agent,\n                    call_records.hra,\n                    call_records.hra_date,\n                    call_records.webhook_sent,\n                    call_records.webhook_sent_at,\n                    call_records.webhook_error,\n                    call_records.tenant_id,\n                    call_records.dg_sentiment,\n                    call_records.dg_intents,\n                    call_records.dg_topics,\n                    call_records.dg_summary,\n                    call_records.call_analytics,\n                    call_records.agent_assessment,\n                    call_records.beneficiary_risk,\n                    call_records.contact_id,\n                    call_records.twilio_call_sid,\n                    call_records.app_written,\n                    call_records.billable,\n                    call_records.duplicate_flag,\n                    call_records.vendor_disposition,\n                    call_records.ancillary_product_type,\n                    call_records.compliance_requested_at,\n                    call_records.compliance_run_at,\n                    call_records.compliance_transcript_hash,\n                    call_records.compliance_dispo_changed_at,\n                    call_records.compliance_status,\n                    call_records.compliance_eligible,\n                    call_records.parent_call_id\n                   FROM read_evidence_call_records() call_records(id, external_call_id, thread_id, agent_id, agent_name, agent_npn, beneficiary_id, beneficiary_name, call_direction, call_type, product_type, carrier_name, plan_name, plan_id, call_start, call_end, call_duration_seconds, recording_url, recording_storage_path, transcript_raw, transcript_diarized, election_period, enrollment_completed, enrollment_confirmation_number, state_code, county, zip_code, lead_source, lead_id, soa_on_file, soa_date, ptc_on_file, ptc_date, ptc_expiry, metadata, created_at, updated_at, effective_date, application_id, call_outcome, agent_notes, session_id, compliance_scorecard_id, transcript_id, customer_first_name, customer_last_name, customer_phone, customer_email, customer_dob, customer_state, customer_mbi, medicaid, medicaid_number, previous_carrier, enrollment_code, premium, sunfire_code, sixty_day_date, sixty_day_status, sixty_day_contacted_at, sep, agency, writing_agent, hra, hra_date, webhook_sent, webhook_sent_at, webhook_error, tenant_id, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, contact_id, twilio_call_sid, app_written, billable, duplicate_flag, vendor_disposition, ancillary_product_type, compliance_requested_at, compliance_run_at, compliance_transcript_hash, compliance_dispo_changed_at, compliance_status, compliance_eligible, parent_call_id, post_call_status, post_call_last_error, is_test_enrollment)\n                  WHERE (call_records.parent_call_id IS NULL)) cr_1\n          GROUP BY cr_1.tenant_id, cr_1.agent_id, COALESCE(cr_1.writing_agent, (cr_1.agent_name)::text, 'Unknown'::text), COALESCE(cr_1.carrier_name, 'Unknown'::character varying)\n        ), top_carriers AS (\n         SELECT carrier_counts.tenant_id,\n            carrier_counts.agent_id,\n            carrier_counts.writing_agent,\n            jsonb_agg(jsonb_build_object('carrier', carrier_counts.carrier_name, 'enrollments', carrier_counts.enrolled_count) ORDER BY carrier_counts.enrolled_count DESC, carrier_counts.carrier_name) FILTER (WHERE (carrier_counts.enrolled_count > 0)) AS top_carriers\n           FROM carrier_counts\n          GROUP BY carrier_counts.tenant_id, carrier_counts.agent_id, carrier_counts.writing_agent\n        )\n SELECT cr.tenant_id,\n    cr.agent_id,\n    cr.agent_name,\n    COALESCE(cr.writing_agent, (cr.agent_name)::text, 'Unknown'::text) AS writing_agent,\n    count(*) AS calls_completed,\n    count(*) FILTER (WHERE ((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE))) AS enrollment_count,\n    round(((100.0 * (count(*) FILTER (WHERE ((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE))))::numeric) / (NULLIF(count(*), 0))::numeric), 2) AS enrollment_rate,\n    round(avg(cs.overall_score), 2) AS average_compliance_score,\n    round(avg(cr.call_duration_seconds), 2) AS average_call_duration_seconds,\n    COALESCE(tc.top_carriers, '[]'::jsonb) AS top_carriers,\n    round(((100.0 * (count(*) FILTER (WHERE (((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE)) AND (cr.webhook_sent IS TRUE))))::numeric) / (NULLIF(count(*) FILTER (WHERE ((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE))), 0))::numeric), 2) AS webhook_success_rate,\n    sum(\n        CASE\n            WHEN ((cr.call_outcome = 'enrolled'::text) OR (cr.enrollment_completed IS TRUE)) THEN COALESCE(((t.coop_rates ->> lower(TRIM(BOTH FROM COALESCE(cr.carrier_name, ''::character varying)))))::numeric, (0)::numeric)\n            ELSE (0)::numeric\n        END) AS coop_earnings_estimate\n   FROM (((( SELECT call_records.id,\n            call_records.external_call_id,\n            call_records.thread_id,\n            call_records.agent_id,\n            call_records.agent_name,\n            call_records.agent_npn,\n            call_records.beneficiary_id,\n            call_records.beneficiary_name,\n            call_records.call_direction,\n            call_records.call_type,\n            call_records.product_type,\n            call_records.carrier_name,\n            call_records.plan_name,\n            call_records.plan_id,\n            call_records.call_start,\n            call_records.call_end,\n            call_records.call_duration_seconds,\n            call_records.recording_url,\n            call_records.recording_storage_path,\n            call_records.transcript_raw,\n            call_records.transcript_diarized,\n            call_records.election_period,\n            call_records.enrollment_completed,\n            call_records.enrollment_confirmation_number,\n            call_records.state_code,\n            call_records.county,\n            call_records.zip_code,\n            call_records.lead_source,\n            call_records.lead_id,\n            call_records.soa_on_file,\n            call_records.soa_date,\n            call_records.ptc_on_file,\n            call_records.ptc_date,\n            call_records.ptc_expiry,\n            call_records.metadata,\n            call_records.created_at,\n            call_records.updated_at,\n            call_records.effective_date,\n            call_records.application_id,\n            call_records.call_outcome,\n            call_records.agent_notes,\n            call_records.session_id,\n            call_records.compliance_scorecard_id,\n            call_records.transcript_id,\n            call_records.customer_first_name,\n            call_records.customer_last_name,\n            call_records.customer_phone,\n            call_records.customer_email,\n            call_records.customer_dob,\n            call_records.customer_state,\n            call_records.customer_mbi,\n            call_records.medicaid,\n            call_records.medicaid_number,\n            call_records.previous_carrier,\n            call_records.enrollment_code,\n            call_records.premium,\n            call_records.sunfire_code,\n            call_records.sixty_day_date,\n            call_records.sixty_day_status,\n            call_records.sixty_day_contacted_at,\n            call_records.sep,\n            call_records.agency,\n            call_records.writing_agent,\n            call_records.hra,\n            call_records.hra_date,\n            call_records.webhook_sent,\n            call_records.webhook_sent_at,\n            call_records.webhook_error,\n            call_records.tenant_id,\n            call_records.dg_sentiment,\n            call_records.dg_intents,\n            call_records.dg_topics,\n            call_records.dg_summary,\n            call_records.call_analytics,\n            call_records.agent_assessment,\n            call_records.beneficiary_risk,\n            call_records.contact_id,\n            call_records.twilio_call_sid,\n            call_records.app_written,\n            call_records.billable,\n            call_records.duplicate_flag,\n            call_records.vendor_disposition,\n            call_records.ancillary_product_type,\n            call_records.compliance_requested_at,\n            call_records.compliance_run_at,\n            call_records.compliance_transcript_hash,\n            call_records.compliance_dispo_changed_at,\n            call_records.compliance_status,\n            call_records.compliance_eligible,\n            call_records.parent_call_id\n           FROM read_evidence_call_records() call_records(id, external_call_id, thread_id, agent_id, agent_name, agent_npn, beneficiary_id, beneficiary_name, call_direction, call_type, product_type, carrier_name, plan_name, plan_id, call_start, call_end, call_duration_seconds, recording_url, recording_storage_path, transcript_raw, transcript_diarized, election_period, enrollment_completed, enrollment_confirmation_number, state_code, county, zip_code, lead_source, lead_id, soa_on_file, soa_date, ptc_on_file, ptc_date, ptc_expiry, metadata, created_at, updated_at, effective_date, application_id, call_outcome, agent_notes, session_id, compliance_scorecard_id, transcript_id, customer_first_name, customer_last_name, customer_phone, customer_email, customer_dob, customer_state, customer_mbi, medicaid, medicaid_number, previous_carrier, enrollment_code, premium, sunfire_code, sixty_day_date, sixty_day_status, sixty_day_contacted_at, sep, agency, writing_agent, hra, hra_date, webhook_sent, webhook_sent_at, webhook_error, tenant_id, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, contact_id, twilio_call_sid, app_written, billable, duplicate_flag, vendor_disposition, ancillary_product_type, compliance_requested_at, compliance_run_at, compliance_transcript_hash, compliance_dispo_changed_at, compliance_status, compliance_eligible, parent_call_id, post_call_status, post_call_last_error, is_test_enrollment)\n          WHERE (call_records.parent_call_id IS NULL)) cr\n     JOIN tenants t ON ((t.id = cr.tenant_id)))\n     LEFT JOIN read_evidence_compliance_scorecards() cs(id, call_id, template_id, thread_id, is_thread_composite, overall_score, overall_grade, total_points_earned, total_points_possible, pass_fail, auto_fail_triggered, auto_fail_reasons, category_scores, risk_level, risk_flags, sequence_violations, plan_fit_score, plan_fit_detail, sentiment_summary, coaching_notes, corrective_actions_needed, reviewed, reviewed_by, reviewed_at, review_notes, review_score_override, created_at, updated_at, tenant_id, transcript_revision, rules_version, scoring_state, scoring_duration_ms, tokens_used, estimated_cost_usd, request_attempts, supersedes_id, auto_fail_item_ids, llm_pass_id) ON ((cs.id = cr.compliance_scorecard_id)))\n     LEFT JOIN top_carriers tc ON (((tc.tenant_id = cr.tenant_id) AND (tc.agent_id = cr.agent_id) AND (tc.writing_agent = COALESCE(cr.writing_agent, (cr.agent_name)::text, 'Unknown'::text)))))\n  GROUP BY cr.tenant_id, cr.agent_id, cr.agent_name, COALESCE(cr.writing_agent, (cr.agent_name)::text, 'Unknown'::text), tc.top_carriers;"
     },
     {
       "schema": "public",
@@ -52383,7 +52961,7 @@
       "options": [
         "security_invoker=true"
       ],
-      "definition": " SELECT cr.tenant_id,\n    cr.agent_id,\n    cr.agent_name,\n    COALESCE(cr.carrier_name, 'Unknown'::character varying) AS carrier_name,\n    (date_trunc('day'::text, COALESCE(cs.created_at, cr.created_at)))::date AS score_date,\n    count(cs.id) AS scorecards,\n    round(avg(cs.overall_score), 2) AS average_score,\n    count(cs.id) FILTER (WHERE ((cs.pass_fail)::text = 'pass'::text)) AS pass_count,\n    count(cs.id) FILTER (WHERE ((cs.pass_fail)::text = 'fail'::text)) AS fail_count,\n    round(((100.0 * (count(cs.id) FILTER (WHERE ((cs.pass_fail)::text = 'pass'::text)))::numeric) / (NULLIF(count(cs.id), 0))::numeric), 2) AS pass_rate\n   FROM (( SELECT call_records.id,\n            call_records.external_call_id,\n            call_records.thread_id,\n            call_records.agent_id,\n            call_records.agent_name,\n            call_records.agent_npn,\n            call_records.beneficiary_id,\n            call_records.beneficiary_name,\n            call_records.call_direction,\n            call_records.call_type,\n            call_records.product_type,\n            call_records.carrier_name,\n            call_records.plan_name,\n            call_records.plan_id,\n            call_records.call_start,\n            call_records.call_end,\n            call_records.call_duration_seconds,\n            call_records.recording_url,\n            call_records.recording_storage_path,\n            call_records.transcript_raw,\n            call_records.transcript_diarized,\n            call_records.election_period,\n            call_records.enrollment_completed,\n            call_records.enrollment_confirmation_number,\n            call_records.state_code,\n            call_records.county,\n            call_records.zip_code,\n            call_records.lead_source,\n            call_records.lead_id,\n            call_records.soa_on_file,\n            call_records.soa_date,\n            call_records.ptc_on_file,\n            call_records.ptc_date,\n            call_records.ptc_expiry,\n            call_records.metadata,\n            call_records.created_at,\n            call_records.updated_at,\n            call_records.effective_date,\n            call_records.application_id,\n            call_records.call_outcome,\n            call_records.agent_notes,\n            call_records.session_id,\n            call_records.compliance_scorecard_id,\n            call_records.transcript_id,\n            call_records.customer_first_name,\n            call_records.customer_last_name,\n            call_records.customer_phone,\n            call_records.customer_email,\n            call_records.customer_dob,\n            call_records.customer_state,\n            call_records.customer_mbi,\n            call_records.medicaid,\n            call_records.medicaid_number,\n            call_records.previous_carrier,\n            call_records.enrollment_code,\n            call_records.premium,\n            call_records.sunfire_code,\n            call_records.sixty_day_date,\n            call_records.sixty_day_status,\n            call_records.sixty_day_contacted_at,\n            call_records.sep,\n            call_records.agency,\n            call_records.writing_agent,\n            call_records.hra,\n            call_records.hra_date,\n            call_records.webhook_sent,\n            call_records.webhook_sent_at,\n            call_records.webhook_error,\n            call_records.tenant_id,\n            call_records.dg_sentiment,\n            call_records.dg_intents,\n            call_records.dg_topics,\n            call_records.dg_summary,\n            call_records.call_analytics,\n            call_records.agent_assessment,\n            call_records.beneficiary_risk,\n            call_records.contact_id,\n            call_records.twilio_call_sid,\n            call_records.app_written,\n            call_records.billable,\n            call_records.duplicate_flag,\n            call_records.vendor_disposition,\n            call_records.ancillary_product_type,\n            call_records.compliance_requested_at,\n            call_records.compliance_run_at,\n            call_records.compliance_transcript_hash,\n            call_records.compliance_dispo_changed_at,\n            call_records.compliance_status,\n            call_records.compliance_eligible,\n            call_records.parent_call_id\n           FROM call_records\n          WHERE (call_records.parent_call_id IS NULL)) cr\n     LEFT JOIN compliance_scorecards cs ON (((cs.id = cr.compliance_scorecard_id) OR ((cr.compliance_scorecard_id IS NULL) AND (cs.call_id = cr.id)))))\n  GROUP BY cr.tenant_id, cr.agent_id, cr.agent_name, COALESCE(cr.carrier_name, 'Unknown'::character varying), ((date_trunc('day'::text, COALESCE(cs.created_at, cr.created_at)))::date);"
+      "definition": " SELECT cr.tenant_id,\n    cr.agent_id,\n    cr.agent_name,\n    COALESCE(cr.carrier_name, 'Unknown'::character varying) AS carrier_name,\n    (date_trunc('day'::text, COALESCE(cs.created_at, cr.created_at)))::date AS score_date,\n    count(cs.id) AS scorecards,\n    round(avg(cs.overall_score), 2) AS average_score,\n    count(cs.id) FILTER (WHERE ((cs.pass_fail)::text = 'pass'::text)) AS pass_count,\n    count(cs.id) FILTER (WHERE ((cs.pass_fail)::text = 'fail'::text)) AS fail_count,\n    round(((100.0 * (count(cs.id) FILTER (WHERE ((cs.pass_fail)::text = 'pass'::text)))::numeric) / (NULLIF(count(cs.id), 0))::numeric), 2) AS pass_rate\n   FROM (( SELECT call_records.id,\n            call_records.external_call_id,\n            call_records.thread_id,\n            call_records.agent_id,\n            call_records.agent_name,\n            call_records.agent_npn,\n            call_records.beneficiary_id,\n            call_records.beneficiary_name,\n            call_records.call_direction,\n            call_records.call_type,\n            call_records.product_type,\n            call_records.carrier_name,\n            call_records.plan_name,\n            call_records.plan_id,\n            call_records.call_start,\n            call_records.call_end,\n            call_records.call_duration_seconds,\n            call_records.recording_url,\n            call_records.recording_storage_path,\n            call_records.transcript_raw,\n            call_records.transcript_diarized,\n            call_records.election_period,\n            call_records.enrollment_completed,\n            call_records.enrollment_confirmation_number,\n            call_records.state_code,\n            call_records.county,\n            call_records.zip_code,\n            call_records.lead_source,\n            call_records.lead_id,\n            call_records.soa_on_file,\n            call_records.soa_date,\n            call_records.ptc_on_file,\n            call_records.ptc_date,\n            call_records.ptc_expiry,\n            call_records.metadata,\n            call_records.created_at,\n            call_records.updated_at,\n            call_records.effective_date,\n            call_records.application_id,\n            call_records.call_outcome,\n            call_records.agent_notes,\n            call_records.session_id,\n            call_records.compliance_scorecard_id,\n            call_records.transcript_id,\n            call_records.customer_first_name,\n            call_records.customer_last_name,\n            call_records.customer_phone,\n            call_records.customer_email,\n            call_records.customer_dob,\n            call_records.customer_state,\n            call_records.customer_mbi,\n            call_records.medicaid,\n            call_records.medicaid_number,\n            call_records.previous_carrier,\n            call_records.enrollment_code,\n            call_records.premium,\n            call_records.sunfire_code,\n            call_records.sixty_day_date,\n            call_records.sixty_day_status,\n            call_records.sixty_day_contacted_at,\n            call_records.sep,\n            call_records.agency,\n            call_records.writing_agent,\n            call_records.hra,\n            call_records.hra_date,\n            call_records.webhook_sent,\n            call_records.webhook_sent_at,\n            call_records.webhook_error,\n            call_records.tenant_id,\n            call_records.dg_sentiment,\n            call_records.dg_intents,\n            call_records.dg_topics,\n            call_records.dg_summary,\n            call_records.call_analytics,\n            call_records.agent_assessment,\n            call_records.beneficiary_risk,\n            call_records.contact_id,\n            call_records.twilio_call_sid,\n            call_records.app_written,\n            call_records.billable,\n            call_records.duplicate_flag,\n            call_records.vendor_disposition,\n            call_records.ancillary_product_type,\n            call_records.compliance_requested_at,\n            call_records.compliance_run_at,\n            call_records.compliance_transcript_hash,\n            call_records.compliance_dispo_changed_at,\n            call_records.compliance_status,\n            call_records.compliance_eligible,\n            call_records.parent_call_id\n           FROM read_evidence_call_records() call_records(id, external_call_id, thread_id, agent_id, agent_name, agent_npn, beneficiary_id, beneficiary_name, call_direction, call_type, product_type, carrier_name, plan_name, plan_id, call_start, call_end, call_duration_seconds, recording_url, recording_storage_path, transcript_raw, transcript_diarized, election_period, enrollment_completed, enrollment_confirmation_number, state_code, county, zip_code, lead_source, lead_id, soa_on_file, soa_date, ptc_on_file, ptc_date, ptc_expiry, metadata, created_at, updated_at, effective_date, application_id, call_outcome, agent_notes, session_id, compliance_scorecard_id, transcript_id, customer_first_name, customer_last_name, customer_phone, customer_email, customer_dob, customer_state, customer_mbi, medicaid, medicaid_number, previous_carrier, enrollment_code, premium, sunfire_code, sixty_day_date, sixty_day_status, sixty_day_contacted_at, sep, agency, writing_agent, hra, hra_date, webhook_sent, webhook_sent_at, webhook_error, tenant_id, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, contact_id, twilio_call_sid, app_written, billable, duplicate_flag, vendor_disposition, ancillary_product_type, compliance_requested_at, compliance_run_at, compliance_transcript_hash, compliance_dispo_changed_at, compliance_status, compliance_eligible, parent_call_id, post_call_status, post_call_last_error, is_test_enrollment)\n          WHERE (call_records.parent_call_id IS NULL)) cr\n     LEFT JOIN read_evidence_compliance_scorecards() cs(id, call_id, template_id, thread_id, is_thread_composite, overall_score, overall_grade, total_points_earned, total_points_possible, pass_fail, auto_fail_triggered, auto_fail_reasons, category_scores, risk_level, risk_flags, sequence_violations, plan_fit_score, plan_fit_detail, sentiment_summary, coaching_notes, corrective_actions_needed, reviewed, reviewed_by, reviewed_at, review_notes, review_score_override, created_at, updated_at, tenant_id, transcript_revision, rules_version, scoring_state, scoring_duration_ms, tokens_used, estimated_cost_usd, request_attempts, supersedes_id, auto_fail_item_ids, llm_pass_id) ON (((cs.id = cr.compliance_scorecard_id) OR ((cr.compliance_scorecard_id IS NULL) AND (cs.call_id = cr.id)))))\n  GROUP BY cr.tenant_id, cr.agent_id, cr.agent_name, COALESCE(cr.carrier_name, 'Unknown'::character varying), ((date_trunc('day'::text, COALESCE(cs.created_at, cr.created_at)))::date);"
     },
     {
       "schema": "public",
@@ -52392,7 +52970,7 @@
       "options": [
         "security_invoker=true"
       ],
-      "definition": " SELECT cr.tenant_id,\n    cr.id AS call_record_id,\n    cr.session_id,\n    cr.agent_id,\n    cr.agent_name,\n    cr.writing_agent,\n    cr.customer_first_name,\n    cr.customer_last_name,\n    cr.customer_phone,\n    (cr.call_start)::date AS activity_date,\n    cr.call_start,\n    cr.call_duration_seconds,\n    cr.call_outcome,\n    cr.enrollment_completed,\n    cr.carrier_name,\n    cr.previous_carrier,\n    cr.plan_name,\n    cr.agency,\n    cs.id AS scorecard_id,\n    cs.overall_score,\n    cs.pass_fail,\n    cr.webhook_sent,\n    cr.webhook_sent_at,\n    cr.webhook_error\n   FROM (( SELECT call_records.id,\n            call_records.external_call_id,\n            call_records.thread_id,\n            call_records.agent_id,\n            call_records.agent_name,\n            call_records.agent_npn,\n            call_records.beneficiary_id,\n            call_records.beneficiary_name,\n            call_records.call_direction,\n            call_records.call_type,\n            call_records.product_type,\n            call_records.carrier_name,\n            call_records.plan_name,\n            call_records.plan_id,\n            call_records.call_start,\n            call_records.call_end,\n            call_records.call_duration_seconds,\n            call_records.recording_url,\n            call_records.recording_storage_path,\n            call_records.transcript_raw,\n            call_records.transcript_diarized,\n            call_records.election_period,\n            call_records.enrollment_completed,\n            call_records.enrollment_confirmation_number,\n            call_records.state_code,\n            call_records.county,\n            call_records.zip_code,\n            call_records.lead_source,\n            call_records.lead_id,\n            call_records.soa_on_file,\n            call_records.soa_date,\n            call_records.ptc_on_file,\n            call_records.ptc_date,\n            call_records.ptc_expiry,\n            call_records.metadata,\n            call_records.created_at,\n            call_records.updated_at,\n            call_records.effective_date,\n            call_records.application_id,\n            call_records.call_outcome,\n            call_records.agent_notes,\n            call_records.session_id,\n            call_records.compliance_scorecard_id,\n            call_records.transcript_id,\n            call_records.customer_first_name,\n            call_records.customer_last_name,\n            call_records.customer_phone,\n            call_records.customer_email,\n            call_records.customer_dob,\n            call_records.customer_state,\n            call_records.customer_mbi,\n            call_records.medicaid,\n            call_records.medicaid_number,\n            call_records.previous_carrier,\n            call_records.enrollment_code,\n            call_records.premium,\n            call_records.sunfire_code,\n            call_records.sixty_day_date,\n            call_records.sixty_day_status,\n            call_records.sixty_day_contacted_at,\n            call_records.sep,\n            call_records.agency,\n            call_records.writing_agent,\n            call_records.hra,\n            call_records.hra_date,\n            call_records.webhook_sent,\n            call_records.webhook_sent_at,\n            call_records.webhook_error,\n            call_records.tenant_id,\n            call_records.dg_sentiment,\n            call_records.dg_intents,\n            call_records.dg_topics,\n            call_records.dg_summary,\n            call_records.call_analytics,\n            call_records.agent_assessment,\n            call_records.beneficiary_risk,\n            call_records.contact_id,\n            call_records.twilio_call_sid,\n            call_records.app_written,\n            call_records.billable,\n            call_records.duplicate_flag,\n            call_records.vendor_disposition,\n            call_records.ancillary_product_type,\n            call_records.compliance_requested_at,\n            call_records.compliance_run_at,\n            call_records.compliance_transcript_hash,\n            call_records.compliance_dispo_changed_at,\n            call_records.compliance_status,\n            call_records.compliance_eligible,\n            call_records.parent_call_id\n           FROM call_records\n          WHERE (call_records.parent_call_id IS NULL)) cr\n     LEFT JOIN compliance_scorecards cs ON (((cs.id = cr.compliance_scorecard_id) OR ((cr.compliance_scorecard_id IS NULL) AND (cs.call_id = cr.id)))));"
+      "definition": " SELECT cr.tenant_id,\n    cr.id AS call_record_id,\n    cr.session_id,\n    cr.agent_id,\n    cr.agent_name,\n    cr.writing_agent,\n    cr.customer_first_name,\n    cr.customer_last_name,\n    cr.customer_phone,\n    (cr.call_start)::date AS activity_date,\n    cr.call_start,\n    cr.call_duration_seconds,\n    cr.call_outcome,\n    cr.enrollment_completed,\n    cr.carrier_name,\n    cr.previous_carrier,\n    cr.plan_name,\n    cr.agency,\n    cs.id AS scorecard_id,\n    cs.overall_score,\n    cs.pass_fail,\n    cr.webhook_sent,\n    cr.webhook_sent_at,\n    cr.webhook_error\n   FROM (( SELECT call_records.id,\n            call_records.external_call_id,\n            call_records.thread_id,\n            call_records.agent_id,\n            call_records.agent_name,\n            call_records.agent_npn,\n            call_records.beneficiary_id,\n            call_records.beneficiary_name,\n            call_records.call_direction,\n            call_records.call_type,\n            call_records.product_type,\n            call_records.carrier_name,\n            call_records.plan_name,\n            call_records.plan_id,\n            call_records.call_start,\n            call_records.call_end,\n            call_records.call_duration_seconds,\n            call_records.recording_url,\n            call_records.recording_storage_path,\n            call_records.transcript_raw,\n            call_records.transcript_diarized,\n            call_records.election_period,\n            call_records.enrollment_completed,\n            call_records.enrollment_confirmation_number,\n            call_records.state_code,\n            call_records.county,\n            call_records.zip_code,\n            call_records.lead_source,\n            call_records.lead_id,\n            call_records.soa_on_file,\n            call_records.soa_date,\n            call_records.ptc_on_file,\n            call_records.ptc_date,\n            call_records.ptc_expiry,\n            call_records.metadata,\n            call_records.created_at,\n            call_records.updated_at,\n            call_records.effective_date,\n            call_records.application_id,\n            call_records.call_outcome,\n            call_records.agent_notes,\n            call_records.session_id,\n            call_records.compliance_scorecard_id,\n            call_records.transcript_id,\n            call_records.customer_first_name,\n            call_records.customer_last_name,\n            call_records.customer_phone,\n            call_records.customer_email,\n            call_records.customer_dob,\n            call_records.customer_state,\n            call_records.customer_mbi,\n            call_records.medicaid,\n            call_records.medicaid_number,\n            call_records.previous_carrier,\n            call_records.enrollment_code,\n            call_records.premium,\n            call_records.sunfire_code,\n            call_records.sixty_day_date,\n            call_records.sixty_day_status,\n            call_records.sixty_day_contacted_at,\n            call_records.sep,\n            call_records.agency,\n            call_records.writing_agent,\n            call_records.hra,\n            call_records.hra_date,\n            call_records.webhook_sent,\n            call_records.webhook_sent_at,\n            call_records.webhook_error,\n            call_records.tenant_id,\n            call_records.dg_sentiment,\n            call_records.dg_intents,\n            call_records.dg_topics,\n            call_records.dg_summary,\n            call_records.call_analytics,\n            call_records.agent_assessment,\n            call_records.beneficiary_risk,\n            call_records.contact_id,\n            call_records.twilio_call_sid,\n            call_records.app_written,\n            call_records.billable,\n            call_records.duplicate_flag,\n            call_records.vendor_disposition,\n            call_records.ancillary_product_type,\n            call_records.compliance_requested_at,\n            call_records.compliance_run_at,\n            call_records.compliance_transcript_hash,\n            call_records.compliance_dispo_changed_at,\n            call_records.compliance_status,\n            call_records.compliance_eligible,\n            call_records.parent_call_id\n           FROM read_evidence_call_records() call_records(id, external_call_id, thread_id, agent_id, agent_name, agent_npn, beneficiary_id, beneficiary_name, call_direction, call_type, product_type, carrier_name, plan_name, plan_id, call_start, call_end, call_duration_seconds, recording_url, recording_storage_path, transcript_raw, transcript_diarized, election_period, enrollment_completed, enrollment_confirmation_number, state_code, county, zip_code, lead_source, lead_id, soa_on_file, soa_date, ptc_on_file, ptc_date, ptc_expiry, metadata, created_at, updated_at, effective_date, application_id, call_outcome, agent_notes, session_id, compliance_scorecard_id, transcript_id, customer_first_name, customer_last_name, customer_phone, customer_email, customer_dob, customer_state, customer_mbi, medicaid, medicaid_number, previous_carrier, enrollment_code, premium, sunfire_code, sixty_day_date, sixty_day_status, sixty_day_contacted_at, sep, agency, writing_agent, hra, hra_date, webhook_sent, webhook_sent_at, webhook_error, tenant_id, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, contact_id, twilio_call_sid, app_written, billable, duplicate_flag, vendor_disposition, ancillary_product_type, compliance_requested_at, compliance_run_at, compliance_transcript_hash, compliance_dispo_changed_at, compliance_status, compliance_eligible, parent_call_id, post_call_status, post_call_last_error, is_test_enrollment)\n          WHERE (call_records.parent_call_id IS NULL)) cr\n     LEFT JOIN read_evidence_compliance_scorecards() cs(id, call_id, template_id, thread_id, is_thread_composite, overall_score, overall_grade, total_points_earned, total_points_possible, pass_fail, auto_fail_triggered, auto_fail_reasons, category_scores, risk_level, risk_flags, sequence_violations, plan_fit_score, plan_fit_detail, sentiment_summary, coaching_notes, corrective_actions_needed, reviewed, reviewed_by, reviewed_at, review_notes, review_score_override, created_at, updated_at, tenant_id, transcript_revision, rules_version, scoring_state, scoring_duration_ms, tokens_used, estimated_cost_usd, request_attempts, supersedes_id, auto_fail_item_ids, llm_pass_id) ON (((cs.id = cr.compliance_scorecard_id) OR ((cr.compliance_scorecard_id IS NULL) AND (cs.call_id = cr.id)))));"
     },
     {
       "schema": "public",
@@ -52428,7 +53006,7 @@
       "options": [
         "security_invoker=true"
       ],
-      "definition": " WITH normalized AS (\n         SELECT cr.id,\n            cr.external_call_id,\n            cr.thread_id,\n            cr.agent_id,\n            cr.agent_name,\n            cr.agent_npn,\n            cr.beneficiary_id,\n            cr.beneficiary_name,\n            cr.call_direction,\n            cr.call_type,\n            cr.product_type,\n            cr.carrier_name,\n            cr.plan_name,\n            cr.plan_id,\n            cr.call_start,\n            cr.call_end,\n            cr.call_duration_seconds,\n            cr.recording_url,\n            cr.recording_storage_path,\n            cr.transcript_raw,\n            cr.transcript_diarized,\n            cr.election_period,\n            cr.enrollment_completed,\n            cr.enrollment_confirmation_number,\n            cr.state_code,\n            cr.county,\n            cr.zip_code,\n            cr.lead_source,\n            cr.lead_id,\n            cr.soa_on_file,\n            cr.soa_date,\n            cr.ptc_on_file,\n            cr.ptc_date,\n            cr.ptc_expiry,\n            cr.metadata,\n            cr.created_at,\n            cr.updated_at,\n            cr.effective_date,\n            cr.application_id,\n            cr.call_outcome,\n            cr.agent_notes,\n            cr.session_id,\n            cr.compliance_scorecard_id,\n            cr.transcript_id,\n            cr.customer_first_name,\n            cr.customer_last_name,\n            cr.customer_phone,\n            cr.customer_email,\n            cr.customer_dob,\n            cr.customer_state,\n            cr.customer_mbi,\n            cr.medicaid,\n            cr.medicaid_number,\n            cr.previous_carrier,\n            cr.enrollment_code,\n            cr.premium,\n            cr.sunfire_code,\n            cr.sixty_day_date,\n            cr.sixty_day_status,\n            cr.sixty_day_contacted_at,\n            cr.sep,\n            cr.agency,\n            cr.writing_agent,\n            cr.hra,\n            cr.hra_date,\n            cr.webhook_sent,\n            cr.webhook_sent_at,\n            cr.webhook_error,\n            cr.tenant_id,\n            (COALESCE(NULLIF(regexp_replace(COALESCE(cr.premium, ''::text), '[^0-9.]'::text, ''::text, 'g'::text), ''::text), '0'::text))::numeric AS premium_amount\n           FROM ( SELECT call_records.id,\n                    call_records.external_call_id,\n                    call_records.thread_id,\n                    call_records.agent_id,\n                    call_records.agent_name,\n                    call_records.agent_npn,\n                    call_records.beneficiary_id,\n                    call_records.beneficiary_name,\n                    call_records.call_direction,\n                    call_records.call_type,\n                    call_records.product_type,\n                    call_records.carrier_name,\n                    call_records.plan_name,\n                    call_records.plan_id,\n                    call_records.call_start,\n                    call_records.call_end,\n                    call_records.call_duration_seconds,\n                    call_records.recording_url,\n                    call_records.recording_storage_path,\n                    call_records.transcript_raw,\n                    call_records.transcript_diarized,\n                    call_records.election_period,\n                    call_records.enrollment_completed,\n                    call_records.enrollment_confirmation_number,\n                    call_records.state_code,\n                    call_records.county,\n                    call_records.zip_code,\n                    call_records.lead_source,\n                    call_records.lead_id,\n                    call_records.soa_on_file,\n                    call_records.soa_date,\n                    call_records.ptc_on_file,\n                    call_records.ptc_date,\n                    call_records.ptc_expiry,\n                    call_records.metadata,\n                    call_records.created_at,\n                    call_records.updated_at,\n                    call_records.effective_date,\n                    call_records.application_id,\n                    call_records.call_outcome,\n                    call_records.agent_notes,\n                    call_records.session_id,\n                    call_records.compliance_scorecard_id,\n                    call_records.transcript_id,\n                    call_records.customer_first_name,\n                    call_records.customer_last_name,\n                    call_records.customer_phone,\n                    call_records.customer_email,\n                    call_records.customer_dob,\n                    call_records.customer_state,\n                    call_records.customer_mbi,\n                    call_records.medicaid,\n                    call_records.medicaid_number,\n                    call_records.previous_carrier,\n                    call_records.enrollment_code,\n                    call_records.premium,\n                    call_records.sunfire_code,\n                    call_records.sixty_day_date,\n                    call_records.sixty_day_status,\n                    call_records.sixty_day_contacted_at,\n                    call_records.sep,\n                    call_records.agency,\n                    call_records.writing_agent,\n                    call_records.hra,\n                    call_records.hra_date,\n                    call_records.webhook_sent,\n                    call_records.webhook_sent_at,\n                    call_records.webhook_error,\n                    call_records.tenant_id,\n                    call_records.dg_sentiment,\n                    call_records.dg_intents,\n                    call_records.dg_topics,\n                    call_records.dg_summary,\n                    call_records.call_analytics,\n                    call_records.agent_assessment,\n                    call_records.beneficiary_risk,\n                    call_records.contact_id,\n                    call_records.twilio_call_sid,\n                    call_records.app_written,\n                    call_records.billable,\n                    call_records.duplicate_flag,\n                    call_records.vendor_disposition,\n                    call_records.ancillary_product_type,\n                    call_records.compliance_requested_at,\n                    call_records.compliance_run_at,\n                    call_records.compliance_transcript_hash,\n                    call_records.compliance_dispo_changed_at,\n                    call_records.compliance_status,\n                    call_records.compliance_eligible,\n                    call_records.parent_call_id\n                   FROM call_records\n                  WHERE (call_records.parent_call_id IS NULL)) cr\n        )\n SELECT tenant_id,\n    COALESCE(carrier_name, 'Unknown'::character varying) AS carrier_name,\n    COALESCE(previous_carrier, 'Unknown'::text) AS previous_carrier,\n    COALESCE(agency, 'Unknown'::text) AS agency,\n    COALESCE(customer_state, 'Unknown'::text) AS customer_state,\n    agent_id,\n    agent_name,\n    (date_trunc('day'::text, call_start))::date AS activity_date,\n    count(*) AS total_calls,\n    count(*) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))) AS enrollments,\n    round(((100.0 * (count(*) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))))::numeric) / (NULLIF(count(*), 0))::numeric), 2) AS enrollment_rate,\n    round(avg(call_duration_seconds) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))), 2) AS avg_enrolled_duration_seconds,\n    round(avg(call_duration_seconds) FILTER (WHERE ((COALESCE(call_outcome, ''::text) <> 'enrolled'::text) AND (COALESCE(enrollment_completed, false) IS FALSE))), 2) AS avg_not_enrolled_duration_seconds,\n    round(sum(premium_amount) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))), 2) AS total_premium_book,\n    round(avg(premium_amount) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))), 2) AS average_premium\n   FROM normalized\n  GROUP BY tenant_id, COALESCE(carrier_name, 'Unknown'::character varying), COALESCE(previous_carrier, 'Unknown'::text), COALESCE(agency, 'Unknown'::text), COALESCE(customer_state, 'Unknown'::text), agent_id, agent_name, ((date_trunc('day'::text, call_start))::date);"
+      "definition": " WITH normalized AS (\n         SELECT cr.id,\n            cr.external_call_id,\n            cr.thread_id,\n            cr.agent_id,\n            cr.agent_name,\n            cr.agent_npn,\n            cr.beneficiary_id,\n            cr.beneficiary_name,\n            cr.call_direction,\n            cr.call_type,\n            cr.product_type,\n            cr.carrier_name,\n            cr.plan_name,\n            cr.plan_id,\n            cr.call_start,\n            cr.call_end,\n            cr.call_duration_seconds,\n            cr.recording_url,\n            cr.recording_storage_path,\n            cr.transcript_raw,\n            cr.transcript_diarized,\n            cr.election_period,\n            cr.enrollment_completed,\n            cr.enrollment_confirmation_number,\n            cr.state_code,\n            cr.county,\n            cr.zip_code,\n            cr.lead_source,\n            cr.lead_id,\n            cr.soa_on_file,\n            cr.soa_date,\n            cr.ptc_on_file,\n            cr.ptc_date,\n            cr.ptc_expiry,\n            cr.metadata,\n            cr.created_at,\n            cr.updated_at,\n            cr.effective_date,\n            cr.application_id,\n            cr.call_outcome,\n            cr.agent_notes,\n            cr.session_id,\n            cr.compliance_scorecard_id,\n            cr.transcript_id,\n            cr.customer_first_name,\n            cr.customer_last_name,\n            cr.customer_phone,\n            cr.customer_email,\n            cr.customer_dob,\n            cr.customer_state,\n            cr.customer_mbi,\n            cr.medicaid,\n            cr.medicaid_number,\n            cr.previous_carrier,\n            cr.enrollment_code,\n            cr.premium,\n            cr.sunfire_code,\n            cr.sixty_day_date,\n            cr.sixty_day_status,\n            cr.sixty_day_contacted_at,\n            cr.sep,\n            cr.agency,\n            cr.writing_agent,\n            cr.hra,\n            cr.hra_date,\n            cr.webhook_sent,\n            cr.webhook_sent_at,\n            cr.webhook_error,\n            cr.tenant_id,\n            (COALESCE(NULLIF(regexp_replace(COALESCE(cr.premium, ''::text), '[^0-9.]'::text, ''::text, 'g'::text), ''::text), '0'::text))::numeric AS premium_amount\n           FROM ( SELECT call_records.id,\n                    call_records.external_call_id,\n                    call_records.thread_id,\n                    call_records.agent_id,\n                    call_records.agent_name,\n                    call_records.agent_npn,\n                    call_records.beneficiary_id,\n                    call_records.beneficiary_name,\n                    call_records.call_direction,\n                    call_records.call_type,\n                    call_records.product_type,\n                    call_records.carrier_name,\n                    call_records.plan_name,\n                    call_records.plan_id,\n                    call_records.call_start,\n                    call_records.call_end,\n                    call_records.call_duration_seconds,\n                    call_records.recording_url,\n                    call_records.recording_storage_path,\n                    call_records.transcript_raw,\n                    call_records.transcript_diarized,\n                    call_records.election_period,\n                    call_records.enrollment_completed,\n                    call_records.enrollment_confirmation_number,\n                    call_records.state_code,\n                    call_records.county,\n                    call_records.zip_code,\n                    call_records.lead_source,\n                    call_records.lead_id,\n                    call_records.soa_on_file,\n                    call_records.soa_date,\n                    call_records.ptc_on_file,\n                    call_records.ptc_date,\n                    call_records.ptc_expiry,\n                    call_records.metadata,\n                    call_records.created_at,\n                    call_records.updated_at,\n                    call_records.effective_date,\n                    call_records.application_id,\n                    call_records.call_outcome,\n                    call_records.agent_notes,\n                    call_records.session_id,\n                    call_records.compliance_scorecard_id,\n                    call_records.transcript_id,\n                    call_records.customer_first_name,\n                    call_records.customer_last_name,\n                    call_records.customer_phone,\n                    call_records.customer_email,\n                    call_records.customer_dob,\n                    call_records.customer_state,\n                    call_records.customer_mbi,\n                    call_records.medicaid,\n                    call_records.medicaid_number,\n                    call_records.previous_carrier,\n                    call_records.enrollment_code,\n                    call_records.premium,\n                    call_records.sunfire_code,\n                    call_records.sixty_day_date,\n                    call_records.sixty_day_status,\n                    call_records.sixty_day_contacted_at,\n                    call_records.sep,\n                    call_records.agency,\n                    call_records.writing_agent,\n                    call_records.hra,\n                    call_records.hra_date,\n                    call_records.webhook_sent,\n                    call_records.webhook_sent_at,\n                    call_records.webhook_error,\n                    call_records.tenant_id,\n                    call_records.dg_sentiment,\n                    call_records.dg_intents,\n                    call_records.dg_topics,\n                    call_records.dg_summary,\n                    call_records.call_analytics,\n                    call_records.agent_assessment,\n                    call_records.beneficiary_risk,\n                    call_records.contact_id,\n                    call_records.twilio_call_sid,\n                    call_records.app_written,\n                    call_records.billable,\n                    call_records.duplicate_flag,\n                    call_records.vendor_disposition,\n                    call_records.ancillary_product_type,\n                    call_records.compliance_requested_at,\n                    call_records.compliance_run_at,\n                    call_records.compliance_transcript_hash,\n                    call_records.compliance_dispo_changed_at,\n                    call_records.compliance_status,\n                    call_records.compliance_eligible,\n                    call_records.parent_call_id\n                   FROM read_evidence_call_records() call_records(id, external_call_id, thread_id, agent_id, agent_name, agent_npn, beneficiary_id, beneficiary_name, call_direction, call_type, product_type, carrier_name, plan_name, plan_id, call_start, call_end, call_duration_seconds, recording_url, recording_storage_path, transcript_raw, transcript_diarized, election_period, enrollment_completed, enrollment_confirmation_number, state_code, county, zip_code, lead_source, lead_id, soa_on_file, soa_date, ptc_on_file, ptc_date, ptc_expiry, metadata, created_at, updated_at, effective_date, application_id, call_outcome, agent_notes, session_id, compliance_scorecard_id, transcript_id, customer_first_name, customer_last_name, customer_phone, customer_email, customer_dob, customer_state, customer_mbi, medicaid, medicaid_number, previous_carrier, enrollment_code, premium, sunfire_code, sixty_day_date, sixty_day_status, sixty_day_contacted_at, sep, agency, writing_agent, hra, hra_date, webhook_sent, webhook_sent_at, webhook_error, tenant_id, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, contact_id, twilio_call_sid, app_written, billable, duplicate_flag, vendor_disposition, ancillary_product_type, compliance_requested_at, compliance_run_at, compliance_transcript_hash, compliance_dispo_changed_at, compliance_status, compliance_eligible, parent_call_id, post_call_status, post_call_last_error, is_test_enrollment)\n                  WHERE (call_records.parent_call_id IS NULL)) cr\n        )\n SELECT tenant_id,\n    COALESCE(carrier_name, 'Unknown'::character varying) AS carrier_name,\n    COALESCE(previous_carrier, 'Unknown'::text) AS previous_carrier,\n    COALESCE(agency, 'Unknown'::text) AS agency,\n    COALESCE(customer_state, 'Unknown'::text) AS customer_state,\n    agent_id,\n    agent_name,\n    (date_trunc('day'::text, call_start))::date AS activity_date,\n    count(*) AS total_calls,\n    count(*) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))) AS enrollments,\n    round(((100.0 * (count(*) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))))::numeric) / (NULLIF(count(*), 0))::numeric), 2) AS enrollment_rate,\n    round(avg(call_duration_seconds) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))), 2) AS avg_enrolled_duration_seconds,\n    round(avg(call_duration_seconds) FILTER (WHERE ((COALESCE(call_outcome, ''::text) <> 'enrolled'::text) AND (COALESCE(enrollment_completed, false) IS FALSE))), 2) AS avg_not_enrolled_duration_seconds,\n    round(sum(premium_amount) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))), 2) AS total_premium_book,\n    round(avg(premium_amount) FILTER (WHERE ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE))), 2) AS average_premium\n   FROM normalized\n  GROUP BY tenant_id, COALESCE(carrier_name, 'Unknown'::character varying), COALESCE(previous_carrier, 'Unknown'::text), COALESCE(agency, 'Unknown'::text), COALESCE(customer_state, 'Unknown'::text), agent_id, agent_name, ((date_trunc('day'::text, call_start))::date);"
     },
     {
       "schema": "public",
@@ -52446,7 +53024,7 @@
       "options": [
         "security_invoker=true"
       ],
-      "definition": " SELECT tenant_id,\n    id AS call_record_id,\n    session_id,\n    agent_id,\n    agent_name,\n    customer_first_name,\n    customer_last_name,\n    customer_phone,\n    call_start,\n    call_end,\n    call_outcome,\n    enrollment_completed,\n    carrier_name,\n    previous_carrier,\n    plan_name,\n    effective_date,\n    sixty_day_date,\n    sixty_day_status,\n    sixty_day_contacted_at,\n    application_id,\n    enrollment_code,\n    enrollment_confirmation_number,\n    agency,\n    writing_agent,\n    webhook_sent,\n    webhook_sent_at,\n    webhook_error,\n        CASE\n            WHEN (call_outcome IS NULL) THEN 'pending_wrap_up'::text\n            WHEN (call_outcome = 'callback_scheduled'::text) THEN 'callback_scheduled'::text\n            WHEN ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE)) THEN 'recent_enrollment'::text\n            WHEN (call_outcome = ANY (ARRAY['incomplete'::text, 'no_answer'::text])) THEN 'needs_review'::text\n            ELSE 'closed'::text\n        END AS pipeline_status\n   FROM ( SELECT call_records.id,\n            call_records.external_call_id,\n            call_records.thread_id,\n            call_records.agent_id,\n            call_records.agent_name,\n            call_records.agent_npn,\n            call_records.beneficiary_id,\n            call_records.beneficiary_name,\n            call_records.call_direction,\n            call_records.call_type,\n            call_records.product_type,\n            call_records.carrier_name,\n            call_records.plan_name,\n            call_records.plan_id,\n            call_records.call_start,\n            call_records.call_end,\n            call_records.call_duration_seconds,\n            call_records.recording_url,\n            call_records.recording_storage_path,\n            call_records.transcript_raw,\n            call_records.transcript_diarized,\n            call_records.election_period,\n            call_records.enrollment_completed,\n            call_records.enrollment_confirmation_number,\n            call_records.state_code,\n            call_records.county,\n            call_records.zip_code,\n            call_records.lead_source,\n            call_records.lead_id,\n            call_records.soa_on_file,\n            call_records.soa_date,\n            call_records.ptc_on_file,\n            call_records.ptc_date,\n            call_records.ptc_expiry,\n            call_records.metadata,\n            call_records.created_at,\n            call_records.updated_at,\n            call_records.effective_date,\n            call_records.application_id,\n            call_records.call_outcome,\n            call_records.agent_notes,\n            call_records.session_id,\n            call_records.compliance_scorecard_id,\n            call_records.transcript_id,\n            call_records.customer_first_name,\n            call_records.customer_last_name,\n            call_records.customer_phone,\n            call_records.customer_email,\n            call_records.customer_dob,\n            call_records.customer_state,\n            call_records.customer_mbi,\n            call_records.medicaid,\n            call_records.medicaid_number,\n            call_records.previous_carrier,\n            call_records.enrollment_code,\n            call_records.premium,\n            call_records.sunfire_code,\n            call_records.sixty_day_date,\n            call_records.sixty_day_status,\n            call_records.sixty_day_contacted_at,\n            call_records.sep,\n            call_records.agency,\n            call_records.writing_agent,\n            call_records.hra,\n            call_records.hra_date,\n            call_records.webhook_sent,\n            call_records.webhook_sent_at,\n            call_records.webhook_error,\n            call_records.tenant_id,\n            call_records.dg_sentiment,\n            call_records.dg_intents,\n            call_records.dg_topics,\n            call_records.dg_summary,\n            call_records.call_analytics,\n            call_records.agent_assessment,\n            call_records.beneficiary_risk,\n            call_records.contact_id,\n            call_records.twilio_call_sid,\n            call_records.app_written,\n            call_records.billable,\n            call_records.duplicate_flag,\n            call_records.vendor_disposition,\n            call_records.ancillary_product_type,\n            call_records.compliance_requested_at,\n            call_records.compliance_run_at,\n            call_records.compliance_transcript_hash,\n            call_records.compliance_dispo_changed_at,\n            call_records.compliance_status,\n            call_records.compliance_eligible,\n            call_records.parent_call_id\n           FROM call_records\n          WHERE (call_records.parent_call_id IS NULL)) cr;"
+      "definition": " SELECT tenant_id,\n    id AS call_record_id,\n    session_id,\n    agent_id,\n    agent_name,\n    customer_first_name,\n    customer_last_name,\n    customer_phone,\n    call_start,\n    call_end,\n    call_outcome,\n    enrollment_completed,\n    carrier_name,\n    previous_carrier,\n    plan_name,\n    effective_date,\n    sixty_day_date,\n    sixty_day_status,\n    sixty_day_contacted_at,\n    application_id,\n    enrollment_code,\n    enrollment_confirmation_number,\n    agency,\n    writing_agent,\n    webhook_sent,\n    webhook_sent_at,\n    webhook_error,\n        CASE\n            WHEN (call_outcome IS NULL) THEN 'pending_wrap_up'::text\n            WHEN (call_outcome = 'callback_scheduled'::text) THEN 'callback_scheduled'::text\n            WHEN ((call_outcome = 'enrolled'::text) OR (enrollment_completed IS TRUE)) THEN 'recent_enrollment'::text\n            WHEN (call_outcome = ANY (ARRAY['incomplete'::text, 'no_answer'::text])) THEN 'needs_review'::text\n            ELSE 'closed'::text\n        END AS pipeline_status\n   FROM ( SELECT call_records.id,\n            call_records.external_call_id,\n            call_records.thread_id,\n            call_records.agent_id,\n            call_records.agent_name,\n            call_records.agent_npn,\n            call_records.beneficiary_id,\n            call_records.beneficiary_name,\n            call_records.call_direction,\n            call_records.call_type,\n            call_records.product_type,\n            call_records.carrier_name,\n            call_records.plan_name,\n            call_records.plan_id,\n            call_records.call_start,\n            call_records.call_end,\n            call_records.call_duration_seconds,\n            call_records.recording_url,\n            call_records.recording_storage_path,\n            call_records.transcript_raw,\n            call_records.transcript_diarized,\n            call_records.election_period,\n            call_records.enrollment_completed,\n            call_records.enrollment_confirmation_number,\n            call_records.state_code,\n            call_records.county,\n            call_records.zip_code,\n            call_records.lead_source,\n            call_records.lead_id,\n            call_records.soa_on_file,\n            call_records.soa_date,\n            call_records.ptc_on_file,\n            call_records.ptc_date,\n            call_records.ptc_expiry,\n            call_records.metadata,\n            call_records.created_at,\n            call_records.updated_at,\n            call_records.effective_date,\n            call_records.application_id,\n            call_records.call_outcome,\n            call_records.agent_notes,\n            call_records.session_id,\n            call_records.compliance_scorecard_id,\n            call_records.transcript_id,\n            call_records.customer_first_name,\n            call_records.customer_last_name,\n            call_records.customer_phone,\n            call_records.customer_email,\n            call_records.customer_dob,\n            call_records.customer_state,\n            call_records.customer_mbi,\n            call_records.medicaid,\n            call_records.medicaid_number,\n            call_records.previous_carrier,\n            call_records.enrollment_code,\n            call_records.premium,\n            call_records.sunfire_code,\n            call_records.sixty_day_date,\n            call_records.sixty_day_status,\n            call_records.sixty_day_contacted_at,\n            call_records.sep,\n            call_records.agency,\n            call_records.writing_agent,\n            call_records.hra,\n            call_records.hra_date,\n            call_records.webhook_sent,\n            call_records.webhook_sent_at,\n            call_records.webhook_error,\n            call_records.tenant_id,\n            call_records.dg_sentiment,\n            call_records.dg_intents,\n            call_records.dg_topics,\n            call_records.dg_summary,\n            call_records.call_analytics,\n            call_records.agent_assessment,\n            call_records.beneficiary_risk,\n            call_records.contact_id,\n            call_records.twilio_call_sid,\n            call_records.app_written,\n            call_records.billable,\n            call_records.duplicate_flag,\n            call_records.vendor_disposition,\n            call_records.ancillary_product_type,\n            call_records.compliance_requested_at,\n            call_records.compliance_run_at,\n            call_records.compliance_transcript_hash,\n            call_records.compliance_dispo_changed_at,\n            call_records.compliance_status,\n            call_records.compliance_eligible,\n            call_records.parent_call_id\n           FROM read_evidence_call_records() call_records(id, external_call_id, thread_id, agent_id, agent_name, agent_npn, beneficiary_id, beneficiary_name, call_direction, call_type, product_type, carrier_name, plan_name, plan_id, call_start, call_end, call_duration_seconds, recording_url, recording_storage_path, transcript_raw, transcript_diarized, election_period, enrollment_completed, enrollment_confirmation_number, state_code, county, zip_code, lead_source, lead_id, soa_on_file, soa_date, ptc_on_file, ptc_date, ptc_expiry, metadata, created_at, updated_at, effective_date, application_id, call_outcome, agent_notes, session_id, compliance_scorecard_id, transcript_id, customer_first_name, customer_last_name, customer_phone, customer_email, customer_dob, customer_state, customer_mbi, medicaid, medicaid_number, previous_carrier, enrollment_code, premium, sunfire_code, sixty_day_date, sixty_day_status, sixty_day_contacted_at, sep, agency, writing_agent, hra, hra_date, webhook_sent, webhook_sent_at, webhook_error, tenant_id, dg_sentiment, dg_intents, dg_topics, dg_summary, call_analytics, agent_assessment, beneficiary_risk, contact_id, twilio_call_sid, app_written, billable, duplicate_flag, vendor_disposition, ancillary_product_type, compliance_requested_at, compliance_run_at, compliance_transcript_hash, compliance_dispo_changed_at, compliance_status, compliance_eligible, parent_call_id, post_call_status, post_call_last_error, is_test_enrollment)\n          WHERE (call_records.parent_call_id IS NULL)) cr;"
     }
   ],
   "constraints": [
@@ -54048,6 +54626,42 @@
     },
     {
       "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_access_log_action_check",
+      "definition": "CHECK ((action = ANY (ARRAY['list'::text, 'read'::text, 'play'::text, 'download'::text, 'export'::text, 'sign'::text, 'ticket'::text, 'decrypt'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_access_log_actor_id_check",
+      "definition": "CHECK (((length(actor_id) >= 1) AND (length(actor_id) <= 256)))"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_access_log_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_access_log_resource_id_check",
+      "definition": "CHECK (((resource_id = 'collection'::text) OR (resource_id ~ '^[0-9a-fA-F-]{36}$'::text) OR (resource_id ~ '^sha256:[0-9a-f]{64}$'::text)))"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_access_log_resource_type_check",
+      "definition": "CHECK ((resource_type ~ '^[a-z_]{1,64}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_access_log_result_check",
+      "definition": "CHECK ((result = ANY (ARRAY['allowed'::text, 'denied'::text])))"
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "name": "fema_disasters_pkey",
       "definition": "PRIMARY KEY (id)"
@@ -55527,6 +56141,12 @@
       "relation": "recording_download_tickets",
       "name": "recording_download_tickets_token_hash_check",
       "definition": "CHECK ((token_hash ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "recording_download_tickets",
+      "name": "recording_ticket_source",
+      "definition": "CHECK (((storage_path IS NOT NULL) OR ((recording_sid IS NOT NULL) AND (account_sid IS NOT NULL) AND (expected_call_sid IS NOT NULL))))"
     },
     {
       "schema": "public",
@@ -57620,6 +58240,18 @@
     },
     {
       "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_access_log_pkey",
+      "definition": "CREATE UNIQUE INDEX evidence_access_log_pkey ON public.evidence_access_log USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_access_tenant_time",
+      "definition": "CREATE INDEX evidence_access_tenant_time ON public.evidence_access_log USING btree (tenant_id, occurred_at, id)"
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "name": "fema_disasters_pkey",
       "definition": "CREATE UNIQUE INDEX fema_disasters_pkey ON public.fema_disasters USING btree (id)"
@@ -59659,6 +60291,12 @@
       "relation": "enrollment_intakes",
       "name": "refresh_call_test_enrollment",
       "definition": "CREATE TRIGGER refresh_call_test_enrollment AFTER INSERT OR DELETE OR UPDATE ON public.enrollment_intakes FOR EACH ROW EXECUTE FUNCTION refresh_call_test_enrollment()"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "evidence_audit_immutable",
+      "definition": "CREATE TRIGGER evidence_audit_immutable BEFORE DELETE OR UPDATE OR TRUNCATE ON public.evidence_access_log FOR EACH STATEMENT EXECUTE FUNCTION reject_evidence_audit_mutation()"
     },
     {
       "schema": "public",

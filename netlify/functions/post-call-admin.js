@@ -1,3 +1,4 @@
+import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {randomUUID} from 'node:crypto';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity,scopeCallToIdentity} from './_evidenceAccess.js';
@@ -8,7 +9,7 @@ export function createPostCallAdminHandler({authenticate=r=>requireClerkAuth(r,{
   if(!['GET','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try {
-   const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
+   const db=getDb();return await auditedEvidenceRequest(db,auth,request,'call_evidence',resolveCallAccessIdentity,async identity=>{
    const id=new URL(request.url).searchParams.get('call_record_id');
    if(!/^[0-9a-f-]{36}$/i.test(id||''))throw new EvidenceError(400,'Call record ID is required.');
    const record=checked(await scopeCallToIdentity(db.from('call_records').select(request.method==='GET'?'id,tenant_id,agent_id,post_call_status,post_call_last_error':'*').eq('id',id),identity).maybeSingle());
@@ -28,7 +29,7 @@ export function createPostCallAdminHandler({authenticate=r=>requireClerkAuth(r,{
    const response=await send(new URL('/.netlify/functions/post-call-background',request.url),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:record.session_id,dispatch_token:original.dispatch_token}),signal:AbortSignal.timeout(8000)});
    if(response.status!==202)throw new EvidenceError(503,'Request saved; dispatch needs retry.');
    return evidenceJson(202,{status:'pending',request_key:queued});
-  }catch(error){return evidenceFailure(error);}
+  }); }catch(error){return evidenceFailure(error);}
  };
 }
 export default createPostCallAdminHandler();

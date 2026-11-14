@@ -1,3 +1,4 @@
+import {redactPromptPayload} from '../telephony/src/lib/redaction.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { engineFiles, engineBuilders, promptOptions } from './helpers/copilotPrompts.js';
@@ -26,19 +27,20 @@ for (const engine of Object.keys(engineFiles)) {
 test('provider cache boundaries preserve both prompt blocks and live message roles', () => {
   const prompt = buildCachedPrompt(engineBuilders('MA').buildCoachingSystemPrompt, promptOptions());
   const request = { engine: 'MA', system: prompt.system, messages: prompt.contextMessages };
+  const scrubbed=redactPromptPayload(request);
   const openai = toResponsesRequest(request, 'gpt-5.6-luna');
   assert.deepEqual(openai.prompt_cache_options, { mode: 'explicit' });
   assert.deepEqual(openai.input[0].content[0].prompt_cache_breakpoint, { mode: 'explicit' });
   assert.equal(openai.input[0].content[1].prompt_cache_breakpoint, undefined);
-  assert.equal(openai.input[0].content.map(b => b.text).join(''), prompt.system.map(b => b.text).join(''));
+  assert.equal(openai.input[0].content.map(b => b.text).join(''), scrubbed.system.map(b => b.text).join(''));
   assert.equal(openai.input[1].role, 'user');
-  assert.equal(openai.input[1].content, request.messages[0].content);
+  assert.equal(openai.input[1].content, scrubbed.messages[0].content);
   assert.ok(!JSON.stringify(openai).includes('cache_control'));
   assert.ok(!JSON.stringify(openai).includes('cache_prefix'));
   const anthropic = toAnthropicRequest(request, 'claude-sonnet-4-6');
   assert.equal(anthropic.system[0].cache_control.type, 'ephemeral');
   assert.equal(anthropic.system[1].cache_control, undefined);
-  assert.equal(anthropic.system.map(b => b.text).join(''), prompt.system.map(b => b.text).join(''));
+  assert.equal(anthropic.system.map(b => b.text).join(''), scrubbed.system.map(b => b.text).join(''));
   assert.ok(!JSON.stringify(anthropic).includes('cache_prefix'));
 });
 

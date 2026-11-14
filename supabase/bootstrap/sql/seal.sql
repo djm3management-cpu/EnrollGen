@@ -42,3 +42,6 @@ DO $$ DECLARE name text; BEGIN
 END $$;
 -- BYPASSRLS does not replace SQL grants; storage service transports need both.
 GRANT ALL ON storage.objects,storage.buckets TO service_role;
+
+-- P0-11 is append only even for server transports.
+REVOKE UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.evidence_access_log FROM service_role;

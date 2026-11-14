@@ -1,3 +1,4 @@
+import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {loadRecordingPlan,recoveryEstimate} from '../lib/transcriptRecovery.js';
@@ -19,7 +20,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
    if(input.action==='fill' && !featureEnabled('TRANSCRIPT_GAP_FILL_ENABLED',env))return disabledResponse('TRANSCRIPT_GAP_FILL_ENABLED');
    if(input.action==='rescore' && !featureEnabled('SCORING_ENABLED',env))return disabledResponse('SCORING_ENABLED');
    if(!/^[0-9a-f-]{36}$/i.test(input.call_id||''))throw new EvidenceError(400,'Call ID required');
-   const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
+   const db=getDb(); return await auditedEvidenceRequest(db,auth,request,'transcript',resolveCallAccessIdentity,async identity=>{
    if(request.method==='POST'&&!identity.admin)throw new EvidenceError(403,'Administrator required');
    const call=checked(await scopeCallToIdentity(db.from('call_records').select('*').eq('id',input.call_id),identity).maybeSingle());
    if(!call)throw new EvidenceError(403,'Call unavailable');
@@ -98,7 +99,7 @@ export function createComplianceReviewHandler({authenticate=r=>requireClerkAuth(
     return evidenceJson(202,{pass_id:pass.id});
    }
    throw new EvidenceError(409,'Rubric validation and paid-action rollout are not approved');
-  }catch(error){return evidenceFailure(error);}
+  }); } catch (error) { return evidenceFailure(error);}
  };
 }
 export default createComplianceReviewHandler();

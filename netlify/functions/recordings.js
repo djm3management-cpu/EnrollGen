@@ -1,3 +1,4 @@
+import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient,scopeCallLogToIdentity } from './_evidenceAccess.js';
 import { recordingIdentity, authorizeRecordingTarget, listTargetRecordings, publicRecording, recordingMediaGrant } from './_recordingAccess.js';
@@ -40,7 +41,7 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
     const auth = await authenticate(request);
     if (auth.response) return auth.response;
     try {
-      const db = getDb(); const identity = await recordingIdentity(db, auth);
+      const db=getDb(); return await auditedEvidenceRequest(db,auth,request,'recording',recordingIdentity,async identity=>{
       const params = new URL(request.url).searchParams;
       if (request.method === 'GET' && params.get('catalog') === '1') {
         if ([...params.keys()].some(key => !['catalog', 'offset'].includes(key))) throw new EvidenceError(400, 'Invalid recordings filter.');
@@ -107,7 +108,7 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
         return evidenceJson(200, { queued: true });
       }
       return evidenceJson(200, await recordingMediaGrant(db, identity, row, { download: input.download === true, forceProvider: input.source === 'twilio', env }));
-    } catch (error) { return evidenceFailure(error); }
+    }); } catch (error) { return evidenceFailure(error); }
   };
 }
 export default createRecordingsHandler();

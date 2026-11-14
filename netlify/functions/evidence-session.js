@@ -1,3 +1,4 @@
+import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import {
   EvidenceError, checked, evidenceFailure, evidenceJson,
@@ -26,7 +27,7 @@ export function createSessionHandler({ authenticate = requireClerkAuth, getDb = 
         if (body.action === "start" && !Object.hasOwn(FLOWS, body.flow)) throw new EvidenceError(400, "Invalid session flow.");
       }
       const db = getDb();
-      const identity = await resolveEvidenceIdentity(db, auth, { provision: body?.action === "start" });
+      return await auditedEvidenceRequest(db,auth,request,'transcript',resolveEvidenceIdentity,async identity=>{
       const { agent, tenant } = identity;
       if (request.method === "GET") {
         const callSid=new URL(request.url).searchParams.get('call_sid');
@@ -92,7 +93,7 @@ export function createSessionHandler({ authenticate = requireClerkAuth, getDb = 
         }));
       }
       return evidenceJson(200, { ok: true });
-    } catch (error) { return evidenceFailure(error); }
+    }); } catch (error) { return evidenceFailure(error); }
   };
 }
 

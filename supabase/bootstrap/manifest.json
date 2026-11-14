@@ -813,9 +813,14 @@
       "sha256": "d4caa2fdacd0db51c7726184a4690dab13fe87ca9c33fe23dd4c6299ec25e348"
     },
     {
+      "file": "sql/m157.sql",
+      "source": "157_evidence_access_and_minimization.sql (complete; additive P0-8/P0-11)",
+      "sha256": "431647b4a5c19ea14f89c6a869f2d155ea452f5fc13f8ec9b743707f51d14ac7"
+    },
+    {
       "file": "sql/seal.sql",
       "source": "Fresh-install baseline",
-      "sha256": "730d3fdbff3a9201843487873552bb1f811735d2e9123aec11a84a30c8c87709"
+      "sha256": "dd9b7c0825a817adb95f753b72532304ca4d0c2c3e46b9cd971e3969dd65afea"
     }
   ],
   "exclusions": [

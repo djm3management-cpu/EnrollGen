@@ -110,7 +110,7 @@ test('later eligible agents can submit, failures show per-agent, and retries reu
  await addCall(17,mark,'Aetna',90);failAgent=mark;const run=await start();await processManualConverselyRun(db,{env,isPlayable:async()=>true});await tick({schedule:false});
  assert.equal(sent.length,2);let result=await history();assert.equal(result.results.find(row=>row.agent_id===mark).status,'failed');assert.equal(result.results.find(row=>row.agent_id===mark).reason,'conversely_response_error');
  assert.equal(logs.filter(row=>row.event==='conversely_response').at(-1).status,200);
- assert.equal(logs.filter(row=>row.event==='conversely_response').at(-1).body,'Invalid API key: [REDACTED]');
+ assert.equal(logs.filter(row=>row.event==='conversely_response').at(-1).body,undefined);
  assert.equal(await start(),run,'an active delivery run is reused');
  await query(`UPDATE conversely_submissions SET next_attempt_at=now()-interval '1 second' WHERE status='pending'`);failAgent=null;
  await tick({schedule:false});await db.rpc('finalize_conversely_runs');assert.equal(sent.length,3);assert.equal(sent[1].headers['Idempotency-Key'],sent[2].headers['Idempotency-Key']);

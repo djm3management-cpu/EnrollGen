@@ -33,7 +33,7 @@ voiceOutboundRouter.post("/api/voice/outbound-check", async (req, res) => {
   try {
     const blocked = await outboundDncStatus(req.body.phone, agent.tenant_id);
     return res.json({ blocked, reason: blocked ? "Do Not Call" : null });
-  } catch (error) { return res.status(503).json({ error: error.message }); }
+  } catch { return res.status(503).json({ error: 'request_failed' }); }
 });
 voiceOutboundRouter.post("/api/voice/outbound-status", async (req, res) => {
   const agent = await browserAgent(req, res);
@@ -115,7 +115,7 @@ voiceOutboundRouter.post("/api/voice/outbound", requireTwilioSignature, outbound
       callSid: req.body.CallSid, agentId, contactId: contact.id, direction: "outbound", to, tenantId: res.locals.outboundTenantId,
     });
   } catch (err) {
-    console.error("Outbound reservation failed:", err);
+    console.error("Outbound reservation failed:", 'request_failed');
     if (reserved) {
       try { await releaseAgent(agentId, req.body.CallSid); }
       catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
@@ -146,8 +146,8 @@ voiceOutboundRouter.post("/api/voice/outbound-result", requireTwilioSignature, c
     const response = new VoiceResponse();
     response.hangup();
     return sendTwiml(res, response);
-  } catch (err) {
-    console.error("Outbound completion failed:", err);
+  } catch {
+    console.error("Outbound completion failed:", 'request_failed');
     return res.status(503).end();
   }
 });

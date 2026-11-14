@@ -1,3 +1,5 @@
+import {auditSink} from './helpers/auditSink.js';
+const auditDb=auditSink();
 import assert from 'node:assert/strict';
 import {before,after,test} from 'node:test';
 import {readFileSync} from 'node:fs';
@@ -110,10 +112,10 @@ test('delivery uses MP3-suffixed bearer URL, fresh retry tickets and stable idem
 });
 test('playability probes Twilio MP3 with a bounded range and rejects unavailable recordings',async()=>{
  const candidate={account_sid:account,recording_sid:sid(10),recording_channels:2};
- assert.equal(await playableMp3(candidate,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'},fetchImpl:async(url,options)=>{
+ assert.equal(await playableMp3(candidate,{db:auditDb,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'},fetchImpl:async(url,options)=>{
   assert.match(url,/\.mp3\?/);assert.equal(options.headers.Range,'bytes=0-0');return new Response('x',{status:206,headers:{'Content-Type':'audio/mpeg'}});
  }}),true);
- assert.equal(await playableMp3(candidate,{env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'},fetchImpl:async()=>new Response(null,{status:404})}),false);
+ assert.equal(await playableMp3(candidate,{db:auditDb,env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,CONVERSELY_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:account,TWILIO_AUTH_TOKEN:'secret'},fetchImpl:async()=>new Response(null,{status:404})}),false);
 });
 test('retry lease ownership, exponential delay, five-attempt exhaustion and RLS are shared',async()=>{
  await query(`INSERT INTO conversely_submissions(tenant_id,call_id,twilio_recording_sid,enrollment_key) VALUES($1,$2,$3,'retry-test')`,[tenant,id(10),sid(10)]);

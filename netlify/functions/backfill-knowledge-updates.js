@@ -39,11 +39,11 @@ export default async (request) => {
       ok: true,
       ...result,
     });
-  } catch (error) {
-    console.error("[backfill-knowledge-updates] Failed:", error);
+  } catch {
+    console.error("[backfill-knowledge-updates] Failed:", 'request_failed');
     return json(500, {
       ok: false,
-      error: error?.message || String(error),
+      error: 'request_failed',
     });
   }
 };

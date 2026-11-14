@@ -15,7 +15,7 @@ const { verifyMediaStreamToken } = await import('../src/media/streamToken.js');
 const originalFetch=globalThis.fetch;
 after(()=>{globalThis.fetch=originalFetch;});
 function database(agents = ['a', 'b']) {
-  const tables = { tenant_agents: agents.map(agent_slug => ({ agent_slug, clerk_user_id:`user_${agent_slug}`, is_active: true, tenant_id: config.defaultTenantId })), contacts: [], inbound_calls: [], telephony_events: [], contact_activities: [],
+  const tables = { evidence_access_log: [], tenant_agents: agents.map(agent_slug => ({ agent_slug, clerk_user_id:`user_${agent_slug}`, is_active: true, tenant_id: config.defaultTenantId })), contacts: [], inbound_calls: [], telephony_events: [], contact_activities: [],
     contact_lead_intel: [], telephony_call_attempts: [], telephony_routing_responses: [] };
   const claims = []; const evidence = []; const releases = []; const finishes = [];
   const reservations = new Map();
@@ -137,8 +137,8 @@ test('terminal callback evidence is durable before releasing an existing reserva
   const originalRpc = supabase.rpc;
   supabase.rpc = async (name, args) => {
     if(name==='resolve_deployment_subject') {
-      const agent=tables.tenant_agents.find(a=>a.clerk_user_id===args.p_subject && a.is_active);
-      return {data:agent&&!state.subjectRevoked?[{tenant_id:agent.tenant_id,agent_id:'enrolled_'+agent.agent_slug,roster_id:'roster_'+agent.agent_slug,agent_slug:agent.agent_slug,authority:'agent',team_agent_ids:[]}]:[]};
+      const agent=db.tables.tenant_agents.find(a=>a.clerk_user_id===args.p_subject && a.is_active);
+      return {data:agent&&!db.subjectRevoked?[{tenant_id:agent.tenant_id,agent_id:'enrolled_'+agent.agent_slug,roster_id:'roster_'+agent.agent_slug,agent_slug:agent.agent_slug,authority:'agent',team_agent_ids:[]}]:[]};
     }
     if (name === 'release_call_agent') {
       assert.ok(db.tables.telephony_events.some(e => e.event === 'call_no-answer' && e.twilio_call_sid === 'PARENT'));

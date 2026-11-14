@@ -28,8 +28,8 @@ export function attachPhonePresence(ws, agentId, {
       if (isReady && !closed && ws.readyState === ws.OPEN) {
         ws.send(JSON.stringify({ type: "presence-ready" }));
       }
-    }).catch(err => {
-      console.error(`Phone presence failed (${agentId}):`, err.message);
+    }).catch(() => {
+      console.error(`Phone presence failed (${agentId}):`, 'request_failed');
       // Fail closed. A failed disconnect is still bounded by the DB lease.
       if (!closed) ws.terminate();
     });

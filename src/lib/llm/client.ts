@@ -1,3 +1,4 @@
+import { redactPromptPayload, safeDiagnosticCode } from '../../../telephony/src/lib/redaction.js';
 import { featureEnabled } from '../../../telephony/src/lib/deploymentFeatures.js';
 import { createOpenAIAdapter } from './openai.ts';
 import { createAnthropicAdapter } from './anthropic.ts';
@@ -11,7 +12,7 @@ assertNoPublicApiKeys(process.env);
 const PRIMARY_MODEL = 'gpt-5.6-luna'; // No dated snapshot listed in the official model catalog.
 const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
 const EMPTY_USAGE = { input_tokens: 0, output_tokens: 0, cached_tokens: 0, reasoning_tokens: 0 };
-const errorCode = (error: any) => String(error.status ?? error.code ?? error.name ?? 'unknown');
+const errorCode = (error: any) => String(Number.isInteger(error.status) ? error.status : safeDiagnosticCode(error));
 const transient = (error: any) => error.status === 429 || (error.status >= 500 && error.status <= 599)
   || ['APIConnectionTimeoutError', 'TimeoutError'].includes(error.name) || ['ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT'].includes(error.code);
 
@@ -110,6 +111,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
 }
 
 function start(request: CompletionRequest, runtime: Runtime, stream: boolean) {
+  request = redactPromptPayload(request);
   const primary = run(request, runtime, stream);
   const shadowModel = request.path === 'scoring' ? undefined : (runtime.env || process.env)[`LLM_SHADOW_${resolveEngine(request.engine)}`];
   if (shadowModel) {
@@ -120,7 +122,7 @@ function start(request: CompletionRequest, runtime: Runtime, stream: boolean) {
       await runtime.telemetry?.({ engine_name: request.engine, model: shadowModel,
         prompt_tokens: 0, cached_tokens: 0, completion_tokens: 0, reasoning_tokens: 0, latency_ms: 0,
         fallback_used: false, original_error_code: null,
-        primary_output: primaryResult, shadow_output: shadowResult,
+        primary_output: null, shadow_output: null,
         shadow_match: primaryResult && shadowResult && !primaryResult.degraded ? comparisonKey(primaryResult, request) === comparisonKey(shadowResult, request) : null,
         metadata: { event: 'shadow_compare', primary_error: p.status === 'rejected' ? errorCode(p.reason) : null,
           shadow_error: s.status === 'rejected' ? errorCode(s.reason) : null } });

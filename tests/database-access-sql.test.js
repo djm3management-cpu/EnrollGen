@@ -1,9 +1,11 @@
+import {AUDITED_TABLES} from '../src/lib/evidenceTransport.js';
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {buildAccessDatabase,fixtureRoster,uuid,T,U,publicReferences} from './helpers/databaseAccessSchema.js';
 let pg,realTables,agents;
 const actualTables=()=>[...realTables];
 const q=(s,args=[])=>pg.query(s,args).then(r=>r.rows);
+const evidence=(s,args=[])=>q(s.replace(/FROM ([a-z_]+)/g,(all,table)=>AUDITED_TABLES.has(table)?'FROM read_evidence_'+table+'() AS '+table:all),args);
 const A=fixtureRoster[0], B=fixtureRoster[1], M=fixtureRoster[2], D=fixtureRoster[3];
 const embedding='['+[1,...Array(1535).fill(0)].join(',')+']';
 const own=uuid(1), other=uuid(2), foreign=uuid(3), ca=uuid(11),cb=uuid(12),cf=uuid(13),sa=uuid(21),sb=uuid(22),sf=uuid(23);
@@ -87,12 +89,12 @@ test('inactive roster, inactive enrolled mapping and removed subject independent
 });
 test('ordinary active agent: own calls, evidence, notes and assigned CRM; no peer PII or intakes',async()=>{
  await as(A.clerk_user_id);
- assert.deepEqual((await q('SELECT id FROM call_records')).map(r=>r.id),[own]);
- assert.deepEqual((await q('SELECT call_record_id AS id FROM v_daily_activity')).map(r=>r.id),[own]);
- for(const table of ['call_transcripts','transcript_chunks','compliance_flags','section_scores','contact_notes','messages','message_media'])assert.equal((await q('SELECT * FROM '+table)).length,1,table);
+ assert.deepEqual((await evidence('SELECT id FROM call_records')).map(r=>r.id),[own]);
+ assert.deepEqual((await evidence('SELECT call_record_id AS id FROM v_daily_activity')).map(r=>r.id),[own]);
+ for(const table of ['call_transcripts','transcript_chunks','compliance_flags','section_scores','contact_notes','messages','message_media'])assert.equal((await evidence('SELECT * FROM '+table)).length,1,table);
  assert.deepEqual((await q('SELECT id FROM contacts')).map(r=>r.id),[ca]);
  assert.equal((await q('SELECT * FROM training_completions')).length,1);
- assert.equal((await q('SELECT * FROM sales_log')).length,1);
+ assert.equal((await evidence('SELECT * FROM sales_log')).length,1);
  assert.equal((await q('SELECT * FROM search_transcript_chunks($1::vector,5,NULL,NULL,NULL,NULL,0.7)',[embedding])).length,1);
  assert.equal((await q('SELECT * FROM search_transcript_chunks($1::vector,0.7::double precision,5)',[embedding])).length,1);
  await denied(q('SELECT first_name FROM contacts'));
@@ -101,8 +103,9 @@ test('ordinary active agent: own calls, evidence, notes and assigned CRM; no pee
  await denied(q('SELECT decrypt_pii($1,$2)',[cb,A.id]));
  await denied(q('SELECT decrypt_pii($1,$2)',[ca,B.id]));
  assert.equal((await q('SELECT * FROM read_contact_details($1,$2)',[[ca,cb],A.id])).length,1);
- assert.equal((await q('SELECT * FROM storage.objects')).length,1);
- assert.equal((await q("UPDATE contact_notes SET body='Owned edit' RETURNING id")).length,1);
+ await denied(q('SELECT * FROM storage.objects'));
+ const note=(await evidence('SELECT id FROM contact_notes'))[0];
+ assert.equal((await q("SELECT id FROM update_evidence_contact_notes($1,'{\"body\":\"Owned edit\"}')",[note.id])).length,1);
  await zero('enrollment_intakes');await zero('vendor_controls');await zero('vendor_control_audit');
  await denied(q("SELECT set_vendor_pause($1,true,'forged')",[T]));
 });
@@ -131,15 +134,15 @@ test('direct contact, PII, opportunity, tag and follow-up RPCs use protected act
 });
 test('protected principal sees agency evidence and assigned contacts, protected manager sees only approved team evidence',async()=>{
  await as(D.clerk_user_id);
- assert.equal((await q('SELECT id FROM call_records')).length,2);
+ assert.equal((await evidence('SELECT id FROM call_records')).length,2);
  assert.equal((await q('SELECT id FROM contacts')).length,2);
- assert.equal((await q('SELECT * FROM call_transcripts')).length,2);
+ assert.equal((await evidence('SELECT * FROM call_transcripts')).length,2);
  await denied(q('UPDATE tenant_agents SET role=\'admin\''));
  await denied(q('SELECT save_opportunity_pipeline(NULL,NULL,NULL,NULL,NULL,NULL)'));
  await as(M.clerk_user_id);
- assert.deepEqual((await q('SELECT id FROM call_records')).map(r=>r.id),[other]);
- assert.equal((await q('SELECT * FROM call_transcripts')).length,1);
- assert.equal((await q("UPDATE call_records SET call_outcome='not_interested' RETURNING id")).length,0);
+ assert.deepEqual((await evidence('SELECT id FROM call_records')).map(r=>r.id),[other]);
+ assert.equal((await evidence('SELECT * FROM call_transcripts')).length,1);
+ assert.equal((await q("SELECT id FROM update_evidence_call_records($1,'{\"call_outcome\":\"not_interested\"}')",[other])).length,0);
  await zero('contacts','id');
  await denied(q('SELECT decrypt_pii($1,$2)',[cb,M.id]));
 });
@@ -147,7 +150,7 @@ test('all escalation paths fail: table/column grants, roster role, mapping, org,
  await as(A.clerk_user_id);
  for(const query of ["UPDATE tenant_agents SET role='admin'","UPDATE tenant_agents SET clerk_user_id='attacker'","UPDATE tenant_agents SET tenant_id='"+U+"'","UPDATE tenants SET clerk_org_id='org_evil'","UPDATE enrolled_agents SET role='principal'","INSERT INTO availability_agent_subjects(agent_slug) VALUES('evil')","INSERT INTO recording_agent_subjects(agent_slug) VALUES('evil')","INSERT INTO deployment_authorities VALUES('"+T+"','"+A.clerk_user_id+"','admin','{}')","UPDATE contacts SET assigned_agent_id='"+A.agent_slug+"'","UPDATE call_records SET agent_id='"+agents[0].id+"'"] )await denied(q(query));
  await q("SELECT set_config('request.headers',$1,false)",[JSON.stringify({'x-org-role':'admin','x-clerk-user-id':D.clerk_user_id,'x-enrollgen-features':'{"GHL_ENABLED":true}',role:'service_role'})]);
- assert.equal((await q('SELECT id FROM call_records')).length,1);
+ assert.equal((await evidence('SELECT id FROM call_records')).length,1);
  await denied(q('SELECT deployment_feature_enabled(\'GHL_ENABLED\')'));
  await denied(q('SELECT * FROM resolve_deployment_subject($1,NULL)',[D.clerk_user_id]));
  await denied(q("SELECT create_workspace_record('contacts',$1)",[JSON.stringify({tenant_id:U,role:'admin',actor:D.clerk_user_id})]));
@@ -163,7 +166,9 @@ test('owned creates derive tenant and actor, cannot link peer resources, preserv
 });
 test('catalog: all public tables RLS; no broad browser policies; no browser grants on protected identity or mapping columns; every SD function pinned and allowlisted',async()=>{
  await pg.exec('RESET ROLE');
- const browserRpcs=new Set(['current_deployment_identity','is_current_tenant','deployment_timezone','deployment_is_admin','deployment_can_read_agent','deployment_can_access_contact','deployment_row_visible','deployment_row_writable','evidence_tenant_member','evidence_owns_agent','evidence_can_read_transcript','opportunities_is_tenant','follow_up_access','is_org_admin','decrypt_pii','search_contacts_secure','log_pii_access','match_contacts_by_phone','update_pii_field','read_contact_details','merge_contacts_secure','search_transcript_chunks','read_opportunities','save_opportunity','move_opportunity_stage','delete_opportunity','read_opportunity_sources','read_contact_tags','add_contact_tag','remove_contact_tag','save_follow_up','get_available_seps','get_counties_for_state','get_plans_for_county','get_county_plan_counts','match_cms_plans_py2027_area','normalize_phone_e164','ensure_opportunities_pipeline','create_workspace_record']);
+ const browserRpcs=new Set(['current_deployment_identity','is_current_tenant','deployment_timezone','deployment_is_admin','deployment_can_read_agent','deployment_can_access_contact','deployment_row_visible','deployment_row_writable','evidence_tenant_member','evidence_owns_agent','evidence_can_read_transcript','opportunities_is_tenant','follow_up_access','is_org_admin','decrypt_pii','search_contacts_secure','log_pii_access','match_contacts_by_phone','update_pii_field','read_contact_details','merge_contacts_secure','search_transcript_chunks','read_opportunities','save_opportunity','move_opportunity_stage','delete_opportunity','read_opportunity_sources','read_contact_tags','add_contact_tag','remove_contact_tag','save_follow_up','get_available_seps','get_counties_for_state','get_plans_for_county','get_county_plan_counts','match_cms_plans_py2027_area','normalize_phone_e164','ensure_opportunities_pipeline','create_workspace_record','mark_evidence_messages_read']);
+ for(const name of AUDITED_TABLES)browserRpcs.add('read_evidence_'+name);
+ for(const name of ['call_records','contact_notes','follow_ups','followup_queue','messages'])browserRpcs.add('update_evidence_'+name);
  for(const r of await q("SELECT p.oid,p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public'")){
   assert.equal((await q("SELECT has_function_privilege('anon',$1,'EXECUTE') ok",[r.oid]))[0].ok,false,r.proname);
   assert.equal((await q("SELECT has_function_privilege('authenticated',$1,'EXECUTE') ok",[r.oid]))[0].ok,browserRpcs.has(r.proname),r.proname);
@@ -173,7 +178,7 @@ test('catalog: all public tables RLS; no broad browser policies; no browser gran
  for(const p of policies){
   if(publicReferences.includes(p.tablename)){assert.equal(p.cmd,'SELECT');continue;} // reviewed public-reference allowlist above, no writes
   assert.doesNotMatch(p.qual||'',/^\(?\s*true\s*\)?$|auth\.role\(\).*authenticated|auth\.uid\(\) IS NOT NULL/i,p.tablename);
-  assert.match(p.qual||'',/deployment_row_(visible|writable)/,p.tablename);
+  assert.match(p.qual||'',p.tablename==='evidence_access_log'?/deployment_is_admin/:/deployment_row_(visible|writable)/,p.tablename);
  }
  const protectedColumns=/^(id|tenant_id|clerk_.*|org.*|role|authority|team_agent_ids|agent_id|agent_slug|assigned_agent_id|writing_agent_id|created_by|owner_agent_id|subject)$/;
  for(const col of await q("SELECT table_name,column_name FROM information_schema.columns WHERE table_schema='public'"))for(const role of ['anon','authenticated'])for(const op of ['INSERT','UPDATE']){

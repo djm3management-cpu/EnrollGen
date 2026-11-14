@@ -1,3 +1,5 @@
+import {appendEvidenceAudit,evidenceGrantId} from '../../telephony/src/lib/evidenceAudit.js';
+import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
 import { loadDeploymentRoster, writingAgent } from '../../telephony/src/lib/deploymentRoster.js';
 import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -10,7 +12,7 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
   if(!['GET','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{
-   const db=getDb(),identity=await resolveCallAccessIdentity(db,auth),{agent,tenant}=identity,url=new URL(request.url);
+   const db=getDb(); return await auditedEvidenceRequest(db,auth,request,'enrollment_intake',resolveCallAccessIdentity,async identity=>{const {agent,tenant}=identity,url=new URL(request.url);
    if(request.method==='GET' && url.searchParams.has('contact_id')){
     const contactId=url.searchParams.get('contact_id');
     if(!/^[0-9a-f-]{36}$/i.test(contactId||''))throw new EvidenceError(400,'Contact ID is required.');
@@ -19,7 +21,7 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
     const callIds=[...new Set(rows.map(row=>row.call_id))];
     const calls=callIds.length?checked(await scopeCallToIdentity(db.from('call_records').select('id').in('id',callIds),identity))||[]:[];
     const allowed=new Set(calls.map(call=>call.id));
-    return evidenceJson(200,{intakes:await readIntakes(db,rows.filter(row=>allowed.has(row.call_id)))});
+    return evidenceJson(200,{intakes:await readIntakes(db,rows.filter(row=>allowed.has(row.call_id)),identity)});
    }
    const profile=deploymentProfile();
    if(tenant.id!==profile.tenantId)throw new EvidenceError(403,'Agency unavailable.');
@@ -70,24 +72,26 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
     return evidenceJson(200,{saved:true,id});
    }
    const rows=checked(await db.from('enrollment_intakes').select('*').eq('call_id',callId).eq('tenant_id',tenant.id).order('submitted_at'))||[];
-   const intakes=await readIntakes(db,rows);
+   const intakes=await readIntakes(db,rows,identity);
    let contact={};
    if(call.contact_id){
     let contactQuery=db.from('contacts').select('*').eq('id',call.contact_id).eq('tenant_id',tenant.id);
     if(!identity.admin)contactQuery=contactQuery.eq('assigned_agent_id',identity.access.agent_slug);
     const row=checked(await contactQuery.maybeSingle());
+    if(row)await appendEvidenceAudit(db,{actor:auth.userId,tenant:tenant.id,resource:'contact',resourceId:row.id,action:'decrypt',result:'allowed',grantId:evidenceGrantId()});
     contact={...row};
     for(const key of ['first_name','last_name','dob','phone','email','mbi_full'])if(row?.pii_encrypted?.[key])contact[key]=checked(await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]}));
    }
    const callAgent=call.agent_id===agent?.id?agent:call.agent_id?checked(await db.from('enrolled_agents').select('id,name').eq('id',call.agent_id).eq('tenant_id',tenant.id).maybeSingle()):null;
    const prefill={...emptyIntake(callAgent?.name||'',roster),firstName:contact.first_name||call.customer_first_name||'',lastName:contact.last_name||call.customer_last_name||'',dob:contact.dob||call.customer_dob||'',phone:contact.phone||call.customer_phone||'',email:contact.email||call.customer_email||'',state:contact.state||call.customer_state||call.state_code||'',zip:contact.zip||call.zip_code||'',mbi:contact.mbi_full||call.customer_mbi||'',prevCarrier:contact.current_carrier||'',sunfireCode:call.sunfire_code||''};
    return evidenceJson(200,{roster:roster.map(({id,name,is_active})=>({id,name,is_active})),admin:identity.admin,intakes,prefill,contact_id:call.contact_id,product_type:call.product_type});
-  }catch(error){return evidenceFailure(error);}
+  }); } catch (error) { return evidenceFailure(error);}
  };
 }
-async function readIntakes(db,rows){
+async function readIntakes(db,rows,identity){
  const intakes=[];
  for(const row of rows){
+  await appendEvidenceAudit(db,{actor:identity.auth.userId,tenant:identity.tenant.id,resource:'enrollment_intake',resourceId:row.id,action:'decrypt',result:'allowed',grantId:evidenceGrantId()});
   const data={...emptyIntake(),...row.data,testEnrollment:row.is_test_enrollment};
   for(const key of ['dob','mbi','medicaidNum'])data[key]=row.pii_encrypted?.[key]?checked(await db.rpc('decrypt_pii_value',{p_encrypted:row.pii_encrypted[key]}))||'':'';
   const jobs=checked(await db.from('ghl_enrollment_deliveries').select('status,attempts,last_error,created_at').eq('intake_id',row.id).order('revision',{ascending:false}).limit(1));

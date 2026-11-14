@@ -505,9 +505,9 @@ export async function syncBulletins(supabase, { feeds = ALL_FEEDS, fetchImpl = f
     try {
       const { error: statusError } = await supabase.from("bulletin_feed_status").upsert(status, { onConflict: "feed_id" });
       if (statusError) throw statusError;
-    } catch (statusError) {
+    } catch {
       statusErrors += 1;
-      console.error("[sync-bulletins] Status write failed:", statusError.message);
+      console.error("[sync-bulletins] Status write failed:", 'request_failed');
     }
   }
 

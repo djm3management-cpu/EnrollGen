@@ -1,3 +1,5 @@
+import { deploymentProfile } from './deploymentProfile.js';
+import { auditedServiceClient } from './evidenceAudit.js';
 import { featureHeaders } from './deploymentFeatures.js';
 import { createClient } from '@supabase/supabase-js';
 
@@ -26,7 +28,7 @@ export async function reportSupabaseKeySelection(db, { env = process.env, log = 
 
 export function createSupabaseClient(url, key, options = {}) {
   const send = options.global?.fetch || ((...args) => fetch(...args));
-  return createClient(url, key, {
+  const client=createClient(url, key, {
     ...options,
     global: { ...options.global, fetch: (input, init = {}) => {
       const headers = new Headers(input instanceof Request ? input.headers : undefined);
@@ -38,4 +40,5 @@ export function createSupabaseClient(url, key, options = {}) {
       return send(input, { ...init, headers });
     } },
   });
+  return auditedServiceClient(client,{tenant:deploymentProfile().tenantId});
 }

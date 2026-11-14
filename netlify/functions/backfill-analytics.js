@@ -19,11 +19,7 @@ function isAuthorized(request) {
     || request.headers.get("x-knowledge-update-secret") === secret;
 }
 
-async function maybeSingle(query) {
-  const { data, error } = await query.maybeSingle();
-  if (error) return null;
-  return data || null;
-}
+
 
 async function findDeploymentTenant(supabase) {
  const {data,error}=await supabase.from('tenants').select('id,name,agency_display_name,clerk_org_id').eq('id',DEPLOYMENT_TENANT_ID).eq('clerk_org_id',DEPLOYMENT_ORG_ID).maybeSingle();
@@ -57,11 +53,11 @@ export default async (request) => {
       tenant,
       result,
     });
-  } catch (error) {
-    console.error("[backfill-analytics] Failed:", error);
+  } catch {
+    console.error("[backfill-analytics] Failed:", 'request_failed');
     return json(500, {
       ok: false,
-      error: error?.message || String(error),
+      error: 'request_failed',
     });
   }
 };

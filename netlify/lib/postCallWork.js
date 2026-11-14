@@ -1,3 +1,5 @@
+import {evidenceCheckpoint} from '../../telephony/src/lib/evidenceAudit.js';
+import { auditedEvidenceRequest } from '../functions/_evidenceAccess.js';
 import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
 import {postJson} from '../../integrations/transport.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -41,9 +43,7 @@ function safeUuid(value) {
     : null;
 }
 
-function normalizeLookup(value) {
-  return safeText(value).toLowerCase().replace(/\s+/g, " ");
-}
+
 
 function looksLikeIdentifier(value) {
   const raw = safeText(value);
@@ -494,7 +494,7 @@ function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
   };
 }
 
-export async function sendEnrollmentWebhook(tenant, tenantAgents, payload, {send=postJson}={}) {
+export async function sendEnrollmentWebhook(tenant, tenantAgents, payload, {send=postJson,db}={}) {
   if (!featureEnabled('GHL_ENABLED')) return { sent: false, sentAt: null, error: 'GHL disabled' };
   if (!deploymentProfile().ghl?.postCallUrl) {
     return {
@@ -508,6 +508,7 @@ export async function sendEnrollmentWebhook(tenant, tenantAgents, payload, {send
     const profile=deploymentProfile();
     const outbound=buildGhlWebhookPayload(payload,tenant,tenantAgents);
     if(!outbound.assignedUserId)throw Error('Writing agent GHL mapping required');
+    await evidenceCheckpoint(db,{actor:'service:post_call',tenant:tenant.id,resource:'enrollment_intake',resourceId:payload.call_record_id,action:'export'});
     const result=await send(validateDestination(profile.ghl.postCallUrl,profile.allowedHosts),JSON.stringify(outbound));
     const response={ok:result.status>=200&&result.status<300,status:result.status,text:async()=>''};
 
@@ -520,11 +521,11 @@ export async function sendEnrollmentWebhook(tenant, tenantAgents, payload, {send
       sentAt: null,
       error: `HTTP ${response.status}: ${response.statusText}`,
     };
-  } catch (error) {
+  } catch {
     return {
       sent: false,
       sentAt: null,
-      error: error?.message || "Webhook request failed",
+      error: 'webhook_failed',
     };
   }
 }
@@ -638,7 +639,7 @@ async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subsc
           : `Call wrap-up: ${outcome}`,
     });
     if (activityError) {
-      console.error("contact_activities insert failed:", activityError.message);
+      console.error("contact_activities insert failed:", 'request_failed');
     }
   }
 
@@ -660,7 +661,7 @@ async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subsc
         writing_agent: updatePayload.writing_agent,
         enrollment_code: updatePayload.enrollment_code,
         application_id: updatePayload.application_id,
-      });
+      },{db:supabase});
 
       const webhookPatch = {
         webhook_sent: webhookResult.sent,
@@ -751,7 +752,7 @@ return async request => {
 
   try {
     const supabase = getDb();
-    const identity = await resolveEvidenceIdentity(supabase, auth);
+    return await auditedEvidenceRequest(supabase,auth,request,'transcript',resolveEvidenceIdentity,async identity=>{
     body = await bindPostCallPayload(supabase, body, identity);
     auth = { ...auth, evidenceIdentity: identity };
     if (action === 'finalize' || action === 'wrap_up') await verifyEnded(supabase,body);
@@ -804,7 +805,7 @@ return async request => {
     }
 
     return json(400, { error: `Unknown action: ${action}` });
-  } catch (error) {
+  }); } catch (error) {
     console.error(JSON.stringify({event:'post_call_storage_error',session_id:body.session_id,action,code:/^[A-Za-z0-9_]{1,64}$/.test(error.code || '')?error.code:null,status:error.status || null,exception:postCallExceptionDetails(error)}));
     return evidenceFailure(error);
   }

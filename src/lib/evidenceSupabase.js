@@ -1,3 +1,4 @@
+import { evidenceTransport } from './evidenceTransport.js';
 import { createClient } from "@supabase/supabase-js";
 import { createClerkFetch } from './clerkFetch.js';
 import { supabasePublishableKey, supabaseApiKeyFetch } from './supabaseKeys.js';
@@ -12,7 +13,7 @@ export function createEvidenceSupabase(getToken, url, publicKey) {
       if (!token || token === publicKey || /^sb_(secret|publishable)_/.test(token)) throw new Error("Sign in to access transcript references.");
       return token;
     },
-    global: { headers: { apikey: publicKey }, fetch: supabaseApiKeyFetch(publicKey, createClerkFetch(getToken, {tokenOptions:{template:'supabase'}})) },
+    global: { headers: { apikey: publicKey }, fetch: supabaseApiKeyFetch(publicKey, evidenceTransport(createClerkFetch(getToken, {tokenOptions:{template:'supabase'}}))) },
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
 }

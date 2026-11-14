@@ -1,3 +1,4 @@
+import {evidenceCheckpoint} from '../../telephony/src/lib/evidenceAudit.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {mediaUrl,twilioHeaders,providerJson,fetchRecordingMedia} from '../../telephony/src/recordings.js';
 import {getEvidenceServiceClient,checked,evidenceJson,evidenceFailure} from './_evidenceAccess.js';
@@ -29,6 +30,7 @@ export function createGapFillHandler({getDb=getEvidenceServiceClient,transport=f
    const recording=checked(await db.from('recording_ingestion').select('*').eq('id',job.recording_id).eq('tenant_id',job.tenant_id).single());
    if(recording.call_record_id!==job.call_id)throw Error('Recording call mismatch');
    if(recording.stored_bytes>MAX_GAP_RECORDING_BYTES)throw Error('Recording exceeds recovery download cap');
+   await evidenceCheckpoint(db,{actor:'service:transcript_recovery',tenant:job.tenant_id,resource:'recording',resourceId:recording.id,action:'read',grantId:job.id});
    let audio;
    if(recording.storage_path){
     if(!recording.storage_path.startsWith(`${job.tenant_id}/`)||recording.storage_path.split('/').includes('..'))throw Error('Invalid recording path');
@@ -49,7 +51,7 @@ export function createGapFillHandler({getDb=getEvidenceServiceClient,transport=f
    }});
    checked(await db.from('manual_transcript_gap_fills').update({status:'complete'}).eq('id',job.id));
    return evidenceJson(200,{job_id:job.id});
-  }catch(error){if(db&&job)await db.from('manual_transcript_gap_fills').update({status:'failed',error:String(error.message).slice(0,300)}).eq('id',job.id);return evidenceFailure(error);}
+  }catch(error){if(db&&job)await db.from('manual_transcript_gap_fills').update({status:'failed',error:'gap_processing_failed'}).eq('id',job.id);return evidenceFailure(error);}
  };
 }
 export default createGapFillHandler();

@@ -1,7 +1,9 @@
+import {redactPromptPayload} from '../../../telephony/src/lib/redaction.js';
 import OpenAI from 'openai';
 import type { Adapter, Completion, CompletionRequest, Json } from './types.ts';
 
 export function toResponsesRequest(request: CompletionRequest, model: string): Json {
+  request=redactPromptPayload(request);
   const system = typeof request.system === 'string' ? request.system : request.system.map(b => b.text || '').join('\n');
   // Cache hits depend on exact prefix stability. Never sort chronological turns/tool results.
   const hasCachePrefix = Array.isArray(request.system) && request.system.some(b => b.cache_prefix === true);

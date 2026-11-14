@@ -141,8 +141,8 @@ export default async (request) => {
   let event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-  } catch (error) {
-    console.error("[stripe-webhook] signature verification failed:", error.message);
+  } catch {
+    console.error("[stripe-webhook] signature verification failed:", 'request_failed');
     return json(400, { error: "Invalid Stripe signature" });
   }
 
@@ -172,7 +172,7 @@ export default async (request) => {
 
     return json(200, { received: true });
   } catch (error) {
-    console.error("[stripe-webhook] handler failed:", error);
+    console.error("[stripe-webhook] handler failed:", 'request_failed');
     return json(500, { error: "Stripe webhook failed", detail: error.message });
   }
 };

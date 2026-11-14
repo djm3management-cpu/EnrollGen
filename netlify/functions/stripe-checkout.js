@@ -119,7 +119,7 @@ export function createStripeCheckoutHandler({
 
     return json(200, { url: session.url, session_id: session.id });
   } catch (error) {
-    console.error("[stripe-checkout] failed:", error);
+    console.error("[stripe-checkout] failed:", 'request_failed');
     return json(500, { error: "Unable to create checkout session", detail: error.message });
   }
   };

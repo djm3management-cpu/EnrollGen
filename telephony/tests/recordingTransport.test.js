@@ -1,3 +1,4 @@
+import {auditSink} from '../../tests/helpers/auditSink.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
@@ -29,7 +30,7 @@ for (const failure of ['oversize', '413', '503']) test(`recording ${failure}: si
   return {error:{status:400,statusCode:failure}};
  }})}};
  const wav=recordingWav();
- const result=await processRecording({db,job,config:{twilioAccountSid:job.account_sid,recordingStorageMaxBytes:1024},
+ const result=await processRecording({db:auditSink(db),job,config:{twilioAccountSid:job.account_sid,recordingStorageMaxBytes:1024},
   fetchImpl:async()=>new Response(wav,{headers:{'content-length':failure==='oversize'?'2048':String(wav.length)}}),log:()=>{}});
  assert.equal(result,failure==='503'?'retry':'failed');
  assert.equal(uploads,failure==='oversize'?0:1);

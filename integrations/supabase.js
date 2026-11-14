@@ -1,3 +1,4 @@
+import { auditedServiceClient } from '../telephony/src/lib/evidenceAudit.js';
 import { deploymentProfile } from '../telephony/src/lib/deploymentProfile.js';
 deploymentProfile();
 import { featureHeaders } from '../telephony/src/lib/deploymentFeatures.js';
@@ -47,8 +48,9 @@ export function supabaseApiKeyFetch(key, send = (...args) => fetch(...args)) {
 }
 
 export function createSupabaseClient(url, key, options = {}) {
-  return createClient(url, key, {
+  const client=createClient(url, key, {
     ...options,
     global: { ...options.global, fetch: supabaseApiKeyFetch(key, options.global?.fetch) },
   });
+  return auditedServiceClient(client,{tenant:deploymentProfile().tenantId});
 }

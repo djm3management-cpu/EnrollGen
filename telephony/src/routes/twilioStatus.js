@@ -56,8 +56,8 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, conferenceGuar
       const finalized = await supabase.rpc("finalize_telephony_transcript", { p_call_sid: callSid });
       if (finalized.error) throw finalized.error;
     }
-  } catch (err) {
-    console.error("/twilio/status failed:", err);
+  } catch {
+    console.error("/twilio/status failed:", 'request_failed');
     return res.status(503).end();
   }
   return res.status(204).end();
@@ -74,8 +74,8 @@ twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, conferen
       await releaseAgent(req.query.agentId, req.body.ParentCallSid);
     }
     return res.status(204).end();
-  } catch (err) {
-    console.error("Agent completion failed:", err);
+  } catch {
+    console.error("Agent completion failed:", 'request_failed');
     return res.status(503).end();
   }
 });

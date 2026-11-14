@@ -1,3 +1,4 @@
+import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveEvidenceIdentity} from './_evidenceAccess.js';
 import {normalizeOutcome} from '../lib/postCallWork.js';
@@ -9,7 +10,7 @@ export function createCallDispositionHandler({authenticate=r=>requireClerkAuth(r
   if(!['GET','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try {
-   const db=getDb(),{agent,tenant}=await resolveEvidenceIdentity(db,auth);
+   const db=getDb();return await auditedEvidenceRequest(db,auth,request,'call_evidence',resolveEvidenceIdentity,async identity=>{const {agent,tenant}=identity;
    const roster=checked(await db.from('availability_agent_subjects').select('agent_slug').eq('tenant_id',tenant.id)
     .eq('clerk_user_id',auth.userId).eq('is_active',true).single());
    const availability=checked(await db.from('agent_availability').select('active_call_sid').eq('agent_id',roster.agent_slug).single());
@@ -89,7 +90,7 @@ export function createCallDispositionHandler({authenticate=r=>requireClerkAuth(r
    if(result.error?.message?.includes('SunFire Confirmation Code is required'))throw new EvidenceError(400,'SunFire Confirmation Code is required for UHC enrollment.');
    if(result.error?.code==='P0001')throw new EvidenceError(409,'Call state changed. Refresh the disposition and try again.');
    return evidenceJson(200,checked(result));
-  }catch(error){return evidenceFailure(error);}
+  }); }catch(error){return evidenceFailure(error);}
  };
 }
 export default createCallDispositionHandler();

@@ -1,3 +1,4 @@
+import {auditSink} from '../../tests/helpers/auditSink.js';
 import express from 'express';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,7 +21,7 @@ async function app(t, {ticket:overrides={},providerCall=CA,unknownLength=false,i
   };},storage:{from(bucket){assert.equal(bucket,'call-recordings');return {async createSignedUrl(path,ttl){
     assert.equal(path,ticket.storage_path);assert.equal(ttl,300);return {data:{signedUrl:'https://storage.test/audio.wav'},error:null};
   }};}}};
-  const handler=createRecordingComplianceHandler({db,config,log:entry=>logs.push(JSON.parse(entry)),fetchImpl:async(url,options)=>{
+  const handler=createRecordingComplianceHandler({db:auditSink(db),config,log:entry=>logs.push(JSON.parse(entry)),fetchImpl:async(url,options)=>{
     requests.push({url,options});
     if(url.endsWith('.json'))return Response.json({account_sid:AC,sid:RE,call_sid:providerCall,channels:2});
     if(url.startsWith('https://storage.test/')) {
@@ -101,11 +102,11 @@ test('missing WAV storage falls back to the same verified provider recording',as
   assert.equal(requests.length,3);
 });
 
-test('every recording capability hit logs timestamp and a hash, without exposing the token',async t=>{
+test('every recording capability hit logs timestamp and a bounded code without any token or hash',async t=>{
  const {url,logs}=await app(t);
  for(const method of ['HEAD','GET','POST']) {const response=await fetch(url,{method});await response.arrayBuffer();}
  assert.equal(logs.length,3);
- for(const entry of logs){assert.equal(entry.event,'conversely_recording_hit');assert.ok(Number.isFinite(Date.parse(entry.timestamp)));assert.equal(entry.token_hash,createHash('sha256').update(token).digest('hex'));assert.ok(!JSON.stringify(entry).includes(token));}
+ for(const entry of logs){assert.equal(entry.event,'conversely_recording_hit');assert.ok(Number.isFinite(Date.parse(entry.timestamp)));assert.equal(entry.code,'request_received');assert.equal(entry.token_hash,undefined);assert.ok(!JSON.stringify(entry).includes(token));}
 });
 
 test('MP3 extension route preserves HEAD and byte ranges with audio/mpeg',async t=>{

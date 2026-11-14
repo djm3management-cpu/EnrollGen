@@ -71,7 +71,7 @@ export async function recordCallbackEvidence(req, source) {
 // persisted, and a transient attribution error must not strand a replay key.
 export async function dialAttribution(req, res, next) {
   try { await recordCallbackEvidence(req, "dial"); return next(); }
-  catch (err) { console.error("Dial attribution failed:", err); return res.status(503).end(); }
+  catch { console.error("Dial attribution failed:", 'request_failed'); return res.status(503).end(); }
 }
 
 export async function finishInboundCall(callSid, status, body = {}) {

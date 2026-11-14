@@ -81,7 +81,7 @@ export function createStripePortalHandler({
 
     return json(200, { url: portalSession.url });
   } catch (error) {
-    console.error("[stripe-portal] failed:", error);
+    console.error("[stripe-portal] failed:", 'request_failed');
     return json(500, { error: "Unable to create billing portal session", detail: error.message });
   }
   };

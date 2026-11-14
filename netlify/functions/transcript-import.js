@@ -1,3 +1,5 @@
+import { auditedEvidenceRequest } from './_evidenceAccess.js';
+import { redactPromptPayload } from './_redaction.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { redactSensitiveText } from "./_redaction.js";
 import { chunkTranscriptByWords, detectSpeaker, detectTopics, parseDurationToSeconds } from "../../src/lib/transcriptProcessing.js";
@@ -11,7 +13,7 @@ async function embedChunks(chunks) {
   if (!key) throw new EvidenceError(503, "Transcript embedding service is not configured.");
   const response = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "text-embedding-3-small", input: chunks }),
+    body: JSON.stringify({ model: "text-embedding-3-small", input: redactPromptPayload(chunks) }),
     signal: AbortSignal.timeout(20000),
   });
   if (!response.ok) throw new EvidenceError(503, "Transcript embeddings are unavailable. Please retry.");
@@ -31,7 +33,7 @@ export function createTranscriptImportHandler({
     if (auth.response) return auth.response;
     try {
       const db = getDb();
-      const identity = await resolveEvidenceIdentity(db, auth);
+      return await auditedEvidenceRequest(db,auth,request,'transcript',resolveEvidenceIdentity,async identity=>{
       const admin = (identity.access.authority==='admin' || canImportForOthers(auth, identity.tenant));
       if (request.method === "GET") {
         const agents = admin
@@ -113,7 +115,7 @@ export function createTranscriptImportHandler({
       checked(await db.from("transcript_chunks").insert(rows));
       return evidenceJson(200, { transcriptId: transcript.id, chunksCreated: rows.length,
         topicsDetected: [...new Set(rows.flatMap(row => row.topics))] });
-    } catch (error) { return evidenceFailure(error); }
+    }); } catch (error) { return evidenceFailure(error); }
   };
 }
 

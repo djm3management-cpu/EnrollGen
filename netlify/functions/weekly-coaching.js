@@ -91,7 +91,7 @@ async function fetchCallsWithScores(supabase, tenantId, sinceIso) {
     .order("created_at", { ascending: false });
 
   if (scoreError) {
-    console.warn("[weekly-coaching] Could not fetch scorecards:", scoreError.message);
+    console.warn("[weekly-coaching] Could not fetch scorecards:", 'request_failed');
     return rows.map((row) => ({ ...row, overall_score: null }));
   }
 
@@ -169,7 +169,7 @@ async function fetchLatestAgentInsights(supabase, tenantId) {
     .order("period_end", { ascending: false });
 
   if (error) {
-    console.warn("[weekly-coaching] Could not fetch agent insights:", error.message);
+    console.warn("[weekly-coaching] Could not fetch agent insights:", 'request_failed');
     return new Map();
   }
 
@@ -242,16 +242,16 @@ export default async (_request, context) => {
     for (const tenant of tenants || []) {
       try {
         results.push(await processTenant(supabase, tenant, context));
-      } catch (tenantError) {
-        console.error("[weekly-coaching] Tenant failed:", tenant.id, tenantError);
-        results.push({ tenant_id: tenant.id, error: tenantError.message });
+      } catch {
+        console.error("[weekly-coaching] Tenant failed:", tenant.id, 'request_failed');
+        results.push({ tenant_id: tenant.id, error: 'request_failed' });
       }
     }
 
     return json(200, { ok: true, tenants: results.length, results });
-  } catch (error) {
-    console.error("[weekly-coaching] Failed:", error);
-    return json(500, { ok: false, error: error.message });
+  } catch {
+    console.error("[weekly-coaching] Failed:", 'request_failed');
+    return json(500, { ok: false, error: 'request_failed' });
   }
 };
 

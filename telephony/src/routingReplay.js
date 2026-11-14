@@ -19,8 +19,8 @@ export async function routingReplay(req, res, next) {
     }
     res.locals.routingRequestKey = requestKey;
     return next();
-  } catch (err) {
-    console.error("Routing replay guard failed:", err);
+  } catch {
+    console.error("Routing replay guard failed:", 'request_failed');
     return res.status(503).send("Routing unavailable");
   }
 }
@@ -30,7 +30,7 @@ export async function sendRoutingTwiml(res, response) {
   const { error } = await supabase.from("telephony_routing_responses")
     .update({ response_xml: xml }).eq("request_key", res.locals.routingRequestKey);
   if (error) {
-    console.error("Could not persist routing response:", error);
+    console.error("Could not persist routing response:", 'request_failed');
     return res.status(503).send("Routing unavailable");
   }
   return res.type("text/xml").send(xml);

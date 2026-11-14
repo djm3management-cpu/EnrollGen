@@ -1,3 +1,4 @@
+import {postCallExceptionDetails} from '../lib/postCallException.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {recoverBeforeScoring} from '../lib/transcriptRecovery.js';
 import {createGapFillHandler} from './transcript-gaps-background.js';
@@ -7,7 +8,6 @@ import {verifyPostCallEnded} from '../lib/postCallGuard.js';
 import { complete } from "../../src/lib/llm/client.ts";
 import { resolveEngine } from "../../src/lib/llm/config.js";
 import { llmRuntime } from "./_llmTelemetry.js";
-import { redactSensitiveText } from "./_redaction.js";
 import {providerErrorCode,recordProviderStatus,sendProviderFailureAlert} from '../lib/postCallProvider.js';
 /**
  * Background function for scoring a call via the compliance engine.
@@ -32,15 +32,7 @@ function hasInternalJobAuthorization(request) {
   return Boolean(secret) && request.headers.get("x-enrollgen-job-secret") === secret;
 }
 
-function errorDetails(error) {
-  // Keep provider/SQL diagnostics, never dump requests, headers or transcript payloads.
-  const message = String(error?.message || error || 'Unknown error')
-    .replace(/sk-[\w-]+|Bearer\s+\S+/gi, '[SECRET_REDACTED]')
-    .replace(/"[^"\n]*"|'[^'\n]*'/g, '[QUOTED_VALUE_REDACTED]');
-  return { name: error?.name, message: redactSensitiveText(message).slice(0, 2000),
-    stack: String(error?.stack || '').split('\n').filter(line => /^\s+at /.test(line)).slice(0, 8),
-    ...(error?.errors ? { causes: error.errors.map(errorDetails) } : {}) };
-}
+function errorDetails(error){return postCallExceptionDetails(error);}
 
 export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus, verifyEnded=verifyPostCallEnded, recover=recoverBeforeScoring } = {}) {
 return async (request, context) => {

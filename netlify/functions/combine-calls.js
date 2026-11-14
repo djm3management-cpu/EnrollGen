@@ -1,3 +1,4 @@
+import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient,scopeCallLogToIdentity } from './_evidenceAccess.js';
 import { authorizeRecordingTarget, listTargetRecordings, publicRecording, recordingIdentity, UUID } from './_recordingAccess.js';
@@ -8,8 +9,7 @@ export function createCombineCallsHandler({ authenticate = requireClerkAuth, get
     const auth = await authenticate(request);
     if (auth.response) return auth.response;
     try {
-      const db = getDb();
-      const identity = await recordingIdentity(db, auth);
+      const db=getDb();return await auditedEvidenceRequest(db,auth,request,'recording',recordingIdentity,async identity=>{
       const tenantId = identity.tenant.id;
       if (request.method === 'GET') {
         const params = new URL(request.url).searchParams;
@@ -55,7 +55,7 @@ export function createCombineCallsHandler({ authenticate = requireClerkAuth, get
       if (result.error?.code === '42501') throw new EvidenceError(403, 'Call unavailable for this agent.');
       if (result.error?.code === '22023') throw new EvidenceError(409, result.error.message);
       return evidenceJson(200, checked(result));
-    } catch (error) { return evidenceFailure(error); }
+    }); } catch (error) { return evidenceFailure(error); }
   };
 }
 export default createCombineCallsHandler();

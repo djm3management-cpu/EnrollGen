@@ -1,3 +1,5 @@
+import { auditedEvidenceAccess } from '../../telephony/src/lib/evidenceAudit.js';
+import { evidenceCheckpoint, evidenceGrantId } from '../../telephony/src/lib/evidenceAudit.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { randomBytes, createHash } from 'node:crypto';
 import { EvidenceError, checked, requireOwnedSession, hasTenantAdminRole, resolveCallAccessIdentity } from './_evidenceAccess.js';
@@ -130,19 +132,21 @@ export function publicRecording(row) {
     provider_available: Boolean(row.recording_sid && row.account_sid && row.provider_status !== 'absent' && row.copy_status !== 'absent'),
     available: Boolean(row.storage_path || (row.recording_sid && row.account_sid && row.provider_status !== 'absent')) };
 }
-export async function recordingMediaGrant(db, identity, row, { download = false, forceProvider = false, env = process.env } = {}) {
+async function rawrecordingMediaGrant(db, identity, row, { download = false, forceProvider = false, env = process.env } = {}) {
   const filename = `recording-${row.recording_sid || String(row.id).replace(/[^a-z0-9-]/gi, '')}.wav`;
+  let storageAvailable=false;
   if (row.storage_path && !forceProvider) {
     const parts = row.storage_path.split('/');
     if (parts[0] !== identity.tenant.id || parts.some(part => !part || part === '.' || part === '..')) {
       throw new EvidenceError(403, 'Recording path is unavailable.');
     }
+    await evidenceCheckpoint(db,{actor:identity.auth.userId,tenant:identity.tenant.id,resource:'recording',resourceId:row.id,action:download?'download':'play',grantId:evidenceGrantId()});
     const { data, error } = await db.storage.from('call-recordings').createSignedUrl(row.storage_path, 300,
       download ? { download: filename } : undefined);
-    if (!error && data?.signedUrl) return { url: data.signedUrl, expires_in: 300, filename, source: 'storage' };
+    if (!error && data?.signedUrl) storageAvailable=true;
     // A missing/corrupt Storage copy must not hide the retained provider copy.
   }
-  if (!row.account_sid || !row.recording_sid || row.provider_status === 'absent' || row.copy_status === 'absent') {
+  if (!storageAvailable && (!row.account_sid || !row.recording_sid || row.provider_status === 'absent' || row.copy_status === 'absent')) {
     throw new EvidenceError(404, 'Recording audio is unavailable.');
   }
   const base = deploymentProfile(env).telephonyOrigin;
@@ -151,11 +155,16 @@ export async function recordingMediaGrant(db, identity, row, { download = false,
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
     throw new EvidenceError(503, 'Recording download service is not configured.');
   }
+  await evidenceCheckpoint(db,{actor:identity.auth.userId,tenant:identity.tenant.id,resource:'recording',resourceId:row.id,action:download?'download':'play',grantId:evidenceGrantId()});
   const token = randomBytes(32).toString('base64url');
   checked(await db.from('recording_download_tickets').insert({ token_hash: createHash('sha256').update(token).digest('hex'),
-    tenant_id: identity.tenant.id, account_sid: row.account_sid, recording_sid: row.recording_sid,
+    tenant_id: identity.tenant.id, actor_id:identity.auth.userId,grant_id:evidenceGrantId(),recording_id:row.id,storage_path:storageAvailable?row.storage_path:null, account_sid: row.account_sid || null, recording_sid: row.recording_sid || null,
     channels: row.recording_channels || (row.direction === 'voicemail' ? 1 : 2),
-    expected_call_sid: row.callback_call_sid || row.expected_call_sid, download,
+    expected_call_sid: row.callback_call_sid || row.expected_call_sid || null, download,
     expires_at: new Date(Date.now() + 300_000).toISOString() }));
-  return { url: `${url.href.replace(/\/$/, '')}/api/recordings/media/${token}`, expires_in: 300, filename, source: 'twilio' };
+  return { url: `${url.href.replace(/\/$/, '')}/api/recordings/media/${token}`, expires_in: 300, filename, source: storageAvailable?'storage':'twilio' };
+}
+
+export async function recordingMediaGrant(db,identity,row,options={}){
+ return auditedEvidenceAccess(db,{actor:identity.auth?.userId,tenant:identity.tenant.id,resource:'recording',resourceId:row.id,action:options.download?'download':'play'},()=>rawrecordingMediaGrant(db,identity,row,options));
 }

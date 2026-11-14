@@ -1,3 +1,5 @@
+import {useAuth} from '@clerk/clerk-react';
+import {fetchWithClerk} from '../../lib/clerkFetch.js';
 import {deploymentPublic} from '../../lib/deploymentPublic.js';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMessageThread } from "../../hooks/useMessages";
@@ -36,22 +38,23 @@ const ACTIVITY_LABELS = {
 };
 
 function MediaAttachment({ item, supabaseClient }) {
+  const {getToken}=useAuth();
   const [signedUrl, setSignedUrl] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
+    let objectUrl=null;
     if (item.storage_path && supabaseClient) {
-      supabaseClient.storage
-        .from("message-media")
-        .createSignedUrl(item.storage_path, 3600)
-        .then(({ data }) => {
-          if (!cancelled && data?.signedUrl) setSignedUrl(data.signedUrl);
-        });
+      fetchWithClerk(getToken,`/api/evidence-media?id=${encodeURIComponent(item.id)}`)
+        .then(response=>response.ok?response.blob():null)
+        .then(blob=>{if(!cancelled && blob){objectUrl=URL.createObjectURL(blob);setSignedUrl(objectUrl);}})
+        .catch(()=>{});
     }
     return () => {
       cancelled = true;
+      if(objectUrl)URL.revokeObjectURL(objectUrl);
     };
-  }, [item.storage_path, supabaseClient]);
+  }, [item.id, item.storage_path, supabaseClient, getToken]);
 
   const url = signedUrl || item.media_url;
   if (!url) return null;

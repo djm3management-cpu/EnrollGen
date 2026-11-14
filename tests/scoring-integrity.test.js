@@ -168,7 +168,7 @@ test('database initialization failures log their stage and sanitized diagnostic 
   const response=await handler(new Request('https://test',{method:'POST',headers:{'x-enrollgen-job-secret':'logging-test'},
    body:JSON.stringify({callId:randomUUID(),tenantId:tenant})}),{});
   assert.equal(response.status,503);assert.equal(logs[0].event,'scoring_failed');assert.equal(logs[0].stage,'load_call');
-  assert.match(logs[0].message,/Database unavailable/);assert.ok(logs[0].stack.length);
+  assert.equal(logs[0].message,'Error text withheld (may contain secrets or personal data)');assert.equal(logs[0].stack,undefined);
   assert.ok(!JSON.stringify(logs).includes('sk-proj-fixturesecret'));
  }finally{console.error=original;if(prior===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=prior;}
 });

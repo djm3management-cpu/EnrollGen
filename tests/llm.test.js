@@ -233,7 +233,7 @@ test('shadow never delays primary and compares resolved intent IDs, ignoring pro
   await h.flush();
   const comparison = h.rows.find(row => row.metadata.event === 'shadow_compare');
   assert.equal(comparison.shadow_match, true);
-  assert.ok(comparison.primary_output && comparison.shadow_output);
+  assert.equal(comparison.primary_output,null);assert.equal(comparison.shadow_output,null);
 });
 
 test('shadow mismatch and shadow failures never affect primary', async () => {

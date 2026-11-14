@@ -16,7 +16,7 @@ export async function selectConverselyWeek(db,week,{env=process.env,now=()=>Date
  for(const candidate of candidates){
   candidate.playable=false;
   if(candidate.call_id&&!carrierEligibility(candidate,config)&&candidate.compliance_status==='complete'&&candidate.score!=null&&!candidate.already_submitted)
-   candidate.playable=await isPlayable(candidate,{env,fetchImpl});
+   candidate.playable=await isPlayable(candidate,{db,env,fetchImpl});
  }
  return {config,decisions:selectWeeklySamples(candidates,config)};
 }

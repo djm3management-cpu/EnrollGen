@@ -1,3 +1,4 @@
+import {evidenceCheckpoint} from '../telephony/src/lib/evidenceAudit.js';
 import {previousReportDate} from '../telephony/src/lib/deploymentSchedule.js';
 import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
@@ -37,7 +38,7 @@ export async function ixCallAttribution(db,call,recordings) {
 
 // State is checkpointed under the queue lease before any audio is sent, and after each PUT.
 // Retrying a successful PUT is safe; registering the same enrollment again is not.
-export async function uploadIx(job, recordings, client, {env=process.env,fetchImpl=fetch,now=()=>Date.now(),checkpoint,call={}}={}) {
+export async function uploadIx(job, recordings, client, {db,env=process.env,fetchImpl=fetch,now=()=>Date.now(),checkpoint,call={}}={}) {
   if(!featureEnabled('IX_UPLOAD_ENABLED',env))return {status:'disabled'};
   const config={twilioAccountSid:env.TWILIO_ACCOUNT_SID,twilioAuthToken:env.TWILIO_AUTH_TOKEN};
   if(!checkpoint)throw Error('ix_checkpoint_required');
@@ -78,6 +79,7 @@ export async function uploadIx(job, recordings, client, {env=process.env,fetchIm
     const target=targets.get(leg.filename),url=uploadUrl(target,deploymentProfile(env));
     if(!Number.isFinite(Date.parse(target.expiresAt)) || Date.parse(target.expiresAt)<=now())throw attention('upload_url_expired');
     if(!config.twilioAuthToken || leg.account_sid!==config.twilioAccountSid)throw Error('twilio_not_configured');
+    await evidenceCheckpoint(db,{actor:'service:ix_export',tenant:job.tenant_id || deploymentProfile(env).tenantId,resource:'recording',resourceId:leg.recording_sid,action:'export',grantId:job.id});
     const audio=await fetchRecordingMedia(mediaUrl(leg.account_sid,leg.recording_sid,2).replace('.wav?','.mp3?'),config,{signal},fetchImpl);
     if(!audio.ok || !audio.body)throw Error('recording_download_failed');
     let response;
@@ -131,7 +133,7 @@ export function createIxIntegration(db,{env=process.env,send=postJson,now=()=>Da
         if(!rows?.length)throw Error('ix_lease_lost');
       };
       const attributed= saved.ix_state?.callRecordingId?call:await ixCallAttribution(db,call,recordings);
-      return uploadIx({...job,ix_state:saved.ix_state},recordings,ixClient,{env,fetchImpl,now,checkpoint,call:attributed});
+      return uploadIx({...job,ix_state:saved.ix_state},recordings,ixClient,{db,env,fetchImpl,now,checkpoint,call:attributed});
     },finish:async(job,{success,receipt,error,failure})=>{
       checked(await db.rpc('finish_ix_upload',{p_id:job.id,p_token:job.lease_token,
         p_outcome:success?'uploaded':failure instanceof IxError?failure.outcome:'retry',p_error:error,

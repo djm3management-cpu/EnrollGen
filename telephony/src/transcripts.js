@@ -81,7 +81,7 @@ export function startTranscriptWorker(options) {
     running = true;
     try { await runTranscriptDispatch(options); }
     catch (error) { console.error(JSON.stringify({ event: 'transcript_dispatch_failed', code: error.code || null,
-      message: redactSensitiveText(String(error.message || 'Reconciliation/dispatch failed')).slice(0, 1000) })); }
+      message:'Reconciliation/dispatch failed' })); }
     finally { running = false; }
   };
   const timer = setInterval(tick, 15_000); timer.unref();
@@ -90,7 +90,7 @@ export function startTranscriptWorker(options) {
 }
 
 // Notifications carry IDs and reason codes only, never recordings or transcript text.
-export async function sendPendingRecoveryAlerts({db,scoringUrl,secret,transport=fetch}) {
+export async function sendPendingRecoveryAlerts({db,secret,transport=fetch}) {
  if(!featureEnabled('OPERATIONAL_EMAIL_ENABLED'))return;
  const {data,error}=await db.from('transcript_recovery_alerts').select('call_id,tenant_id,reason').is('alerted_at',null).order('created_at').limit(20);
  if(error)throw error;

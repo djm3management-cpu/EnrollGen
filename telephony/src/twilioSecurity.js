@@ -14,7 +14,7 @@ export function requireTwilioSignature(req, res, next) {
     req.body || {}
   );
   if (!valid) {
-    console.warn(`Rejected unsigned Twilio webhook: ${req.originalUrl}`);
+    console.warn('Rejected unsigned Twilio webhook');
     return res.status(403).send("Invalid Twilio signature");
   }
   return next();

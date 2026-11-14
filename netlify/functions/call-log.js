@@ -1,9 +1,10 @@
+import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient,scopeCallLogToIdentity,scopeCallToIdentity } from './_evidenceAccess.js';
 import { recordingIdentity } from './_recordingAccess.js';
 
 const terminal = new Set(['completed', 'canceled', 'failed', 'busy', 'no-answer']);
-const allowed = new Set(['offset', 'limit', 'from', 'to', 'direction', 'disposition', 'agent', 'search', 'ascending', 'contact_id', 'record_ids', 'outcome', 'inbound_call_id']);
+const allowed = new Set(['export','offset', 'limit', 'from', 'to', 'direction', 'disposition', 'agent', 'search', 'ascending', 'contact_id', 'record_ids', 'outcome', 'inbound_call_id']);
 const validUuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 const integer = (value, fallback, max) => {
   if (value == null) return fallback;
@@ -73,8 +74,7 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
     const auth = await authenticate(request);
     if (auth.response) return auth.response;
     try {
-      const db = getDb();
-      const identity = await recordingIdentity(db, auth);
+      const db=getDb(); return await auditedEvidenceRequest(db,auth,request,'call_evidence',recordingIdentity,async identity=>{
       const params = new URL(request.url).searchParams;
       if ([...params.keys()].some(key => !allowed.has(key))) throw new EvidenceError(400, 'Invalid call-log filter.');
       const offset = integer(params.get('offset'), 0, 1_000_000);
@@ -148,7 +148,7 @@ export function createCallLogHandler({ authenticate = requireClerkAuth, getDb = 
           call_outcome: record?.call_outcome ?? row.call_outcome ?? null,
           compliance_grade: card?.overall_grade || null, compliance_pass_fail: card?.pass_fail || null };
       }), count: result.count || 0 });
-    } catch (error) { return evidenceFailure(error); }
+    }); } catch (error) { return evidenceFailure(error); }
   };
 }
 export default createCallLogHandler();

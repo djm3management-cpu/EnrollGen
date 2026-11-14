@@ -1,3 +1,4 @@
+import {auditSink} from './helpers/auditSink.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID, createHash } from 'node:crypto';
@@ -26,7 +27,7 @@ function fixture({badCopy=false,missing=false,lostLease=false,deleteStatus=204}=
     if(options.method==='DELETE'){events.push('DELETE');return new Response(null,{status:deleteStatus});}
     events.push('download');return new Response(wav,{headers:{'content-length':String(wav.length)}});
   };
-  return {db,job,row,events,logs,objects,fetchImpl,log:line=>logs.push(JSON.parse(line))};
+  return {db:auditSink(db),job,row,events,logs,objects,fetchImpl,log:line=>logs.push(JSON.parse(line))};
 }
 test('recording deletion follows immutable upload, byte/checksum verification and durable copy metadata',async()=>{
   const f=fixture();assert.equal(await processRecording({...f,config}),'stored');

@@ -1,3 +1,4 @@
+import {installEvidenceAuditFixture} from './evidenceAuditFixture.js';
 import {prepareServerIdentity} from './serverIdentityFixture.js';
 // Thin Supabase-shaped adapter. All authorization and mutations execute in
 // PostgreSQL under the caller's real role; no RLS outcomes are mocked.
@@ -49,6 +50,7 @@ export function evidenceDb(pg, onError = () => {}) {
         abortSignal() { return chain; },
         then(resolve, reject) {
           const run = async () => {
+            if(table==='evidence_access_log')await installEvidenceAuditFixture(pg);
             if (rows?.length === 0) return { data: [], error: null };
             const where = filters.length ? " WHERE " + filters.join(" AND ") : "";
             const sort = order.length ? " ORDER BY " + order.join(",") : "";

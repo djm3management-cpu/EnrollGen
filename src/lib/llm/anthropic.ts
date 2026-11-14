@@ -1,8 +1,10 @@
+import {redactPromptPayload} from '../../../telephony/src/lib/redaction.js';
 import Anthropic from '@anthropic-ai/sdk';
 import { jsonSchemaOutputFormat } from '@anthropic-ai/sdk/helpers/json-schema';
 import type { Adapter, CompletionRequest, Completion, Json } from './types.ts';
 
 export function toAnthropicRequest(request: CompletionRequest, model: string): Json {
+  request=redactPromptPayload(request);
   const body: Json = {
     model, system: typeof request.system === 'string' ? request.system : request.system.map(({ cache_prefix, ...block }) => ({
       ...block, ...(cache_prefix === true ? { cache_control: { type: 'ephemeral' } } : {}),

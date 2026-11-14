@@ -1,4 +1,5 @@
-import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
+import {auditedEvidenceRequest} from './_evidenceAccess.js';
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { createHash } from 'node:crypto';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient, resolveEvidenceIdentity, bindPostCallPayload, requireOwnedSession } from './_evidenceAccess.js';
@@ -25,7 +26,7 @@ export function createPostCallQueueHandler({authenticate = request=>requireClerk
     if (auth.response) return auth.response;
     try {
       const db = getDb();
-      const identity = await resolveEvidenceIdentity(db,auth);
+      return await auditedEvidenceRequest(db,auth,request,'call_evidence',resolveEvidenceIdentity,async identity=>{
       if (request.method === 'GET') {
         const params = new URL(request.url).searchParams;
         const sessionId = params.get('session_id'), key=params.get('request_key');
@@ -77,7 +78,7 @@ export function createPostCallQueueHandler({authenticate = request=>requireClerk
         if (response.status !== 202) throw new EvidenceError(503,'Post-call dispatch failed. Your queued request is retained.');
       }
       return evidenceJson(202,{session_id:body.session_id,request_key:key,status:queued.status,result:queued.result});
-    } catch(error) {
+    }); } catch(error) {
       console.error(JSON.stringify({event:'post_call_queue_error',code:error.code || error.status || 'request_failed'}));
       return evidenceFailure(error);
     }

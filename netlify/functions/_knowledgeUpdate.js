@@ -1,3 +1,4 @@
+import { redactPromptPayload } from './_redaction.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 const SOURCE_FETCH_TIMEOUT_MS = 15000;
@@ -117,7 +118,7 @@ async function callClaude(entry, sourceMaterial) {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({
+      body: JSON.stringify(redactPromptPayload({
         model: process.env.KNOWLEDGE_UPDATE_MODEL || "claude-sonnet-4-6",
         max_tokens: 5000,
         system: "You are a Medicare compliance knowledge base editor. Return only the requested update format.",
@@ -127,13 +128,13 @@ async function callClaude(entry, sourceMaterial) {
             content: `You are a Medicare compliance knowledge base editor. Compare the existing knowledge entry below with the latest source material. If there are meaningful changes (new regulations, updated guidance, changed dates, new carriers, etc.), produce an updated version of the knowledge entry. If no changes are needed, respond with "NO_CHANGES".\n\nExisting entry:\n${truncate(entry.content, 18000)}\n\nSource material:\n${truncate(sourceMaterial, 28000)}\n\nIf changes are needed, respond with:\nCHANGES_DETECTED\nSummary: [1-2 sentence summary of what changed]\nConfidence: [0.0-1.0 how confident you are this update is correct]\n\nUpdated content:\n[the full updated entry content]`,
           },
         ],
-      }),
+      })),
       signal: controller.signal,
     });
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data?.error?.message || `Anthropic request failed with HTTP ${response.status}`);
+      throw new Error(`Anthropic request failed with HTTP ${response.status}`);
     }
     return parseUpdateResponse(parseClaudeText(data));
   } finally {
@@ -238,7 +239,7 @@ export async function runKnowledgeUpdate(
         id: entry.id,
         key: entry.key,
         result: "error",
-        error: error?.message || String(error),
+        error: 'request_failed',
       });
     }
   }
@@ -261,12 +262,12 @@ export async function runAllKnowledgeCategoryUpdates({ limitPerCategory = 6 } = 
         limit: limitPerCategory,
       });
       results.push({ category, ...result });
-    } catch (error) {
+    } catch {
       results.push({
         category,
         checked: 0,
         results: [],
-        error: error?.message || String(error),
+        error: 'request_failed',
       });
     }
   }

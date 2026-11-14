@@ -1,3 +1,5 @@
+import {auditSink} from './helpers/auditSink.js';
+const auditDb=auditSink();
 import {profileForIx} from './fixtures/profile-helpers.js';
 // Explicit opt-in for existing enabled-feature behavior under test.
 process.env.IX_UPLOAD_ENABLED = 'true';
@@ -67,7 +69,7 @@ test('Type A payload matches OpenAPI and omits external-enrollment and applicant
 test('multi-leg MP3 streaming matches out-of-order targets by filename and checkpoints before PUT',async()=>{
  let saved,puts=0,registered=0;
  const client={environment:'test',register:async payload=>{registered++;assert.equal(payload.sunfireEnrollmentCode,'SF-CODE');assert.equal(payload.callMetadata.recordings.length,2);return registration(payload);},finalize:async()=>({status:'finalized'})};
- const receipt=await uploadIx(job,[leg(2),leg(1)],client,{env,checkpoint:async state=>{saved=structuredClone(state);},fetchImpl:async(url,options)=>{
+ const receipt=await uploadIx(job,[leg(2),leg(1)],client,{db:auditDb,env,checkpoint:async state=>{saved=structuredClone(state);},fetchImpl:async(url,options)=>{
   if(options?.method==='PUT'){
    assert.equal(saved.callRecordingId,id);assert.equal(options.headers['Content-Type'],'audio/mpeg');assert.ok(options.body instanceof ReadableStream);assert.equal(options.headers.Authorization,undefined);
    assert.equal(url,`https://bucket.s3.amazonaws.com/${puts++}`);
@@ -81,7 +83,7 @@ test('partial upload and failed finalize resume saved registration without re-re
  let saved,registrations=0,puts=0,finalizes=0;
  const client={environment:'test',register:async payload=>{registrations++;return registration(payload);},finalize:async()=>{if(++finalizes===1)throw new IxError('ix_http_500');return {status:'already_finalized'};}};
  let failUpload=true;
- const options={env,checkpoint:async state=>{saved=structuredClone(state);},fetchImpl:async(url,opts)=>{
+ const options={db:auditDb,env,checkpoint:async state=>{saved=structuredClone(state);},fetchImpl:async(url,opts)=>{
   if(opts?.method==='PUT'){puts++;if(url.endsWith('/1')&&failUpload){failUpload=false;throw Error('network');}}return twilio(url,opts);
  }};
  await assert.rejects(()=>uploadIx(job,[leg(1),leg(2)],client,options),/network/);assert.equal(saved.uploadedFilenames.length,1);
@@ -95,7 +97,7 @@ test('expired unfinished URLs need attention; finished uploads can finalize afte
  const state={environment:'test',...registration(payload),recordings:[{filename:'a.mp3',...leg(1)}],uploadedFilenames:[]};
  state.recordingUploads[0].expiresAt='2000-01-01T00:00:00Z';
  const client={environment:'test',register:()=>assert.fail('must not register'),finalize:async()=>({status:'finalized'})};
- const options={env,checkpoint:async value=>{saved=value;},fetchImpl:()=>assert.fail('expired target must not fetch')};
+ const options={db:auditDb,env,checkpoint:async value=>{saved=value;},fetchImpl:()=>assert.fail('expired target must not fetch')};
  await assert.rejects(()=>uploadIx({...job,ix_state:state},[],client,options),error=>error.message==='upload_url_expired'&&error.outcome==='needs_attention');
  await uploadIx({...job,ix_state:{...state,uploadedFilenames:['a.mp3']}},[],client,options);assert.equal(saved,undefined);
 });
@@ -104,12 +106,12 @@ test('saved registration cannot cross environments and malformed targets never c
  const client={environment:'production',register:async()=>({callRecordingId:id,recordingUploads:[]})};
  await assert.rejects(()=>uploadIx({...job,ix_state:{environment:'test',callRecordingId:id}},[],client,{checkpoint:async()=>{}}),/ix_environment_mismatch/);
  client.environment='test';
- await assert.rejects(()=>uploadIx(job,[leg(1)],client,{env,fetchImpl:twilio,checkpoint:async value=>{saved=value;}}),/ix_invalid_upload_targets/);
+ await assert.rejects(()=>uploadIx(job,[leg(1)],client,{db:auditDb,env,fetchImpl:twilio,checkpoint:async value=>{saved=value;}}),/ix_invalid_upload_targets/);
  assert.equal(saved.callRecordingId,id);client.register=()=>assert.fail('must not register');
- await assert.rejects(()=>uploadIx({...job,ix_state:saved},[],client,{env,checkpoint:async()=>{}}),/ix_invalid_upload_targets/);
+ await assert.rejects(()=>uploadIx({...job,ix_state:saved},[],client,{db:auditDb,env,checkpoint:async()=>{}}),/ix_invalid_upload_targets/);
 });
 test('dual-channel identity and reliable recording timestamps are required',async()=>{
  for(const changed of [{channels:1},{call_sid:'wrong'},{start_time:null}]){
-  await assert.rejects(()=>uploadIx(job,[leg(1)],{environment:'test',register:()=>assert.fail('unverified recording')},{env,checkpoint:async()=>{},fetchImpl:async()=>Response.json({sid:leg(1).recording_sid,account_sid:account,call_sid:parent,channels:2,start_time:'2026-10-30T12:00:00Z',duration:120,...changed})}),/dual_channel|identity_mismatch|times_missing/);
+  await assert.rejects(()=>uploadIx(job,[leg(1)],{environment:'test',register:()=>assert.fail('unverified recording')},{db:auditDb,env,checkpoint:async()=>{},fetchImpl:async()=>Response.json({sid:leg(1).recording_sid,account_sid:account,call_sid:parent,channels:2,start_time:'2026-10-30T12:00:00Z',duration:120,...changed})}),/dual_channel|identity_mismatch|times_missing/);
  }
 });

@@ -331,6 +331,7 @@ export default function CallLogTab({ onOpenContact = null, inboundCallId=null })
       const to = dateTo ? new Date(`${dateTo}T00:00:00`) : null;
       if (to) to.setDate(to.getDate() + 1);
       const exportRows = await loadCallLogPages(getToken, {
+        export:1,
         inbound_call_id:inboundCallId,
         from: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null,
         to: to?.toISOString(),

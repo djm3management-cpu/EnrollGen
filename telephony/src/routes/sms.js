@@ -87,13 +87,13 @@ async function storeInboundMedia({ tenantId, messageId, body }) {
         .upload(storagePath, data, { contentType, upsert: true });
       if (uploadError) throw new Error(`media upload failed: ${uploadError.message}`);
       mediaRow.storage_path = storagePath;
-    } catch (err) {
+    } catch {
       // Keep the Twilio URL so the attachment is not lost entirely.
-      console.error(`inbound media ${index} for message ${messageId}:`, err.message);
+      console.error(`inbound media ${index} for message ${messageId}:`, 'request_failed');
     }
 
     const { error: insertError } = await supabase.from("message_media").insert(mediaRow);
-    if (insertError) console.error("message_media insert failed:", insertError.message);
+    if (insertError) console.error("message_media insert failed:", 'request_failed');
   }
 }
 
@@ -140,8 +140,8 @@ smsRouter.post("/twilio/sms", requireTwilioSignature, async (req, res) => {
     if (contact.assigned_agent_id) {
       sendToAgent(contact.assigned_agent_id, { type: "sms", message, contact });
     }
-  } catch (err) {
-    console.error("/twilio/sms failed:", err);
+  } catch {
+    console.error("/twilio/sms failed:", 'request_failed');
   }
   return res.type("text/xml").send("<Response/>");
 });
@@ -156,7 +156,7 @@ smsRouter.post("/twilio/sms-status", requireTwilioSignature, async (req, res) =>
     .from("messages")
     .update({ status })
     .eq("twilio_message_sid", sid);
-  if (error) console.error("sms status update failed:", error.message);
+  if (error) console.error("sms status update failed:", 'request_failed');
 });
 
 smsRouter.get("/api/sms/gifs", async (req, res) => {
@@ -252,7 +252,7 @@ smsRouter.post("/api/sms/send", async (req, res) => {
         storage_path: gifStoragePath,
       }));
       const { error: mediaError } = await supabase.from("message_media").insert(mediaRows);
-      if (mediaError) console.error("outbound media insert failed:", mediaError.message);
+      if (mediaError) console.error("outbound media insert failed:", 'request_failed');
     }
 
     await logContactActivity({
@@ -264,8 +264,8 @@ smsRouter.post("/api/sms/send", async (req, res) => {
     });
 
     return res.status(201).json({ message });
-  } catch (err) {
-    console.error("/api/sms/send failed:", err);
-    return res.status(500).json({ error: err.message || "send failed" });
+  } catch {
+    console.error("/api/sms/send failed:", 'request_failed');
+    return res.status(500).json({ error: 'send_failed' });
   }
 });

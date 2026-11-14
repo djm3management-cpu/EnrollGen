@@ -1,3 +1,4 @@
+import { auditedEvidenceRequest } from './_evidenceAccess.js';
 /**
  * Deepgram batch transcription — transcribes a pre-recorded audio file.
  *
@@ -224,7 +225,7 @@ export function createTranscribeHandler({
 
   try {
     const sb = getDb();
-    const identity = await recordingIdentity(sb, auth);
+    return await auditedEvidenceRequest(sb,auth,request,'recording',recordingIdentity,async identity=>{
     const target = await authorizeRecordingTarget(sb, identity, { call_record_id: callId });
     const recordings = await listTargetRecordings(sb, identity, target);
     const recording = recordings.find(row => row.id === recordingId);
@@ -335,6 +336,7 @@ export function createTranscribeHandler({
     }
 
     return json(200, result);
+    });
   } catch (err) {
     return evidenceFailure(err);
   }

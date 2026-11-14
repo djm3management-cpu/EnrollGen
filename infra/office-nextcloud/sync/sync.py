@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import uuid
 import base64
 import json
 import logging
@@ -37,7 +38,7 @@ NEXTCLOUD_USER = env("NEXTCLOUD_USER")
 NEXTCLOUD_APP_TOKEN = env("NEXTCLOUD_APP_TOKEN")
 
 CALLS_TABLE = env("SUPABASE_CALLS_TABLE", "call_records")
-CALL_SELECT = env("SUPABASE_CALL_SELECT", "*")
+CALL_SELECT = "id,tenant_id,created_at,updated_at,call_start,agent_name,writing_agent,customer_first_name,customer_last_name,beneficiary_name,transcript_raw,metadata"
 SYNC_TIME_COLUMN = env("SYNC_TIME_COLUMN", "created_at")
 PAGE_SIZE = int(env("SUPABASE_PAGE_SIZE", "50") or "50")
 SYNC_INTERVAL_SECONDS = int(env("SYNC_INTERVAL_SECONDS", "300") or "300")
@@ -134,8 +135,10 @@ def query_calls(since):
         "order": f"{SYNC_TIME_COLUMN}.asc",
         "limit": str(PAGE_SIZE),
     }
-    url = f"{SUPABASE_URL}/rest/v1/{urllib.parse.quote(CALLS_TABLE)}?{urllib.parse.urlencode(params)}"
-    status, body, _ = http_request("GET", url, headers=supabase_headers())
+    # The SQL export routine bounds the deployment tenant and durably audits.
+    url = f"{SUPABASE_URL}/rest/v1/rpc/export_evidence_calls?{urllib.parse.urlencode(params)}"
+    headers = {**supabase_headers(), "Content-Type": "application/json"}
+    status, body, _ = http_request("POST", url, data=b"{}", headers=headers)
     if status >= 300:
         raise RuntimeError(f"Supabase query failed with HTTP {status}")
     return json.loads(body.decode("utf-8"))
@@ -310,10 +313,10 @@ def put_with_retry(path_parts, content, content_type):
             raise RuntimeError(f"PUT returned HTTP {status}")
         except Exception as error:
             last_error = error
-            logging.warning("Upload attempt %s failed for %s: %s", attempt, "/".join(path_parts), error)
+            logging.warning("Upload attempt %s failed", attempt)
             if attempt < 3:
                 time.sleep(2)
-    raise RuntimeError(f"upload failed after 3 attempts: {last_error}")
+    raise RuntimeError("upload failed after 3 attempts")
 
 
 def transcript_fallback_bytes(row):
@@ -329,6 +332,16 @@ def transcript_fallback_bytes(row):
 
 def process_call(row):
     call_id = row.get("id")
+    # Do not release any storage file or inline transcript to WebDAV unless
+    # its specific export decision is durably accepted first.
+    audit = {"actor_id": "service:nextcloud", "tenant_id": row.get("tenant_id"),
+             "resource_type": "call_evidence", "resource_id": call_id,
+             "action": "export", "result": "allowed", "grant_id": str(uuid.uuid4())}
+    status, _, _ = http_request("POST", f"{SUPABASE_URL}/rest/v1/evidence_access_log",
+                               data=json.dumps(audit).encode(),
+                               headers={**supabase_headers(), "Content-Type": "application/json"})
+    if status >= 300:
+        raise RuntimeError("Evidence audit unavailable")
     month = month_for_call(row)
     stem = file_stem(row)
     uploaded = []
@@ -404,7 +417,7 @@ def main():
         try:
             sync_once(conn)
         except Exception:
-            logging.exception("Sync run failed")
+            logging.error("Sync run failed")
         if run_once:
             break
         time.sleep(SYNC_INTERVAL_SECONDS)

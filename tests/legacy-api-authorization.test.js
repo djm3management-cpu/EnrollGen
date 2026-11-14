@@ -46,7 +46,7 @@ const transport = async (url, options) => {
   usage.provider++;
   assert.equal(new URL(url).hostname, 'api.deepgram.com');
   const audioUrl = JSON.parse(options.body).url;
-  assert.match(audioUrl, /^https:\/\/storage.offline.test\//);
+  assert.match(audioUrl, /^https:\/\/phone.test\/api\/recordings\/media\//);
   assert.doesNotMatch(audioUrl, /attacker/);
   return Response.json({ metadata: { duration: 200 }, results: { channels: [{ alternatives: [{ transcript: 'Authorized transcript', words: [] }] }], utterances: [] } });
 };
@@ -96,6 +96,7 @@ before(async () => {
       call_end timestamptz, call_duration_seconds integer, transcript_raw text, transcript_diarized jsonb,
       dg_sentiment jsonb, dg_intents jsonb, dg_topics jsonb, dg_summary text, call_analytics jsonb, updated_at timestamptz);
     CREATE TABLE telephony_call_attempts(id uuid, tenant_id uuid, call_record_id uuid, parent_call_sid text, agent_id text);
+    CREATE TABLE recording_download_tickets(token_hash text PRIMARY KEY,tenant_id uuid,recording_sid text,account_sid text,channels smallint,expected_call_sid text,download boolean,expires_at timestamptz);
     CREATE TABLE recording_ingestion(id uuid, tenant_id uuid, call_record_id uuid, storage_path text, first_seen_at timestamptz);
     CREATE TABLE compliance_scorecards(id uuid, tenant_id uuid, call_id uuid, created_at timestamptz);
     CREATE TABLE compliance_llm_passes(id uuid, tenant_id uuid, call_id uuid, created_at timestamptz, status text);

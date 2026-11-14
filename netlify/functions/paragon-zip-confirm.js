@@ -1,3 +1,4 @@
+import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {resolveCallAccessIdentity,evidenceFailure} from './_evidenceAccess.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 // Legacy URL retained for callback clients; residence confirmation is retired.
@@ -13,7 +14,7 @@ export function createParagonCallbacksHandler({authenticate=requireClerkAuth,get
   const auth = await authenticate(request);
   if (auth.response) return auth.response;
   const db = getDb();
-  const identity=await resolveCallAccessIdentity(db,auth),agent={id:identity.access.roster_id,agent_slug:identity.access.agent_slug};
+  return await auditedEvidenceRequest(db,auth,request,'contact',resolveCallAccessIdentity,async identity=>{const agent={id:identity.access.roster_id,agent_slug:identity.access.agent_slug};
   if (request.method === 'GET') {
     const params=new URL(request.url).searchParams;
     const summary=params.get('summary')==='1';
@@ -64,7 +65,7 @@ export function createParagonCallbacksHandler({authenticate=requireClerkAuth,get
     return error?json({error:'Unable to update callback task'},503):!data?json({error:'Callback task unavailable'},403):json({saved:true});
   }
   return json({ error:'Unsupported callback action' },400);
- }catch(error){return evidenceFailure(error);}
+ }); }catch(error){return evidenceFailure(error);}
  };
 }
 export default createParagonCallbacksHandler();

@@ -154,7 +154,7 @@ async function fetchCallsWithScores(supabase, tenantId, sinceIso) {
     .order("created_at", { ascending: false });
 
   if (scoreError) {
-    console.warn("[nightly-analytics] Could not fetch scorecards:", scoreError.message);
+    console.warn("[nightly-analytics] Could not fetch scorecards:", 'request_failed');
     return rows.map((row) => ({ ...row, overall_score: null }));
   }
 
@@ -357,16 +357,16 @@ export default async () => {
     for (const tenant of tenants || []) {
       try {
         results.push(await processTenant(supabase, tenant));
-      } catch (tenantError) {
-        console.error("[nightly-analytics] Tenant failed:", tenant.id, tenantError);
-        results.push({ tenant_id: tenant.id, error: tenantError.message });
+      } catch {
+        console.error("[nightly-analytics] Tenant failed:", tenant.id, 'request_failed');
+        results.push({ tenant_id: tenant.id, error: 'request_failed' });
       }
     }
 
     return json(200, { ok: true, tenants: results.length, results });
-  } catch (error) {
-    console.error("[nightly-analytics] Failed:", error);
-    return json(500, { ok: false, error: error.message });
+  } catch {
+    console.error("[nightly-analytics] Failed:", 'request_failed');
+    return json(500, { ok: false, error: 'request_failed' });
   }
 };
 

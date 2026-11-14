@@ -40,7 +40,7 @@ async function sweepPresence() {
   if (expiryRunning) return;
   expiryRunning = true;
   try { await expirePhoneSessions(); }
-  catch (err) { console.error(err.message); }
+  catch { console.error('Server startup failed'); }
   finally { expiryRunning = false; }
 }
 setInterval(sweepPresence, 15_000).unref();

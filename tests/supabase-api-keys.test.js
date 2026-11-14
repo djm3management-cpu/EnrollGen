@@ -75,7 +75,7 @@ for(const [name,client] of [['Netlify/integrations',createSupabaseClient],['tele
       const signal=AbortSignal.timeout(3000);
       assert.equal((await db.from('call_records').select('id').abortSignal(signal)).error,null);
       assert.equal((await db.storage.from('recordings').createSignedUrl('fixture.wav',60)).error,null);
-      assert.equal(requests.length,2);assert.equal(requests[0].signal,signal);
+      assert.equal(requests.length,4);assert.equal(requests[0].signal,signal);
       for(const request of requests){
         assert.equal(request.headers.get('apikey'),key);
         assert.equal(request.headers.get('Authorization'),key.startsWith('sb_')?null:`Bearer ${key}`);
@@ -115,7 +115,7 @@ test('authenticated SDK requests retain Clerk user JWTs while using new public k
 test('browser singleton clients never use an opaque public key as a JWT, including Realtime and missing Clerk sessions',async()=>{
   const bundled=await build({entryPoints:['src/lib/supabase.js'],bundle:true,write:false,platform:'node',format:'cjs',external:['@supabase/supabase-js'],define:{'import.meta.env':JSON.stringify({VITE_SUPABASE_URL:url,VITE_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture'})}});
   const module={exports:{}},requests=[];
-  const context=vm.createContext({module,exports:module.exports,require:createRequire(import.meta.url),Headers,Request,Response,Date,Map,atob,console,
+  const context=vm.createContext({module,exports:module.exports,require:createRequire(import.meta.url),Headers,Request,Response,URL,Date,Map,atob,console,
     fetch:async(_,init)=>{requests.push(new Headers(init.headers));return new Response('[]',{headers:{'Content-Type':'application/json'}});}});
   vm.runInContext(bundled.outputFiles[0].text,context);
   const api=module.exports;

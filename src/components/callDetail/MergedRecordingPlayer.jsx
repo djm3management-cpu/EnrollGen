@@ -1,3 +1,5 @@
+import {auditEvidenceExport} from '../../lib/evidenceExport.js';
+import {downloadRecordingUrl} from '../../lib/recordingsApi';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppAuth } from '../../context/AuthContext';
 import { listRecordings, recordingMedia } from '../../lib/recordingsApi';
@@ -74,7 +76,11 @@ export default function MergedRecordingPlayer({ target, playback, playRequest = 
         if (pendingSeek.current != null) event.currentTarget.currentTime = Math.max(0, pendingSeek.current - media.startOffset);
         if (shouldPlay.current) void event.currentTarget.play().catch(() => setError('Press Play to start the merged recording.'));
       }} onTimeUpdate={event => onTime?.(event.currentTarget.currentTime + media.startOffset)} />
-      <a className="contacts-mini-btn" href={media.url} download={`conference-${media.callId}.wav`}>Download merged WAV</a>
+      <a className="contacts-mini-btn" href={media.url} download={`conference-${media.callId}.wav`} onClick={async event=>{
+        event.preventDefault();
+        try{await auditEvidenceExport(getToken,stableTarget);downloadRecordingUrl(media.url,`conference-${media.callId}.wav`);}
+        catch{setError('Download unavailable. Please retry.');}
+      }}>Download merged WAV</a>
       <p className="contacts-muted">{media.duration.toFixed(1)} seconds of audio · starts {media.startOffset.toFixed(1)} seconds into the call.</p>
     </>}
   </section>;

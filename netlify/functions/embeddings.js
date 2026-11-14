@@ -1,3 +1,4 @@
+import { redactPromptPayload } from './_redaction.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import {timingSafeEqual} from 'node:crypto';
 import {checked,getEvidenceServiceClient,resolveEvidenceIdentity,requireOwnedSession} from './_evidenceAccess.js';
@@ -68,11 +69,11 @@ export function createEmbeddingsHandler({ authenticate, getDb=getEvidenceService
         const response = await send('https://api.openai.com/v1/embeddings', {
           method:'POST', signal,
           headers:{Authorization:`Bearer ${env.OPENAI_API_KEY}`, 'Content-Type':'application/json'},
-          body:JSON.stringify({model:MODEL,input:batch,encoding_format:'float'}),
+          body:JSON.stringify({model:MODEL,input:redactPromptPayload(batch),encoding_format:'float'}),
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          console.error(JSON.stringify({event:'embedding_provider_error',status:response.status,code:data.error?.code || null,request_id:response.headers.get('x-request-id'),chunks:chunks.length}));
+          console.error(JSON.stringify({event:'embedding_provider_error',status:response.status,code:"provider_error",request_id:response.headers.get('x-request-id'),chunks:chunks.length}));
           return await fail(providerErrorCode({...data.error,error:data.error,status:response.status}),response.status===429?429:503);
         }
         const vectors = [...(data.data || [])].sort((a,b) => a.index-b.index);

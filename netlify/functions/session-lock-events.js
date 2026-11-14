@@ -1,3 +1,4 @@
+import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceJson, evidenceFailure, getEvidenceServiceClient, resolveEvidenceIdentity } from './_evidenceAccess.js';
 
@@ -11,7 +12,7 @@ export function createSessionLockEventsHandler({ authenticate = request => requi
     if (auth.response) return auth.response;
     try {
       const db = getDb();
-      const identity = await resolveEvidenceIdentity(db, auth);
+      return await auditedEvidenceRequest(db,auth,request,'call_evidence',resolveEvidenceIdentity,async identity=>{
       let input;
       try { input = await request.json(); } catch { throw new EvidenceError(400, 'Invalid event'); }
       if (!EVENTS.has(input?.event)) throw new EvidenceError(400, 'Invalid event');
@@ -20,7 +21,7 @@ export function createSessionLockEventsHandler({ authenticate = request => requi
         payload: { source: 'browser_session_lock', clerk_user_id: auth.userId, result: input.event === 'session_unlock_failed' ? 'failed' : 'success' },
       }));
       return evidenceJson(200, { recorded: true });
-    } catch (error) { return evidenceFailure(error); }
+    }); } catch (error) { return evidenceFailure(error); }
   };
 }
 export default createSessionLockEventsHandler();

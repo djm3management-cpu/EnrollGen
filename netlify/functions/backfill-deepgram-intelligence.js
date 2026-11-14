@@ -362,10 +362,10 @@ export default async (request) => {
 
           if (error) throw error;
           updated += 1;
-        } catch (error) {
+        } catch {
           errors.push({
             call_id: row.id,
-            error: error?.message || String(error),
+            error: 'request_failed',
           });
         }
       }
@@ -381,11 +381,11 @@ export default async (request) => {
       skipped_missing_audio: skippedMissingAudio,
       errors,
     });
-  } catch (error) {
-    console.error("[backfill-deepgram-intelligence] Failed:", error);
+  } catch {
+    console.error("[backfill-deepgram-intelligence] Failed:", 'request_failed');
     return json(500, {
       ok: false,
-      error: error?.message || String(error),
+      error: 'request_failed',
     });
   }
 };

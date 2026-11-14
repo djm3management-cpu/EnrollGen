@@ -1,3 +1,4 @@
+import {evidenceCheckpoint} from '../telephony/src/lib/evidenceAudit.js';
 import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled } from '../telephony/src/lib/deploymentFeatures.js';
 import {postJson} from './transport.js';
@@ -15,6 +16,7 @@ export async function deliverEnrollmentWebhooks(db,{env=process.env,send=postJso
    const snapshot=checked(await db.from('ghl_enrollment_deliveries').select('payload_encrypted,intake_id').eq('id',job.id).single());
    const intake=checked(await db.from('enrollment_intakes').select('is_test_enrollment').eq('id',snapshot.intake_id).eq('tenant_id',job.tenant_id).single());
    if(intake.is_test_enrollment)throw Error('test_enrollment_excluded');
+   await evidenceCheckpoint(db,{actor:'service:ghl_enrollment',tenant:job.tenant_id,resource:'enrollment_intake',resourceId:snapshot.intake_id,action:'export',grantId:job.id});
    const payload=checked(await db.rpc('decrypt_pii_value',{p_encrypted:snapshot.payload_encrypted}));
    const response=await send(destination,JSON.stringify(typeof payload==='string'?JSON.parse(payload):payload),{'Idempotency-Key':job.id});
    if(response.status<200 || response.status>=300)throw Error('webhook_failed');

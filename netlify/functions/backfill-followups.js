@@ -123,11 +123,11 @@ export default async (request) => {
       scanned,
       queued,
     });
-  } catch (error) {
-    console.error("[backfill-followups] Failed:", error);
+  } catch {
+    console.error("[backfill-followups] Failed:", 'request_failed');
     return json(500, {
       ok: false,
-      error: error?.message || String(error),
+      error: 'request_failed',
     });
   }
 };

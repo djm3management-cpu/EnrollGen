@@ -1,3 +1,4 @@
+import {auditSink} from './helpers/auditSink.js';
 import {previousConverselyWeek,currentConverselyWeek} from '../integrations/converselySelection.js';
 import {createWorker} from '../integrations/worker.js';
 import test from 'node:test';
@@ -32,7 +33,7 @@ test('synthetic enrollment delivery has exactly one destination and uses the wri
  const env={DEPLOYMENT_PROFILE_JSON:JSON.stringify(profile),GHL_ENABLED:'true'};
  const sent=[],payload=ghlPayload(valid(roster[11]),'2026-11-14T12:00:00Z',roster);let claimed=false,finished=false;
  const db={rpc:async(name)=>({data:name==='claim_compliance_upload'?(claimed?[]:(claimed=true,[{id:'job',tenant_id:profile.tenantId,lease_token:'lease'}])):name==='decrypt_pii_value'?JSON.stringify(payload):(finished=true,null)}),from(table){const q={select(){return q},eq(){return q},single:async()=>({data:table==='enrollment_intakes'?{is_test_enrollment:false}:{payload_encrypted:{},intake_id:'intake'}})};return q;}};
- await deliverEnrollmentWebhooks(db,{env,send:async(url,body)=>{sent.push({host:new URL(url).host,body:JSON.parse(body)});return {status:200};}});
+ await deliverEnrollmentWebhooks(auditSink(db),{env,send:async(url,body)=>{sent.push({host:new URL(url).host,body:JSON.parse(body)});return {status:200};}});
  assert.equal(finished,true);assert.equal(sent.length,1);assert.deepEqual(sent.map(s=>s.host),['sink.example']);assert.equal(sent[0].body.assignedUserId,roster[11].ghl_user_id);
 });
 

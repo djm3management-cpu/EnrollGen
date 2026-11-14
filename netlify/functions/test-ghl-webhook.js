@@ -63,7 +63,7 @@ export default async (request) => {
       response_body: responseText.slice(0, 1000),
     });
   } catch (error) {
-    console.error("[test-ghl-webhook] failed:", error);
+    console.error("[test-ghl-webhook] failed:", 'request_failed');
     const timedOut = error?.name === "AbortError";
     return json(timedOut ? 504 : 500, {
       error: timedOut ? "Webhook test timed out" : "Webhook test failed",

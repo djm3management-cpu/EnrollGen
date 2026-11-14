@@ -47,7 +47,7 @@ export function createUpdateKnowledgeHandler({ run = runKnowledgeUpdate, runAll 
 
       return json(200, result);
     } catch (error) {
-      console.error("[update-knowledge]", error);
+      console.error("[update-knowledge]", 'request_failed');
       return json(500, {
         error: "Knowledge update failed",
         detail: error?.message || String(error),

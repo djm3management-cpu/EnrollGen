@@ -166,7 +166,7 @@ test('own subject and organization admin can retrieve; peer, cross-tenant, inact
 test('authorized Storage play/download works before and after 065 with a service key',async()=>{
   const row=(await sql("SELECT * FROM recording_ingestion WHERE copy_status='stored' LIMIT 1"))[0];await sql("INSERT INTO storage.objects(bucket_id,name) VALUES('call-recordings',$1)",[row.storage_path]);
   await pg.exec('SET ROLE service_role');
-  const before=await call(auth,{action:'media',call_record_id:C,recording_id:row.id,download:true});assert.equal(before.source,'storage');assert.match(before.url,/download=recording-/);
+  const before=await call(auth,{action:'media',call_record_id:C,recording_id:row.id,download:true});assert.equal(before.source,'storage');assert.match(before.url,/\/api\/recordings\/media\//);
   await pg.exec('RESET ROLE');await pg.exec(readFileSync(new URL('../supabase/migrations/065_recording_storage_access.sql',import.meta.url),'utf8'));
   await pg.exec('SET ROLE authenticated');assert.equal((await sql('SELECT * FROM storage.objects')).length,0);await pg.exec('RESET ROLE; SET ROLE service_role');
   const after=await call(auth,{action:'media',call_record_id:C,recording_id:row.id});assert.equal(after.source,'storage');
@@ -175,7 +175,7 @@ test('authorized Storage play/download works before and after 065 with a service
 test('missing Storage copy yields a short-lived provider capability, not credentials or raw provider URL',async()=>{
   const row=(await sql("SELECT * FROM recording_ingestion WHERE recording_sid=$1",[re(3)]))[0];const grant=await call(auth,{action:'media',call_record_id:C,recording_id:row.id,download:true});
   assert.equal(grant.source,'twilio');assert.match(grant.url,/^https:\/\/phone\.test\/api\/recordings\/media\/[A-Za-z0-9_-]{43}$/);
-  assert.equal(grant.url.includes(AC),false);const ticket=(await sql('SELECT * FROM recording_download_tickets'))[0];assert.equal(ticket.recording_sid,row.recording_sid);assert.equal(ticket.download,true);assert.equal(ticket.token_hash.length,64);
+  assert.equal(grant.url.includes(AC),false);const ticket=(await sql("SELECT * FROM recording_download_tickets WHERE storage_path IS NULL"))[0];assert.equal(ticket.recording_sid,row.recording_sid);assert.equal(ticket.download,true);assert.equal(ticket.token_hash.length,64);
   await call(auth,{action:'media',call_record_id:C,recording_id:'not-my-recording'},404);
 });
 

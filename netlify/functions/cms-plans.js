@@ -39,8 +39,8 @@ export default async (req) => {
   let supabase;
   try {
     supabase = getSupabase();
-  } catch (error) {
-    console.error("cms-plans configuration error:", error);
+  } catch {
+    console.error("cms-plans configuration error:", 'request_failed');
     return json(500, {
       error: "Server configuration error",
       detail: "Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in Netlify environment variables.",

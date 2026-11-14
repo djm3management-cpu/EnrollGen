@@ -78,5 +78,5 @@ export async function logContactActivity({
     ref_id: refId,
     summary,
   });
-  if (error) console.error("contact_activities insert failed:", error.message);
+  if (error) console.error("contact_activities insert failed:", 'request_failed');
 }

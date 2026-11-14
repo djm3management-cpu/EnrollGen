@@ -74,12 +74,9 @@ export function useMessageThread(contactId) {
 
   const markRead = useCallback(async () => {
     if (!supabaseClient || !contactId) return;
-    const { error: updateError } = await supabaseClient
-      .from("messages")
-      .update({ read_at: new Date().toISOString() })
-      .eq("contact_id", contactId)
-      .eq("direction", "inbound")
-      .is("read_at", null);
+    const { error: updateError } = await supabaseClient.rpc('mark_evidence_messages_read', {
+      p_contact:contactId,p_read_at:new Date().toISOString(),
+    });
     if (updateError) debugLog("[useMessageThread] markRead failed");
     else publishSms({ type: "read", contactId });
   }, [supabaseClient, contactId]);

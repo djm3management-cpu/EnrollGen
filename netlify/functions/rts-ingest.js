@@ -1,3 +1,4 @@
+import { redactPromptPayload } from './_redaction.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { resolveCallAccessIdentity, checked } from "./_evidenceAccess.js";
@@ -110,7 +111,7 @@ async function callNormalizer(knownCarriers, knownAgents, rows) {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({
+      body: JSON.stringify(redactPromptPayload({
         model: process.env.RTS_INGESTION_MODEL || "claude-sonnet-4-6",
         max_tokens: 12000,
         temperature: 0,
@@ -123,12 +124,12 @@ async function callNormalizer(knownCarriers, knownAgents, rows) {
             )}\nRAW_ROWS: ${JSON.stringify(rows)}`,
           },
         ],
-      }),
+      })),
       signal: controller.signal,
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data.error?.message || `Anthropic API returned HTTP ${response.status}.`);
+      throw new Error(`Anthropic API returned HTTP ${response.status}.`);
     }
     const text = (data.content || [])
       .filter((block) => block.type === "text")
@@ -467,7 +468,7 @@ export function createRtsIngestHandler({authenticate=requireClerkAuth,getDb=getS
   } catch (error) {
     console.error("[rts-ingest] failed", {status:error.status || 500,code:error.code || null});
     return json(error.status || 500, {
-      error: error.message || "RTS ingestion failed.",
+      error: "RTS ingestion failed.",
     });
   }
 };

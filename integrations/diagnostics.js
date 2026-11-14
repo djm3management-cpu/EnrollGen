@@ -21,7 +21,7 @@ export function deliveryDiagnostic(error, { env = {}, provider = false } = {}) {
     name: ['Error','TypeError','RangeError','SyntaxError'].includes(error?.name) ? error.name : 'Error',
     message: messages.has(error?.message) ? error.message : 'Error text withheld (may contain secrets or personal data)',
   };
-  if (codes.has(error?.code) || /^[0-9A-Z]{5}$/.test(error?.code ?? '')) diagnostic.code = error.code;
+  if (codes.has(error?.code) || /^[0-9]{2}[0-9A-Z]{3}$/.test(error?.code ?? '')) diagnostic.code = error.code;
   if (provider && providerNames.has(error?.name)) {
     diagnostic.code = error.name;
     if (/domain.*not verified/i.test(error?.message ?? '')) diagnostic.message = 'Resend sender domain is not verified';

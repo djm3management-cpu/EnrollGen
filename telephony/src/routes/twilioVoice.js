@@ -64,7 +64,7 @@ async function logEvent({ inboundCallId, callSid, event, payload }) {
     event,
     payload: payload || {},
   });
-  if (error) console.error("telephony_events insert failed:", error.message);
+  if (error) console.error("telephony_events insert failed:", 'request_failed');
 }
 
 async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
@@ -272,8 +272,8 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req,res,next)=>
       res,
       await dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds: [] })
     );
-  } catch (err) {
-    console.error("/twilio/voice failed:", err);
+  } catch {
+    console.error("/twilio/voice failed:", 'request_failed');
     // Don't strand a claimed agent as busy if we never actually dialed
     // them (e.g. the inbound_calls insert failed after the claim).
     if (claimedAgent) {
@@ -376,8 +376,8 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, conference
         triedAgentIds: tried,
       })
     );
-  } catch (err) {
-    console.error("/twilio/dial-result failed:", err);
+  } catch {
+    console.error("/twilio/dial-result failed:", 'request_failed');
     if (claimedAgent) {
       try { await releaseAgent(claimedAgent.agent_id, callSid); }
       catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }

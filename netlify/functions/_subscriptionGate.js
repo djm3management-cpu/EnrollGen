@@ -34,7 +34,7 @@ export async function requireActiveSubscription(supabase, tenantId) {
     .maybeSingle();
 
   if (error) {
-    console.error("[subscription] lookup failed:", error);
+    console.error("[subscription] lookup failed:", 'request_failed');
     return {
       response: subscriptionError(500, "Unable to verify subscription status."),
     };
@@ -103,7 +103,7 @@ export async function checkSeatLimit(supabase, tenantId, subscription) {
     .eq("is_active", true);
 
   if (error) {
-    console.error("[subscription] seat count failed:", error);
+    console.error("[subscription] seat count failed:", 'request_failed');
     return {
       response: subscriptionError(500, "Unable to verify seat limit."),
     };
@@ -132,6 +132,6 @@ export async function logUsageRecord(supabase, tenantId, recordType, quantity = 
   });
 
   if (error) {
-    console.warn("[subscription] usage log failed:", error.message || error);
+    console.warn("[subscription] usage log failed:", 'request_failed');
   }
 }

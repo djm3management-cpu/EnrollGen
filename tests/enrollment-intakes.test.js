@@ -167,7 +167,7 @@ test('compliance metadata comes only from the selected completed intake and subm
 });
 test('IX sends Type A metadata and does not deliver a queued call without an intake',async()=>{
  const received=[];
- const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,IX_ENV:'production',DEPLOYMENT_PROFILE_JSON:profileForIx('production'),IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
+ const env={IX_ENV:'production',DEPLOYMENT_PROFILE_JSON:profileForIx('production'),IX_UPLOAD_ENABLED:'true',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
  const integration=createIxIntegration(db,{env,ixClient:{environment:'production',available:true,register:async args=>{received.push(args);return {callRecordingId:id(88),recordingUploads:args.callMetadata.recordings.map(({filename})=>({filename,presignedUrl:'https://bucket.s3.amazonaws.com/audio',expiresAt:'2099-01-01T00:00:00Z'}))};},finalize:async()=>({status:'finalized'})},fetchImpl:async(url,options)=>url.endsWith('.json')?Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:'120'}):options.method==='PUT'?new Response(null,{status:200}):new Response(new Uint8Array([1,2]))});
  await createComplianceWorker(db,{env,...integration,log:()=>{}})({schedule:false});assert.equal(received.length,2);
  assert.equal(received[0].sunfireEnrollmentCode,'SF-123');assert.deepEqual(Object.keys(received[0]).sort(),['callMetadata','sunfireEnrollmentCode']);assert.equal(received[0].callMetadata.recordings.length,1);assert.equal(received[0].callMetadata.teamName,'Pilot Benefit Agency');
@@ -250,7 +250,7 @@ test('admin claims require the matching organization and support Clerk role and 
  assert.equal((await handler({authenticate:async()=>mikeAdminAuth})(new Request(`https://app.test/api/enrollment-intakes?call_id=${id(74)}`))).status,403);
 }));
 
-const ixEnv={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,IX_ENV:'production',DEPLOYMENT_PROFILE_JSON:profileForIx('production'),IX_UPLOAD_ENABLED:'true',IX_USERNAME:'ix-user',IX_PASSWORD:'ix-password',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
+const ixEnv={IX_ENV:'production',DEPLOYMENT_PROFILE_JSON:profileForIx('production'),IX_UPLOAD_ENABLED:'true',IX_USERNAME:'ix-user',IX_PASSWORD:'ix-password',TWILIO_ACCOUNT_SID:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',TWILIO_AUTH_TOKEN:'test'};
 const ixFetch=(status,extra={})=>async(url,options)=>{
  if(url.endsWith('/authenticate'))return Response.json({username:'ix-user',token:'private-token',expiresIn:100});
  if(url.endsWith('.json'))return Response.json({sid:'REbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',account_sid:'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',call_sid:'CAcccccccccccccccccccccccccccccccc',channels:2,start_time:'2026-10-20T15:00:00Z',duration:120});
@@ -272,7 +272,7 @@ for(const [http,status,error,retryable] of [[404,'needs_attention','invalid_sunf
    await tick({schedule:false});
    let [row]=await query('SELECT * FROM ix_uploads WHERE enrollment_key=$1',[intake]);
    assert.equal(row.status,status);assert.equal(row.last_error,error);assert.equal(row.retryable,retryable);assert.equal(row.attempts,1);
-   assert.ok(row.provider_message.includes('[redacted]'));assert.ok(!JSON.stringify(logs).includes('private-token'));assert.ok(!JSON.stringify(logs).includes('Provider says'));
+   assert.equal(row.provider_message,'Provider message withheld');assert.ok(!JSON.stringify(logs).includes('private-token'));assert.ok(!JSON.stringify(logs).includes('Provider says'));
    const admin=createComplianceUploadsHandler({getDb:()=>db,authenticate:async()=>({userId:'user_pilot01',orgId:'org-a',tokenPayload:{org_role:'org:admin'}})});
    const response=await admin(new Request('https://app.test/compliance-uploads'));assert.equal(response.status,200);
    const data=await response.json();assert.ok(data.failures.some(item=>item.id===row.id&&item.status===status));

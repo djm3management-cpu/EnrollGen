@@ -1,3 +1,4 @@
+import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity,scopeCallToIdentity} from './_evidenceAccess.js';
 import {OPTIONAL_CALL_FIELDS,optionalCallDetailsPatch} from '../../src/lib/callRecordDetails.js';
@@ -6,7 +7,7 @@ export function createCallRecordDetailsHandler({authenticate=r=>requireClerkAuth
   if(!['GET','PATCH'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{
-   const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
+   const db=getDb();return await auditedEvidenceRequest(db,auth,request,'call_evidence',resolveCallAccessIdentity,async identity=>{
    const id=new URL(request.url).searchParams.get('call_record_id');
    if(!/^[0-9a-f-]{36}$/i.test(id||''))throw new EvidenceError(400,'Call record ID is required.');
    const accessible=()=>scopeCallToIdentity(db.from('call_records').select(['id',...OPTIONAL_CALL_FIELDS.map(([key])=>key)].join(',')).eq('id',id),identity).maybeSingle();
@@ -18,7 +19,7 @@ export function createCallRecordDetailsHandler({authenticate=r=>requireClerkAuth
    if(Object.keys(patch).length)checked(await scopeCallToIdentity(db.from('call_records').update(patch).eq('id',id),identity));
    // Edits never queue scoring, create an opportunity, or alter disposition.
    return evidenceJson(200,{record:checked(await accessible())});
-  }catch(error){return evidenceFailure(error);}
+  }); }catch(error){return evidenceFailure(error);}
  };
 }
 export default createCallRecordDetailsHandler();

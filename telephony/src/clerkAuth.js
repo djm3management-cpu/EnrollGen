@@ -20,7 +20,7 @@ export async function requireClerkUser(req, res) {
     const authority=deploymentIdentity.authority==='admin'||signedDeploymentAdmin(payload,payload.org_id)?'admin':deploymentIdentity.authority;
     return { ...payload, deploymentIdentity:{...deploymentIdentity,authority} };
   } catch (error) {
-    if (error.status) { res.status(error.status).json({ error: error.message }); return null; }
+    if (error.status) { res.status(error.status).json({ error: 'request_failed' }); return null; }
     console.error("Clerk token verification failed");
     res.status(401).json({ error: "Invalid or expired Clerk session token" });
     return null;

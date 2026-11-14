@@ -1,3 +1,4 @@
+import {auditSink} from './helpers/auditSink.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -186,12 +187,12 @@ test('migration guards real integration claim SQL and skips parked reports witho
 
 test('GHL post-call delivery uses the deployment gate even with a tenant webhook, and preserves enabled delivery',async()=>{
  let calls=0;
- const tenant={ghl_webhook_url:'https://attacker.offline.test',name:'Untrusted agency'};
+ const tenant={id:'00000000-0000-4000-8000-000000000001',ghl_webhook_url:'https://attacker.offline.test',name:'Untrusted agency'};
  const send=async(url,body)=>{calls++;assert.equal(url,'https://ghl.test/webhook');assert.equal(JSON.parse(body).agency,'Pilot Benefit Agency');return {status:200};};
  const roster=[{id:'writer',clerk_user_id:'subject',name:'Pilot Agent 01',ghl_user_id:'provider-id'}];
  try{
-  assert.equal((await sendEnrollmentWebhook(tenant,roster,{writing_agent_id:'writer'},{send})).sent,false);assert.equal(calls,0);
-  process.env.GHL_ENABLED='true';assert.equal((await sendEnrollmentWebhook(tenant,roster,{writing_agent_id:'writer'},{send})).sent,true);assert.equal(calls,1);
+  assert.equal((await sendEnrollmentWebhook(tenant,roster,{writing_agent_id:'writer'},{send,db:auditSink()})).sent,false);assert.equal(calls,0);
+  process.env.GHL_ENABLED='true';assert.equal((await sendEnrollmentWebhook(tenant,roster,{writing_agent_id:'writer'},{send,db:auditSink()})).sent,true);assert.equal(calls,1);
  }finally{process.env.GHL_ENABLED='false';}
 
 });

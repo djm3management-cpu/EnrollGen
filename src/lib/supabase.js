@@ -1,3 +1,4 @@
+import { evidenceTransport } from './evidenceTransport.js';
 import { debugLog } from "./debugLog.js";
 import { createClient } from "@supabase/supabase-js";
 import { createClerkFetch } from './clerkFetch.js';
@@ -138,7 +139,7 @@ export function getClerkSupabase() {
       // The accessToken option only manages the Authorization bearer;
       // Supabase's gateway still requires the public API key in the apikey
       // header on every request ("No API key found in request").
-      global: { headers: { apikey: supabasePublicKey }, fetch:supabaseApiKeyFetch(supabasePublicKey, createClerkFetch(resolveClerkAccessToken)) },
+      global: { headers: { apikey: supabasePublicKey }, fetch:supabaseApiKeyFetch(supabasePublicKey, evidenceTransport(createClerkFetch(resolveClerkAccessToken))) },
     });
   }
   return clerkClient;
@@ -162,7 +163,7 @@ export function getAuthSupabase(token) {
     // Realtime must receive the same user JWT as REST/Storage, not the API key.
     accessToken: () => resolveToken(),
     global: { headers: { Authorization: `Bearer ${token}` },
-      fetch:supabaseApiKeyFetch(supabasePublicKey, createClerkFetch(resolveToken)) },
+      fetch:supabaseApiKeyFetch(supabasePublicKey, evidenceTransport(createClerkFetch(resolveToken))) },
     auth: {
       persistSession: false,
       autoRefreshToken: false,

@@ -1,5 +1,8 @@
+import {useAppAuth} from '../context/AuthContext';
+import {getActiveSessionMetadata} from '../hooks/useSessionTracker.js';
+import {auditEvidenceExport} from '../lib/evidenceExport.js';
 import {deploymentPublic} from '../lib/deploymentPublic.js';
-import { agencyName,agencyLine,agencyHours } from '../lib/deploymentPublic.js';
+import { agencyLine,agencyHours } from '../lib/deploymentPublic.js';
 import React, { useCallback, useState } from "react";
 import { ClipboardCheck } from "lucide-react";
 import { useScript } from "../context/ScriptContext";
@@ -489,6 +492,8 @@ export function exportSessionSummaryPdf(
    ═══════════════════════════════════════════════════ */
 export default React.memo(function SessionSummary() {
   const { state } = useScript();
+  const {getToken}=useAppAuth();
+  const [exportError,setExportError]=useState('');
   const { liveCall } = useLiveCall();
   const { entries, getTranscript, getWarnings } = useCopilotLog();
   const [exportingPdf, setExportingPdf] = useState(false);
@@ -529,6 +534,8 @@ export default React.memo(function SessionSummary() {
     const blockers = getDeterministicBlockers(state);
 
     try {
+      setExportError('');
+      await auditEvidenceExport(getToken,{session_id:getActiveSessionMetadata().sessionId});
       const pdfRuntime = await loadPdfRuntime();
 
       exportSessionSummaryPdf(
@@ -539,7 +546,8 @@ export default React.memo(function SessionSummary() {
         blockers,
         pdfRuntime
       );
-    } finally {
+    } catch {setExportError('Export unavailable. Please retry.');}
+    finally {
       setExportingPdf(false);
     }
   }, [
@@ -547,10 +555,13 @@ export default React.memo(function SessionSummary() {
     getTranscript,
     getWarnings,
     exportingPdf,
-    buildComplianceResult,
+    buildComplianceResult, getToken,
   ]);
 
-  const handleCopyToClipboard = useCallback(() => {
+  const handleCopyToClipboard = useCallback(async () => {
+    setExportError('');
+    try {await auditEvidenceExport(getToken,{session_id:getActiveSessionMetadata().sessionId});}
+    catch {setExportError('Export unavailable. Please retry.');return;}
     const summary = generateSessionSummary(state);
     const complianceResult = buildComplianceResult();
     const blockers = getDeterministicBlockers(state);
@@ -598,7 +609,7 @@ export default React.memo(function SessionSummary() {
     }
 
     navigator.clipboard.writeText(lines.join("\n"));
-  }, [state, buildComplianceResult]);
+  }, [state, buildComplianceResult, getToken]);
 
   if (!state.enrollOk) return null;
 
@@ -628,6 +639,7 @@ export default React.memo(function SessionSummary() {
         <span style={{ fontSize: "1rem" }}>Enrollment complete</span>
         <span>Enrollment complete, save your records</span>
       </span>
+      {exportError && <span className="ops-error" role="alert">{exportError}</span>}
       <div style={{ display: "flex", gap: 10 }}>
         <button data-key-role="secondary" className="btn-clay" onClick={handleCopyToClipboard}>
           Copy Summary

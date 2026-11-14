@@ -84,17 +84,17 @@ export default async (request, context) => {
             const { value, done } = await events.next();
             if (done) controller.close();
             else controller.enqueue(encoder.encode(`event: ${value.type}\ndata: ${JSON.stringify(value)}\n\n`));
-          } catch (error) { controller.error(error); }
+          } catch { controller.error(new Error('AI stream unavailable')); }
         },
         async cancel() { await events.return(); },
       }), { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' } });
     }
     return jsonResponse(200, await complete(input, runtime));
-  } catch (error) {
-    console.error("coach function error:", error);
+  } catch {
+    console.error("coach request failed");
     return jsonResponse(500, {
       error: "AI request failed",
-      detail: error?.message || String(error),
+      detail: "Please retry shortly.",
     });
   }
 };

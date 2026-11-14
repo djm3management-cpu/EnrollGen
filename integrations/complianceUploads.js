@@ -1,3 +1,4 @@
+import {evidenceCheckpoint} from '../telephony/src/lib/evidenceAudit.js';
 import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
 import {selectConverselyWeek,processManualConverselyRun} from './converselyRuns.js';
@@ -52,11 +53,12 @@ export function converselyPayload(call, recordingPath, agent = {},profile=deploy
   return record;
 }
 
-export async function playableMp3(candidate,{env=process.env,fetchImpl=fetch}={}) {
+export async function playableMp3(candidate,{db,env=process.env,fetchImpl=fetch}={}) {
   if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env))return false;
   if(!candidate.recording_sid)return false;
   if(!env.TWILIO_AUTH_TOKEN || !env.TWILIO_ACCOUNT_SID)throw Error('twilio_not_configured');
   if(candidate.account_sid!==env.TWILIO_ACCOUNT_SID)return false;
+  await evidenceCheckpoint(db,{actor:'service:compliance_probe',tenant:candidate.tenant_id || deploymentProfile(env).tenantId,resource:'recording',resourceId:candidate.call_id || candidate.recording_sid,action:'read'});
   let response;
   try{
     const url=mediaUrl(candidate.account_sid,candidate.recording_sid,candidate.recording_channels || 2).replace('.wav?','.mp3?');
@@ -139,7 +141,7 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
             const result=await send(validateDestination(deploymentProfile(env).conversely.endpoint,deploymentProfile(env).allowedHosts),JSON.stringify({metadata:[converselyPayload(call,grant.url,{pcpName:intake.data?.pcpName},deploymentProfile(env))]}),
               {'Api-Key':env.CONVERSELY_API_KEY,'Idempotency-Key':job.id});
             log(JSON.stringify({event:'conversely_response',id:job.id,status:result.status,
-              body:typeof result.body==='string'?result.body.replaceAll(env.CONVERSELY_API_KEY,'[REDACTED]'):null}));
+              code:result.status>=200 && result.status<300?'provider_response':'provider_failure'}));
             if(result.status<200 || result.status>=300)throw Error(`conversely_http_${result.status}`);
             if(result.body && /invalid api key|unauthori[sz]ed|forbidden|denied/i.test(result.body))throw Error('conversely_response_error');
             if(result.body){
