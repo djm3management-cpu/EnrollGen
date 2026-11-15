@@ -40,7 +40,6 @@ import { useUnreadMessages } from "./hooks/useMessages";
 import SmsToastHost from "./components/SmsToastHost";
 import { setPendingCallContact } from "./lib/callLaunch";
 import { useAppAuth } from "./context/AuthContext";
-import { fetchWithClerk } from "./lib/clerkFetch";
 import { BookOpen, SquareTerminal, Sun, TableProperties, ShieldCheck } from "lucide-react";
 import CollapsibleWidget from "./components/CollapsibleWidget";
 import ComplianceMini from "./components/ComplianceMini";

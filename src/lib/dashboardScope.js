@@ -1,4 +1,3 @@
-const normalizeName = value => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export function dashboardAgents(roster, enrolled) {
   const options = roster.map(agent => {

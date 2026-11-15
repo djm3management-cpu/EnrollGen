@@ -14,7 +14,7 @@ import {createEnrollmentIntakesHandler} from '../netlify/functions/enrollment-in
 import {deliverEnrollmentWebhooks} from '../integrations/enrollmentWebhook.js';
 import {emptyIntake,normalizeIntake} from '../src/lib/enrollmentIntake.js';
 import rosterSource from './fixtures/deployment-roster.json' with {type:'json'};
-import profileSource from '../docs/pilot-profile.example.json' with {type:'json'};
+import profileSource from '../config/deployment-profile.example.json' with {type:'json'};
 const expected=JSON.parse(readFileSync(new URL('catalog.expected.json',bootstrapRoot)));
 let pg;
 const q=(sql,args=[])=>pg.query(sql,args).then(r=>r.rows);

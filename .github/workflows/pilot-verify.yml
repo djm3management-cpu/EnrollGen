@@ -1,0 +1,26 @@
+name: Pilot release verification
+on:
+  push:
+    branches: ['pilot/release']
+  pull_request:
+    branches: ['pilot/release']
+permissions:
+  contents: read
+jobs:
+  verify:
+    # Also guard against manually altered event context; never execute on main.
+    if: github.ref == 'refs/heads/pilot/release' || (github.event_name == 'pull_request' && github.base_ref == 'pilot/release')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # Exact release tags: hashes could not be independently verified locally.
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm ci --prefix telephony --ignore-scripts --no-audit --no-fund
+      - run: npm run verify

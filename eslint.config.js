@@ -37,6 +37,10 @@ export default [
     },
   },
   {
+    files: ['scripts/security/**/*.mjs', 'scripts/verify.mjs', 'scripts/clean-export.mjs'],
+    rules: {...js.configs.recommended.rules},
+  },
+  {
     files: ['netlify/functions/**/*.{js,cjs,mjs}', 'scripts/**/*.{js,cjs,mjs}', 'telephony/**/*.{js,cjs,mjs}', 'integrations/**/*.{js,cjs,mjs}', 'tests/**/*.{js,cjs,mjs}'],
     languageOptions: {
       globals: {

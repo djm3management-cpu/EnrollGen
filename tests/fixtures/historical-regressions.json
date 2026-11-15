@@ -1,0 +1,1053 @@
+{
+  "provenance": [
+    {
+      "ref": "b47e80d:src/hooks/useContacts.js",
+      "sha256": "eb0c13a3b4b75042736fe0feb89ee9fc52141327fd05e01767ee4df5dbf7741e"
+    },
+    {
+      "ref": "81c935f:src/data/u65ComplianceKnowledge.js",
+      "sha256": "8075970700baf8ac123e6dc6eacdca8911d6966eb4290efc3a169976a0156887"
+    },
+    {
+      "ref": "51fccc3:src/flows/u65/U65Data.js",
+      "sha256": "a00a73f745a497fd8bc40b4d0ff5e147b5c5f53750ac8053dac1d4f76e151e08"
+    },
+    {
+      "ref": "51fccc3:public/private-plan-playbook.html",
+      "sha256": "161374f6dcde072d07a771d8b3ebf1f480b3ba697e0eef79bbc88e7a2e223591"
+    }
+  ],
+  "callbacks": {
+    "addFollowUp": "async ({ contactId, agentId, dueAt, reason }) => {\n      const { error } = await supabaseClient.from(\"follow_ups\").insert({\n        tenant_id: tenant?.id,\n        contact_id: contactId,\n        agent_id: agentId || null,\n        due_at: dueAt,\n        reason,\n      });\n      if (error) throw error;\n      await supabaseClient.from(\"contact_activities\").insert({\n        tenant_id: tenant?.id,\n        contact_id: contactId,\n        type: \"follow_up\",\n        summary: reason ? `Follow-up scheduled: ${reason.slice(0, 100)}` : \"Follow-up scheduled\",\n      });\n    }",
+    "setFollowUpStatus": "async (followUpId, status) => {\n      const { error } = await supabaseClient\n        .from(\"follow_ups\")\n        .update({ status })\n        .eq(\"id\", followUpId);\n      if (error) throw error;\n    }"
+  },
+  "knowledge": {
+    "Open & Qualify": {
+      "verbatimScript": [
+        "Confirm the household needs and actual current coverage.",
+        "DE, MD, FL agents; target higher earners priced out of unsubsidized ACA.",
+        "Eligibility, availability, rating basis and ACA/MEC status: verify with carrier."
+      ],
+      "keyPhrasesToListenFor": [
+        "verify with carrier",
+        "confirm with carrier",
+        "selected plan",
+        "limits",
+        "network",
+        "OOP"
+      ],
+      "requiredElements": [
+        "Confirm the household needs and actual current coverage.",
+        "DE, MD, FL agents; target higher earners priced out of unsubsidized ACA.",
+        "Eligibility, availability, rating basis and ACA/MEC status: verify with carrier.",
+        "Unknown product facts, ACA/MEC status and underwriting lookbacks: verify with carrier.",
+        "Use the selected variant’s required statements from the workbook catalog; never transfer rules between products.",
+        "Never compare premiums across major medical, HSA, limited copay, MEC/preventive and fixed indemnity groups.",
+        "MedAccess Basic/Pro: state inpatient day limits and maternity rules. BMI MVP/DVP: state inpatient day/surgery caps and no OON.",
+        "Vault Bronze/Silver: cancer excluded. Vault Bronze/Silver/Elite Plus: 140% of Medicare facility reference pricing; hospitals can refuse and balance bill outside OOP.",
+        "Life-X VL: unlimited exposure past visit caps. Bloom: fixed indemnity, NOT major medical, scheduled amounts only; member may owe the balance; 6-month pre-ex limitation.",
+        "Everest newborn 365 days and cancer/CI 30 days; Life-X initial 90-day elective exclusion where stated; MedMax elective surgery excluded.",
+        "Ultimate EPO: underlying SBC deductible $9,000 individual / $18,000 family; $1,500/$3,500 gap headlines are never the deductible.",
+        "MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.",
+        "First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.",
+        "PHCS Extended/limited-benefit networks are not full PHCS PPO; UW Medicine does not take PHCS; verify exact network selector.",
+        "Verify participation per provider and exact product; maps are examples, not a census.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "commonMistakes": [
+        "Transferring another product’s rules to the selected plan.",
+        "Comparing premiums across coverage groups."
+      ],
+      "redFlags": [
+        "Guaranteeing total exposure is capped despite exclusions or limits.",
+        "Treating a network logo as proof of exact-product participation.",
+        "Inventing underwriting lookbacks or ACA/MEC status."
+      ]
+    },
+    "Discovery": {
+      "verbatimScript": [
+        "Ask about current costs, provider needs, prescriptions and budget.",
+        "Never compare premiums across workbook coverage groups.",
+        "No age-based ACA prices or subsidy threshold is established by these sources: verify with carrier."
+      ],
+      "keyPhrasesToListenFor": [
+        "verify with carrier",
+        "confirm with carrier",
+        "selected plan",
+        "limits",
+        "network",
+        "OOP"
+      ],
+      "requiredElements": [
+        "Ask about current costs, provider needs, prescriptions and budget.",
+        "Never compare premiums across workbook coverage groups.",
+        "No age-based ACA prices or subsidy threshold is established by these sources: verify with carrier.",
+        "Unknown product facts, ACA/MEC status and underwriting lookbacks: verify with carrier.",
+        "Use the selected variant’s required statements from the workbook catalog; never transfer rules between products.",
+        "Never compare premiums across major medical, HSA, limited copay, MEC/preventive and fixed indemnity groups.",
+        "MedAccess Basic/Pro: state inpatient day limits and maternity rules. BMI MVP/DVP: state inpatient day/surgery caps and no OON.",
+        "Vault Bronze/Silver: cancer excluded. Vault Bronze/Silver/Elite Plus: 140% of Medicare facility reference pricing; hospitals can refuse and balance bill outside OOP.",
+        "Life-X VL: unlimited exposure past visit caps. Bloom: fixed indemnity, NOT major medical, scheduled amounts only; member may owe the balance; 6-month pre-ex limitation.",
+        "Everest newborn 365 days and cancer/CI 30 days; Life-X initial 90-day elective exclusion where stated; MedMax elective surgery excluded.",
+        "Ultimate EPO: underlying SBC deductible $9,000 individual / $18,000 family; $1,500/$3,500 gap headlines are never the deductible.",
+        "MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.",
+        "First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.",
+        "PHCS Extended/limited-benefit networks are not full PHCS PPO; UW Medicine does not take PHCS; verify exact network selector.",
+        "Verify participation per provider and exact product; maps are examples, not a census.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "commonMistakes": [
+        "Transferring another product’s rules to the selected plan.",
+        "Comparing premiums across coverage groups."
+      ],
+      "redFlags": [
+        "Guaranteeing total exposure is capped despite exclusions or limits.",
+        "Treating a network logo as proof of exact-product participation.",
+        "Inventing underwriting lookbacks or ACA/MEC status."
+      ]
+    },
+    "Health & Confirm": {
+      "verbatimScript": [
+        "Underwriting lookbacks: verify with carrier. Use the current carrier application.",
+        "Do not infer acceptance, decline or a pregnancy eligibility outcome from benefit summaries.",
+        "Do not coach the client to hide conditions."
+      ],
+      "keyPhrasesToListenFor": [
+        "verify with carrier",
+        "confirm with carrier",
+        "selected plan",
+        "limits",
+        "network",
+        "OOP"
+      ],
+      "requiredElements": [
+        "Underwriting lookbacks: verify with carrier. Use the current carrier application.",
+        "Do not infer acceptance, decline or a pregnancy eligibility outcome from benefit summaries.",
+        "Do not coach the client to hide conditions.",
+        "Unknown product facts, ACA/MEC status and underwriting lookbacks: verify with carrier.",
+        "Use the selected variant’s required statements from the workbook catalog; never transfer rules between products.",
+        "Never compare premiums across major medical, HSA, limited copay, MEC/preventive and fixed indemnity groups.",
+        "MedAccess Basic/Pro: state inpatient day limits and maternity rules. BMI MVP/DVP: state inpatient day/surgery caps and no OON.",
+        "Vault Bronze/Silver: cancer excluded. Vault Bronze/Silver/Elite Plus: 140% of Medicare facility reference pricing; hospitals can refuse and balance bill outside OOP.",
+        "Life-X VL: unlimited exposure past visit caps. Bloom: fixed indemnity, NOT major medical, scheduled amounts only; member may owe the balance; 6-month pre-ex limitation.",
+        "Everest newborn 365 days and cancer/CI 30 days; Life-X initial 90-day elective exclusion where stated; MedMax elective surgery excluded.",
+        "Ultimate EPO: underlying SBC deductible $9,000 individual / $18,000 family; $1,500/$3,500 gap headlines are never the deductible.",
+        "MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.",
+        "First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.",
+        "PHCS Extended/limited-benefit networks are not full PHCS PPO; UW Medicine does not take PHCS; verify exact network selector.",
+        "Verify participation per provider and exact product; maps are examples, not a census.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "commonMistakes": [
+        "Transferring another product’s rules to the selected plan.",
+        "Comparing premiums across coverage groups."
+      ],
+      "redFlags": [
+        "Guaranteeing total exposure is capped despite exclusions or limits.",
+        "Treating a network logo as proof of exact-product participation.",
+        "Inventing underwriting lookbacks or ACA/MEC status."
+      ]
+    },
+    "Present, Select, Add-on": {
+      "verbatimScript": [
+        "Select the exact workbook variant. Use its required agent statements.",
+        "Review plan type, exact network, deductible/OOP scope, hard limits, Rx, maternity and waiting periods.",
+        "Unknown: verify with carrier. Conflicting: confirm with carrier; never select a disputed number.",
+        "Enroll Prime is the CURRENT agent portal.",
+        "Network participation must be checked per provider; maps are examples, not a census."
+      ],
+      "keyPhrasesToListenFor": [
+        "verify with carrier",
+        "confirm with carrier",
+        "selected plan",
+        "limits",
+        "network",
+        "OOP"
+      ],
+      "requiredElements": [
+        "Select the exact workbook variant. Use its required agent statements.",
+        "Review plan type, exact network, deductible/OOP scope, hard limits, Rx, maternity and waiting periods.",
+        "Unknown: verify with carrier. Conflicting: confirm with carrier; never select a disputed number.",
+        "Enroll Prime is the CURRENT agent portal.",
+        "Network participation must be checked per provider; maps are examples, not a census.",
+        "Unknown product facts, ACA/MEC status and underwriting lookbacks: verify with carrier.",
+        "Use the selected variant’s required statements from the workbook catalog; never transfer rules between products.",
+        "Never compare premiums across major medical, HSA, limited copay, MEC/preventive and fixed indemnity groups.",
+        "MedAccess Basic/Pro: state inpatient day limits and maternity rules. BMI MVP/DVP: state inpatient day/surgery caps and no OON.",
+        "Vault Bronze/Silver: cancer excluded. Vault Bronze/Silver/Elite Plus: 140% of Medicare facility reference pricing; hospitals can refuse and balance bill outside OOP.",
+        "Life-X VL: unlimited exposure past visit caps. Bloom: fixed indemnity, NOT major medical, scheduled amounts only; member may owe the balance; 6-month pre-ex limitation.",
+        "Everest newborn 365 days and cancer/CI 30 days; Life-X initial 90-day elective exclusion where stated; MedMax elective surgery excluded.",
+        "Ultimate EPO: underlying SBC deductible $9,000 individual / $18,000 family; $1,500/$3,500 gap headlines are never the deductible.",
+        "MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.",
+        "First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.",
+        "PHCS Extended/limited-benefit networks are not full PHCS PPO; UW Medicine does not take PHCS; verify exact network selector.",
+        "Verify participation per provider and exact product; maps are examples, not a census.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "commonMistakes": [
+        "Transferring another product’s rules to the selected plan.",
+        "Comparing premiums across coverage groups."
+      ],
+      "redFlags": [
+        "Guaranteeing total exposure is capped despite exclusions or limits.",
+        "Treating a network logo as proof of exact-product participation.",
+        "Inventing underwriting lookbacks or ACA/MEC status."
+      ]
+    },
+    "Enroll & Close": {
+      "verbatimScript": [
+        "Confirm current effective-date documents, disclosures and carrier application.",
+        "Approval, premium, fees and effective date: verify with carrier.",
+        "Never promise an OOP maximum covers excluded services, charges above caps or balance bills."
+      ],
+      "keyPhrasesToListenFor": [
+        "verify with carrier",
+        "confirm with carrier",
+        "selected plan",
+        "limits",
+        "network",
+        "OOP"
+      ],
+      "requiredElements": [
+        "Confirm current effective-date documents, disclosures and carrier application.",
+        "Approval, premium, fees and effective date: verify with carrier.",
+        "Never promise an OOP maximum covers excluded services, charges above caps or balance bills.",
+        "Unknown product facts, ACA/MEC status and underwriting lookbacks: verify with carrier.",
+        "Use the selected variant’s required statements from the workbook catalog; never transfer rules between products.",
+        "Never compare premiums across major medical, HSA, limited copay, MEC/preventive and fixed indemnity groups.",
+        "MedAccess Basic/Pro: state inpatient day limits and maternity rules. BMI MVP/DVP: state inpatient day/surgery caps and no OON.",
+        "Vault Bronze/Silver: cancer excluded. Vault Bronze/Silver/Elite Plus: 140% of Medicare facility reference pricing; hospitals can refuse and balance bill outside OOP.",
+        "Life-X VL: unlimited exposure past visit caps. Bloom: fixed indemnity, NOT major medical, scheduled amounts only; member may owe the balance; 6-month pre-ex limitation.",
+        "Everest newborn 365 days and cancer/CI 30 days; Life-X initial 90-day elective exclusion where stated; MedMax elective surgery excluded.",
+        "Ultimate EPO: underlying SBC deductible $9,000 individual / $18,000 family; $1,500/$3,500 gap headlines are never the deductible.",
+        "MedPerformance 5000 OON %, MedAccess Pro Rx footnote, Ultimate PPO coinsurance and Vault schedules: confirm with carrier; never select a disputed number.",
+        "First Health terminated Cleveland Clinic including Weston/Martin/Indian River FL effective 7/1/2025; recheck before quoting those facilities.",
+        "PHCS Extended/limited-benefit networks are not full PHCS PPO; UW Medicine does not take PHCS; verify exact network selector.",
+        "Verify participation per provider and exact product; maps are examples, not a census.",
+        "Hospital participation lists do not confirm the exact third-party plan, employer group, clinician, service or appointment. Sales eligibility is separate from provider access. No state access ranking or guaranteed facility participation is established."
+      ],
+      "commonMistakes": [
+        "Transferring another product’s rules to the selected plan.",
+        "Comparing premiums across coverage groups."
+      ],
+      "redFlags": [
+        "Guaranteeing total exposure is capped despite exclusions or limits.",
+        "Treating a network logo as proof of exact-product participation.",
+        "Inventing underwriting lookbacks or ACA/MEC status."
+      ]
+    }
+  },
+  "topology": {
+    "U65_GATES": [
+      {
+        "id": "u65-screen-1",
+        "num": 0,
+        "code": "S01",
+        "key": "screen1Ok",
+        "shortLabel": "Open",
+        "groups": [
+          {
+            "title": "Open",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "opener-selector"
+              },
+              {
+                "type": "callout",
+                "items": [
+                  {
+                    "type": "spoken"
+                  }
+                ]
+              },
+              {
+                "type": "callout",
+                "items": [
+                  {
+                    "type": "spoken"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Confirm & Route",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "branch-set",
+                "branches": [
+                  {
+                    "badge": "DO AOR SWAP",
+                    "tone": "switch",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "badge": "ASK BELOW",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "badge": "CONTINUE",
+                    "tone": "continue",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "callout",
+                "items": [
+                  {
+                    "type": "spoken"
+                  },
+                  {
+                    "type": "branch-set",
+                    "branches": [
+                      {
+                        "badge": "COBRA?",
+                        "tone": "continue",
+                        "items": [
+                          {
+                            "type": "spoken"
+                          },
+                          {
+                            "type": "hint",
+                            "tone": {
+                              "$historicalUndefined": true
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "badge": "END CALL",
+                        "tone": "end",
+                        "items": [
+                          {
+                            "type": "spoken"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "tone": "conditional"
+              }
+            ]
+          },
+          {
+            "title": "Ages",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "branch-set",
+                "branches": [
+                  {
+                    "badge": "FLOW SWITCH",
+                    "tone": "switch",
+                    "action": "medsup",
+                    "items": [
+                      {
+                        "type": "spoken"
+                      }
+                    ]
+                  },
+                  {
+                    "badge": "AGENT NOTE",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "gate": "Open and qualification complete"
+      },
+      {
+        "id": "u65-screen-2",
+        "num": 1,
+        "code": "S02",
+        "key": "screen2Ok",
+        "shortLabel": "Discovery",
+        "groups": [
+          {
+            "title": "Current Situation",
+            "blocks": [
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              }
+            ]
+          },
+          {
+            "title": "Problem",
+            "blocks": [
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "capture",
+                "field": "problem",
+                "required": false
+              }
+            ]
+          },
+          {
+            "title": "Consequence",
+            "blocks": [
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "capture",
+                "field": "consequence",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "gate": "Discovery complete"
+      },
+      {
+        "id": "u65-screen-3",
+        "num": 2,
+        "code": "S03",
+        "key": "screen3Ok",
+        "shortLabel": "Health",
+        "groups": [
+          {
+            "title": "Health Transition",
+            "blocks": [
+              {
+                "type": "spoken"
+              }
+            ]
+          },
+          {
+            "title": "Health Questions",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "callout",
+                "items": [
+                  {
+                    "type": "spoken"
+                  }
+                ]
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "callout",
+                "items": [
+                  {
+                    "type": "spoken"
+                  }
+                ]
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              }
+            ]
+          },
+          {
+            "title": "Confirm",
+            "blocks": [
+              {
+                "type": "spoken"
+              }
+            ]
+          }
+        ],
+        "gate": "Health and confirmation complete"
+      },
+      {
+        "id": "u65-screen-4",
+        "num": 3,
+        "code": "S04",
+        "key": "screen4Ok",
+        "shortLabel": "Present",
+        "groups": [
+          {
+            "title": "Ask First",
+            "blocks": [
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              },
+              {
+                "type": "spoken"
+              }
+            ]
+          },
+          {
+            "title": "Then Be Straight",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              }
+            ]
+          },
+          {
+            "title": "Let Them Talk Before You Recap",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              },
+              {
+                "type": "spoken"
+              }
+            ]
+          },
+          {
+            "title": "Add-on",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              }
+            ]
+          }
+        ],
+        "gate": "Presentation, selection, and add-on complete"
+      },
+      {
+        "id": "u65-screen-5",
+        "num": 4,
+        "code": "S05",
+        "key": "screen5Ok",
+        "shortLabel": "Close",
+        "groups": [
+          {
+            "title": "Enroll",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "capture",
+                "field": "why_bought",
+                "required": false
+              }
+            ]
+          },
+          {
+            "title": "Recap",
+            "blocks": [
+              {
+                "type": "spoken"
+              }
+            ]
+          }
+        ],
+        "gate": "Enrollment and close complete"
+      }
+    ],
+    "U65_SMALL_BUSINESS_GATES": [
+      {
+        "id": "u65-small-business-gate-1",
+        "num": 0,
+        "code": "G01",
+        "key": "smallBusinessGate1Ok",
+        "shortLabel": "Connect",
+        "groups": [
+          {
+            "title": "Connect + Situation",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "branch-set",
+                "branches": [
+                  {
+                    "badge": "FOLLOW UP",
+                    "items": [
+                      {
+                        "type": "spoken"
+                      }
+                    ]
+                  },
+                  {
+                    "badge": "FOLLOW UP",
+                    "items": [
+                      {
+                        "type": "spoken"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "gate": "Connection and current benefits situation established"
+      },
+      {
+        "id": "u65-small-business-gate-2",
+        "num": 1,
+        "code": "G02",
+        "key": "smallBusinessGate2Ok",
+        "shortLabel": "Problem",
+        "groups": [
+          {
+            "title": "Problem + Consequence",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "callout",
+                "items": [
+                  {
+                    "type": "spoken"
+                  }
+                ],
+                "tone": "conditional"
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              }
+            ]
+          }
+        ],
+        "gate": "Owner has verbalized the problem and cost of doing nothing"
+      },
+      {
+        "id": "u65-small-business-gate-3",
+        "num": 2,
+        "code": "G03",
+        "key": "smallBusinessGate3Ok",
+        "shortLabel": "Close",
+        "groups": [
+          {
+            "title": "Direction + Close",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "branch-set",
+                "branches": [
+                  {
+                    "badge": "GO TO G04",
+                    "tone": "continue",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "badge": "LOCK IT IN",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "badge": "STANDARD U65",
+                    "tone": "switch",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "gate": "Next step selected and close completed"
+      },
+      {
+        "id": "u65-small-business-gate-4",
+        "num": 3,
+        "code": "G04",
+        "key": "smallBusinessGate4Ok",
+        "shortLabel": "Census",
+        "groups": [
+          {
+            "title": "Census Capture",
+            "blocks": [
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "capture",
+                "field": "headcount",
+                "required": true
+              },
+              {
+                "type": "spoken"
+              },
+              {
+                "type": "branch-set",
+                "branches": [
+                  {
+                    "badge": "ENTER CENSUS",
+                    "tone": "continue",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "badge": "SEND + FOLLOW UP",
+                    "items": [
+                      {
+                        "type": "hint",
+                        "tone": {
+                          "$historicalUndefined": true
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "hint",
+                "tone": {
+                  "$historicalUndefined": true
+                }
+              }
+            ]
+          }
+        ],
+        "gate": "Census captured or census link sent with follow-up scheduled"
+      }
+    ]
+  },
+  "playbookStyleSha256": "84c9117465240f1ed7a1600a6cbe034c266831b4fe1e9bf1c67ca779941b4db1",
+  "auditTables": [
+    "oct_slim_086_rollback.backfills",
+    "oct_slim_086_rollback.policies",
+    "oct_slim_086_rollback.state",
+    "oct_slim_088_rollback.state",
+    "pii_vault.encryption_keys",
+    "agent_availability",
+    "agent_availability_log",
+    "agent_coaching",
+    "agent_compliance_profiles",
+    "agent_phone_sessions",
+    "agents",
+    "autoresearch_iterations",
+    "availability_agent_subjects",
+    "availability_consumers",
+    "birthday_rule_states",
+    "bulletin_feed_status",
+    "bulletins",
+    "bulletins_duplicate_archive",
+    "calibration_overrides",
+    "calibration_runs",
+    "call_conferences",
+    "call_disposition_opportunity_log",
+    "call_insights",
+    "call_logs",
+    "call_participants",
+    "call_records",
+    "call_threads",
+    "call_transcripts",
+    "call_wrap_up_policy",
+    "call_wrap_ups",
+    "carrier_profiles",
+    "carrier_rts",
+    "cms_county_penetration",
+    "cms_plan_embeddings_py2027",
+    "cms_plans_py2026",
+    "cms_plans_py2027",
+    "compliance_daily_budget",
+    "compliance_daily_summaries",
+    "compliance_flags",
+    "compliance_intents",
+    "compliance_llm_passes",
+    "compliance_llm_requests",
+    "compliance_review_decisions",
+    "compliance_runtime_control",
+    "compliance_scorecards",
+    "compliance_scores",
+    "compliance_version_requests",
+    "conference_media_leases",
+    "contact_activities",
+    "contact_lead_intel",
+    "contact_merge_archive",
+    "contact_notes",
+    "contact_tags",
+    "contacts",
+    "conversely_run_agents",
+    "conversely_run_events",
+    "conversely_runs",
+    "conversely_submissions",
+    "conversely_week_slots",
+    "conversely_weekly_audit",
+    "conversely_weekly_runs",
+    "conversely_worker_status",
+    "corrective_actions",
+    "cross_sell_attempts",
+    "csnp_carrier_verification",
+    "dsnp_eae_lookup",
+    "enrolled_agents",
+    "enrollment_intakes",
+    "fema_disasters",
+    "fema_feed_snapshot",
+    "follow_ups",
+    "followup_queue",
+    "ghl_enrollment_deliveries",
+    "ghl_sync_log",
+    "inbound_calls",
+    "integration_deliveries",
+    "integration_delivery_attempts",
+    "integration_link_issues",
+    "integration_push_state",
+    "integration_report_log",
+    "intent_detections",
+    "ix_upload_retries",
+    "ix_uploads",
+    "knowledge_base",
+    "knowledge_updates",
+    "lead_source_pings",
+    "lead_sources",
+    "manual_transcript_gap_fills",
+    "manual_transcript_gap_requests",
+    "media_stream_leases",
+    "message_media",
+    "messages",
+    "opportunities",
+    "opportunity_events",
+    "opportunity_stage_history",
+    "paragon_agent_reservations",
+    "paragon_billing_events",
+    "paragon_call_billing",
+    "paragon_callback_tasks",
+    "paragon_contact_zip_origin",
+    "paragon_control_changes",
+    "paragon_ping_decisions",
+    "paragon_report_access",
+    "paragon_report_email_days",
+    "paragon_report_email_log",
+    "paragon_report_tokens",
+    "paragon_residence_jobs",
+    "paragon_residence_sep_inputs",
+    "paragon_residence_settings",
+    "phi_redactions",
+    "pii_access_log",
+    "pipeline_stages",
+    "pipelines",
+    "plan_terminations",
+    "policies",
+    "post_call_jobs",
+    "post_call_requests",
+    "post_call_status_tickets",
+    "post_call_webhook_claims",
+    "provider_alert_throttle",
+    "qhp_landscape_2026",
+    "recording_agent_subjects",
+    "recording_call_scopes",
+    "recording_compliance_tickets",
+    "recording_download_tickets",
+    "recording_ingestion",
+    "recording_reconciliation",
+    "rts_ingestion_log",
+    "sales_log",
+    "scorecard_items",
+    "scoring_jobs",
+    "scoring_manual_retries",
+    "scoring_segment_progress",
+    "scoring_template_items",
+    "scoring_templates",
+    "script_templates",
+    "section_scores",
+    "sessions",
+    "snp_plans_by_county",
+    "snp_routing_rules",
+    "star_ratings_by_county",
+    "state_excess_charge_rules",
+    "stt_call_reconnects",
+    "subscriptions",
+    "telephony_call_attempts",
+    "telephony_events",
+    "telephony_presence_policy",
+    "telephony_routing_responses",
+    "telephony_transcript_segments",
+    "tenant_agents",
+    "tenants",
+    "training_completions",
+    "transcript_chunks",
+    "transcript_recovery_alerts",
+    "transcript_score_dispatch",
+    "transcription_incidents",
+    "usage_records",
+    "user_preferences",
+    "vendor_agent_state_eligibility",
+    "vendor_control_audit",
+    "vendor_controls",
+    "vendor_routing_config",
+    "zip_county_crosswalk",
+    "storage.objects"
+  ]
+}

@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
 import {randomUUID} from 'node:crypto';
 import {wavInfo,sliceWav} from '../../src/lib/wavGaps.js';

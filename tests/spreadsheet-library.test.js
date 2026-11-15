@@ -1,9 +1,10 @@
+import {sourceFiles} from '../scripts/security/source-files.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { spawnSync, execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { build } from 'esbuild';
 import Papa from 'papaparse';
 import { SPREADSHEET_LIMITS, readWorkbook, sheetObjects, sheetArrays, runSpreadsheetWorker, excelSerialIsoDate } from '../netlify/functions/_spreadsheet.js';
@@ -170,7 +171,7 @@ test('Netlify-style esbuild bundle preserves the terminable reader and installed
 test('no tracked source imports or requires the removed spreadsheet package', () => {
   const packageName = ['xl', 'sx'].join('');
   const importPattern = new RegExp(`(?:\\bfrom\\s*|\\bimport\\s*(?:\\(\\s*)?|\\brequire(?:\\.resolve)?\\s*\\(\\s*)["']${packageName}(?:[/"'])`);
-  const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(file => /\.(?:[cm]?[jt]sx?|vue|svelte)$/.test(file));
+  const files = sourceFiles().filter(file => /\.(?:[cm]?[jt]sx?|vue|svelte)$/.test(file));
   const offenders = files.filter(file => importPattern.test(readFileSync(file, 'utf8')));
   assert.deepEqual(offenders, []);
   const root = JSON.parse(readFileSync('package.json'));

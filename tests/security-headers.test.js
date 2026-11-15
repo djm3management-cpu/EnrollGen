@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {browserHeaders,frontendHeaders} from '../scripts/security/browser-headers.mjs';
+import profile from '../config/deployment-profile.example.json' with {type:'json'};
+const html='<script>window.synthetic = true;</script>';
+const policy=headers=>headers['Content-Security-Policy-Report-Only'];
+test('Netlify configuration contains every static browser security header verbatim',()=>{
+  const config=readFileSync('netlify.toml','utf8');
+  for(const [name,value] of Object.entries(frontendHeaders))assert.ok(config.includes(`${name} = "${value}"`),name);
+  assert.equal(frontendHeaders['X-Frame-Options'],'DENY');
+  assert.match(frontendHeaders['Permissions-Policy'],/^microphone=\(self\), camera=\(\), geolocation=\(\)/);
+});
+test('content policy derives exact auth, storage, database and phone hosts without allowing private delivery sinks',()=>{
+  const p=structuredClone(profile);p.allowedHosts.push('private-delivery.example');
+  const headers=browserHeaders(p,{},[html]),csp=policy(headers);
+  for(const origin of ['https://auth.example','https://accounts.example','https://database.example','wss://database.example','https://phone.example','wss://phone.example'])assert.ok(csp.includes(origin));
+  for(const directive of ["frame-ancestors 'none'","object-src 'none'","worker-src 'self' blob:","'wasm-unsafe-eval'",'https://sdk.twilio.com','wss://*.twilio.com'])assert.ok(csp.includes(directive));
+  assert.ok(csp.includes(`'sha256-${createHash('sha256').update('window.synthetic = true;').digest('base64')}'`));
+  assert.ok(!csp.includes('private-delivery.example'));
+  assert.ok(!csp.includes("script-src 'self' 'unsafe-inline'"));
+  const terms=JSON.parse(readFileSync('tests/fixtures/forbidden-deployment-terms.json','utf8'));
+  assert.ok(!terms.some(t=>csp.toLowerCase().includes(t.toLowerCase())));
+});
+test('one setting selects enforcement; invalid hosts, mismatches and policy modes fail closed without echoing values',()=>{
+  const headers=browserHeaders(profile,{CSP_MODE:'enforce'},[html]);
+  assert.ok(headers['Content-Security-Policy']);assert.equal(policy(headers),undefined);
+  for(const env of [{CSP_MODE:'bad'},{VITE_SUPABASE_URL:'https://foreign.invalid'},{VITE_CLERK_PUBLISHABLE_KEY:'pk_test_'+Buffer.from('foreign.invalid$').toString('base64')}])assert.throws(()=>browserHeaders(profile,env,[html]));
+  for(const origin of ['https://foreign.invalid','https://auth.example/path','https://auth.example; script-src *']){
+    const p=structuredClone(profile);p.browserSecurity.clerkOrigin=origin;assert.throws(()=>browserHeaders(p,{},[html]));
+  }
+});

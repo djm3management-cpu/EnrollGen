@@ -101,7 +101,7 @@ test('browser routine audit failure rolls back and returns no protected composit
  finally{await pg.exec('RESET ROLE;DROP TRIGGER synthetic_audit_failure ON evidence_access_log;DROP FUNCTION synthetic_audit_failure()');}
 });
 test('evidence handler inventory rejects unwrapped user routes and raw server SDK factories',()=>{
- const inventory=JSON.parse(readFileSync(new URL('../docs/pilot-evidence-boundaries.json',import.meta.url),'utf8'));
+ const inventory=JSON.parse(readFileSync(new URL('./fixtures/evidence-boundaries.json',import.meta.url),'utf8'));
  const userRoutes=inventory.sessionHandlers;
  for(const route of userRoutes)assert.match(readFileSync(new URL('../netlify/functions/'+route+'.js',import.meta.url),'utf8'),/auditedEvidenceRequest/);
  for(const file of readdirSync(new URL('../netlify/functions/',import.meta.url)).filter(n=>n.endsWith('.js')&&!n.startsWith('_'))){

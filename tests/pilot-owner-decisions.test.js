@@ -1,6 +1,6 @@
+import {sourceFiles} from '../scripts/security/source-files.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {normalizeRtsChunk} from '../netlify/functions/rts-ingest.js';
 import {runKnowledgeUpdate,generateKnowledgeUpdate} from '../netlify/functions/_knowledgeUpdate.js';
@@ -117,7 +117,7 @@ test('both GHL payloads have exact allowlists, preserve all remaining values and
 });
 test('no tracked source can reference the removed provider API host, SDK or model family',()=>{
  const host=['api','anthropic','com'].join('.'),sdk=['@anthropic-ai','sdk'].join('/'),models=new RegExp(['claude','(?:-|\\s+)(?:sonnet|opus|haiku|[0-9])'].join(''),'i');
- const paths=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(path=>!path.startsWith('docs/')&&/\.(?:[cm]?[jt]sx?|json|ya?ml|toml)$/.test(path)&&!path.startsWith('.claude/'));
+ const paths=sourceFiles().filter(path=>!path.startsWith('docs/')&&/\.(?:[cm]?[jt]sx?|json|ya?ml|toml)$/.test(path)&&!path.startsWith('.claude/'));
  const offenders=paths.filter(path=>{const source=readFileSync(path,'utf8');return source.includes(host)||source.includes(sdk)||models.test(source);});
  assert.deepEqual(offenders,[]);
 });

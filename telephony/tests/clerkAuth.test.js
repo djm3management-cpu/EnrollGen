@@ -1,3 +1,4 @@
+import {installSecurityHeaders} from '../src/lib/securityHeaders.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import process from 'node:process';
@@ -21,6 +22,7 @@ function jwt(keys, claims = {}) {
 }
 test('voice token handler rejects missing, expired, foreign-issuer and malformed credentials before provider or DB access', async () => {
   const app = express();
+  installSecurityHeaders(app);
   app.use(express.json());
   app.use(voiceTokenRouter);
   const server = app.listen(0, '127.0.0.1');
@@ -49,6 +51,10 @@ test('voice token handler rejects missing, expired, foreign-issuer and malformed
     assert.equal(result.sub, 'user-fixture');
     const issued=await fetch(origin+'/api/voice/token',{method:'POST',headers:{Authorization:`Bearer ${jwt(trusted)}`,'Content-Type':'application/json'},body:JSON.stringify({agent_id:'peer',tenant_id:'forged',actor:'attacker',role:'admin'})});
     assert.equal(issued.status,200);
+    assert.equal(issued.headers.get('cache-control'),'no-store');
+    assert.equal(issued.headers.get('strict-transport-security'),'max-age=31536000; includeSubDomains');
+    assert.equal(issued.headers.get('x-content-type-options'),'nosniff');
+    assert.equal(issued.headers.get('x-powered-by'),null);
     assert.equal((await issued.json()).identity,'fixture_agent');
     const burst=await Promise.all(Array.from({length:20},(_,i)=>fetch(origin+'/api/voice/token',{method:'POST',headers:{Authorization:`Bearer ${jwt(trusted)}`,'Content-Type':'application/json','x-forwarded-for':`198.51.100.${i}`},body:JSON.stringify({agent_id:'spoof_'+i})})));
     assert.equal(burst.filter(r=>r.status===200).length,2);assert.equal(lookups,3);

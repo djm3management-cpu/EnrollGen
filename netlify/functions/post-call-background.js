@@ -1,4 +1,4 @@
-import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import {retryPostCall} from '../lib/postCallRetry.js';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { createPostCallHandler } from '../lib/postCallWork.js';

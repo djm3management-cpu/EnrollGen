@@ -256,7 +256,6 @@ export default function TenantSettings({ currentUser = null }) {
   const {
     tenant,
     tenantId,
-    supabaseClient,
     agents: activeAgents,
     refetch: refetchTenant,
     loading,

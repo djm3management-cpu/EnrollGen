@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { Buffer } from 'node:buffer';
-import { execFileSync } from 'node:child_process';
+import {createHash} from 'node:crypto';
+import regression from './fixtures/historical-regressions.json' with {type:'json'};
 import { PGlite } from '@electric-sql/pglite';
 import { U65_CATALOG, U65_PLANS, U65_COVERAGE_GROUPS, U65_QUIZ, U65_MEDMAX_QUIZ, buildU65ProductContext, resolveU65Knowledge } from '../src/data/u65Guidance.js';
 import { U65_COMPLIANCE_KNOWLEDGE, U65_GATE_LABELS } from '../src/data/u65ComplianceKnowledge.js';
@@ -179,12 +179,10 @@ test('082 is idempotent, retires U65 tenant/global overrides and leaves other do
     const active = (await pg.query("SELECT * FROM knowledge_base WHERE category='compliance_u65' AND is_active ORDER BY title")).rows;
     assert.equal(active.length, 5);
     assert.equal((await pg.query("SELECT * FROM knowledge_base WHERE category='compliance_u65' AND version=1 AND is_active")).rows.length, 0);
-    const historicalSource=execFileSync('git',['show','81c935f:src/data/u65ComplianceKnowledge.js'],{encoding:'utf8'});
-    const historical=await import('data:text/javascript;base64,'+Buffer.from(historicalSource).toString('base64'));
     for (const row of active) {
       assert.equal(row.tenant_id, null);
       assert.equal(row.metadata.source_version, 'f57-source-v2');
-      assert.deepEqual(row.metadata.structured, historical.U65_COMPLIANCE_KNOWLEDGE[row.title]);
+      assert.deepEqual(row.metadata.structured, regression.knowledge[row.title]);
       assert.deepEqual(JSON.parse(row.content), row.metadata.structured);
     }
     assert.equal((await pg.query("SELECT * FROM script_templates WHERE flow_type='u65' AND is_active")).rows.length, 0);
@@ -195,18 +193,17 @@ test('082 is idempotent, retires U65 tenant/global overrides and leaves other do
 });
 
 test('U65 script capture topology and existing playbook style blocks are unchanged', async () => {
-  const previous = execFileSync('git', ['show', '51fccc3:src/flows/u65/U65Data.js'], { encoding: 'utf8' });
-  const original = await import('data:text/javascript;base64,' + Buffer.from(previous).toString('base64'));
+  // JSON fixtures encode own properties whose historical value is undefined.
+  const restore = value => Array.isArray(value) ? value.map(restore) : value && typeof value==='object' ? value.$historicalUndefined===true ? undefined : Object.fromEntries(Object.entries(value).map(([key,child])=>[key,restore(child)])) : value;
   const topology = (value) => {
     if (Array.isArray(value)) return value.map(topology);
     if (!value || typeof value !== 'object') return null;
     return Object.fromEntries(Object.entries(value).filter(([key]) => !['text', 'label', 'script', 'directions'].includes(key)).map(([key, child]) => [key, child && typeof child === 'object' ? topology(child) : child]));
   };
-  assert.deepEqual(topology(U65_GATES), topology(original.U65_GATES));
-  assert.deepEqual(topology(U65_SMALL_BUSINESS_GATES), topology(original.U65_SMALL_BUSINESS_GATES));
-  const oldPlaybook = execFileSync('git', ['show', '51fccc3:public/private-plan-playbook.html'], { encoding: 'utf8' });
+  assert.deepEqual(topology(U65_GATES), restore(regression.topology.U65_GATES));
+  assert.deepEqual(topology(U65_SMALL_BUSINESS_GATES), restore(regression.topology.U65_SMALL_BUSINESS_GATES));
   const currentPlaybook = fs.readFileSync('public/private-plan-playbook.html', 'utf8');
-  assert.equal(currentPlaybook.match(/<style>[\s\S]*?<\/style>/)[0], oldPlaybook.match(/<style>[\s\S]*?<\/style>/)[0]);
+  assert.equal(createHash('sha256').update(currentPlaybook.match(/<style>[\s\S]*?<\/style>/)[0]).digest('hex'), regression.playbookStyleSha256);
   for (const plan of U65_PLANS) {
     assert.ok(currentPlaybook.includes('id="plan-' + plan.id + '"'));
     assert.ok(currentPlaybook.includes(plan.name));

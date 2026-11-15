@@ -54,3 +54,11 @@ supabase/.temp/
 /docs/compliance-overhaul/full-rubric-tpmo-fails.md
 
 /docs/compliance-overhaul/event-fixes-top-losses.md
+
+# Local assistant/editor state and scratch evaluation outputs (keep on disk).
+.claude/
+.codex/
+.agents/
+.codesandbox/
+/calls_500.jsonl
+/eval_report.json

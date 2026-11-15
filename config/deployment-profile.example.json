@@ -1,0 +1,65 @@
+{
+  "tenantId": "e0000000-0000-4000-8000-000000000005",
+  "organizationId": "org_syntheticpilot",
+  "agencyName": "Example Pilot Benefits",
+  "agencyAliases": [
+    "Example Pilot"
+  ],
+  "documentName": "Example Pilot Benefits",
+  "agencyLine": "+12125550100",
+  "agencyLineLabel": "Agency main line",
+  "phoneDisplay": "national",
+  "textSender": "+12125550100",
+  "timezone": "America/Chicago",
+  "staffedHours": {
+    "mon": {
+      "enabled": true,
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "tue": {
+      "enabled": true,
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "wed": {
+      "enabled": true,
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "thu": {
+      "enabled": true,
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "fri": {
+      "enabled": true,
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "sat": {
+      "enabled": false,
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "sun": {
+      "enabled": false,
+      "start": "09:00",
+      "end": "17:00"
+    }
+  },
+  "allowedHosts": [
+    "app.example",
+    "phone.example",
+    "auth.example",
+    "accounts.example",
+    "database.example"
+  ],
+  "appOrigin": "https://app.example",
+  "telephonyOrigin": "https://phone.example",
+  "browserSecurity": {
+    "clerkOrigin": "https://auth.example",
+    "clerkAccountsOrigin": "https://accounts.example",
+    "databaseOrigin": "https://database.example"
+  }
+}

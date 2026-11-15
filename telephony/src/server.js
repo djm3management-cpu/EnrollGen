@@ -1,3 +1,4 @@
+import {installSecurityHeaders} from './lib/securityHeaders.js';
 import {allowedBrowserOrigin,assertSingleReplica} from './lib/browserBoundary.js';
 import {verifyDeploymentConfiguration} from './lib/deploymentRoster.js';
 import { featureEnabled } from './lib/deploymentFeatures.js';
@@ -50,6 +51,7 @@ setInterval(sweepPresence, 15_000).unref();
 void sweepPresence();
 
 const app = express();
+installSecurityHeaders(app);
 void reportSupabaseKeySelection(supabase);
 app.set("trust proxy", false);
 

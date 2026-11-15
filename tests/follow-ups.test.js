@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { before, after, test } from 'node:test';
-import { execFileSync } from 'node:child_process';
+import regression from './fixtures/historical-regressions.json' with {type:'json'};
 import { runInNewContext } from 'node:vm';
 import { PGlite } from '@electric-sql/pglite';
 import { followUpBucket, updateFollowUp, createFollowUp } from '../src/lib/followUps.js';
@@ -146,7 +146,7 @@ test('086 is standalone, repeatable and permits new tasks for shared agency cont
 });
 
 test('actual b47e80d frontend callbacks still create and complete tasks after SQL-before-deploy',async()=>{
-  const source=execFileSync('git',['show','b47e80d:src/hooks/useContacts.js'],{encoding:'utf8'});
+
   const oldClient={from(table){return {
     async insert(fields){try {
       if(table==='follow_ups') await query('INSERT INTO follow_ups(tenant_id,contact_id,agent_id,due_at,reason) VALUES($1,$2,$3,$4,$5)',[fields.tenant_id,fields.contact_id,fields.agent_id,fields.due_at,fields.reason]);
@@ -156,9 +156,8 @@ test('actual b47e80d frontend callbacks still create and complete tasks after SQ
     update(fields){return {async eq(key,id){assert.equal(key,'id');try{await query('UPDATE follow_ups SET status=$1 WHERE id=$2',[fields.status,id]);return {error:null};}catch(error){return {error};}}};},
   };}};
   const callback=name=>{
-    const match=source.match(new RegExp(`const ${name} = useCallback\\(\\s*(async[\\s\\S]*?),\\s*\\[supabaseClient(?:, tenant)?\\]`));
-    assert.ok(match,name);
-    return runInNewContext(`(${match[1]})`,{supabaseClient:oldClient,tenant:{id:tenant}});
+    assert.ok(regression.callbacks[name],name);
+    return runInNewContext(`(${regression.callbacks[name]})`,{supabaseClient:oldClient,tenant:{id:tenant}});
   };
   await asUser('mike');
   for(const agentId of ['mike',null]) {
