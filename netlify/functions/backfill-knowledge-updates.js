@@ -1,3 +1,4 @@
+import {AdmissionError,admissionResponse} from './_admission.js';
 import {
   runAllKnowledgeCategoryUpdates,
 } from "./_knowledgeUpdate.js";
@@ -39,7 +40,8 @@ export default async (request) => {
       ok: true,
       ...result,
     });
-  } catch {
+  } catch(error) {
+    if(error instanceof AdmissionError)return admissionResponse(error);
     console.error("[backfill-knowledge-updates] Failed:", 'request_failed');
     return json(500, {
       ok: false,

@@ -1,0 +1,110 @@
+{
+  "metrics": {
+    "mode": "short",
+    "cohort": "standard",
+    "wall_seconds": 1.6545174579999997,
+    "synthetic_call_minutes": 20,
+    "calls": 20,
+    "fault_calls": 2,
+    "overflows": 8,
+    "tracks": 40,
+    "segments": 48,
+    "callbacks": 68,
+    "uploads": 12,
+    "request_ms": {
+      "p50": 0.833042000000205,
+      "p95": 10.974167000000307,
+      "p99": 17.095542000000023
+    },
+    "routing_p95_ms": 6.082875000000058,
+    "false_overflow_rate": 0,
+    "lease_conflicts": 0,
+    "transcript_p95_ms": 1065.853271484375,
+    "transcript_persistence_p95_ms": 1.6638750000001892,
+    "webhook_ack_p99_ms": 6.236332999999831,
+    "post_call_p95_ms": 203.9497919999999,
+    "presence_removal_ms": 2.951499999999669,
+    "rss_peak_bytes": 1496236032,
+    "rss_tail_growth_bytes": 0,
+    "event_loop_p99_ms": 12.689407,
+    "cpu_ms": 528.305,
+    "db_lock_time_ms": null,
+    "queue_backlog": 0,
+    "visible_exhausted_jobs": 1,
+    "paid_cost_usd": 0
+  },
+  "gates": {
+    "unauthorized_successes": {
+      "measured": 0,
+      "pass": true
+    },
+    "double_assignments": {
+      "measured": 0,
+      "pass": true
+    },
+    "cross_agent_leaks": {
+      "measured": 0,
+      "pass": true
+    },
+    "missing_terminal_linkage": {
+      "measured": 0,
+      "pass": true
+    },
+    "duplicate_uploads": {
+      "measured": 0,
+      "pass": true
+    },
+    "presence_removal": {
+      "measured": 2.951499999999669,
+      "threshold_ms": 60000,
+      "pass": true
+    },
+    "routing": {
+      "measured": 6.082875000000058,
+      "threshold_ms": 2000,
+      "pass": true
+    },
+    "webhook_ack": {
+      "measured": 6.236332999999831,
+      "threshold_ms": 15000,
+      "pass": true
+    },
+    "transcript": {
+      "measured": 1065.853271484375,
+      "threshold_ms": 3000,
+      "pass": true
+    },
+    "post_call": {
+      "measured": 203.9497919999999,
+      "threshold_ms": 120000,
+      "pass": true
+    },
+    "no_backlog": {
+      "measured": 0,
+      "pass": true
+    },
+    "visible_exhaustion": {
+      "measured": 1,
+      "expected": 1,
+      "pass": true
+    },
+    "stable_memory": {
+      "measured": 0,
+      "pass": true
+    },
+    "real_duration_soak": {
+      "measured": 1.2,
+      "required_seconds": 3600,
+      "pass": false
+    },
+    "multi_connection_db_locks": {
+      "measured": null,
+      "pass": false
+    }
+  },
+  "limitations": [
+    "WASM database serializes queries: independent PostgreSQL backends and lock wait are unverified.",
+    "20-minute call timestamps are accelerated; media is paced for the measured wall duration. Full 60-minute churn and longer wall-clock soak remain unverified.",
+    "Local SQL/track/presence adapters do not prove deployed HTTP, browser device, real provider, recording bytes or hosted quotas."
+  ]
+}

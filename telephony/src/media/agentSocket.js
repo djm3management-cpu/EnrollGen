@@ -1,3 +1,6 @@
+import {createSocketAdmission} from '../lib/admission.js';
+import {allowedBrowserOrigin} from '../lib/browserBoundary.js';
+const reserveSocket=createSocketAdmission();
 import { egressMetrics } from '../egressMetrics.js';
 import { WebSocketServer } from "ws";
 import { attachPhonePresence } from "../phonePresence.js";
@@ -16,6 +19,7 @@ agentWss.on('wsClientError', (_error, socket) => {
 });
 
 export function handleAgentUpgrade(request, socket, head) {
+  if(!allowedBrowserOrigin(request.headers?.origin)){socket.end("HTTP/1.1 403 Forbidden\r\n\r\n");return;}
   let result;
   try {
     const url = new URL(request.url, "http://localhost");
@@ -28,7 +32,11 @@ export function handleAgentUpgrade(request, socket, head) {
     socket.destroy();
     return;
   }
+  let release;
+  try{release=reserveSocket(claims.clerkSubject);}catch(error){socket.end(`HTTP/1.1 429 Too Many Requests\r\nRetry-After: ${error.retryAfter}\r\nConnection: close\r\n\r\n`);return;}
+  socket.once("close",release);
   agentWss.handleUpgrade(request, socket, head, (ws) => {
+    ws.once("close",release);
     agentWss.emit("connection", ws, request, claims);
   });
 }

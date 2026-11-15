@@ -47,6 +47,15 @@
     },
     {
       "schema": "public",
+      "name": "admission_counters",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "agent_availability",
       "kind": "r",
       "owner": "postgres",
@@ -2069,6 +2078,61 @@
       "position": 6,
       "type": "timestamp with time zone",
       "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "key_hash",
+      "position": 1,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "window_start",
+      "position": 2,
+      "type": "bigint",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "window_seconds",
+      "position": 3,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "used",
+      "position": 4,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "expires_at",
+      "position": 5,
+      "type": "timestamp with time zone",
+      "not_null": true,
       "identity": "",
       "generated": "",
       "default_expression": null
@@ -27020,6 +27084,118 @@
     },
     {
       "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "agent_availability",
       "grantor": "postgres",
       "grantee": "postgres",
@@ -49037,6 +49213,19 @@
     },
     {
       "schema": "public",
+      "name": "admit_vendor",
+      "arguments": "p_key_hash text, p_route text, p_limit integer",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.admit_vendor(p_key_hash text, p_route text, p_limit integer DEFAULT 600)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE result jsonb;\nBEGIN\n IF p_route NOT IN ('vendorPing','availability') THEN RAISE EXCEPTION 'Invalid vendor route'; END IF;\n IF NOT EXISTS(SELECT 1 FROM availability_consumers WHERE key_hash=p_key_hash AND active)\n AND NOT (p_route='vendorPing' AND EXISTS(SELECT 1 FROM lead_sources WHERE ping_key_hash=p_key_hash AND active AND name=deployment_vendor_name() AND type='publisher'))\n THEN RETURN jsonb_build_object('authorized',false); END IF;\n result:=consume_admission(jsonb_build_array(jsonb_build_object('key','vendor:'||p_route||':'||p_key_hash,'seconds',60,'limit',p_limit)));\n RETURN result||jsonb_build_object('authorized',true);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "advance_contact_connection",
       "arguments": "p_contact_id uuid, p_tenant_id uuid, p_agent_id text, p_connected_at timestamp with time zone, p_direction text",
       "result": "boolean",
@@ -49151,6 +49340,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.authorize_paragon_report(p_hash text, p_ip text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE v_source uuid; v_limited boolean; v_ip text := left(coalesce(nullif(p_ip,''),'unknown'), 128);\nBEGIN\n  PERFORM pg_advisory_xact_lock(hashtextextended('paragon-report:' || v_ip, 0));\n  SELECT count(*) >= 30 INTO v_limited FROM paragon_report_access\n    WHERE ip=v_ip AND attempted_at > clock_timestamp() - interval '5 minutes';\n  IF NOT v_limited AND p_hash ~ '^[a-f0-9]{64}$' THEN\n    SELECT t.source_id INTO v_source FROM paragon_report_tokens t\n      JOIN lead_sources s ON s.id=t.source_id\n      WHERE t.token_hash=p_hash AND s.name=public.bootstrap_vendor_source_name() AND s.type='publisher' AND s.active;\n  END IF;\n  INSERT INTO paragon_report_access(ip,authorized,rate_limited)\n    VALUES(v_ip,v_source IS NOT NULL,v_limited);\n  RETURN v_source;\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "authorize_paragon_report_limited",
+      "arguments": "p_hash text, p_ip text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.authorize_paragon_report_limited(p_hash text, p_ip text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE ip_key text:=left(coalesce(nullif(p_ip,''),'unknown'),128);limited boolean;source uuid;\nBEGIN\n PERFORM pg_advisory_xact_lock(hashtextextended('paragon-report:'||ip_key,0));\n SELECT count(*)>=30 INTO limited FROM paragon_report_access WHERE ip=ip_key AND attempted_at>clock_timestamp()-interval '5 minutes';\n source:=authorize_paragon_report(p_hash,ip_key);\n RETURN jsonb_build_object('source_id',source,'limited',limited,'retry_after',CASE WHEN limited THEN 300 ELSE 0 END);\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -49606,6 +49808,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.confirm_paragon_call_state(p_call uuid, p_tenant uuid, p_agent text, p_zip text, p_state text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nBEGIN\n PERFORM 1 FROM inbound_calls i JOIN lead_sources s ON s.id=i.lead_source_id AND s.tenant_id=i.tenant_id\n WHERE i.id=p_call AND i.tenant_id=p_tenant AND i.routed_agent_id=p_agent AND i.source_kind='publisher'\n AND s.name=public.bootstrap_vendor_source_name() AND s.type='publisher' FOR UPDATE OF i;\n IF NOT FOUND OR NOT EXISTS(SELECT 1 FROM tenant_agents WHERE tenant_id=p_tenant AND agent_slug=p_agent AND is_active) THEN\n  RAISE EXCEPTION 'Paragon call unavailable'; END IF;\n IF p_zip !~ '^[0-9]{5}$' OR p_state !~ '^[A-Z]{2}$' OR NOT EXISTS(\n  SELECT 1 FROM zip_county_crosswalk WHERE zip=p_zip AND state_code=p_state) THEN RAISE EXCEPTION 'Invalid confirmed residence'; END IF;\n UPDATE inbound_calls SET confirmed_zip=p_zip,confirmed_state=p_state WHERE id=p_call AND tenant_id=p_tenant;\n RETURN reconcile_paragon_serviceability(p_call,p_tenant);\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "consume_admission",
+      "arguments": "p_rules jsonb",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.consume_admission(p_rules jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE r jsonb; k text; s integer; cap integer; w bigint; n integer; retry integer:=0;\n t bigint:=floor(extract(epoch FROM clock_timestamp()));\nBEGIN\n IF jsonb_typeof(p_rules)<>'array' OR jsonb_array_length(p_rules) NOT BETWEEN 1 AND 12 THEN RAISE EXCEPTION 'Invalid admission rules'; END IF;\n -- Lock all keys in a stable order BEFORE reading. Shared daily budgets serialize\n -- requests from different function instances. No read/count then insert race.\n FOR k IN SELECT DISTINCT encode(sha256(convert_to(value->>'key','UTF8')),'hex') FROM jsonb_array_elements(p_rules) ORDER BY 1 LOOP\n  PERFORM pg_advisory_xact_lock(hashtextextended('admission:'||k,0));\n END LOOP;\n FOR r IN SELECT value FROM jsonb_array_elements(p_rules) LOOP\n  IF r->>'key' IS NULL OR length(r->>'key') NOT BETWEEN 1 AND 1024 THEN RAISE EXCEPTION 'Invalid admission key'; END IF;\n  s:=(r->>'seconds')::integer;cap:=(r->>'limit')::integer;\n  IF s IS NULL OR cap IS NULL OR s NOT IN (60,300,86400) OR cap NOT BETWEEN 1 AND 1000000 THEN RAISE EXCEPTION 'Invalid admission limit'; END IF;\n  k:=encode(sha256(convert_to(r->>'key','UTF8')),'hex');w:=(t/s)*s;\n  SELECT used INTO n FROM admission_counters WHERE key_hash=k AND window_start=w AND window_seconds=s;\n  IF coalesce(n,0)>=cap THEN retry:=greatest(retry,(w+s-t)::integer); END IF;\n END LOOP;\n IF retry>0 THEN RETURN jsonb_build_object('allowed',false,'retry_after',retry); END IF;\n FOR r IN SELECT DISTINCT value FROM jsonb_array_elements(p_rules) LOOP\n  s:=(r->>'seconds')::integer;k:=encode(sha256(convert_to(r->>'key','UTF8')),'hex');w:=(t/s)*s;\n  INSERT INTO admission_counters VALUES(k,w,s,1,to_timestamp(w+s))\n  ON CONFLICT(key_hash,window_start,window_seconds) DO UPDATE SET used=admission_counters.used+1;\n END LOOP;\n RETURN jsonb_build_object('allowed',true,'retry_after',0);\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -51231,6 +51446,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.provision_deployment_roster(p_profile jsonb, p_agents jsonb)\n RETURNS integer\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE tenant uuid:=(p_profile->>'tenantId')::uuid; item jsonb; agent_uuid uuid; former_slugs text[]; zone text:=p_profile->>'timezone';\nBEGIN\n IF jsonb_typeof(p_agents)<>'array' OR jsonb_array_length(p_agents)=0 OR NOT EXISTS(SELECT 1 FROM pg_timezone_names WHERE name=zone) THEN RAISE EXCEPTION 'Invalid deployment provisioning input'; END IF;\n IF EXISTS(SELECT 1 FROM jsonb_array_elements(p_agents) a WHERE nullif(a->>'clerk_user_id','') IS NULL OR nullif(a->>'agent_slug','') IS NULL OR nullif(a->>'npn','') IS NULL OR nullif(a->>'name','') IS NULL) THEN RAISE EXCEPTION 'Stable roster binding required'; END IF;\n PERFORM pg_advisory_xact_lock(hashtextextended('deployment-roster',0));\n IF EXISTS(SELECT 1 FROM deployment_settings WHERE tenant_id<>tenant) THEN RAISE EXCEPTION 'Deployment tenant cannot be replaced'; END IF;\n INSERT INTO tenants(id,name,clerk_org_id,agency_display_name) VALUES(tenant,p_profile->>'agencyName',p_profile->>'organizationId',p_profile->>'agencyName')\n ON CONFLICT(id) DO UPDATE SET name=excluded.name,clerk_org_id=excluded.clerk_org_id,agency_display_name=excluded.agency_display_name;\n INSERT INTO deployment_settings(singleton,tenant_id,public_profile) VALUES(true,tenant,p_profile) ON CONFLICT(singleton) DO UPDATE SET public_profile=excluded.public_profile;\n SELECT array_agg(agent_slug) INTO former_slugs FROM tenant_agents WHERE tenant_id=tenant;\n -- A full reviewed roster is applied atomically, including revocation in protected mappings.\n UPDATE tenant_agents SET is_active=false WHERE tenant_id=tenant;\n UPDATE enrolled_agents SET is_active=false WHERE tenant_id=tenant;\n UPDATE availability_agent_subjects SET is_active=false WHERE tenant_id=tenant;\n DELETE FROM recording_agent_subjects WHERE tenant_id=tenant;\n FOR item IN SELECT * FROM jsonb_array_elements(p_agents) LOOP\n  IF (item->>'is_active')::boolean IS NOT TRUE THEN CONTINUE; END IF;\n  agent_uuid:=(item->>'id')::uuid;\n  IF EXISTS(SELECT 1 FROM tenant_agents WHERE id=agent_uuid AND tenant_id<>tenant) THEN RAISE EXCEPTION 'Foreign roster ID'; END IF;\n  INSERT INTO tenant_agents(id,tenant_id,name,npn,clerk_user_id,agent_slug,ghl_user_id,is_active,identity_aliases,licensed_states,team,sunfire_agent_id,ams_producer_id)\n  VALUES(agent_uuid,tenant,item->>'name',item->>'npn',item->>'clerk_user_id',item->>'agent_slug',item->>'ghl_user_id',true,item->'identity_aliases',item->'licensed_states',item->>'team',item->>'sunfire_agent_id',item->>'ams_producer_id')\n  ON CONFLICT(id) DO UPDATE SET name=excluded.name,npn=excluded.npn,clerk_user_id=excluded.clerk_user_id,agent_slug=excluded.agent_slug,ghl_user_id=excluded.ghl_user_id,is_active=true,identity_aliases=excluded.identity_aliases,licensed_states=excluded.licensed_states,team=excluded.team,sunfire_agent_id=excluded.sunfire_agent_id,ams_producer_id=excluded.ams_producer_id;\n  -- Roles deliberately are NOT copied from the roster payload.\n  INSERT INTO enrolled_agents(tenant_id,clerk_user_id,name,npn,role,is_active) VALUES(tenant,item->>'clerk_user_id',item->>'name',item->>'npn','agent',true)\n  ON CONFLICT(clerk_user_id) DO UPDATE SET name=excluded.name,npn=excluded.npn,is_active=true WHERE enrolled_agents.tenant_id=tenant;\n  INSERT INTO agent_availability(agent_id,agent_name,available,status,toggled_at) VALUES(item->>'agent_slug',item->>'name',false,'offline',now())\n  ON CONFLICT(agent_id) DO UPDATE SET agent_name=excluded.agent_name;\n  INSERT INTO availability_agent_subjects(agent_slug,tenant_id,clerk_org_id,clerk_user_id,is_active) VALUES(item->>'agent_slug',tenant,p_profile->>'organizationId',item->>'clerk_user_id',true)\n  ON CONFLICT(agent_slug) DO UPDATE SET clerk_org_id=excluded.clerk_org_id,clerk_user_id=excluded.clerk_user_id,is_active=true WHERE availability_agent_subjects.tenant_id=tenant;\n  INSERT INTO recording_agent_subjects(tenant_id,agent_slug,clerk_user_id) VALUES(tenant,item->>'agent_slug',item->>'clerk_user_id');\n END LOOP;\n UPDATE agent_availability SET available=false,status='offline',toggled_at=now() WHERE agent_id=ANY(former_slugs) AND NOT EXISTS(SELECT 1 FROM tenant_agents t WHERE t.tenant_id=tenant AND t.is_active AND t.agent_slug=agent_availability.agent_id);\n RETURN (SELECT count(*)::integer FROM tenant_agents WHERE tenant_id=tenant AND is_active);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "prune_admission_counters",
+      "arguments": "",
+      "result": "bigint",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.prune_admission_counters()\n RETURNS bigint\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE n bigint; BEGIN\n DELETE FROM admission_counters WHERE ctid IN (SELECT ctid FROM admission_counters WHERE expires_at<clock_timestamp()-interval '1 day' LIMIT 10000);\n GET DIAGNOSTICS n=ROW_COUNT; RETURN n; END $function$\n"
     },
     {
       "schema": "public",
@@ -53069,6 +53297,18 @@
       "relation": "encryption_keys",
       "name": "encryption_keys_pkey",
       "definition": "PRIMARY KEY (key_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "admission_counters_pkey",
+      "definition": "PRIMARY KEY (key_hash, window_start, window_seconds)"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "admission_counters_used_check",
+      "definition": "CHECK ((used >= 0))"
     },
     {
       "schema": "public",
@@ -57091,6 +57331,18 @@
       "relation": "encryption_keys",
       "name": "idx_pii_encryption_keys_active",
       "definition": "CREATE UNIQUE INDEX idx_pii_encryption_keys_active ON pii_vault.encryption_keys USING btree (is_active) WHERE (is_active = true)"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "admission_counter_expiry",
+      "definition": "CREATE INDEX admission_counter_expiry ON public.admission_counters USING btree (expires_at)"
+    },
+    {
+      "schema": "public",
+      "relation": "admission_counters",
+      "name": "admission_counters_pkey",
+      "definition": "CREATE UNIQUE INDEX admission_counters_pkey ON public.admission_counters USING btree (key_hash, window_start, window_seconds)"
     },
     {
       "schema": "public",

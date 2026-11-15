@@ -12,7 +12,9 @@
     "test:opportunities": "node --test tests/opportunities.test.js",
     "eval:copilot": "node scripts/evaluate-copilot-scenarios.mjs",
     "test:llm": "node --test tests/llm.test.js tests/copilot-prompts.test.js tests/copilot-silence.test.js tests/medsup-nj.test.js",
-    "typecheck:llm": "tsc -p tsconfig.llm.json"
+    "typecheck:llm": "tsc -p tsconfig.llm.json",
+    "pilot:load:short": "node scripts/pilot/run-local.mjs",
+    "pilot:load:long": "node scripts/pilot/run-local.mjs --long"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",

@@ -55,9 +55,11 @@ export const createHandler = (makeDb = (url,key) => createClient(url,key,{auth:{
   const key = supabaseSecretKey();
   if (!supabaseUrl || !key) return respond('Service unavailable',503,'text/plain; charset=utf-8');
   const db = makeDb(supabaseUrl,key);
-  const ip = request.headers.get('x-nf-client-connection-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const {data:sourceId,error:authError} = await db.rpc('authorize_paragon_report',{p_hash:hash,p_ip:ip});
+  const ip = request.headers.get('x-nf-client-connection-ip') || 'unknown';
+  const {data:admission,error:authError} = await db.rpc('authorize_paragon_report_limited',{p_hash:hash,p_ip:ip});
   if (authError) return respond('Service unavailable',503,'text/plain; charset=utf-8');
+  if(admission?.limited)return new Response('Rate limit reached. Retry in 300 seconds.',{status:429,headers:{...HEADERS,'Retry-After':'300'}});
+  const sourceId=admission?.source_id;
   if (request.method !== 'GET') return respond('Not found',404,'text/plain; charset=utf-8');
   if (!sourceId) return respond('Not found',404,'text/plain; charset=utf-8');
 

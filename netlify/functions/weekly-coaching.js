@@ -1,3 +1,4 @@
+import {admitCall} from './_admission.js';
 import {localDay,shiftCalendarDay} from '../../telephony/src/lib/deploymentCalendar.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import {zonedMidnight} from '../../telephony/src/lib/deploymentSchedule.js';
@@ -197,6 +198,9 @@ async function processTenant(supabase, tenant, context) {
       const stats = summarizeAgentWeek(agentCalls);
       const priorities = priorityList(agentCalls);
       const prompt = buildCoachingPrompt(agentName, periodStart, periodEnd, stats, priorities);
+      const {data:budgetAgent,error:budgetError}=await supabase.from('enrolled_agents').select('id').eq('tenant_id',tenant.id).eq('name',agentName).eq('is_active',true).single();
+      if(budgetError||!budgetAgent)throw Error('Summary owner unavailable');
+      await admitCall(supabase,'summary',{agent_id:budgetAgent.id,tenant_id:tenant.id});
       const completion = await complete({ engine: 'MA', path: 'summary', system: COACHING_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }], max_completion_tokens: 4096,
       }, llmRuntime(supabase, tenant.id, context, { endpoint: 'weekly-coaching', agent_name: agentName }));

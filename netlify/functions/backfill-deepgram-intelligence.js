@@ -1,3 +1,4 @@
+import {admitCall,AdmissionError,admissionResponse} from './_admission.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import {
@@ -223,7 +224,7 @@ function resolveAudioUrl(row) {
     || null;
 }
 
-async function transcribeAudio(audioUrl) {
+async function transcribeAudio(audioUrl,db,call) {
   const dgKey = process.env.DEEPGRAM_API_KEY;
   if (!dgKey) throw new Error("DEEPGRAM_API_KEY not configured");
 
@@ -240,6 +241,7 @@ async function transcribeAudio(audioUrl) {
   dgUrl.searchParams.set("summarize", "v2");
   applyDeepgramRedactionParams(dgUrl);
 
+  await admitCall(db,'transcription',call);
   const dgResp = await fetch(dgUrl.toString(), {
     method: "POST",
     headers: {
@@ -293,7 +295,7 @@ async function transcribeAudio(audioUrl) {
 async function fetchPage(supabase, from, to) {
   const { data, error } = await supabase
     .from("call_records")
-    .select("id, recording_url, transcript_raw, dg_sentiment, metadata")
+    .select("id, tenant_id, agent_id, recording_url, transcript_raw, dg_sentiment, metadata")
     .eq("tenant_id",deploymentProfile().tenantId).not("transcript_raw", "is", null)
     .order("created_at", { ascending: true })
     .range(from, to);
@@ -354,7 +356,7 @@ export default async (request) => {
         }
 
         try {
-          const updatePayload = await transcribeAudio(audioUrl);
+          const updatePayload = await transcribeAudio(audioUrl,supabase,row);
           const { error } = await supabase
             .from("call_records")
             .update(updatePayload)
@@ -362,7 +364,8 @@ export default async (request) => {
 
           if (error) throw error;
           updated += 1;
-        } catch {
+        } catch(error) {
+    if(error instanceof AdmissionError)return admissionResponse(error);
           errors.push({
             call_id: row.id,
             error: 'request_failed',
@@ -381,7 +384,8 @@ export default async (request) => {
       skipped_missing_audio: skippedMissingAudio,
       errors,
     });
-  } catch {
+  } catch(error) {
+    if(error instanceof AdmissionError)return admissionResponse(error);
     console.error("[backfill-deepgram-intelligence] Failed:", 'request_failed');
     return json(500, {
       ok: false,

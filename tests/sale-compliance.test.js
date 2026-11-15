@@ -28,7 +28,7 @@ const classify=async(system,user)=>{
  return {detections:[{intent_code:'CALL_OPEN_001_RECORDING_ANNOUNCE',detected:true,confidence:0.99,
   speaker:'agent',evidence_text:'This call is recorded.',sequence_position:1}],assessment,risk_indicators:[],sentiment:{}};
 };
-const worker=createScoreCallHandler({getDb:()=>db,classify,recordStatus:async()=>{}});
+const worker=createScoreCallHandler({admission:async()=>{},getDb:()=>db,classify,recordStatus:async()=>{}});
 async function score(id) {
  return worker(new Request('https://example.test/score',{method:'POST',headers:{'x-enrollgen-job-secret':'sale-test'},
   body:JSON.stringify({callId:id,tenantId:tenant,transcript:'CLIENT PARTIAL MUST BE IGNORED'})}),{});

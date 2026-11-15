@@ -1,7 +1,7 @@
 // Server-held, per-deployment configuration. This file ships in every service.
 import { deploymentFeatures, serverFeatureEnvironment } from './deploymentFeatures.js';
 const fail = key => { throw new Error(`Invalid deployment profile: ${key}`); };
-const text = (value, key) => typeof value === 'string' && value.trim() && value.length <= 500 && !/[\r\n\x00-\x1f]/.test(value) ? value.trim() : fail(key);
+const text = (value, key) => typeof value === 'string' && value.trim() && value.length <= 500 && !Array.from(value).some(c=>c.charCodeAt(0)<32) ? value.trim() : fail(key);
 const list = (value, key) => Array.isArray(value) && value.length && value.every(v => typeof v === 'string' && v.trim()) ? [...new Set(value.map(v => text(v,key)))] : fail(key);
 const email = (value,key) => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(text(value,key)) ? value : fail(key);
 const emails = (value,key) => list(value,key).map(v=>email(v,key));
@@ -70,6 +70,22 @@ export function parseDeploymentProfile(raw, features = deploymentFeatures()) {
     p.paragon.states = list(p.paragon.states,'paragon.states');
     if (p.paragon.states.some(s=> !/^[A-Z]{2}$/.test(s))) fail('paragon.states');
     if (features.OPERATIONAL_EMAIL_ENABLED) p.paragon.reportRecipients = emails(p.paragon.reportRecipients,'paragon.reportRecipients');
+  }
+  // Auth defaults are exact deployment origins and a deployment-specific audience.
+  p.browserOrigins = p.browserOrigins ? list(p.browserOrigins,'browserOrigins') : [new URL(p.appOrigin).origin];
+  p.authorizedParties = p.authorizedParties ? list(p.authorizedParties,'authorizedParties') : [...p.browserOrigins];
+  for(const origin of [...p.browserOrigins,...p.authorizedParties]) {
+    const u=new URL(validateDestination(origin,p.allowedHosts));
+    if(u.origin!==origin)fail('auth origin must be an exact origin');
+  }
+  p.tokenAudiences = p.tokenAudiences ? list(p.tokenAudiences,'tokenAudiences') : [p.organizationId];
+  if(p.messageMediaHosts)p.messageMediaHosts=list(p.messageMediaHosts,'messageMediaHosts').map(h=>{validateDestination(`https://${h}/`,[h]);return h;});
+  if(p.admissionLimits) {
+    const keys=['vendorLead','vendorPing','availability','voiceToken','agentSocket','sms','gifs','coach','transcription','sttStream','scoring','summary','embeddings'];
+    for(const [route,limits] of Object.entries(p.admissionLimits)) {
+      if(!keys.includes(route)||!limits||typeof limits!=='object'||Array.isArray(limits))fail('admissionLimits');
+      for(const [key,value] of Object.entries(limits))if(!['minute','subjectDay','deploymentDay','concurrent'].includes(key)||!Number.isInteger(value)||value<1||value>1000000)fail('admissionLimits value');
+    }
   }
   return deepFreeze(p);
 }

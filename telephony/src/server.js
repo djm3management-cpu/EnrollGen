@@ -1,3 +1,4 @@
+import {allowedBrowserOrigin,assertSingleReplica} from './lib/browserBoundary.js';
 import {verifyDeploymentConfiguration} from './lib/deploymentRoster.js';
 import { featureEnabled } from './lib/deploymentFeatures.js';
 import { startEgressMetrics } from './egressMetrics.js';
@@ -31,8 +32,10 @@ import { conferenceRuntime } from './conferenceRuntime.js';
 
 import { expirePhoneSessions } from "./phonePresence.js";
 
+assertSingleReplica();
 await verifyDeploymentConfiguration(supabase);
 startEgressMetrics();
+setInterval(()=>void supabase.rpc('prune_admission_counters').then(({error})=>{if(error)console.error('admission_prune_failed');}).catch(()=>console.error('admission_prune_failed')),3600000).unref();
 
 // Routing checks lease expiry itself, even if this maintenance job is delayed.
 let expiryRunning = false;
@@ -48,12 +51,15 @@ void sweepPresence();
 
 const app = express();
 void reportSupabaseKeySelection(supabase);
-app.set("trust proxy", true);
+app.set("trust proxy", false);
 
 // CORS for the browser softphone (token endpoint). Twilio webhooks and
 // the vendor intake are server-to-server and unaffected.
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ALLOW_ORIGIN || "*");
+  const origin=req.header("origin");
+  if(!allowedBrowserOrigin(origin))return res.status(403).json({error:"Origin forbidden"});
+  if(origin)res.setHeader("Access-Control-Allow-Origin",origin);
+  res.setHeader("Vary","Origin");
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, x-api-key");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   if (req.method === "OPTIONS") return res.status(204).end();

@@ -1,3 +1,4 @@
+import {allowedBrowserOrigin,jwtVerificationOptions,assertTokenBoundary} from '../../telephony/src/lib/browserBoundary.js';
 import { assertSafeAuthEnvironment } from "../../integrations/authSafety.js";
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { verifyToken } from "@clerk/backend";
@@ -5,13 +6,6 @@ import { verifyToken } from "@clerk/backend";
 deploymentProfile();
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
-
-function parseList(value) {
-  return (value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
 
 function jsonResponse(status, payload) {
   return new Response(JSON.stringify(payload), {
@@ -32,6 +26,7 @@ function getBearerToken(request) {
 
 export async function requireClerkAuth(request) {
   assertSafeAuthEnvironment();
+  if(!allowedBrowserOrigin(request.headers.get("origin")))return {response:jsonResponse(403,{error:"Origin forbidden"})};
   const secretKey = process.env.CLERK_SECRET_KEY;
   const jwtKey = process.env.CLERK_JWT_KEY;
 
@@ -57,14 +52,8 @@ export async function requireClerkAuth(request) {
   }
 
   try {
-    const authorizedParties = parseList(process.env.CLERK_AUTHORIZED_PARTIES);
-    const audience = parseList(process.env.CLERK_AUDIENCE);
-    const payload = await verifyToken(token, {
-      secretKey,
-      jwtKey,
-      ...(authorizedParties.length ? { authorizedParties } : {}),
-      ...(audience.length ? { audience: audience.length === 1 ? audience[0] : audience } : {}),
-    });
+    const payload = await verifyToken(token, { secretKey, jwtKey, ...jwtVerificationOptions() });
+    assertTokenBoundary(payload);
 
     return {
       userId: payload.sub,

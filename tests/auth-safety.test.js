@@ -48,7 +48,7 @@ test('protected handlers reject missing, expired, foreign-issuer and malformed t
   const jwt = (keys, claims = {}) => {
     const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
     const body = encode({ alg: 'RS256', typ: 'JWT', kid: 'offline-fixture' }) + '.' + encode({
-      sub: 'user-fixture', sid: 'session-fixture', iss: 'https://trusted.clerk.accounts.dev', iat: now - 600, nbf: now - 600, exp: now + 60, ...claims,
+      sub: 'user-fixture', sid: 'session-fixture', iss: 'https://trusted.clerk.accounts.dev', azp: new URL(JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).appOrigin).origin, aud: JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).organizationId, iat: now - 600, nbf: now - 600, exp: now + 60, ...claims,
     });
     return body + '.' + sign('RSA-SHA256', Buffer.from(body), keys.privateKey).toString('base64url');
   };

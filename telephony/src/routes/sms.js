@@ -1,3 +1,5 @@
+import {admitHttp} from '../lib/admission.js';
+import {downloadMessageMedia} from '../lib/messageMedia.js';
 import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 import { normalizePhoneE164 } from "../phone.js";
@@ -56,7 +58,7 @@ function normalizeTwilioStatus(twilioStatus) {
 }
 
 async function storeInboundMedia({ tenantId, messageId, body }) {
-  const count = Number(body.NumMedia) || 0;
+  const count = Math.min(10,Math.max(0,Number(body.NumMedia)||0));
   for (let index = 0; index < count; index += 1) {
     const mediaUrl = body[`MediaUrl${index}`];
     const contentType = body[`MediaContentType${index}`] || "application/octet-stream";
@@ -71,15 +73,9 @@ async function storeInboundMedia({ tenantId, messageId, body }) {
     };
 
     try {
-      const response = await fetch(mediaUrl, {
-        headers: {
-          Authorization:
-            "Basic " +
-            Buffer.from(`${config.twilioAccountSid}:${config.twilioAuthToken}`).toString("base64"),
-        },
+      const data=await downloadMessageMedia(mediaUrl,{
+        headers:{Authorization:'Basic '+Buffer.from(`${config.twilioAccountSid}:${config.twilioAuthToken}`).toString('base64')}
       });
-      if (!response.ok) throw new Error(`media download failed: ${response.status}`);
-      const data = Buffer.from(await response.arrayBuffer());
 
       const storagePath = `${tenantId}/${messageId}/${index}.${extensionFor(contentType)}`;
       const { error: uploadError } = await supabase.storage
@@ -160,7 +156,8 @@ smsRouter.post("/twilio/sms-status", requireTwilioSignature, async (req, res) =>
 });
 
 smsRouter.get("/api/sms/gifs", async (req, res) => {
-  if (!await requireClerkUser(req, res)) return;
+  const user=await requireClerkUser(req,res);if(!user)return;
+  if(!await admitHttp(supabase,"gifs",user.sub,res))return;
   try {
     const payload = await giphyRequest("search", { q: String(req.query.q || "minions").slice(0, 100), limit: "30", rating: "g" });
     return res.json({ gifs: (payload.data || []).map(chooseGif).filter(Boolean) });
@@ -172,6 +169,7 @@ smsRouter.get("/api/sms/gifs", async (req, res) => {
 smsRouter.post("/api/sms/send", async (req, res) => {
   const clerkUser = await requireClerkUser(req, res);
   if (!clerkUser) return;
+  if(!await admitHttp(supabase,"sms",clerkUser.sub,res))return;
 
   const { contact_id: contactId, body, media_urls: mediaUrls, gif_id: gifId } = req.body || {};
   let outgoingMedia = Array.isArray(mediaUrls) ? mediaUrls : [];

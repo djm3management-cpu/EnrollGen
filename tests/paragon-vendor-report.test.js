@@ -25,7 +25,7 @@ test('missing and bad tokens return 404 and never read calls', async () => {
       assert.equal(response.status,404);
       assert.equal(response.headers.get('Cache-Control'),'private, no-store, max-age=0');
     }
-    assert.deepEqual(calls.map(([name]) => name),['authorize_paragon_report','authorize_paragon_report']);
+    assert.deepEqual(calls.map(([name]) => name),['authorize_paragon_report_limited','authorize_paragon_report_limited']);
     assert.ok(calls.every(([,args]) => args.p_hash === null));
   } finally { if (previous === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY; else process.env.SUPABASE_SERVICE_ROLE_KEY = previous; if (previousUrl === undefined) delete process.env.SUPABASE_URL; else process.env.SUPABASE_URL = previousUrl; }
 });
@@ -38,7 +38,7 @@ test('CSV and page expose only approved columns', async () => {
   try {
     const row = {call_id:'vendor-1',received_at:'2026-10-01T14:00:00Z',caller_phone:'+15551234567',caller_state:'FL',duration_seconds:100,billable:'yes',non_billable_reason:null,disposition_category:'completed',app_written:true,name:'PRIVATE_NAME',notes:'PRIVATE_NOTES',transcript:'PRIVATE_TRANSCRIPT',recording_url:'PRIVATE_RECORDING'};
     const handler = createHandler(() => ({rpc(name) {
-      if (name === 'authorize_paragon_report') return Promise.resolve({data:'source-id',error:null});
+      if (name === 'authorize_paragon_report_limited') return Promise.resolve({data:{source_id:'source-id',limited:false},error:null});
       if (name==='paragon_report_totals') return Promise.resolve({data:[{day:'2026-10-01',calls:1,billable:1,amount_due:28}],error:null});
       assert.equal(name,'paragon_vendor_report');
       return {range() { return Promise.resolve({data:[row,{...row,call_id:'vendor-2',disposition_category:'enrolled',app_written:false}],error:null}); }};
@@ -79,7 +79,7 @@ test('serviceability count/filter and CSV identify only unserviceable calls with
   const rows=[{call_id:'dispute-1',received_at:'2026-10-01T14:00:00Z',caller_phone:'+15555550123',caller_state:'NY',billable:'yes',duration_seconds:120,disposition_category:'completed',serviceability:'Out of state: not serviceable'},
    {call_id:'callback-2',received_at:'2026-10-01T15:00:00Z',caller_state:'AZ',billable:'yes',disposition_category:'callback_scheduled',serviceability:'Paragon callback: out-of-state'}];
   const handler=createHandler(()=>({rpc(name){
-   if(name==='authorize_paragon_report')return Promise.resolve({data:'source-id'});
+   if(name==='authorize_paragon_report_limited')return Promise.resolve({data:{source_id:'source-id',limited:false}});
    if(name==='paragon_report_totals')return Promise.resolve({data:[{day:'2026-10-01',calls:2,billable:2,amount_due:56}]});
    return {range:async()=>({data:rows})};
   }}));

@@ -1,3 +1,4 @@
+import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
 import { redactPromptPayload } from './_redaction.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
@@ -138,6 +139,7 @@ async function callNormalizer(knownCarriers, knownAgents, rows) {
       .trim();
     return parseAnthropicJson(text);
   } catch (error) {
+    if(error instanceof AdmissionError)return admissionResponse(error);
     if (error?.name === "AbortError") throw new Error("The RTS normalization request timed out.");
     throw error;
   } finally {
@@ -212,6 +214,7 @@ async function handleUpload(request, supabase, context) {
 
   const chunks = chunkRows(parsed.rows, RTS_CHUNK_SIZE);
   const chunkResults = await mapConcurrent(chunks, AI_CONCURRENCY, async (chunk) => {
+    await admitAgent(supabase,'summary',{userId:context.actor.clerk_user_id});
     const raw = await callNormalizer(known.carriers, known.agents, chunk.rows);
     return normalizeChunkResult(raw, chunk.start, chunk.rows.length);
   });
@@ -466,6 +469,7 @@ export function createRtsIngestHandler({authenticate=requireClerkAuth,getDb=getS
     }
     return await handleUpload(request, supabase, context);
   } catch (error) {
+    if(error instanceof AdmissionError)return admissionResponse(error);
     console.error("[rts-ingest] failed", {status:error.status || 500,code:error.code || null});
     return json(error.status || 500, {
       error: "RTS ingestion failed.",

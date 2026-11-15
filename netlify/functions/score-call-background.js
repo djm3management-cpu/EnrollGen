@@ -1,3 +1,4 @@
+import {admitCall,AdmissionError,admissionResponse} from './_admission.js';
 import {postCallExceptionDetails} from '../lib/postCallException.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {recoverBeforeScoring} from '../lib/transcriptRecovery.js';
@@ -34,7 +35,7 @@ function hasInternalJobAuthorization(request) {
 
 function errorDetails(error){return postCallExceptionDetails(error);}
 
-export function createScoreCallHandler({ getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus, verifyEnded=verifyPostCallEnded, recover=recoverBeforeScoring } = {}) {
+export function createScoreCallHandler({admission=admitCall, getDb = getEvidenceServiceClient, classify, recordStatus=recordProviderStatus, verifyEnded=verifyPostCallEnded, recover=recoverBeforeScoring } = {}) {
 return async (request, context) => {
   if(!featureEnabled('SCORING_ENABLED'))return disabledResponse('SCORING_ENABLED');
   if (request.method !== "POST") return new Response('Method not allowed', { status: 405 });
@@ -119,6 +120,7 @@ return async (request, context) => {
       return Response.json(recovery,{status:recovery.pending||recovery.recovered?202:200});
     }
 
+    await admission(sb,"scoring",callRecord);
     stage = 'generate_scorecard';
     const result = await generateScorecard({
       supabase: sb,
@@ -161,6 +163,7 @@ return async (request, context) => {
     console.log(`[score-bg] Scoring complete for ${callId}: ${result.scorecard?.overall_grade} (${result.scorecard?.overall_score?.toFixed(1)}%)`);
     return Response.json({scorecard_id:result.scorecard?.id});
   } catch (err) {
+    if(err instanceof AdmissionError){if(sb&&callRecord)await recordStatus(sb,callRecord.session_id,'scoring',err.code,startedAt);return admissionResponse(err);}
     const code=providerErrorCode(err,'scoring_failed');
     console.error(JSON.stringify({event:'scoring_failed',call_record_id:callId,session_id:callRecord?.session_id,stage,code,status:err?.status || null,...errorDetails(err)}));
     // Preflight failures happen before generateScorecard can record a failed job.

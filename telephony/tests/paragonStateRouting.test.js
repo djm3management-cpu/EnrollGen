@@ -22,7 +22,7 @@ test('field adapter and public Paragon response use a configurable request mappi
     { state:'region',phone:'ani',call_id:'cid' }),
     { state:'KS',phone:'+15550000001',invalidPhone:false,callId:'abc' });
   let received;
-  const handler = createHandler({
+  const handler = createHandler({admission:async()=>({data:{authorized:true,allowed:true}}),
     rpc:async () => ({ data:{ authorized:true,consumer_name:'Paragon Media',feed:{ agents:[] } } }),
     paragonPing:async params => { received=params;return { data:{ available:false,reason:'routing_disabled' } }; },
     routingEnabled:false,fieldMap:JSON.stringify({ state:'region',phone:'ani',call_id:'cid' }),log:() => {},

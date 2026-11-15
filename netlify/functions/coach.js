@@ -1,3 +1,4 @@
+import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
 import { complete, completeStream } from "../../src/lib/llm/client.ts";
 import { resolveEngine } from "../../src/lib/llm/config.js";
 import { coachingFormat } from "../../src/lib/llm/schemas/coaching.js";
@@ -44,6 +45,7 @@ export default async (request, context) => {
 
   const planGate = requirePlan(subscription, "pro");
   if (planGate.response) return planGate.response;
+  try{await admitAgent(supabase,"coach",auth);}catch(error){return admissionResponse(error instanceof AdmissionError?error:new AdmissionError(503));}
 
   try {
     let body;

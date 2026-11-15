@@ -1,3 +1,4 @@
+import {admitHttp} from '../lib/admission.js';
 import {createIncomingLeadHandler} from '../lib/incomingLead.js';
 import crypto from "node:crypto";
 import { Router } from "express";
@@ -14,10 +15,12 @@ function timingSafeEquals(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-function requireVendorApiKey(req, res, next) {
+async function requireVendorApiKey(req, res, next) {
+  if(!config.paragonEnabled && /paragon/i.test(String(req.body?.vendor_source||req.body?.publisher||'')))return res.status(503).json({status:'disabled',feature:'PARAGON_ENABLED'});
   if (!timingSafeEquals(req.header("x-api-key"), config.inboundVendorApiKey)) {
     return res.status(401).json({ error: "Invalid API key" });
   }
+  if(!await admitHttp(supabase,"vendorLead",crypto.createHash("sha256").update(config.inboundVendorApiKey).digest("hex"),res))return;
   return next();
 }
 

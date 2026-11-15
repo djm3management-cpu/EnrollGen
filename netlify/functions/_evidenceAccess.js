@@ -1,3 +1,4 @@
+import {AdmissionError,admissionResponse} from './_admission.js';
 import { auditedEvidenceAccess, EvidenceAuditError } from '../../telephony/src/lib/evidenceAudit.js';
 import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
 import { resolveDeploymentAccess,signedDeploymentAdmin } from '../../telephony/src/lib/deploymentAccess.js';
@@ -27,6 +28,7 @@ export function evidenceJson(status, body) {
 }
 
 export function evidenceFailure(error) {
+  if(error instanceof AdmissionError)return admissionResponse(error);
   // SQL errors can contain submitted transcript/flag text. Never expose or log it.
   return evidenceJson(error instanceof EvidenceError || error instanceof EvidenceAuditError ? error.status : 503, {
     error: error instanceof EvidenceError || error instanceof EvidenceAuditError ? error.message : "Evidence request failed. Please retry.",

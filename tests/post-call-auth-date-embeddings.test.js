@@ -30,7 +30,7 @@ test('US dates normalize before input binding, invalid dates are rejected, ident
 });
 test('Unicode chunks stay below token-safe byte bounds and long inputs combine into one valid vector',async()=>{
  const text='🦄 cancer '.repeat(2000);const chunks=embeddingChunks(text);assert.equal(chunks.join(''),text);assert.ok(chunks.every(chunk=>Buffer.byteLength(chunk)<=6000));
- const handler=createEmbeddingsHandler({authenticate:async()=>({userId:'test'}),env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,OPENAI_API_KEY:'test'},send:async(_url,init)=>{
+ const handler=createEmbeddingsHandler({getDb:()=>({rpc:async name=>({data:name==='consume_admission'?{allowed:true,retry_after:0}:[{tenant_id:JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).tenantId,agent_id:'synthetic',roster_id:'synthetic',agent_slug:'synthetic',authority:'agent',team_agent_ids:[]}],error:null})}),authenticate:async()=>({userId:'test'}),env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,OPENAI_API_KEY:'test'},send:async(_url,init)=>{
  const inputs=JSON.parse(init.body).input;assert.ok(inputs.every(input=>Buffer.byteLength(input)<=6000));
  return new Response(JSON.stringify({data:inputs.map((_,index)=>({index,embedding:Array(1536).fill(1)}))}));
  }});

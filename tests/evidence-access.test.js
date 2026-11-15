@@ -362,7 +362,7 @@ async function scoreFixtureCall() {
   const firstError = sqlErrors.length;
   const priorScores = (await query("SELECT count(*)::int AS n FROM scoring_jobs WHERE call_id=$1 AND status='complete'",[windowCall.call_record_id]))[0].n;
   let llmCalls = 0;
-  const scoring = createScoreCallHandler({getDb:()=>db,recordStatus:async()=>{},classify:async()=> {
+  const scoring = createScoreCallHandler({admission:async()=>{},getDb:()=>db,recordStatus:async()=>{},classify:async()=> {
     llmCalls++;
     return { detections:[{intent_code:"CALL_OPEN_001_RECORDING_ANNOUNCE",detected:true,confidence:0.99,speaker:"agent",
       evidence_text:"This call is recorded.",sequence_position:1}],assessment,risk_indicators:[],sentiment:{agent:"neutral",beneficiary:"neutral"} };

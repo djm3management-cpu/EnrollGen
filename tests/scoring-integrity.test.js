@@ -141,7 +141,7 @@ test('background failure returns retryable status and never marks complete', asy
   const record = await newCall(); await triggerFailure('scorecard_items');
   const prior = process.env.SCORE_CALL_JOB_SECRET; process.env.SCORE_CALL_JOB_SECRET='scoring-test-secret';
   try {
-    const handler = createScoreCallHandler({getDb:()=>db,classify:callLLM,recordStatus:async()=>{}});
+    const handler = createScoreCallHandler({admission:async()=>{},getDb:()=>db,classify:callLLM,recordStatus:async()=>{}});
     const response = await handler(new Request('https://example.test',{method:'POST',headers:{'x-enrollgen-job-secret':'scoring-test-secret'},
       body:JSON.stringify({callId:record.id,tenantId:tenant})}),{});
     assert.equal(response.status,503);
@@ -154,7 +154,7 @@ test('background failure returns retryable status and never marks complete', asy
 test('provider errors keep their code in the response and notify durable post-call status',async()=>{
  const record=await newCall();const calls=[];const prior=process.env.SCORE_CALL_JOB_SECRET;process.env.SCORE_CALL_JOB_SECRET='provider-fixture';
  try {
-  const handler=createScoreCallHandler({getDb:()=>db,classify:async()=>{throw Object.assign(new Error('Provider quota exhausted'),{status:429,code:'insufficient_quota'});},recordStatus:async(...args)=>{calls.push(args);}});
+  const handler=createScoreCallHandler({admission:async()=>{},getDb:()=>db,classify:async()=>{throw Object.assign(new Error('Provider quota exhausted'),{status:429,code:'insufficient_quota'});},recordStatus:async(...args)=>{calls.push(args);}});
   const response=await handler(new Request('https://test',{method:'POST',headers:{'x-enrollgen-job-secret':'provider-fixture'},body:JSON.stringify({callId:record.id,tenantId:tenant})}),{});
   assert.equal(response.status,503);assert.equal((await response.json()).code,'insufficient_quota');assert.equal(calls.at(-1)[2],'scoring');assert.equal(calls.at(-1)[3],'insufficient_quota');
   assert.equal((await value(`SELECT count(*)::int n FROM compliance_scorecards WHERE scoring_state='complete' AND call_id='${record.id}'`)).n,0);
@@ -164,7 +164,7 @@ test('database initialization failures log their stage and sanitized diagnostic 
  const prior=process.env.SCORE_CALL_JOB_SECRET;process.env.SCORE_CALL_JOB_SECRET='logging-test';
  const original=console.error,logs=[];console.error=message=>logs.push(JSON.parse(message));
  try{
-  const handler=createScoreCallHandler({getDb:()=>{throw Error('Database unavailable: sk-proj-fixturesecret');}});
+  const handler=createScoreCallHandler({admission:async()=>{},getDb:()=>{throw Error('Database unavailable: sk-proj-fixturesecret');}});
   const response=await handler(new Request('https://test',{method:'POST',headers:{'x-enrollgen-job-secret':'logging-test'},
    body:JSON.stringify({callId:randomUUID(),tenantId:tenant})}),{});
   assert.equal(response.status,503);assert.equal(logs[0].event,'scoring_failed');assert.equal(logs[0].stage,'load_call');

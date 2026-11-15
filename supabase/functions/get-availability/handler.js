@@ -1,9 +1,10 @@
+import {allowedBrowserOrigin} from '../../../telephony/src/lib/browserBoundary.js';
+import {limitsFor} from '../../../telephony/src/lib/admission.js';
 import {deploymentProfile} from '../../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled } from '../../../telephony/src/lib/deploymentFeatures.js';
 import { parseParagonFieldMap, readParagonPing } from '../_shared/paragonPingAdapter.js';
 
 const cors = {
-  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-api-key, content-type',
   'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
   'Cache-Control': 'no-store',
@@ -14,9 +15,12 @@ export async function hashKey(key) {
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function createHandler({ rpc, paragonPing, routingEnabled = false, env,  fieldMap, log = console.log, now = () => performance.now() }) {
+export function createHandler({ rpc, admission, paragonPing, routingEnabled = false, env,  fieldMap, log = console.log, now = () => performance.now() }) {
   return async request => {
     if(!featureEnabled('PARAGON_ENABLED',env))return Response.json({status:'disabled',feature:'PARAGON_ENABLED'},{status:503,headers:cors});
+    const origin=request.headers.get('origin');
+    if(!allowedBrowserOrigin(origin,deploymentProfile(env)))return Response.json({error:'Origin forbidden'},{status:403,headers:cors});
+    const headers={...cors,...(origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin'}:{})};
     const start = now();
     let consumer = 'unknown';
     let status = 500;
@@ -25,7 +29,7 @@ export function createHandler({ rpc, paragonPing, routingEnabled = false, env,  
     const respond = (body, code = 200) => {
       status = code;
       decisionReason = body?.reason || null;
-      return new Response(request.method === 'HEAD' ? null : JSON.stringify(body), { status: code, headers: cors });
+      return new Response(request.method === 'HEAD' ? null : JSON.stringify(body), { status: code, headers });
     };
     try {
       if (request.method === 'OPTIONS') {
@@ -38,6 +42,11 @@ export function createHandler({ rpc, paragonPing, routingEnabled = false, env,  
       const key = headerKey ?? url.searchParams.get('key');
       authMethod = headerKey !== null ? 'header' : key !== null ? 'query' : 'none';
       if (!key || key.length > 512) return respond({ error: 'Unauthorized' }, 401);
+      const keyHash=await hashKey(key);
+      const gate=await admission({p_key_hash:keyHash,p_route:'availability',p_limit:limitsFor('availability',deploymentProfile(env)).minute});
+      if(gate.error||!gate.data)return respond({error:'Admission unavailable'},503);
+      if(!gate.data.authorized)return respond({error:'Unauthorized'},401);
+      if(!gate.data.allowed){headers['Retry-After']=String(gate.data.retry_after);return respond({error:'admission_limited',retry_after:gate.data.retry_after},429);}
       const agentId = url.searchParams.get('agent_id');
       const format = url.searchParams.get('format') || 'json';
       const pingFields = readParagonPing(url.searchParams,parseParagonFieldMap(fieldMap));
@@ -75,7 +84,7 @@ export function createHandler({ rpc, paragonPing, routingEnabled = false, env,  
       if (format === 'simple') return respond({ available, count });
       if (format === 'text') {
         status = 200;
-        return new Response(available ? '1' : '0', { headers: { ...cors, 'Content-Type': 'text/plain; charset=utf-8' } });
+        return new Response(available ? '1' : '0', { headers: { ...headers, 'Content-Type': 'text/plain; charset=utf-8' } });
       }
       if (agentId !== null && !state && !url.searchParams.has('min')) {
         if (!agents.length) return respond({ error: 'Agent not found' }, 404);

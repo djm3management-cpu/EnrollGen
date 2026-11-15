@@ -1,3 +1,4 @@
+import {deploymentProfile} from './lib/deploymentProfile.js';
 import crypto from "node:crypto";
 import { Buffer } from "node:buffer";
 import { config } from "./config.js";
@@ -18,6 +19,7 @@ export function mintAgentWsToken(agentId, clerkSubject, clerkSessionId) {
     agentId,
     clerkSubject,
     clerkSessionId,
+    aud: deploymentProfile().organizationId,
     exp,
   })).toString("base64url");
   return `${payload}.${hmac(payload)}`;
@@ -41,6 +43,7 @@ export function inspectAgentWsToken(token, now = Date.now()) {
     return reject("malformed_claims");
   }
   if (!claims?.agentId || !claims?.clerkSubject || !claims?.clerkSessionId || !Number.isFinite(claims.exp)) return reject("invalid_claims");
+  if(claims.aud!==deploymentProfile().organizationId)return reject("audience_mismatch");
   if (claims.exp < Math.floor(now / 1000)) return reject("expired_token");
   return { claims, reason: null };
 }

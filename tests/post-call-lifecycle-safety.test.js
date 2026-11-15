@@ -40,7 +40,7 @@ test('scoring checks parent status before invoking any model or writing a result
  let modelCalls=0,verified=0;
  const db={from(){return {select(){return this;},eq(){return this;},async single(){return {data:{id:'call',session_id:'session',tenant_id:'tenant',call_outcome:'enrolled',twilio_call_sid:sid}};}};}};
  try {
-  const handler=createScoreCallHandler({getDb:()=>db,classify:async()=>{modelCalls++;},verifyEnded:async()=>{verified++;throw Object.assign(new Error('Call is active'),{status:409});}});
+  const handler=createScoreCallHandler({admission:async()=>{},getDb:()=>db,classify:async()=>{modelCalls++;},verifyEnded:async()=>{verified++;throw Object.assign(new Error('Call is active'),{status:409});}});
   const response=await handler(new Request('https://app.test/score',{method:'POST',headers:{'x-enrollgen-job-secret':'fixture'},body:JSON.stringify({callId:'call',tenantId:'tenant'})}));
   assert.equal(response.status,202);assert.equal((await response.json()).reason,'parent_call_active');assert.equal(verified,1);assert.equal(modelCalls,0);
  }finally{if(previous===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=previous;}

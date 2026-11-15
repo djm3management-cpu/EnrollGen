@@ -34,7 +34,7 @@ const foreignKey = generateKeyPairSync('rsa', { modulusLength: 2048 });
 function token(key, extra = {}) {
   const now = Math.floor(Date.now() / 1000);
   const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
-  const body = encode({ alg: 'RS256', typ: 'JWT', kid: 'offline' }) + '.' + encode({ sub: 'user-a', sid: 'session', iss: 'https://trusted.clerk.accounts.dev', iat: now - 600, nbf: now - 600, exp: now + 60, ...extra });
+  const body = encode({ alg: 'RS256', typ: 'JWT', kid: 'offline' }) + '.' + encode({ sub: 'user-a', sid: 'session', iss: 'https://trusted.clerk.accounts.dev', azp: new URL(JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).appOrigin).origin, aud: JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).organizationId, iat: now - 600, nbf: now - 600, exp: now + 60, ...extra });
   return body + '.' + sign('RSA-SHA256', Buffer.from(body), key.privateKey).toString('base64url');
 }
 const env={DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, STRIPE_BILLING_ENABLED:'true', SCORING_ENABLED:'true', TRANSCRIPT_GAP_FILL_ENABLED:'true', DEEPGRAM_API_KEY: 'offline-fixture', STRIPE_PRO_PRICE_ID: 'price_fixture' };

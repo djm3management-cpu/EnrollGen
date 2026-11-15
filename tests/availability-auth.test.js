@@ -173,7 +173,7 @@ test('Clerk signature verification is mandatory for availability', async () => {
     const now = Math.floor(Date.now()/1000);
     const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
     const unsigned = encode({ alg: 'RS256', typ: 'JWT', kid: 'fixture' }) + '.' + encode({
-      sub: 'alice', sid: 'sess-alice', iss: 'https://fixture.clerk.accounts.dev', iat: now, nbf: now-5, exp: now+60,
+      sub: 'alice', sid: 'sess-alice', iss: 'https://fixture.clerk.accounts.dev', azp:new URL(JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).appOrigin).origin,aud:JSON.parse(process.env.DEPLOYMENT_PROFILE_JSON).organizationId, iat: now, nbf: now-5, exp: now+60,
     });
     const token = unsigned + '.' + sign('RSA-SHA256', Buffer.from(unsigned), privateKey).toString('base64url');
     const verified = await requireClerkAuth(new Request('https://app.example', { headers: { Authorization: 'Bearer ' + token } }), { allowBypass: false });

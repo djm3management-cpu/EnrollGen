@@ -1,3 +1,4 @@
+import {limitsFor} from '../lib/admission.js';
 import { Router } from 'express';
 import { createHash } from 'node:crypto';
 import { supabase } from '../supabase.js';
@@ -18,6 +19,11 @@ vendorPingRouter.post('/api/leads/ping',async(req,res)=>{
   const phone=fields.phone ? normalizePhoneE164(fields.phone) : null;
   if(fields.phone && !phone)return decision({available:false,reason:'invalid_phone'});
   try {
+    const hash=createHash('sha256').update(key).digest('hex');
+    const gate=await supabase.rpc('admit_vendor',{p_key_hash:hash,p_route:'vendorPing',p_limit:limitsFor('vendorPing').minute});
+    if(gate.error||!gate.data)return decision({error:'Admission unavailable'},503);
+    if(!gate.data.authorized)return decision({error:'Unauthorized'},401);
+    if(!gate.data.allowed){res.setHeader('Retry-After',String(gate.data.retry_after));return decision({error:'admission_limited',retry_after:gate.data.retry_after},429);}
     const {data,error}=await supabase.rpc('paragon_ping',{
       p_key_hash:createHash('sha256').update(key).digest('hex'),p_phone:phone,p_state:fields.state,
       p_call_id:fields.callId?.slice(0,128) || null,

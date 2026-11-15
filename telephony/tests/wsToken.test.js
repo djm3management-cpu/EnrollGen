@@ -66,3 +66,11 @@ test('valid agent websocket authenticates the owning subject and delivers live t
     await new Promise(resolve=>setTimeout(resolve,5));globalThis.fetch=originalFetch;
   }
 });
+
+test('agent socket token rejects a correctly signed foreign deployment audience',()=>{
+ const minted=mintAgentWsToken('pilot_agent_01','user_fixture','sess_fixture');
+ const claims=JSON.parse(Buffer.from(minted.split('.')[0],'base64url').toString());claims.aud='org_ForeignSynthetic';
+ const payload=Buffer.from(JSON.stringify(claims)).toString('base64url');
+ const token=payload+'.'+createHmac('sha256','fixture').update(payload).digest('base64url');
+ assert.equal(inspectAgentWsToken(token).reason,'audience_mismatch');
+});

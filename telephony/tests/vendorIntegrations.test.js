@@ -52,7 +52,7 @@ const sample={any_available:true,available_count:2,unavailable_count:1,total_cou
  {agent_id:'a',agent_name:'A',available:true,status:'available',licensed_states:['NJ']},
  {agent_id:'b',agent_name:'B',available:true,status:'available',licensed_states:['CA']},
  {agent_id:'c',agent_name:'C',available:false,status:'busy',licensed_states:['TX']}]};
-function handlerFixture(){const logs=[];const h=createHandler({rpc:async()=>({data:{authorized:true,consumer_name:'test',feed:sample}}),log:l=>logs.push(JSON.parse(l))});return {h,logs};}
+function handlerFixture(){const logs=[];const h=createHandler({admission:async()=>({data:{authorized:true,allowed:true}}),rpc:async()=>({data:{authorized:true,consumer_name:'test',feed:sample}}),log:l=>logs.push(JSON.parse(l))});return {h,logs};}
 for(const [query,expected] of [['format=simple',{available:true,count:2}],['format=simple&state=NJ',{available:true,count:1}],['format=simple&state=TX',{available:false,count:0}],['format=simple&min=3',{available:false,count:2}],['format=simple&state=NJ&min=2',{available:false,count:1}]]){
  test('pull '+query,async()=>{const {h}=handlerFixture();const r=await h(new Request('https://feed.test/?'+query,{headers:{'x-api-key':'test'}}));assert.deepEqual(await r.json(),expected);});
 }
@@ -256,7 +256,7 @@ test('worker records transport failures and proceeds to the next delivery',async
  assert.deepEqual(JSON.parse(logs[0]).error,finished[0].p_error);
 });
 test('credential selection and query authentication hash the actual supplied key',async()=>{
- const received=[];const h=createHandler({rpc:async p=>{received.push(p.p_key_hash);return{data:{authorized:p.p_key_hash===await (await import('../../supabase/functions/get-availability/handler.js')).hashKey('valid'),consumer_name:'vendor',feed:sample}};},log:()=>{}});
+ const received=[];const h=createHandler({admission:async()=>({data:{authorized:true,allowed:true}}),rpc:async p=>{received.push(p.p_key_hash);return{data:{authorized:p.p_key_hash===await (await import('../../supabase/functions/get-availability/handler.js')).hashKey('valid'),consumer_name:'vendor',feed:sample}};},log:()=>{}});
  assert.equal((await h(new Request('https://feed.test/?key=valid'))).status,200);
  assert.equal((await h(new Request('https://feed.test/?key=valid',{headers:{'x-api-key':'invalid'}}))).status,401);
  assert.notEqual(received[0],received[1]);

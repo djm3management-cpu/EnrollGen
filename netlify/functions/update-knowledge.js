@@ -1,3 +1,4 @@
+import {AdmissionError,admissionResponse} from './_admission.js';
 import {
   runAllKnowledgeCategoryUpdates,
   runKnowledgeUpdate,
@@ -47,6 +48,7 @@ export function createUpdateKnowledgeHandler({ run = runKnowledgeUpdate, runAll 
 
       return json(200, result);
     } catch (error) {
+      if(error instanceof AdmissionError)return admissionResponse(error);
       console.error("[update-knowledge]", 'request_failed');
       return json(500, {
         error: "Knowledge update failed",

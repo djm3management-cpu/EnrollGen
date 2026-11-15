@@ -94,7 +94,7 @@ test('Netlify routes reject direct function paths and aliases before auth, datab
     // The real scheduled export shares the same early guard; no DB construction.
     const {createDailyHandler}=await import('../netlify/functions/paragon-daily-email.js');
     assert.equal((await createDailyHandler({makeDb:forbidden,fetchImpl:forbidden})()).status,503);
-    for(const handler of [createGapFillHandler({env:credentials,getDb:forbidden,transport:forbidden}),createManualScoringHandler({env:credentials,getDb:forbidden,callModel:forbidden}),createScoreCallHandler({getDb:forbidden,classify:forbidden})])assert.equal((await handler(request('/api/disabled'))).status,503);
+    for(const handler of [createGapFillHandler({env:credentials,getDb:forbidden,transport:forbidden}),createManualScoringHandler({admission:async()=>{},env:credentials,getDb:forbidden,callModel:forbidden}),createScoreCallHandler({admission:async()=>{},getDb:forbidden,classify:forbidden})])assert.equal((await handler(request('/api/disabled'))).status,503);
     assert.equal((await createComplianceUploadsHandler({env:credentials,authenticate:forbidden,getDb:forbidden})(request('/api/compliance-uploads'))).status,503);
     for(const action of ['fill','rescore']){
       const handler=createComplianceReviewHandler({env:credentials,authenticate:async()=>({userId:'fixture'}),getDb:forbidden,transport:forbidden});

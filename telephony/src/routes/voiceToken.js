@@ -1,3 +1,5 @@
+import {admitHttp} from '../lib/admission.js';
+import {supabase} from '../supabase.js';
 import { Router } from "express";
 import twilio from "twilio";
 import { config } from "../config.js";
@@ -22,6 +24,7 @@ voiceTokenRouter.post("/api/voice/token", async (req, res) => {
   const clerkUser = await requireClerkUser(req, res);
   if (!clerkUser) return;
 
+  if(!await admitHttp(supabase,"voiceToken",clerkUser.sub,res))return;
   const clerkSubject = clerkUser.sub;
   const clerkSessionId = clerkUser.sid;
   if (!clerkSubject || !clerkSessionId) {

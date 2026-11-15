@@ -22,6 +22,11 @@
     },
     {
       "schema": "public",
+      "name": "admit_vendor",
+      "arguments": "p_key_hash text, p_route text, p_limit integer"
+    },
+    {
+      "schema": "public",
       "name": "advance_contact_connection",
       "arguments": "p_contact_id uuid, p_tenant_id uuid, p_agent_id text, p_connected_at timestamp with time zone, p_direction text"
     },
@@ -58,6 +63,11 @@
     {
       "schema": "public",
       "name": "authorize_paragon_report",
+      "arguments": "p_hash text, p_ip text"
+    },
+    {
+      "schema": "public",
+      "name": "authorize_paragon_report_limited",
       "arguments": "p_hash text, p_ip text"
     },
     {
@@ -234,6 +244,11 @@
       "schema": "public",
       "name": "confirm_paragon_call_state",
       "arguments": "p_call uuid, p_tenant uuid, p_agent text, p_zip text, p_state text"
+    },
+    {
+      "schema": "public",
+      "name": "consume_admission",
+      "arguments": "p_rules jsonb"
     },
     {
       "schema": "public",
@@ -839,6 +854,11 @@
       "schema": "public",
       "name": "provision_deployment_roster",
       "arguments": "p_profile jsonb, p_agents jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "prune_admission_counters",
+      "arguments": ""
     },
     {
       "schema": "public",

@@ -1,3 +1,4 @@
+import {installAdmissionFixture} from './admissionFixture.js';
 import {installEvidenceAuditFixture} from './evidenceAuditFixture.js';
 import {prepareServerIdentity} from './serverIdentityFixture.js';
 // Thin Supabase-shaped adapter. All authorization and mutations execute in
@@ -6,15 +7,16 @@ export function evidenceDb(pg, onError = () => {}) {
   const q = name => '"' + name.replaceAll('"', '""') + '"';
   return {
     async rpc(name, input = {}) {
+      if(name==='consume_admission')await installAdmissionFixture(pg);
       if(name==='resolve_deployment_subject')await prepareServerIdentity(pg);
       const entries = Object.entries(input);
       try {
         const sql = "SELECT * FROM public." + q(name) + "(" + entries.map(([key], index) =>
           q(key) + "=>$" + (index + 1) + (key === "query_embedding" ? "::vector" : "")).join(",") + ")";
-        const jsonArgs = new Set(['p_transcript', 'p_result', 'p_stages', 'p_fields', 'p_rows', 'p_warnings']);
+        const jsonArgs = new Set(['p_rules','p_transcript', 'p_result', 'p_stages', 'p_fields', 'p_rows', 'p_warnings']);
         const rows = (await pg.query(sql, entries.map(([key,item]) => key === "query_embedding" ? "{" + item.join(",") + "}"
           : (jsonArgs.has(key) || name === 'finish_ix_upload' && key === 'p_receipt') ? JSON.stringify(item) : item))).rows;
-        const scalarScoring = ['create_workspace_record','save_opportunity_pipeline','claim_compliance_pass','mark_compliance_not_applicable','mark_scoring_incomplete','save_compliance_version','claim_post_call_webhook','begin_scoring_job','persist_scoring_result','persist_tpmo_timing_repair','fail_scoring_job','reserve_scoring_input_tokens','retry_failed_scoring','start_telephony_session','save_agent_call_disposition','combine_call_records'].includes(name);
+        const scalarScoring = ['consume_admission','create_workspace_record','save_opportunity_pipeline','claim_compliance_pass','mark_compliance_not_applicable','mark_scoring_incomplete','save_compliance_version','claim_post_call_webhook','begin_scoring_job','persist_scoring_result','persist_tpmo_timing_repair','fail_scoring_job','reserve_scoring_input_tokens','retry_failed_scoring','start_telephony_session','save_agent_call_disposition','combine_call_records'].includes(name);
         return { data: scalarScoring ? rows[0]?.[name] : rows, error: null };
       } catch (error) { return { data: null, error }; }
     },

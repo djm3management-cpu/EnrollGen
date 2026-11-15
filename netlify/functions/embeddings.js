@@ -1,3 +1,4 @@
+import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
 import { redactPromptPayload } from './_redaction.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import {timingSafeEqual} from 'node:crypto';
@@ -36,7 +37,7 @@ export async function authenticateEmbeddingRequest(request,getDb) {
   return {userId:job.clerk_user_id,orgId:job.clerk_org_id,tokenPayload:{},recovery:{sessionId,input:row.payload.transcript_text?.trim()}};
 }
 
-export function createEmbeddingsHandler({ authenticate, getDb=getEvidenceServiceClient, send = (...args) => fetch(...args), env = process.env } = {}) {
+export function createEmbeddingsHandler({ admission=admitAgent, authenticate, getDb=getEvidenceServiceClient, send = (...args) => fetch(...args), env = process.env } = {}) {
   return async request => {
     if (request.method !== 'POST') return json(405, {error:'Method not allowed'});
     let db,sessionId;
@@ -60,6 +61,8 @@ export function createEmbeddingsHandler({ authenticate, getDb=getEvidenceService
       if (!input || (body.model && body.model !== MODEL)) return json(400, {error:'Enter text and use text-embedding-3-small.'});
       if (Buffer.byteLength(input, 'utf8') > 512000) return json(413, {error:'Embedding input exceeds 512 KB.'});
       if (!env.OPENAI_API_KEY) return await fail('configuration_missing');
+      db ||= getDb();
+      await admission(db,"embeddings",auth);
       const chunks = embeddingChunks(input);
       const combined = Array(1536).fill(0);
       let totalWeight = 0;
@@ -93,6 +96,7 @@ export function createEmbeddingsHandler({ authenticate, getDb=getEvidenceService
       console.log(JSON.stringify({event:'embeddings_complete',session_id:sessionId || null,chunks:chunks.length,dimensions:1536}));
       return json(200,{embedding:mean.map(value=>value/norm),model:MODEL,chunks:chunks.length});
     } catch (error) {
+      if(error instanceof AdmissionError)return admissionResponse(error);
       const timeout = error?.name === 'TimeoutError' || error?.name === 'AbortError';
       console.error(`[embeddings] ${timeout ? 'provider_timeout' : 'request_failed'}`);
       if (error.status===403 || error.status===401) return json(error.status,{error:'Session unavailable.'});

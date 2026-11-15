@@ -1,3 +1,4 @@
+import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import {
@@ -42,6 +43,7 @@ export default async (request) => {
 
   const planGate = requirePlan(subscription, "pro");
   if (planGate.response) return planGate.response;
+  try{await admitAgent(supabase,"transcription",auth);}catch(error){return admissionResponse(error instanceof AdmissionError?error:new AdmissionError(503));}
 
   const apiKey = process.env.DEEPGRAM_API_KEY;
   if (!apiKey) {

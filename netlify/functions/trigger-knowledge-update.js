@@ -41,6 +41,7 @@ export function createTriggerKnowledgeUpdateHandler({
 
       const result = await run({
         tenantId: identity.tenant.id,
+        budgetSubject: auth.userId,
         category,
         key: key || null,
         limit: key ? 1 : Number(body.limit || 6),

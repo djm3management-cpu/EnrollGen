@@ -1,3 +1,4 @@
+import {admit,AdmissionError} from './_admission.js';
 import { redactPromptPayload } from './_redaction.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
@@ -158,12 +159,13 @@ async function logKnowledgeUpdate(supabase, entryId, payload) {
   if (error) throw error;
 }
 
-async function processEntry(supabase, entry, { fetchSources, generateUpdate }) {
+async function processEntry(supabase, entry, { fetchSources, generateUpdate, budgetSubject }) {
   if (!entry.source_urls?.length) {
     return { id: entry.id, key: entry.key, result: "skipped_no_sources" };
   }
 
   const sourceMaterial = await fetchSources(entry.source_urls);
+  await admit(supabase,'summary',budgetSubject);
   const parsed = await generateUpdate(entry, sourceMaterial);
   if (!parsed.changed) return { id: entry.id, key: entry.key, result: "no_changes" };
 
@@ -215,7 +217,7 @@ export async function listKnowledgeCategories() {
 }
 
 export async function runKnowledgeUpdate(
-  { category = null, key = null, limit = 12, tenantId = null } = {},
+  { category = null, key = null, limit = 12, tenantId = null, budgetSubject = 'service:knowledge-update' } = {},
   { getDb = getSupabase, fetchSources = fetchSourceMaterial, generateUpdate = callClaude } = {},
 ) {
   if (process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED !== "true") return { status: "disabled" };
@@ -225,8 +227,9 @@ export async function runKnowledgeUpdate(
 
   for (const entry of entries) {
     try {
-      results.push(await processEntry(supabase, entry, { fetchSources, generateUpdate }));
+      results.push(await processEntry(supabase, entry, { fetchSources, generateUpdate, budgetSubject }));
     } catch (error) {
+      if(error instanceof AdmissionError)throw error;
       await logKnowledgeUpdate(supabase, entry.id, {
         previousContent: entry.content,
         newContent: null,
@@ -262,7 +265,8 @@ export async function runAllKnowledgeCategoryUpdates({ limitPerCategory = 6 } = 
         limit: limitPerCategory,
       });
       results.push({ category, ...result });
-    } catch {
+    } catch(error) {
+      if(error instanceof AdmissionError)throw error;
       results.push({
         category,
         checked: 0,

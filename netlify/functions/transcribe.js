@@ -1,3 +1,4 @@
+import {admitAgent} from './_admission.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 /**
  * Deepgram batch transcription — transcribes a pre-recorded audio file.
@@ -230,6 +231,7 @@ export function createTranscribeHandler({
     const recordings = await listTargetRecordings(sb, identity, target);
     const recording = recordings.find(row => row.id === recordingId);
     if (!recording) throw new EvidenceError(403, "Recording is unavailable for this call.");
+    await admitAgent(sb,"transcription",auth);
     const dgKey = env.DEEPGRAM_API_KEY;
     if (!dgKey) throw new EvidenceError(503, "Transcription is not configured.");
     const { url: audioUrl } = await recordingMediaGrant(sb, identity, recording, { env });

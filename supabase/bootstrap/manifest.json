@@ -818,6 +818,11 @@
       "sha256": "431647b4a5c19ea14f89c6a869f2d155ea452f5fc13f8ec9b743707f51d14ac7"
     },
     {
+      "file": "sql/m158.sql",
+      "source": "158_admission_limits.sql (complete; additive P0-10)",
+      "sha256": "5654b96317860910a77796f034a495fb23856caf3cad1ebde6179d79fc475ff6"
+    },
+    {
       "file": "sql/seal.sql",
       "source": "Fresh-install baseline",
       "sha256": "dd9b7c0825a817adb95f753b72532304ca4d0c2c3e46b9cd971e3969dd65afea"

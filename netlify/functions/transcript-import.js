@@ -1,3 +1,4 @@
+import {admitAgent} from './_admission.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { redactPromptPayload } from './_redaction.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
@@ -80,6 +81,7 @@ export function createTranscriptImportHandler({
         throw new EvidenceError(400, "Split the transcript into sentences before importing.");
       }
       // Validate embeddings before creating any evidence rows.
+      await admitAgent(db,"embeddings",auth);
       const embeddings = await embed(chunks);
       if (!Array.isArray(embeddings) || embeddings.length !== chunks.length
         || embeddings.some(vector => !Array.isArray(vector) || vector.length !== 1536

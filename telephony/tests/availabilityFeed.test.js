@@ -84,7 +84,7 @@ test('all unavailable has empty states and accurate counts; live second session 
 });
 test('revoked and unknown keys rejected immediately, with safe consumer latency logs',async()=>{
   await reset(); const logs=[];
-  const handler=createHandler({rpc,log:l=>logs.push(JSON.parse(l))});
+  const handler=createHandler({admission:async()=>({data:{authorized:true,allowed:true}}),rpc,log:l=>logs.push(JSON.parse(l))});
   const request=()=>new Request('https://example.test/',{headers:{'x-api-key':key}});
   assert.equal((await handler(request())).status,200);
   await db.exec("UPDATE availability_consumers SET active=false WHERE name='test-vendor'");
@@ -96,7 +96,7 @@ test('revoked and unknown keys rejected immediately, with safe consumer latency 
 });
 test('response allowlist and single-agent compatibility, no cache and one RPC per GET',async()=>{
   await reset(); let count=0;
-  const handler=createHandler({rpc:async p=>{count++;const r=await rpc(p);if(r.data.feed.agents[0]) r.data.feed.agents[0].phone='PRIVATE';return r;},log:()=>{}});
+  const handler=createHandler({admission:async()=>({data:{authorized:true,allowed:true}}),rpc:async p=>{count++;const r=await rpc(p);if(r.data.feed.agents[0]) r.data.feed.agents[0].phone='PRIVATE';return r;},log:()=>{}});
   const get=path=>handler(new Request('https://example.test/'+path,{headers:{'x-api-key':key}}));
   const response=await get(''); const body=await response.json();
   assert.equal(count,1); assert.equal(response.headers.get('cache-control'),'no-store');
@@ -107,7 +107,7 @@ test('response allowlist and single-agent compatibility, no cache and one RPC pe
 });
 test('method, missing key, preflight and errors are sanitized and logged',async()=>{
   const logs=[]; let calls=0;
-  const handler=createHandler({rpc:async()=>{calls++;throw Error('secret database error');},log:l=>logs.push(JSON.parse(l))});
+  const handler=createHandler({admission:async()=>({data:{authorized:true,allowed:true}}),rpc:async()=>{calls++;throw Error('secret database error');},log:l=>logs.push(JSON.parse(l))});
   for(const [method,headers,status] of [['GET',{},401],['POST',{},405],['OPTIONS',{},200],['GET',{'x-api-key':key},503]]){
     const response=await handler(new Request('https://example.test/',{method,headers}));
     assert.equal(response.status,status); assert.equal((await response.text()).includes('secret'),false);
