@@ -1,0 +1,242 @@
+[
+  {
+    "id": "20000000-0000-4000-8000-000000000001",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 01",
+    "npn": "10000001",
+    "clerk_user_id": "user_pilot01",
+    "agent_slug": "pilot_agent_01",
+    "ghl_user_id": "pilot-ghl-01",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 01"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-01",
+    "ams_producer_id": "pilot-ams-01"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000002",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 02",
+    "npn": "10000002",
+    "clerk_user_id": "user_pilot02",
+    "agent_slug": "pilot_agent_02",
+    "ghl_user_id": "pilot-ghl-02",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 02"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-02",
+    "ams_producer_id": "pilot-ams-02"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000003",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 03",
+    "npn": "10000003",
+    "clerk_user_id": "user_pilot03",
+    "agent_slug": "pilot_agent_03",
+    "ghl_user_id": "pilot-ghl-03",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 03"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-03",
+    "ams_producer_id": "pilot-ams-03"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000004",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 04",
+    "npn": "10000004",
+    "clerk_user_id": "user_pilot04",
+    "agent_slug": "pilot_agent_04",
+    "ghl_user_id": "pilot-ghl-04",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 04"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-04",
+    "ams_producer_id": "pilot-ams-04"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000005",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 05",
+    "npn": "10000005",
+    "clerk_user_id": "user_pilot05",
+    "agent_slug": "pilot_agent_05",
+    "ghl_user_id": "pilot-ghl-05",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 05"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-05",
+    "ams_producer_id": "pilot-ams-05"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000006",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 06",
+    "npn": "10000006",
+    "clerk_user_id": "user_pilot06",
+    "agent_slug": "pilot_agent_06",
+    "ghl_user_id": "pilot-ghl-06",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 06"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-06",
+    "ams_producer_id": "pilot-ams-06"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000007",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 07",
+    "npn": "10000007",
+    "clerk_user_id": "user_pilot07",
+    "agent_slug": "pilot_agent_07",
+    "ghl_user_id": "pilot-ghl-07",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 07"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-07",
+    "ams_producer_id": "pilot-ams-07"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000008",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 08",
+    "npn": "10000008",
+    "clerk_user_id": "user_pilot08",
+    "agent_slug": "pilot_agent_08",
+    "ghl_user_id": "pilot-ghl-08",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 08"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-08",
+    "ams_producer_id": "pilot-ams-08"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000009",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 09",
+    "npn": "10000009",
+    "clerk_user_id": "user_pilot09",
+    "agent_slug": "pilot_agent_09",
+    "ghl_user_id": "pilot-ghl-09",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 09"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-09",
+    "ams_producer_id": "pilot-ams-09"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000010",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 10",
+    "npn": "10000010",
+    "clerk_user_id": "user_pilot10",
+    "agent_slug": "pilot_agent_10",
+    "ghl_user_id": "pilot-ghl-10",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 10"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-10",
+    "ams_producer_id": "pilot-ams-10"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000011",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 11",
+    "npn": "10000011",
+    "clerk_user_id": "user_pilot11",
+    "agent_slug": "pilot_agent_11",
+    "ghl_user_id": "pilot-ghl-11",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 11"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-11",
+    "ams_producer_id": "pilot-ams-11"
+  },
+  {
+    "id": "20000000-0000-4000-8000-000000000012",
+    "tenant_id": "e0050000-0000-4000-8000-000000000024",
+    "name": "Pilot Agent 12",
+    "npn": "10000012",
+    "clerk_user_id": "user_pilot12",
+    "agent_slug": "pilot_agent_12",
+    "ghl_user_id": "pilot-ghl-12",
+    "is_active": true,
+    "identity_aliases": [
+      "Agent Alias 12"
+    ],
+    "licensed_states": [
+      "NY",
+      "NJ"
+    ],
+    "team": "pilot",
+    "sunfire_agent_id": "pilot-sf-12",
+    "ams_producer_id": "pilot-ams-12"
+  }
+]

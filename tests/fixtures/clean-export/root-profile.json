@@ -1,0 +1,184 @@
+{
+  "tenantId": "e0050000-0000-4000-8000-000000000024",
+  "organizationId": "org_pilot",
+  "agencyName": "Pilot Benefit Agency",
+  "agencyAliases": [
+    "Pilot Benefits",
+    "Pilot Agency"
+  ],
+  "documentName": "Pilot Benefit Agency",
+  "agencyLine": "+12125550100",
+  "agencyLineLabel": "Agency main line",
+  "textSender": "+12125550100",
+  "phoneDisplay": "national",
+  "timezone": "America/New_York",
+  "staffedHours": {
+    "mon": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "tue": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "wed": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "thu": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "fri": {
+      "enabled": true,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "sat": {
+      "enabled": false,
+      "start": "10:00",
+      "end": "18:00"
+    },
+    "sun": {
+      "enabled": false,
+      "start": "10:00",
+      "end": "18:00"
+    }
+  },
+  "allowedHosts": [
+    "api.openai.com",
+    "api.resend.com",
+    "api.sunfirematrix.com",
+    "api.twilio.com",
+    "api.twilio.com.evil.test",
+    "app.example",
+    "app.example.test",
+    "app.offline.test",
+    "app.test",
+    "attacker.offline.test",
+    "audio.test",
+    "bucket.s3.amazonaws.com",
+    "clerk.example.com",
+    "edge.example.test",
+    "identity-34.invalid",
+    "evil.example",
+    "evil.test",
+    "example.com",
+    "example.invalid",
+    "example.org",
+    "example.supabase.co",
+    "example.test",
+    "feed.test",
+    "fixture.clerk.accounts.dev",
+    "foreign.clerk.accounts.dev",
+    "ghl.example.test",
+    "ghl.test",
+    "hooks.example.com",
+    "media1.giphy.com",
+    "media2.giphy.com",
+    "medicare.gov",
+    "medigaplife.example",
+    "office.test",
+    "offline.example",
+    "offline.example.test",
+    "offline.test",
+    "phone.test",
+    "post.test",
+    "push.test",
+    "recording.test",
+    "score.example.test",
+    "sink.example",
+    "sms.converselyai.com",
+    "source.invalid",
+    "storage.offline.test",
+    "storage.test",
+    "stripe.offline.test",
+    "telephony.test",
+    "test-api.sunfirematrix.com",
+    "trusted.clerk.accounts.dev",
+    "twilio-recordings.s3.amazonaws.com",
+    "vendor.example.test",
+    "vendor.test",
+    "x.supabase.co"
+  ],
+  "email": {
+    "from": "reports@example.test",
+    "replyTo": "reply@example.test",
+    "recipients": [
+      "recipient@example.test"
+    ],
+    "endpoint": "https://api.resend.com/emails"
+  },
+  "ghl": {
+    "postCallUrl": "https://ghl.test/webhook",
+    "enrollmentUrl": "https://ghl.test/webhook",
+    "locationId": "pilot-location"
+  },
+  "conversely": {
+    "target": "Pilot Benefit Agency",
+    "endpoint": "https://sms.converselyai.com/api/metadata/import"
+  },
+  "ix": {
+    "teamName": "Pilot Benefit Agency",
+    "environment": "test",
+    "origin": "https://test-api.sunfirematrix.com",
+    "reportRecipients": [
+      "recipient@example.test"
+    ]
+  },
+  "paragon": {
+    "sourceName": "Paragon Media",
+    "pushUrl": "https://push.test/",
+    "postbackUrl": "https://post.test/",
+    "pushSecret": "replace-with-synthetic-signing-secret-before-use",
+    "postbackSecret": "replace-with-synthetic-signing-secret-before-use",
+    "rate": 28,
+    "dailyCap": 100,
+    "states": [
+      "AR",
+      "AZ",
+      "DE",
+      "FL",
+      "GA",
+      "IN",
+      "KS",
+      "KY",
+      "LA",
+      "MO",
+      "NJ",
+      "OH",
+      "SC",
+      "TN",
+      "TX",
+      "VA"
+    ],
+    "reportRecipients": [
+      "recipient@example.test"
+    ],
+    "pingKeyHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "availabilityKeyHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "reportTokenHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "capMode": "soft",
+    "requiredCarriers": [
+      "aetna",
+      "humana",
+      "uhc",
+      "wellcare",
+      "devoted",
+      "healthspring"
+    ],
+    "criticalCarriers": [
+      "uhc",
+      "humana"
+    ],
+    "planYear": 2027,
+    "reservationTtlSeconds": 30,
+    "eligibility": []
+  },
+  "appOrigin": "https://app.test",
+  "telephonyOrigin": "https://phone.test"
+}

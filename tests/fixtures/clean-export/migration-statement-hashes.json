@@ -1,0 +1,10 @@
+{
+  "150_deployment_feature_switches.sql": "c7133b429dbf6187de9e8a3ef2d5f95ae7e8b32b23d43970c62aa5976181df79",
+  "151_deployment_profile_roster.sql": "58dfab639fec4e73d6a4045b6097c2a5cfeb73583886642ce222425374592aee",
+  "152_protected_deployment_identity.sql": "664fb00f7c74a2a9d285848aa2071edf485b8cbb186e30c73c3cf45729069988",
+  "153_scoped_table_and_storage_access.sql": "dbde5ac39edc64a1816f6fbb1fe40b897fea31b5be4404a3047a78b7b2076582",
+  "154_scoped_browser_routines.sql": "96a28a324cfb202616cc3b0ed35276d3c593c1f349d18a83fb74ecfe353db26d",
+  "155_owned_workspace_writes.sql": "653361651b37800476352f3b41679e2b433a88f1393ae02033f6a207274abcb6",
+  "156_scoped_service_call_views.sql": "c274799afc0dcec1ad83021e9f0bbe05c20f0bc0a87e6c1ddc58bf45e69957b3",
+  "159_ghl_delivery_minimization.sql": "9e93c44c390cb41b832d55d7402779651280b59e380c105a2ce0d5d3a5c974df"
+}

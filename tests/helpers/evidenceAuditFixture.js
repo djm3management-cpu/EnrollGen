@@ -1,5 +1,5 @@
-import {readFileSync} from 'node:fs';
-const core=readFileSync(new URL('../../supabase/migrations/157_evidence_access_and_minimization.sql',import.meta.url),'utf8').split('ALTER TABLE public.evidence_access_log ENABLE')[0].replace('BEGIN;','');
+import {securityMigrationFixture} from './securityMigrationFixture.js';
+const core=securityMigrationFixture('157_evidence_access_and_minimization.sql').split('ALTER TABLE public.evidence_access_log ENABLE')[0].replace('BEGIN;','');
 export async function installEvidenceAuditFixture(pg){
  const {rows}=await pg.query("SELECT to_regclass('public.evidence_access_log') name");
  if(rows[0].name)return;

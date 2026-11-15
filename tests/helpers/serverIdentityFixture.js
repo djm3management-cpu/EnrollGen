@@ -1,5 +1,5 @@
 import {installEvidenceAuditFixture} from './evidenceAuditFixture.js';
-import {readFileSync} from 'node:fs';
+import {securityMigrationFixture} from './securityMigrationFixture.js';
 // Older handler suites reconstruct only the tables they need. Extend those
 // explicit synthetic fixtures with the new protected maps, then execute the REAL
 // resolver body from 152. No authorization result is mocked or cached.
@@ -35,14 +35,14 @@ export function prepareServerIdentity(pg) {
    if(!available)await pg.query('INSERT INTO availability_agent_subjects(tenant_id,agent_slug,clerk_user_id,clerk_org_id,is_active) VALUES($1,$2,$3,$4,$5)',[e.tenant_id,slug,e.clerk_user_id,org,e.is_active]);
    else await pg.query('UPDATE availability_agent_subjects SET clerk_user_id=coalesce(clerk_user_id,$1),clerk_org_id=coalesce(clerk_org_id,$2) WHERE tenant_id=$3 AND agent_slug=$4',[e.clerk_user_id,org,e.tenant_id,slug]);
   }
-  const source=readFileSync(new URL('../../supabase/migrations/152_protected_deployment_identity.sql',import.meta.url),'utf8');
+  const source=securityMigrationFixture('152_protected_deployment_identity.sql');
   // No other migration grants/policies are needed in legacy service-client
   // fixtures; the new direct-browser suite runs all new migrations in full.
   const start=source.indexOf('CREATE TABLE public.deployment_authorities');
   const end=source.indexOf('CREATE FUNCTION public.current_deployment_identity');
   await pg.exec(source.slice(start,end));
   await pg.exec('GRANT SELECT ON tenants TO service_role');
-  await pg.exec(readFileSync(new URL('../../supabase/migrations/156_scoped_service_call_views.sql',import.meta.url),'utf8').replace(/^BEGIN;$/m,'').replace(/^COMMIT;$/m,''));
+  await pg.exec(securityMigrationFixture('156_scoped_service_call_views.sql').replace(/^BEGIN;$/m,'').replace(/^COMMIT;$/m,''));
   await installEvidenceAuditFixture(pg);
   } finally { if(savedRole!=='none')await pg.exec('SET ROLE '+savedRole); }
  })();prepared.set(pg,work);return work;

@@ -4,13 +4,14 @@ import {mkdtempSync,mkdirSync,writeFileSync,existsSync,readFileSync,rmSync,symli
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {cleanExport,exported} from '../scripts/clean-export.mjs';
+import {scanAgencyTerms} from '../scripts/security/scan-agency-terms.mjs';
 const setup = () => {
   const parent=mkdtempSync(path.join(tmpdir(),'enrollgen-export-test-')),root=path.join(parent,'source');mkdirSync(root);
   return {parent,root,destination:path.join(parent,'review')};
 };
 test('reviewer export exclusions cover every requested internal category and retain source and templates',()=>{
-  for(const file of ['ENROLLGEN_FULL_AUDIT.md','CODEX_PROMPT_example.md','PILOT_READINESS.md','docs/pilot-p0-3-authorization.md','docs/pilot-load.json','docs/internal-archive/plan.md','docs/legacy-operations/old.txt','docs/current-agency-profile.example.json','.claude/settings.local.json','.env','.env.local','telephony/.env','calls_500.jsonl','eval_report.json','supabase/migrations/007_multi_tenant_foundation.sql'])assert.equal(exported(file),false,file);
-  for(const file of ['src/main.jsx','telephony/src/server.js','config/deployment-profile.example.json','.env.example','telephony/.env.example','supabase/migrations/159_ghl_delivery_minimization.sql'])assert.equal(exported(file),true,file);
+  for(const file of ['ENROLLGEN_FULL_AUDIT.md','CODEX_PROMPT_example.md','PILOT_READINESS.md','docs/pilot-p0-3-authorization.md','docs/pilot-load.json','docs/internal-archive/plan.md','docs/legacy-operations/old.txt','docs/current-agency-profile.example.json','.claude/settings.local.json','.env','.env.local','telephony/.env','calls_500.jsonl','eval_report.json','supabase/migrations/007_multi_tenant_foundation.sql','supabase/migrations/149_conversely_run_events.sql','supabase/migrations/159_ghl_delivery_minimization.sql','telephony/.env.example','tests/fixtures/forbidden-deployment-terms.json'])assert.equal(exported(file),false,file);
+  for(const file of ['src/main.jsx','telephony/src/server.js','config/deployment-profile.example.json','.env.example','supabase/bootstrap/manifest.json','supabase/bootstrap/sql/m159.sql'])assert.equal(exported(file),true,file);
 });
 test('export writes a new external directory, preserves source and templates, and excludes local settings',()=>{
   const f=setup();
@@ -39,4 +40,17 @@ test('export rejects symlinks without reading outside the source tree',()=>{
   const f=setup();
   try {symlinkSync('/etc/passwd',path.join(f.root,'link'));assert.throws(()=>cleanExport(f.root,f.destination));assert.equal(existsSync(f.destination),false);}
   finally {rmSync(f.parent,{recursive:true,force:true});}
+});
+
+for(const file of ['README','tests/fixtures/nested/reference.json','reference.xlsx','assets/identity.bin','config/identity.txt','reference/dist/identity.bin','reference/node_modules/identity.txt'])test(`export scans agency terms in every file category: ${file}`,()=>{
+  const f=setup();
+  try {
+    const target=path.join(f.root,file);mkdirSync(path.dirname(target),{recursive:true});
+    const term=JSON.parse(readFileSync('tests/fixtures/forbidden-deployment-terms.json','utf8'))[0];
+    writeFileSync(target,Buffer.concat([Buffer.from([0,255]),Buffer.from(term.toUpperCase()),Buffer.from([0])]));
+    assert.equal(scanAgencyTerms(f.root,{directory:true,allFiles:true}).length,1);
+    // History-free source inventories omit generated trees. A tracked nested
+    // path can still reach the export, whose full walk must scan it above.
+    if(!file.startsWith('reference/')) {assert.throws(()=>cleanExport(f.root,f.destination));assert.equal(existsSync(f.destination),false);}
+  } finally {rmSync(f.parent,{recursive:true,force:true});}
 });

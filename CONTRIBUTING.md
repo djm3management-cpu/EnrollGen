@@ -35,8 +35,17 @@ See `SECURITY.md` for vulnerability reports.
 Create a history-free reviewer copy outside the repository with:
 `node scripts/clean-export.mjs /absolute/path/to/new-review-directory`.
 It refuses existing destinations and removes its incomplete output on failure.
-The two scans must pass before it finishes. The deployment-specific legacy migration 007 is omitted from the export;
-the complete sanitized bootstrap remains. Other historical migrations and negative
-regression fixtures remain intact; the agency scan covers the same deployable
-runtime boundary as P0-5, not historical migration/audit content. Review the
-explicit exclusions in the script before sharing the artifact.
+The two scans must pass before it finishes. Every shipped file is checked for
+forbidden agency identity, including fixtures, references, binary and extensionless
+files. No plaintext forbidden-term list ships; SHA-256 captures preserve the
+complete case-insensitive substring checks, with parity tests in the repository.
+All historical migrations (including 149 and lower), standalone seed/validation
+and operational SQL, identity-bearing references and private documents are omitted.
+The complete checksummed bootstrap is the only install definition.
+
+`capturedFixtures` in the script maps the three original shared identity fixtures
+to sanitized captures for export tests. `scripts/security/export-test-exclusions.mjs`
+is the explicit, commented export-only exclusion list, with a reason per file.
+The repository retains every test and historical migration. Fresh-install catalog,
+security headers and all other included tests run in the export with fake transports
+and in-process databases. Review the exclusion list before sharing the artifact.

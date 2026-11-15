@@ -4,8 +4,9 @@ import {fileURLToPath} from 'node:url';
 import {sourceFiles} from './security/source-files.mjs';
 import {scanFiles} from './security/scan-secrets.mjs';
 import {scanAgencyTerms} from './security/scan-agency-terms.mjs';
+import {excludedTests} from './security/export-test-exclusions.mjs';
 
-// Explicit reviewer-export exclusions. Source and regression fixtures are kept.
+// Explicit reviewer-export exclusions. Sanitized bootstrap is the sole install definition.
 export const exclusions = [
   // Root pilot audits/plans (including names now moved into the archive).
   /^(?:PILOT_.*|P0-\d+_.*|ENROLLGEN_FULL_AUDIT|THEME_AUDIT)\.md$/,
@@ -15,9 +16,12 @@ export const exclusions = [
   /^docs\/internal-archive\//,
   /^docs\/legacy-operations\//,
   /^docs\/current-agency-profile\.example\.json$/,
-  // Legacy deployment-specific seed with an active production capability. Export only:
-  // repository/history are unchanged; the complete sanitized bootstrap remains.
-  /^supabase\/migrations\/007_multi_tenant_foundation\.sql$/,
+  // Omit ALL upgrade history (including every migration <=149), standalone
+  // seeds/validation and SQL operations. The checksummed bootstrap remains whole.
+  /^supabase\/(?:migrations|seeds|validation)\//,
+  /^scripts\/.*\.sql$/,
+  // Identity-bearing operational references and service environment examples.
+  /^(?:telephony\/README\.md|telephony\/\.env\.example|integrations\/\.env\.example|supabase\/functions\/get-availability\/README\.md)$/,
   // Other internal operational/audit docs can contain historical agency data.
   // Keep only the public vendor contract consumed by regression tests.
   /^docs\/(?!sunfire-ix-openapi\.json$)/,
@@ -27,7 +31,14 @@ export const exclusions = [
   /(?:^|\/)(?:[^/]+\.local(?:\.json)?|\.DS_Store)$/,
   /^(?:calls_500\.jsonl|eval_report\.json|eval_runner\.py|CLAUDE\.md)$/,
 ];
-export const exported = file => !exclusions.some(rule => rule.test(file));
+export const exported = file => !Object.hasOwn(excludedTests,file) && !exclusions.some(rule => rule.test(file));
+// Original identity-bearing fixtures never enter the export. These captured,
+// sanitized fixtures preserve the shared schema and relationships for its tests.
+export const capturedFixtures = Object.freeze({
+  'tests/fixtures/deployment-profile.json':'tests/fixtures/clean-export/root-profile.json',
+  'telephony/tests/fixtures/deployment-profile.json':'tests/fixtures/clean-export/telephony-profile.json',
+  'tests/fixtures/deployment-roster.json':'tests/fixtures/clean-export/roster.json',
+});
 export function cleanExport(root, requested) {
   if (!requested || !path.isAbsolute(requested)) throw Error('Export requires an absolute new directory');
   const repository = realpathSync(root), parent = realpathSync(path.dirname(requested)), destination = path.join(parent, path.basename(requested));
@@ -36,14 +47,14 @@ export function cleanExport(root, requested) {
   try {
     const files = sourceFiles(repository).filter(exported);
     for (const file of files) {
-      const origin = path.join(repository,file);
+      const origin = path.join(repository,capturedFixtures[file] || file);
       if (!lstatSync(origin).isFile()) throw Error('Export refuses nonregular source files');
       const target = path.join(destination,file);
       mkdirSync(path.dirname(target), {recursive:true});
       copyFileSync(origin,target);
     }
     for (const [label, scan] of [['secret scan',scanFiles], ['forbidden agency terms',scanAgencyTerms]]) {
-      const findings = scan(destination,{directory:true});
+      const findings = scan(destination,{directory:true,allFiles:true});
       for (const f of findings) console.error(`${f.path}:${f.line}: ${f.type}`);
       console.log(`${findings.length ? 'FAIL' : 'PASS'} export ${label}: ${findings.length} findings`);
       if (findings.length) throw Error('Export scan failed');

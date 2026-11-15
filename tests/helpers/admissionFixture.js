@@ -1,5 +1,5 @@
-import {readFileSync} from 'node:fs';
-const sql=readFileSync(new URL('../../supabase/migrations/158_admission_limits.sql',import.meta.url),'utf8').split('CREATE FUNCTION public.admit_vendor')[0]+'COMMIT;';
+import {securityMigrationFixture} from './securityMigrationFixture.js';
+const sql=securityMigrationFixture('158_admission_limits.sql').split('CREATE FUNCTION public.admit_vendor')[0]+'COMMIT;';
 const installed=new WeakMap();
 export async function installAdmissionFixture(pg){
  if(!installed.has(pg))installed.set(pg,(async()=>{

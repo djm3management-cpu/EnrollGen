@@ -3,12 +3,12 @@ import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import {validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
 
-export const permissionsPolicy = 'microphone=(self), camera=(), geolocation=(), accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), battery=(), bluetooth=(), browsing-topics=(), clipboard-read=(), clipboard-write=(), compute-pressure=(), display-capture=(), encrypted-media=(), fullscreen=(), gamepad=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), local-fonts=(), magnetometer=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), speaker-selection=(), storage-access=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()';
+export const permissionsPolicy = 'microphone=(self), camera=(), geolocation=(), accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(self), battery=(), bluetooth=(), browsing-topics=(), clipboard-read=(), clipboard-write=(self), compute-pressure=(), display-capture=(self), encrypted-media=(), fullscreen=(), gamepad=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), local-fonts=(), magnetometer=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), publickey-credentials-create=(self), publickey-credentials-get=(self), screen-wake-lock=(), serial=(), speaker-selection=(self), storage-access=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()';
 export const frontendHeaders = Object.freeze({
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'X-Frame-Options': 'DENY',
+  'X-Frame-Options': 'SAMEORIGIN',
   'Permissions-Policy': permissionsPolicy,
 });
 function exactOrigin(value, profile) {
@@ -40,7 +40,7 @@ export function browserHeaders(profile, env, htmlSources) {
     'default-src': ["'self'"],
     'base-uri': ["'self'"],
     'object-src': ["'none'"],
-    'frame-ancestors': ["'none'"],
+    'frame-ancestors': ["'self'"],
     'form-action': ["'self'", clerk, accounts],
     // Twilio's SDK is bundled. Clerk loads its own script from its exact FAPI.
     // WASM and same-origin/blob workers cover both noise suppression models.

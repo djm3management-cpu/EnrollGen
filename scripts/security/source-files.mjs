@@ -5,11 +5,11 @@ import path from 'node:path';
 // Exports have no Git metadata. Walk source there; never traverse installed or
 // generated trees. In a checkout, Git is authoritative (including staged files).
 const generated = new Set(['.git', 'node_modules', 'dist', 'dist-ssr', '.netlify']);
-export function directoryFiles(root, relative = '') {
+export function directoryFiles(root, relative = '', {includeGenerated = false} = {}) {
   return readdirSync(path.join(root, relative), {withFileTypes: true}).flatMap(entry => {
     const file = path.posix.join(relative, entry.name);
     if (entry.isSymbolicLink()) throw Error('Source symlink refused');
-    return entry.isDirectory() ? generated.has(entry.name) ? [] : directoryFiles(root, file) : [file];
+    return entry.isDirectory() ? !includeGenerated && generated.has(entry.name) ? [] : directoryFiles(root, file, {includeGenerated}) : [file];
   }).sort();
 }
 export function sourceFiles(root = process.cwd()) {

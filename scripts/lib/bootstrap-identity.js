@@ -1,8 +1,6 @@
-import {readFileSync} from 'node:fs';
-const terms=JSON.parse(readFileSync(new URL('../../tests/fixtures/forbidden-deployment-terms.json',import.meta.url))).map(t=>t.toLowerCase());
+import {forbiddenIdentityOffsets} from '../security/agency-fingerprints.mjs';
 export function assertNoDeploymentIdentity(content,label){
- const lower=content.toLowerCase();
- if(terms.some(term=>lower.includes(term)))throw Error('Forbidden deployment identity found in '+label);
+ if(forbiddenIdentityOffsets(content).length)throw Error('Forbidden deployment identity found in '+label);
 }
 // A logical application dump for isolated acceptance ONLY. Raw Vault/key values
 // are deliberately excluded; never export credentials, including generated keys.

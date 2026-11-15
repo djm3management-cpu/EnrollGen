@@ -1,6 +1,8 @@
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import capturedHashes from './fixtures/clean-export/migration-statement-hashes.json' with {type:'json'};
 import {freshDatabase,bootstrapRoot} from './helpers/freshInstall.js';
 import {freshInstallClient} from './helpers/freshInstallClient.js';
 import {snapshotCatalog,catalogDifferences} from '../scripts/lib/database-catalog.js';
@@ -31,8 +33,13 @@ test('manifest is checksummed, skips 143, preserves complete 150–156 and order
  assert.ok(files.indexOf('sql/m156.sql')>files.indexOf('sql/m151.sql'));
  for(let n=150;n<=156;n++){
   const actual=entries.find(e=>e.file===`sql/m${n}.sql`);
-  const source=readFileSync(new URL('../supabase/migrations/'+['150_deployment_feature_switches.sql','151_deployment_profile_roster.sql','152_protected_deployment_identity.sql','153_scoped_table_and_storage_access.sql','154_scoped_browser_routines.sql','155_owned_workspace_writes.sql','156_scoped_service_call_views.sql'][n-150],import.meta.url),'utf8');
-  assert.deepEqual(statements(actual.sql),statements(source));
+  const name=['150_deployment_feature_switches.sql','151_deployment_profile_roster.sql','152_protected_deployment_identity.sql','153_scoped_table_and_storage_access.sql','154_scoped_browser_routines.sql','155_owned_workspace_writes.sql','156_scoped_service_call_views.sql'][n-150];
+  const digest=sql=>createHash('sha256').update(JSON.stringify(statements(sql))).digest('hex');
+  assert.equal(digest(actual.sql),capturedHashes[name]);
+  // The repository still compares every statement with the immutable original.
+  // The export contains only the bootstrap and captured comparison digests.
+  const original=new URL('../supabase/migrations/'+name,import.meta.url);
+  if(existsSync(original))assert.deepEqual(statements(actual.sql),statements(readFileSync(original,'utf8')));
  }
 });
 test('two independent EMPTY builds match the committed catalog, including all view bodies, grants and defaults',async()=>{
@@ -151,7 +158,11 @@ test('migration 159 cleans historical CRM snapshots while GHL is off and restore
  await q("SELECT set_config('request.headers','{}',false)");
  assert.equal((await q("SELECT deployment_feature_enabled('GHL_ENABLED') enabled"))[0].enabled,false);
  await pg.exec('DROP TRIGGER minimize_ghl_delivery_snapshot ON ghl_enrollment_deliveries; DROP FUNCTION minimize_ghl_delivery_snapshot()');
- await pg.exec(readFileSync(new URL('../supabase/migrations/159_ghl_delivery_minimization.sql',import.meta.url),'utf8'));
+ const migration=bootstrapEntries().find(e=>e.file==='sql/m159.sql').sql;
+ assert.equal(createHash('sha256').update(JSON.stringify(statements(migration))).digest('hex'),capturedHashes['159_ghl_delivery_minimization.sql']);
+ const original=new URL('../supabase/migrations/159_ghl_delivery_minimization.sql',import.meta.url);
+ if(existsSync(original))assert.deepEqual(statements(migration),statements(readFileSync(original,'utf8')));
+ await pg.exec(migration);
  const [after]=await q('SELECT * FROM ghl_enrollment_deliveries WHERE id=$1',[job.id]);
  assert.deepEqual((await q('SELECT decrypt_pii_value(payload_encrypted)::jsonb payload FROM ghl_enrollment_deliveries WHERE id=$1',[job.id]))[0].payload,payload);
  const {payload_encrypted:beforeCipher,...beforeState}=job,{payload_encrypted:afterCipher,...afterState}=after;

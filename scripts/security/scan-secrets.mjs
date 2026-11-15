@@ -69,8 +69,8 @@ export function scanText(content, file, {allowlist = secretAllowlist, fingerprin
   }
   return findings;
 }
-export function scanFiles(root, {directory = false, ...options} = {}) {
-  return (directory ? directoryFiles(root) : sourceFiles(root)).flatMap(file => scanText(readFileSync(path.join(root, file)).toString('utf8'), file, options));
+export function scanFiles(root, {directory = false, allFiles = false, ...options} = {}) {
+  return (directory ? directoryFiles(root, '', {includeGenerated: allFiles}) : sourceFiles(root)).flatMap(file => scanText(readFileSync(path.join(root, file)).toString('utf8'), file, options));
 }
 export function historyReport(root) {
   const git = args => execFileSync('git', args, {cwd: root, encoding: 'utf8', maxBuffer: 128 * 1024 * 1024});
