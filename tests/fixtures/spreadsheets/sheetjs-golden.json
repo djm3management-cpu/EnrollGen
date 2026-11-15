@@ -1,0 +1,305 @@
+{
+  "shapes.xlsx": [
+    {
+      "sheet": "Roster",
+      "objects": [
+        {
+          " Producer ": "Synthetic Agent",
+          "NPN": "001234",
+          "Date": "1/1/27",
+          "Amount": "12.5",
+          "Enabled": "TRUE",
+          "Duplicate": "a",
+          "Duplicate_1": "b",
+          "__EMPTY": "blank header",
+          "Merged": "left",
+          "__EMPTY_1": "right"
+        },
+        {
+          " Producer ": " Second ",
+          "NPN": "123",
+          "Date": "11/14/26",
+          "Amount": "0",
+          "Enabled": "FALSE",
+          "Duplicate": null,
+          "Duplicate_1": "c",
+          "__EMPTY": null,
+          "Merged": null,
+          "__EMPTY_1": null
+        }
+      ],
+      "arrays": [
+        [
+          " Producer ",
+          "NPN",
+          "Date",
+          "Amount",
+          "Enabled",
+          "Duplicate",
+          "Duplicate",
+          "",
+          "Merged",
+          ""
+        ],
+        [
+          "Synthetic Agent",
+          "001234",
+          "1/1/27",
+          "12.5",
+          "TRUE",
+          "a",
+          "b",
+          "blank header",
+          "left",
+          "right"
+        ],
+        [
+          " Second ",
+          "123",
+          "11/14/26",
+          "0",
+          "FALSE",
+          "",
+          "c",
+          "",
+          "",
+          ""
+        ]
+      ]
+    },
+    {
+      "sheet": "Notes",
+      "objects": [
+        {
+          "Note": "Synthetic second sheet"
+        }
+      ],
+      "arrays": [
+        [
+          "Note"
+        ],
+        [
+          "Synthetic second sheet"
+        ]
+      ]
+    }
+  ],
+  "formats.xlsx": [
+    {
+      "sheet": "Data",
+      "objects": [
+        {
+          "Date": "3/3/27",
+          "ISO": "2027-03-03",
+          "Plan": "001",
+          "Percent": "12.50%",
+          "Currency": "1,234.50",
+          "Text": " spaces "
+        }
+      ],
+      "arrays": [
+        [
+          "Date",
+          "ISO",
+          "Plan",
+          "Percent",
+          "Currency",
+          "Text"
+        ],
+        [
+          "3/3/27",
+          "2027-03-03",
+          "001",
+          "12.50%",
+          "1,234.50",
+          " spaces "
+        ]
+      ]
+    }
+  ],
+  "epoch1904.xlsx": [
+    {
+      "sheet": "Data",
+      "objects": [
+        {
+          "Date": "1/2/04"
+        },
+        {
+          "Date": "2027-03-16 12:00"
+        }
+      ],
+      "arrays": [
+        [
+          "Date"
+        ],
+        [
+          "1/2/04"
+        ],
+        [
+          "2027-03-16 12:00"
+        ]
+      ]
+    }
+  ],
+  "cy2027-dsnp.xlsx": [
+    {
+      "sheet": "Overview",
+      "objects": [],
+      "arrays": [
+        [
+          "Synthetic overview"
+        ]
+      ]
+    },
+    {
+      "sheet": "CY 2027 Data",
+      "objects": [
+        {
+          "Contract ID": "H1234",
+          "Plan ID": "001",
+          "Legal Entity Name": "Fixture",
+          "State": "NJ",
+          "D-SNP Integration Status": "CO",
+          "Applicable Integrated Plan": "Yes"
+        }
+      ],
+      "arrays": [
+        [
+          "Contract ID",
+          "Plan ID",
+          "Legal Entity Name",
+          "State",
+          "D-SNP Integration Status",
+          "Applicable Integrated Plan"
+        ],
+        [
+          "H1234",
+          "001",
+          "Fixture",
+          "NJ",
+          "CO",
+          "Yes"
+        ]
+      ]
+    }
+  ],
+  "cy2027-invalid.xlsx": [
+    {
+      "sheet": "Data",
+      "objects": [
+        {
+          "Contract ID": "H1234",
+          "Plan ID": "001",
+          "Legal Entity Name": "Fixture",
+          "State": "NJ",
+          "D-SNP Integration Status": "CO",
+          "Applicable Integrated Plan": "Yes"
+        }
+      ],
+      "arrays": [
+        [
+          "Contract ID",
+          "Plan ID",
+          "Legal Entity Name",
+          "State",
+          "D-SNP Integration Status",
+          "Applicable Integrated Plan"
+        ],
+        [
+          "H1234",
+          "001",
+          "Fixture",
+          "NJ",
+          "CO",
+          "Yes"
+        ]
+      ]
+    }
+  ],
+  "offset.xlsx": [
+    {
+      "sheet": "Data",
+      "objects": [
+        {
+          "Synthetic title": "Code",
+          "__EMPTY": null,
+          "__EMPTY_1": "Code"
+        },
+        {
+          "Synthetic title": "1",
+          "__EMPTY": "2",
+          "__EMPTY_1": "001"
+        },
+        {
+          "Synthetic title": "2",
+          "__EMPTY": "3",
+          "__EMPTY_1": "002"
+        }
+      ],
+      "arrays": [
+        [
+          "Synthetic title",
+          "",
+          ""
+        ],
+        [
+          "Code",
+          "",
+          "Code"
+        ],
+        [
+          "1",
+          "2",
+          "001"
+        ],
+        [
+          "2",
+          "3",
+          "002"
+        ]
+      ]
+    }
+  ],
+  "serialDates": [
+    {
+      "serial": 0,
+      "iso": null
+    },
+    {
+      "serial": 1,
+      "iso": "1900-01-01"
+    },
+    {
+      "serial": 59,
+      "iso": "1900-02-28"
+    },
+    {
+      "serial": 60,
+      "iso": "1900-03-01"
+    },
+    {
+      "serial": 61,
+      "iso": "1900-03-01"
+    },
+    {
+      "serial": 25569,
+      "iso": "1970-01-01"
+    },
+    {
+      "serial": 45000.99999999,
+      "iso": "2023-03-15"
+    },
+    {
+      "serial": -1,
+      "iso": null
+    },
+    {
+      "serial": 2958465,
+      "iso": "9999-12-31"
+    },
+    {
+      "serial": 2958466,
+      "iso": null
+    }
+  ]
+}
