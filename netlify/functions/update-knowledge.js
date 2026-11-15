@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','update_knowledge');
 import {AdmissionError,admissionResponse} from './_admission.js';
 import {
   runAllKnowledgeCategoryUpdates,
@@ -49,7 +52,7 @@ export function createUpdateKnowledgeHandler({ run = runKnowledgeUpdate, runAll 
       return json(200, result);
     } catch (error) {
       if(error instanceof AdmissionError)return admissionResponse(error);
-      console.error("[update-knowledge]", 'request_failed');
+      logger.error("update_knowledge", 'request_failed');
       return json(500, {
         error: "Knowledge update failed",
         detail: error?.message || String(error),
@@ -58,4 +61,4 @@ export function createUpdateKnowledgeHandler({ run = runKnowledgeUpdate, runAll 
   };
 }
 
-export default createUpdateKnowledgeHandler();
+export default serverRequest('update-knowledge',createUpdateKnowledgeHandler());

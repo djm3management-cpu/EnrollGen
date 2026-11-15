@@ -1,3 +1,4 @@
+import {securityEvent,inspectInput} from '../../telephony/src/lib/logger.js';
 import { Worker } from 'node:worker_threads';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
@@ -33,6 +34,9 @@ const csvUrl = pathToFileURL(require.resolve('papaparse')).href;
  * Exported for deterministic deadline tests; callers never supply worker code.
  */
 export function runSpreadsheetWorker(bytes, mode, limits = SPREADSHEET_LIMITS, job = spreadsheetJob) {
+  return rawSpreadsheetWorker(bytes,mode,limits,job).then(result=>{inspectInput(result);return result;}).catch(error=>{securityEvent("upload_rejected");throw error;});
+}
+function rawSpreadsheetWorker(bytes, mode, limits, job) {
   if (bytes.byteLength > limits.uploadBytes) return Promise.reject(new Error(`The uploaded file must be smaller than ${limits.uploadBytes / (1024 * 1024)} MB.`));
   return new Promise((resolve, reject) => {
     const worker = new Worker(`(${job.toString()})()`, {

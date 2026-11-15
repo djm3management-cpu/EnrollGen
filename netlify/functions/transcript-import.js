@@ -1,3 +1,4 @@
+import {serverRequest,adminActionClient,logAdminDispatch} from '../../telephony/src/lib/adminActions.js';
 import {admitAgent} from './_admission.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { redactPromptPayload } from './_redaction.js';
@@ -28,12 +29,12 @@ const optional = (value, max = 300) => typeof value === "string" ? value.trim().
 export function createTranscriptImportHandler({
   authenticate = requireClerkAuth, getDb = getEvidenceServiceClient, embed = embedChunks,
 } = {}) {
-  return async (request) => {
+  return serverRequest('transcript-import',async (request) => {
     if (!["GET", "POST"].includes(request.method)) return evidenceJson(405, { error: "Method not allowed" });
     const auth = await authenticate(request);
     if (auth.response) return auth.response;
     try {
-      const db = getDb();
+      const db = adminActionClient(getDb());
       return await auditedEvidenceRequest(db,auth,request,'transcript',resolveEvidenceIdentity,async identity=>{
       const admin = (identity.access.authority==='admin' || canImportForOthers(auth, identity.tenant));
       if (request.method === "GET") {
@@ -52,6 +53,7 @@ export function createTranscriptImportHandler({
       let owner = identity.agent;
       if (form.agentId && form.agentId !== owner.id) {
         if (!admin) throw new EvidenceError(403, "You may only import your own transcripts.");
+        await logAdminDispatch(db,{...identity,admin,auth},"transcript_import");
         owner = checked(await db.from("enrolled_agents").select("id, name, tenant_id")
           .eq("id", form.agentId).eq("tenant_id", identity.tenant.id).eq("is_active", true).maybeSingle());
         if (!owner) throw new EvidenceError(403, "Import agent is unavailable in this tenant.");
@@ -118,7 +120,7 @@ export function createTranscriptImportHandler({
       return evidenceJson(200, { transcriptId: transcript.id, chunksCreated: rows.length,
         topicsDetected: [...new Set(rows.flatMap(row => row.topics))] });
     }); } catch (error) { return evidenceFailure(error); }
-  };
+  });
 }
 
 export default createTranscriptImportHandler();

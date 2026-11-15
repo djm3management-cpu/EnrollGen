@@ -1,5 +1,7 @@
+import {createLogger} from './logger.js';
+const logger=createLogger('telephony','incominglead');
 import {allowlistedLeadPayload,allowlistedLeadInput} from './leadPayload.js';
-export function createIncomingLeadHandler({findContact,db,settings,log=(...args)=>console.error(...args)}={}) {
+export function createIncomingLeadHandler({findContact,db,settings,log=(...args)=>logger.error(...args)}={}) {
  return async (req,res)=>{
   const body = {...allowlistedLeadInput(req.body),phone:req.body?.phone};
   if(!settings.paragonEnabled && /paragon/i.test(String(body.vendor_source || req.body?.publisher || '')))return res.status(503).json({status:'disabled',feature:'PARAGON_ENABLED'});

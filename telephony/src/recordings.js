@@ -1,3 +1,6 @@
+import {loggedJob} from './lib/logger.js';
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','recordings');
 import { auditedEvidenceAccess, evidenceCheckpoint } from './lib/evidenceAudit.js';
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
@@ -42,7 +45,7 @@ export function callbackPayload(body, account) {
     RecordingDuration: body.RecordingStatus === 'absent' && String(body.RecordingDuration) === '-1'
       ? null : number(body.RecordingDuration), RecordingStartTime: start || null };
 }
-export function createRecordingCallback({ db, config, log = console.error }) {
+export function createRecordingCallback({ db, config, log = logger.error }) {
   return async (req, res) => {
     try {
       const payload = callbackPayload(req.body, config.twilioAccountSid);
@@ -142,7 +145,7 @@ export async function verifyStoredRecording({ db, storagePath, bytes, sha256 }) 
 
 // Only reads Supabase audio. A failed deletion is retried independently of copying,
 // so a provider deletion can never force an upload or overwrite on retry.
-export async function deleteVerifiedTwilioRecording({ db, job, config, fetchImpl = fetch, log = console.error }) {
+export async function deleteVerifiedTwilioRecording({ db, job, config, fetchImpl = fetch, log = logger.error }) {
   if (!config.deleteTwilioRecordingsAfterCopy || job.twilio_deleted_at) return false;
   try {
     if (job.account_sid !== config.twilioAccountSid || !SID.recording.test(job.recording_sid || '') ||
@@ -170,7 +173,7 @@ export async function deleteVerifiedTwilioRecording({ db, job, config, fetchImpl
   }
 }
 
-async function rawProcessRecording({ db, job, config, fetchImpl, maxBytes, timeoutMs, log = console.error }) {
+async function rawProcessRecording({ db, job, config, fetchImpl, maxBytes, timeoutMs, log = logger.error }) {
   let audio;
   try {
     if (job.account_sid !== config.twilioAccountSid) throw new RecordingError('account_mismatch');
@@ -251,9 +254,9 @@ export async function reconcileCall({ db, job, config, fetchImpl = fetch }) {
   }
 }
 
-export function startRecordingWorker({ db, config, log = console.error }) {
+export function startRecordingWorker({ db, config, log = logger.error,recordSuccess=async()=>{} }) {
   let running = false; let seededAt = 0;
-  const tick = async () => {
+  const tick = loggedJob('telephony',async () => {
     if (running) return;
     running = true;
     try {
@@ -273,9 +276,10 @@ export function startRecordingWorker({ db, config, log = console.error }) {
       ...checks.map(job => reconcileCall({ db, job, config })),
       ...deletions.map(job => deleteVerifiedTwilioRecording({ db, job, config, log }))]);
       if (results.some(result => result.status === 'rejected')) throw new RecordingError('worker_job_failed');
+      await recordSuccess();
     } catch { log(JSON.stringify({ event: 'recording_worker_failed', code: 'database_or_worker_error' })); }
     finally { running = false; }
-  };
+  });
   const timer = setInterval(() => void tick(), 15_000); timer.unref(); void tick();
   return () => clearInterval(timer);
 }

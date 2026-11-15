@@ -1,6 +1,6 @@
 import {GHL_INTAKE_FIELDS} from './ghlFields.js';
 import { agencyName } from './deploymentPublic.js';
-import {canonicalCarrier} from '../../integrations/converselySelection.js';
+import {canonicalCarrier} from './carrierAliases.js';
 export const CARRIERS=['Devoted Health','Aetna','Elevance / Anthem','UnitedHealthcare','Humana','Cigna / HealthSpring','Wellcare / Centene','Zing Health','HCSC / BCBS','Manhattan Life','Other'];
 export const PLAN_TYPES=['MA/MAPD/PDP','C-SNP','D-SNP'];
 export const INTAKE_FIELDS=[

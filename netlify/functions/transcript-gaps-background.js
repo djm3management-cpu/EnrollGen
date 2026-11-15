@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {admitCall} from './_admission.js';
 import {evidenceCheckpoint} from '../../telephony/src/lib/evidenceAudit.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -57,4 +58,4 @@ export function createGapFillHandler({getDb=getEvidenceServiceClient,transport=f
   }catch(error){if(db&&job)await db.from('manual_transcript_gap_fills').update({status:'failed',error:'gap_processing_failed'}).eq('id',job.id);return evidenceFailure(error);}
  };
 }
-export default createGapFillHandler();
+export default serverRequest('transcript-gaps-background',createGapFillHandler());

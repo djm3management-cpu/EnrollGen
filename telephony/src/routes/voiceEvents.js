@@ -1,3 +1,5 @@
+import {createLogger} from '../lib/logger.js';
+const logger=createLogger('telephony','voiceevents');
 import { Router } from 'express';
 import { requireClerkUser } from '../clerkAuth.js';
 import { supabase } from '../supabase.js';
@@ -60,7 +62,7 @@ voiceEventsRouter.post('/api/voice/events', async (req, res) => {
     }
     return res.status(204).end();
   } catch {
-    console.error('Browser voice telemetry persistence failed');
+    logger.error("voiceevents_browser_voice_telemetry_persistence_failed");
     return res.status(503).end();
   }
 });

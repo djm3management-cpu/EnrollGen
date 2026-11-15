@@ -1,5 +1,7 @@
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','_telephonylink');
 // Linking has no vendor HTTP dependency and must never reject wrap-up.
-export async function linkTelephonyRecord(db,record,payload,auth,tenant,log=console.warn) {
+export async function linkTelephonyRecord(db,record,payload,auth,tenant,log=logger.warn) {
   const sid=payload.twilio_call_sid || record.twilio_call_sid || record.metadata?.twilio_call_sid;
   if(!payload.telephony_call && !sid && !record.metadata?.telephony_call)return 'not_telephony';
   try {

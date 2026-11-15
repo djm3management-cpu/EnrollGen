@@ -1,3 +1,5 @@
+import {createLogger} from '../lib/logger.js';
+const logger=createLogger('telephony','vendorping');
 import {limitsFor} from '../lib/admission.js';
 import { Router } from 'express';
 import { createHash } from 'node:crypto';
@@ -9,7 +11,7 @@ export const vendorPingRouter = Router();
 vendorPingRouter.post('/api/leads/ping',async(req,res)=>{
   if(!config.paragonEnabled)return res.status(503).json({status:'disabled',feature:'PARAGON_ENABLED'});
   const decision=(body,status=200)=>{
-    console.info(JSON.stringify({ event:'paragon_ping_decision',reason:body.reason || 'unauthorized',available:body.available===true }));
+    logger.info(JSON.stringify({ event:'paragon_ping_decision',reason:body.reason || 'unauthorized',available:body.available===true }));
     return res.status(status).json(body);
   };
   const key=req.header('x-api-key');

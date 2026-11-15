@@ -1,3 +1,4 @@
+import {createLogger} from '../telephony/src/lib/logger.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -10,7 +11,7 @@ function harness({ claims = [], recovered = false } = {}) {
   let authorized = true; let fail = false;
   const attempt = { id: 'attempt', contact_id: 'canonical', to_number: '+16097787669',
     tenant_id: 'tenant', agent_id: 'agent', direction: 'outbound', parent_call_sid: 'sid' };
-  const ctx = {
+  const ctx = {createLogger,
     Router: () => ({ post(path, ...handlers) { routes.set(path, handlers.at(-1)); } }),
     twilio: { twiml: { VoiceResponse: class {
       say(message) { this.message = message; } hangup() {} dial() { return { number() {} }; }

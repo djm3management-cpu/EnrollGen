@@ -1,3 +1,6 @@
+import {loggedJob} from './lib/logger.js';
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','transcripts');
 import {deploymentProfile,validateDestination} from './lib/deploymentProfile.js';
 import { featureEnabled } from './lib/deploymentFeatures.js';
 import { randomUUID } from 'node:crypto';
@@ -10,7 +13,7 @@ export function createTranscriptWriter({ db, claims, retryMs = 1000, notify = ()
     if(message.type==='transcription_incident') {
       const args={p_attempt_id:claims.attemptId||null,p_participant_id:claims.participantId||null,p_reason:message.reason,p_at_ms:Math.round(claims.participantId?Math.max(0,message.timestamp-Date.parse(claims.startedAt)):message.atMs||0)};
       // Incident failure must never block the transcript write queue.
-      return db.rpc('record_transcription_incident',args).then(({error})=>{if(error)console.error(JSON.stringify({event:'transcription_incident_write_failed',call_sid:claims.parentCallSid||claims.callSid}));}).catch(()=>console.error(JSON.stringify({event:'transcription_incident_write_failed',call_sid:claims.parentCallSid||claims.callSid})));
+      return db.rpc('record_transcription_incident',args).then(({error})=>{if(error)logger.error(JSON.stringify({event:'transcription_incident_write_failed',call_sid:claims.parentCallSid||claims.callSid}));}).catch(()=>logger.error(JSON.stringify({event:'transcription_incident_write_failed',call_sid:claims.parentCallSid||claims.callSid})));
     }
     if(message.type==='transcription_gap'){
       const offset=claims.participantId?Math.max(0,message.timestamp-Date.parse(claims.startedAt)-message.startMs):0;
@@ -52,7 +55,7 @@ export async function runTranscriptDispatch({ db, scoringUrl, secret, transport 
   const { data, error } = await db.rpc('get_sale_compliance_dispatch');
   if (error) throw error;
   try {await sendPendingRecoveryAlerts({db,scoringUrl,secret,transport});}
-  catch {console.error(JSON.stringify({event:'recovery_alert_dispatch_failed'}));}
+  catch {logger.error(JSON.stringify({event:'recovery_alert_dispatch_failed'}));}
   for (const job of data || []) {
     if (job.delivered_revision >= job.revision) continue;
     let lastError = null;
@@ -63,7 +66,7 @@ export async function runTranscriptDispatch({ db, scoringUrl, secret, transport 
         signal: AbortSignal.timeout(10_000) });
       if (!response.ok) lastError = `HTTP ${response.status}`;
     } catch { lastError = 'scoring_transport_failed'; }
-    console[lastError ? 'error' : 'log'](JSON.stringify({ event: 'scoring_dispatch', call_record_id: job.call_id,
+    logger.info(JSON.stringify({ event: 'scoring_dispatch', call_record_id: job.call_id,
       revision: job.revision, attempt: job.dispatch_attempts, error: lastError }));
     // 202 is only acceptance. Reconciliation confirms the current snapshot was actually scored.
     // The RPC already claimed/scheduled this delivery. Never move transcript readiness.
@@ -76,14 +79,14 @@ export async function runTranscriptDispatch({ db, scoringUrl, secret, transport 
 
 export function startTranscriptWorker(options) {
   let running = false;
-  const tick = async () => {
+  const tick = loggedJob('telephony',async () => {
     if (running) return;
     running = true;
-    try { await runTranscriptDispatch(options); }
-    catch (error) { console.error(JSON.stringify({ event: 'transcript_dispatch_failed', code: error.code || null,
+    try { await runTranscriptDispatch(options);await options.recordSuccess?.(); }
+    catch (error) { logger.error(JSON.stringify({ event: 'transcript_dispatch_failed', code: error.code || null,
       message:'Reconciliation/dispatch failed' })); }
     finally { running = false; }
-  };
+  });
   const timer = setInterval(tick, 15_000); timer.unref();
   void tick();
   return () => clearInterval(timer);

@@ -1,3 +1,5 @@
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','transcriptrecovery');
 import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
 import {transcriptCoverage} from '../../src/compliance/rules/transcript.js';
 import {DEEPGRAM_BATCH_PER_MINUTE_USD} from '../../src/compliance/shared/scoringConfig.js';
@@ -56,7 +58,7 @@ export async function recoveryBlocked(db,call,reason,sendAlert=sendProviderFailu
  if(notify && featureEnabled('OPERATIONAL_EMAIL_ENABLED')) {
   try {await sendAlert(db,call.session_id,`transcript_recovery call=${call.id}`,reason,{dailyClaim:`recovery-${call.id}-${reason}`});
    checked(await db.from('transcript_recovery_alerts').update({alerted_at:new Date().toISOString()}).eq('call_id',call.id).eq('tenant_id',call.tenant_id).eq('reason',reason));}
-  catch {console.error(JSON.stringify({event:'transcript_recovery_alert_delivery_failed',call_record_id:call.id,reason}));}
+  catch {logger.error(JSON.stringify({event:'transcript_recovery_alert_delivery_failed',call_record_id:call.id,reason}));}
  }
  return {incomplete:true,reason};
 }

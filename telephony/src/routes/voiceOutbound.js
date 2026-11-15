@@ -1,3 +1,5 @@
+import {createLogger} from '../lib/logger.js';
+const logger=createLogger('telephony','voiceoutbound');
 import {resolveDeploymentAccess} from '../lib/deploymentAccess.js';
 import {deploymentProfile} from '../lib/deploymentProfile.js';
 import { supabase } from "../supabase.js";
@@ -115,10 +117,10 @@ voiceOutboundRouter.post("/api/voice/outbound", requireTwilioSignature, outbound
       callSid: req.body.CallSid, agentId, contactId: contact.id, direction: "outbound", to, tenantId: res.locals.outboundTenantId,
     });
   } catch (err) {
-    console.error("Outbound reservation failed:", 'request_failed');
+    logger.error("voiceoutbound_outbound_reservation_failed", 'request_failed');
     if (reserved) {
       try { await releaseAgent(agentId, req.body.CallSid); }
-      catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
+      catch (releaseError) { logger.error("voiceoutbound_reservation_cleanup_failed", releaseError); return res.status(503).end(); }
     }
     response.say(err.message === "Do Not Call" ? "Do Not Call" : "Calling is temporarily unavailable. Please try again.");
     response.hangup();
@@ -147,7 +149,7 @@ voiceOutboundRouter.post("/api/voice/outbound-result", requireTwilioSignature, c
     response.hangup();
     return sendTwiml(res, response);
   } catch {
-    console.error("Outbound completion failed:", 'request_failed');
+    logger.error("voiceoutbound_outbound_completion_failed", 'request_failed');
     return res.status(503).end();
   }
 });

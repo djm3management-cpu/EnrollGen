@@ -1,3 +1,4 @@
+import {securityEvent} from './logger.js';
 import { deploymentProfile,publicDeploymentProfile } from './deploymentProfile.js';
 export function validateRoster(rows, {ghl = false} = {}) {
   if (!Array.isArray(rows) || !rows.length) throw Error('Active deployment roster required');
@@ -35,6 +36,6 @@ export function rosterIdentity(user, roster=[]) {
 export async function verifyDeploymentConfiguration(db,profile=deploymentProfile()) {
  const {data,error}=await db.from('deployment_settings').select('tenant_id,public_profile').eq('singleton',true).single();
  const canonical=value=>JSON.stringify(value,(_key,item)=>item && !Array.isArray(item) && typeof item==='object'?Object.fromEntries(Object.entries(item).filter(([,v])=>v!==undefined).sort(([a],[b])=>a.localeCompare(b))):item);
- if(error || data?.tenant_id!==profile.tenantId || canonical(data?.public_profile)!==canonical(publicDeploymentProfile(profile)))throw Error('Provisioned deployment profile differs from service configuration');
+ if(error || data?.tenant_id!==profile.tenantId || canonical(data?.public_profile)!==canonical(publicDeploymentProfile(profile))){securityEvent('configuration_failed');throw Error('Provisioned deployment profile differs from service configuration');}
  return loadDeploymentRoster(db,profile);
 }

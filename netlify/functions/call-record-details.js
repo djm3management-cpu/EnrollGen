@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveCallAccessIdentity,scopeCallToIdentity} from './_evidenceAccess.js';
@@ -22,4 +23,4 @@ export function createCallRecordDetailsHandler({authenticate=r=>requireClerkAuth
   }); }catch(error){return evidenceFailure(error);}
  };
 }
-export default createCallRecordDetailsHandler();
+export default serverRequest('call-record-details',createCallRecordDetailsHandler());

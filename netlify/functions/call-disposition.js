@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceClient,resolveEvidenceIdentity} from './_evidenceAccess.js';
@@ -93,4 +94,4 @@ export function createCallDispositionHandler({authenticate=r=>requireClerkAuth(r
   }); }catch(error){return evidenceFailure(error);}
  };
 }
-export default createCallDispositionHandler();
+export default serverRequest('call-disposition',createCallDispositionHandler());

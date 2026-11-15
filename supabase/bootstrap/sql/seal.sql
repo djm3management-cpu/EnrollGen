@@ -50,3 +50,10 @@ REVOKE UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.evidence_access_log F
 REVOKE ALL ON public.retention_holds,public.retention_complaint_resolution,public.retention_audit_permit FROM service_role;
 GRANT SELECT ON public.retention_holds TO service_role;
 REVOKE DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.retention_runs FROM service_role;
+
+-- 161: preserve the migration's narrow server grants after the broad bootstrap
+-- service ownership grant. Private transaction permits cannot be forged.
+REVOKE UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.admin_action_log FROM service_role;
+REVOKE ALL ON public.admin_action_permit,public.operational_configuration,public.operational_alert_state,public.operational_alert_history,public.operational_events,public.scheduled_job_status FROM service_role;
+GRANT SELECT ON public.operational_configuration,public.operational_alert_state,public.operational_alert_history,public.operational_events,public.scheduled_job_status TO service_role;
+GRANT DELETE ON public.operational_events TO service_role;

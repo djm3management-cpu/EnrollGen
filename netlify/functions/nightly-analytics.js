@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','nightly_analytics');
 import {localDay,shiftCalendarDay} from '../../telephony/src/lib/deploymentCalendar.js';
 import {zonedMidnight} from '../../telephony/src/lib/deploymentSchedule.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
@@ -154,7 +157,7 @@ async function fetchCallsWithScores(supabase, tenantId, sinceIso) {
     .order("created_at", { ascending: false });
 
   if (scoreError) {
-    console.warn("[nightly-analytics] Could not fetch scorecards:", 'request_failed');
+    logger.warn("nightly_analytics_could_not_fetch_scorecards", 'request_failed');
     return rows.map((row) => ({ ...row, overall_score: null }));
   }
 
@@ -340,7 +343,7 @@ export async function processTenant(supabase, tenant) {
   return { tenant_id: tenant.id, insights: insightCount, followups: followupCount };
 }
 
-export default async () => {
+export default serverRequest('nightly-analytics',async () => {
  const localParts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:deploymentProfile().timezone,weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
  if(Number(localParts.hour)!==3)return new Response('Outside local schedule window');
 
@@ -358,17 +361,17 @@ export default async () => {
       try {
         results.push(await processTenant(supabase, tenant));
       } catch {
-        console.error("[nightly-analytics] Tenant failed:", tenant.id, 'request_failed');
+        logger.error("nightly_analytics_tenant_failed", tenant.id, 'request_failed');
         results.push({ tenant_id: tenant.id, error: 'request_failed' });
       }
     }
 
     return json(200, { ok: true, tenants: results.length, results });
   } catch {
-    console.error("[nightly-analytics] Failed:", 'request_failed');
+    logger.error("nightly_analytics_failed", 'request_failed');
     return json(500, { ok: false, error: 'request_failed' });
   }
-};
+});
 
 export const config = {
   schedule: "0 * * * *",

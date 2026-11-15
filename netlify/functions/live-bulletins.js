@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 const CACHE_TTL = 15 * 60 * 1000;
 const LOOKBACK_DAYS = 30;
 const MAX_ITEMS = 12;
@@ -144,7 +145,7 @@ function buildJsonResponse(data) {
   });
 }
 
-export default async () => {
+export default serverRequest('live-bulletins',async () => {
   const now = Date.now();
   if (responseCache.data && now - responseCache.fetchedAt < CACHE_TTL) {
     return buildJsonResponse(responseCache.data);
@@ -172,4 +173,4 @@ export default async () => {
 
   responseCache = { data: payload, fetchedAt: now };
   return buildJsonResponse(payload);
-};
+});

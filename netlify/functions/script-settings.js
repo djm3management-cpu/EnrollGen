@@ -1,11 +1,12 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {resolveCallAccessIdentity,getEvidenceServiceClient,checked,EvidenceError,evidenceFailure,evidenceJson} from './_evidenceAccess.js';
 export function createScriptSettingsHandler({authenticate=requireClerkAuth,getDb=getEvidenceServiceClient}={}){
- return async request=>{
+ return serverRequest('script-settings',async request=>{
   if(request.method!=='POST')return evidenceJson(405,{error:'Use POST.'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{
-   const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
+   const db=adminActionClient(getDb()),identity=await resolveCallAccessIdentity(db,auth);
    if(!identity.admin)throw new EvidenceError(403,'Administrator required.');
    const input=await request.json();
    if(!['medsup','aca','u65','ancillary'].includes(input.flow)||!Array.isArray(input.sections)||input.sections.length>1000)throw new EvidenceError(400,'Invalid script template.');
@@ -16,6 +17,6 @@ export function createScriptSettingsHandler({authenticate=requireClerkAuth,getDb
     :table.insert({tenant_id:identity.tenant.id,flow_type:input.flow,version:1,is_active:true,sections:input.sections});
    return evidenceJson(200,{template:checked(await write.select('id,tenant_id,flow_type,version,is_active,sections,updated_at').single())});
   }catch(error){return evidenceFailure(error);}
- };
+ });
 }
 export default createScriptSettingsHandler();

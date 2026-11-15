@@ -1,3 +1,4 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -24,12 +25,12 @@ async function namedRunResults(db,tenantId,results){
 }
 
 export function createComplianceUploadsHandler({authenticate=requireClerkAuth,getDb=getEvidenceServiceClient,now=()=>Date.now(),env=process.env}={}) {
-  return async request=>{
+  return serverRequest('compliance-uploads',async request=>{
     if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env) && !featureEnabled('IX_UPLOAD_ENABLED',env))return disabledResponse('COMPLIANCE_UPLOADS');
     if(!['GET','PATCH','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
     const auth=await authenticate(request);if(auth.response)return auth.response;
     try{
-      const db=getDb();return await auditedEvidenceRequest(db,auth,request,'call_evidence',recordingIdentity,async identity=>{
+      const db=adminActionClient(getDb());return await auditedEvidenceRequest(db,auth,request,'call_evidence',recordingIdentity,async identity=>{
       if(!identity.admin)throw new EvidenceError(403,'Organization admin access required.');
       if(request.method==='PATCH'){
         if(!featureEnabled('IX_UPLOAD_ENABLED',env))return disabledResponse('IX_UPLOAD_ENABLED');
@@ -99,6 +100,6 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
       return evidenceJson(200,{admin:true,ix_environment:featureEnabled('IX_UPLOAD_ENABLED',env)?ixConfiguration(env).environment.toUpperCase():null,failures:[...checked(conversely).map(row=>({...row,provider:'Conversely'})),...checked(ix).map(row=>({...row,provider:'UHC IX'}))],
         missing:checked(missing),reconciliation:checked(reconciliation),weekly});
     }); }catch(error){return evidenceFailure(error);}
-  };
+  });
 }
 export default createComplianceUploadsHandler();

@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','deepgram_token');
 import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
@@ -26,7 +29,7 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-export default async (request) => {
+export default serverRequest('deepgram-token',async (request) => {
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
   }
@@ -70,7 +73,7 @@ export default async (request) => {
   }
 
   if (!response.ok) {
-    console.error("Deepgram token grant failed:", response.status, payload.err_code);
+    logger.error("deepgram_token_deepgram_token_grant_failed", response.status, payload.err_code);
     const detail = response.status === 403
       ? "Customer transcription is unavailable: the server's Deepgram key lacks permission to issue temporary tokens. An administrator must configure a Deepgram key with Member or higher permissions in Netlify."
       : response.status === 401
@@ -89,6 +92,6 @@ export default async (request) => {
     access_token: payload.access_token,
     expires_in: payload.expires_in,
   });
-};
+});
 
 export const config = { path: "/api/deepgram-token" };

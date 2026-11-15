@@ -1,3 +1,6 @@
+import {securityEvent} from '../../telephony/src/lib/logger.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','_llmtelemetry');
 import {scoringCost,scoringDailyCap} from '../../src/compliance/shared/scoringConfig.js';
 import {sendProviderFailureAlert} from '../lib/postCallProvider.js';
 // Uses the existing tenant-scoped telemetry/billing table and its service-role RLS.
@@ -12,11 +15,12 @@ export function llmRuntime(supabase, tenantId, context, metadata = {}) {
       const tokens=new TextEncoder().encode(JSON.stringify(request)).length+512+(request.max_completion_tokens||4096);
       const {data,error}=await supabase.rpc('reserve_compliance_request',{p_pass_id:metadata.pass_id,p_request_id:requestId,p_model:model,p_tokens:tokens,p_daily_cap:dailyCap,p_fallback:false});
       if(error)throw error;
-      if(data?.alert_claimed)await sendProviderFailureAlert(supabase,metadata.call_record_id,'scoring','daily_scoring_token_cap',{dailyClaim:data.day}).catch(()=>console.error('daily_cap_alert_failed','request_failed'));
-      if(data?.status==='daily_cap')throw Object.assign(new Error('daily_scoring_token_cap'),{code:'daily_scoring_token_cap'});
+      if(data?.alert_claimed)await sendProviderFailureAlert(supabase,metadata.call_record_id,'scoring','daily_scoring_token_cap',{dailyClaim:data.day}).catch(()=>logger.error('daily_cap_alert_failed','request_failed'));
+      if(data?.status==='daily_cap'){securityEvent('budget_rejected',{subject:metadata.subject,reason:'budget'});throw Object.assign(new Error('daily_scoring_token_cap'),{code:'daily_scoring_token_cap'});}
 
     },
     async telemetry(row) {
+      logger.info('provider_result',{status:row.metadata?.error_code?502:200});
       if(metadata.pass_id){
         const cost=scoringCost(row.prompt_tokens,row.completion_tokens,row.cached_tokens);
         const {error}=await supabase.from('compliance_llm_requests').update({input_tokens:row.prompt_tokens||0,cached_input_tokens:Math.min(row.prompt_tokens||0,Math.max(0,row.cached_tokens||0)),output_tokens:row.completion_tokens||0,estimated_cost_usd:cost,error_code:row.metadata?.error_code||null,completed_at:new Date().toISOString()}).eq('request_id',row.request_id).eq('pass_id',metadata.pass_id);

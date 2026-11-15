@@ -1,3 +1,4 @@
+import {securityEvent,setVerifiedLogSubject} from '../../telephony/src/lib/logger.js';
 import {allowedBrowserOrigin,jwtVerificationOptions,assertTokenBoundary} from '../../telephony/src/lib/browserBoundary.js';
 import { assertSafeAuthEnvironment } from "../../integrations/authSafety.js";
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
@@ -26,12 +27,12 @@ function getBearerToken(request) {
 
 export async function requireClerkAuth(request) {
   assertSafeAuthEnvironment();
-  if(!allowedBrowserOrigin(request.headers.get("origin")))return {response:jsonResponse(403,{error:"Origin forbidden"})};
+  if(!allowedBrowserOrigin(request.headers.get("origin"))){securityEvent("authorization_denied");return {response:jsonResponse(403,{error:"Origin forbidden"})};}
   const secretKey = process.env.CLERK_SECRET_KEY;
   const jwtKey = process.env.CLERK_JWT_KEY;
 
   if (!secretKey && !jwtKey) {
-    console.error("Clerk auth is enabled but no backend signing key is set");
+    securityEvent("configuration_failed");
     return {
       response: jsonResponse(500, {
         error: "Server configuration error",
@@ -43,6 +44,7 @@ export async function requireClerkAuth(request) {
   const token = getBearerToken(request);
 
   if (!token) {
+    securityEvent("verification_failed",{reason:"missing_token"});
     return {
       response: jsonResponse(401, {
         error: "Unauthorized",
@@ -54,6 +56,7 @@ export async function requireClerkAuth(request) {
   try {
     const payload = await verifyToken(token, { secretKey, jwtKey, ...jwtVerificationOptions() });
     assertTokenBoundary(payload);
+    setVerifiedLogSubject(payload.sub);
 
     return {
       userId: payload.sub,
@@ -62,7 +65,7 @@ export async function requireClerkAuth(request) {
       tokenPayload: payload,
     };
   } catch {
-    console.error("Clerk token verification failed");
+    securityEvent("verification_failed",{reason:"invalid_token"});
     return {
       response: jsonResponse(401, {
         error: "Unauthorized",

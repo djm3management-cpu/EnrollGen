@@ -1,3 +1,5 @@
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','answerattribution');
 import twilio from "twilio";
 import { config } from "./config.js";
 import { supabase } from "./supabase.js";
@@ -71,7 +73,7 @@ export async function recordCallbackEvidence(req, source) {
 // persisted, and a transient attribution error must not strand a replay key.
 export async function dialAttribution(req, res, next) {
   try { await recordCallbackEvidence(req, "dial"); return next(); }
-  catch { console.error("Dial attribution failed:", 'request_failed'); return res.status(503).end(); }
+  catch { logger.error("answerattribution_dial_attribution_failed", 'request_failed'); return res.status(503).end(); }
 }
 
 export async function finishInboundCall(callSid, status, body = {}) {

@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient } from './_evidenceAccess.js';
 import { recordingIdentity } from './_recordingAccess.js';
@@ -68,4 +69,4 @@ export function createAgentStatusLogHandler({
   };
 }
 
-export default createAgentStatusLogHandler();
+export default serverRequest('agent-status-log',createAgentStatusLogHandler());

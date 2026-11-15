@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','post_call_background');
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import {retryPostCall} from '../lib/postCallRetry.js';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
@@ -31,11 +34,11 @@ export function createPostCallWorker({getDb=getEvidenceServiceClient, work=creat
         const run=()=>handler(new Request(new URL('/api/post-call',deploymentProfile().appOrigin),{
           method:'POST',redirect:'error',headers:{'Content-Type':'application/json'},body:JSON.stringify({...next.payload,action:next.action==='recover'?'finalize':next.action}),
         }),{waitUntil:promise=>pending.push(promise)});
-        const response=await retryPostCall(run,{wait,onRetry:({attempt,status})=>console.warn(JSON.stringify({event:'post_call_retry',session_id:job.session_id,request_key:next.request_key,attempt,status}))});
+        const response=await retryPostCall(run,{wait,onRetry:({attempt,status})=>logger.warn(JSON.stringify({event:'post_call_retry',session_id:job.session_id,request_key:next.request_key,attempt,status}))});
         const body=await response.json();
         if (!response.ok) {
           errorCode=body.code || `post_call_http_${response.status}`;
-          console.error(JSON.stringify({event:'post_call_work_failed',session_id:job.session_id,action:next.action,status:response.status}));
+          logger.error(JSON.stringify({event:'post_call_work_failed',session_id:job.session_id,action:next.action,status:response.status}));
         } else {
           result=body;
           if (next.action==='recover') {
@@ -58,7 +61,7 @@ export function createPostCallWorker({getDb=getEvidenceServiceClient, work=creat
       } catch(error) {
         errorCode=error.message==='worker_budget_exceeded'?'worker_budget_exceeded':providerErrorCode(error,'post_call_work_failed');
         if (providerStage) await recordProviderStatus(db,job.session_id,providerStage,errorCode);
-        console.error(JSON.stringify({event:errorCode,session_id:job.session_id,action:next.action}));
+        logger.error(JSON.stringify({event:errorCode,session_id:job.session_id,action:next.action}));
       }
       checked(await db.rpc('finish_post_call_request',{
         p_session_id:job.session_id,p_worker_id:worker,p_request_key:next.request_key,p_result:result,p_error_code:errorCode,
@@ -66,4 +69,4 @@ export function createPostCallWorker({getDb=getEvidenceServiceClient, work=creat
     }
   };
 }
-export default createPostCallWorker();
+export default serverRequest('post-call-background',createPostCallWorker());

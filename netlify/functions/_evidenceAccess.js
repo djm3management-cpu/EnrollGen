@@ -1,3 +1,5 @@
+import {verifiedAdminIdentity} from '../../telephony/src/lib/adminActions.js';
+import {securityEvent,setVerifiedLogSubject} from '../../telephony/src/lib/logger.js';
 import {AdmissionError,admissionResponse} from './_admission.js';
 import { auditedEvidenceAccess, EvidenceAuditError } from '../../telephony/src/lib/evidenceAudit.js';
 import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
@@ -8,6 +10,7 @@ export class EvidenceError extends Error {
   constructor(status, message) {
     super(message);
     this.status = status;
+    if(status===403)securityEvent('authorization_denied');
   }
 }
 
@@ -44,6 +47,7 @@ export async function resolveEvidenceIdentity(db, auth) {
   let access;
   try { access = await resolveDeploymentAccess(db, auth.userId, auth.orgId || auth.tokenPayload?.o?.id || null); }
   catch (error) { throw new EvidenceError(error.status || 503, error.message); }
+  setVerifiedLogSubject(auth.userId);
   const agent = checked(await db.from('enrolled_agents').select('id,tenant_id,clerk_user_id,name,npn,is_active')
     .eq('tenant_id',access.tenant_id).eq('id',access.agent_id).eq('clerk_user_id',auth.userId).eq('is_active',true).single());
   const tenant = checked(await db.from('tenants').select('*').eq('id',access.tenant_id).single());
@@ -59,7 +63,9 @@ export function hasTenantAdminRole(auth) {
 
 export async function resolveCallAccessIdentity(db, auth) {
   const identity = await resolveEvidenceIdentity(db, auth);
-  return { ...identity, admin: identity.access.authority === 'admin' || hasTenantAdminRole(auth), auth };
+  const resolved={ ...identity, admin: identity.access.authority === 'admin' || hasTenantAdminRole(auth), auth };
+  verifiedAdminIdentity(resolved);
+  return resolved;
 }
 
 export function scopeCallToIdentity(query, identity) {

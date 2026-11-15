@@ -32,7 +32,7 @@ test('local webhook exception cannot escape into a build or hosted development p
     assert.throws(() => assertSafeAuthEnvironment({ ...env, [marker]: 'true' }), /Unsafe authentication/);
   }
   for (const name of switches.slice(0, 2)) assert.throws(() => assertSafeAuthEnvironment({ NODE_ENV: 'development', [name]: 'true' }), /Unsafe authentication/);
-  assert.equal(readFileSync(new URL('../integrations/authSafety.js', import.meta.url), 'utf8'), readFileSync(new URL('../telephony/src/authSafety.js', import.meta.url), 'utf8'));
+  assert.equal(readFileSync(new URL('../integrations/authSafety.js', import.meta.url), 'utf8').replace('../telephony/src/lib/logger.js','./lib/logger.js'), readFileSync(new URL('../telephony/src/authSafety.js', import.meta.url), 'utf8'));
 });
 test('bypassed identity cannot be an admin, including with role claims', () => {
   assert.equal(isAdminAuth({ userId: 'dev-bypass', tokenPayload: { role: 'admin' } }), false);

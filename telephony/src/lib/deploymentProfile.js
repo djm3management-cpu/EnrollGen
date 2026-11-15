@@ -1,7 +1,9 @@
+import {validateAlerting} from './alertPolicy.js';
+import {securityEvent} from './logger.js';
 import { validateRetention } from './retentionPolicy.js';
 // Server-held, per-deployment configuration. This file ships in every service.
 import { deploymentFeatures, serverFeatureEnvironment } from './deploymentFeatures.js';
-const fail = key => { throw new Error(`Invalid deployment profile: ${key}`); };
+const fail = key => { securityEvent(key==='destination host'||key==='destination URL'?'destination_rejected':'configuration_failed'); throw new Error(`Invalid deployment profile: ${key}`); };
 const text = (value, key) => typeof value === 'string' && value.trim() && value.length <= 500 && !Array.from(value).some(c=>c.charCodeAt(0)<32) ? value.trim() : fail(key);
 const list = (value, key) => Array.isArray(value) && value.length && value.every(v => typeof v === 'string' && v.trim()) ? [...new Set(value.map(v => text(v,key)))] : fail(key);
 const email = (value,key) => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(text(value,key)) ? value : fail(key);
@@ -88,6 +90,7 @@ export function parseDeploymentProfile(raw, features = deploymentFeatures()) {
       for(const [key,value] of Object.entries(limits))if(!['minute','subjectDay','deploymentDay','concurrent'].includes(key)||!Number.isInteger(value)||value<1||value>1000000)fail('admissionLimits value');
     }
   }
+  try{p.alerting=validateAlerting(p.alerting,validateDestination,p.allowedHosts);}catch{fail('alerting');}
   p.retention = validateRetention(p.retention);
   return deepFreeze(p);
 }

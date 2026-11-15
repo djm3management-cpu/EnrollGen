@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {resolveCallAccessIdentity,evidenceFailure} from './_evidenceAccess.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -40,4 +41,4 @@ export function createVendorRoutingHandler({authenticate=requireClerkAuth,getDb=
   });
 };
 }
-export default createVendorRoutingHandler();
+export default serverRequest('vendor-routing',createVendorRoutingHandler());

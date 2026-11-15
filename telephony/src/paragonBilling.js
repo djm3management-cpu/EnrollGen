@@ -1,3 +1,6 @@
+import {loggedJob} from './lib/logger.js';
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','paragonbilling');
 import { featureEnabled } from './lib/deploymentFeatures.js';
 import { createHash } from 'node:crypto';
 import twilio from 'twilio';
@@ -96,11 +99,11 @@ export async function processBillingJob({ db, config, job, fetchParent, fetchChi
     return 'retry';
   }
 }
-export function startParagonBillingWorker({ db, config, interval = setInterval, log = console.error }) {
+export function startParagonBillingWorker({ db, config, interval = setInterval, log = logger.error,recordSuccess=async()=>{} }) {
   if (!featureEnabled('PARAGON_ENABLED')) return {tick:async()=>{},stop:()=>{}};
   const client = twilio(config.twilioAccountSid,config.twilioAuthToken,{ timeout:8000,autoRetry:false });
   let busy=false;
-  const tick = async () => {
+  const tick = loggedJob('telephony',async () => {
     if (busy) return;
     busy=true;
     try {
@@ -111,8 +114,9 @@ export function startParagonBillingWorker({ db, config, interval = setInterval, 
         fetchChildren:sid=>client.calls.list({parentCallSid:sid,limit:20,pageSize:20}),
       })));
       if(results.some(result=>result.status==='rejected')) log('Paragon billing retry persistence unavailable');
+      else await recordSuccess();
     } finally { busy=false; }
-  };
+  });
   const timer=interval(()=>void tick().catch(()=>log('Paragon billing worker failed')),15000);
   timer.unref?.(); void tick().catch(()=>log('Paragon billing worker failed'));
   return { tick, stop:()=>clearInterval(timer) };

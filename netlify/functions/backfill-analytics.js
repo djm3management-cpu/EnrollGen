@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','backfill_analytics');
 import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
 import {
   getSupabase,
@@ -26,7 +29,7 @@ async function findDeploymentTenant(supabase) {
  if(error)throw error;return data;
 }
 
-export default async (request) => {
+export default serverRequest('backfill-analytics',async (request) => {
   if (!["GET", "POST"].includes(request.method)) {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -54,10 +57,10 @@ export default async (request) => {
       result,
     });
   } catch {
-    console.error("[backfill-analytics] Failed:", 'request_failed');
+    logger.error("backfill_analytics_failed", 'request_failed');
     return json(500, {
       ok: false,
       error: 'request_failed',
     });
   }
-};
+});

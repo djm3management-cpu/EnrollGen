@@ -1,3 +1,5 @@
+import {createLogger} from '../telephony/src/lib/logger.js';
+const logger=createLogger('integrations','complianceuploads');
 import {evidenceCheckpoint} from '../telephony/src/lib/evidenceAudit.js';
 import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
@@ -69,7 +71,7 @@ export async function playableMp3(candidate,{db,env=process.env,fetchImpl=fetch}
     return [200,206].includes(response.status) && /audio\/(mpeg|mp3)/i.test(response.headers.get('content-type') || '') && !!response.body;
   }finally{await response?.body?.cancel().catch(()=>{});}
 }
-export async function scheduleConverselyWeek(db,{env=process.env,log=console.log,now=()=>Date.now(),isPlayable=playableMp3,fetchImpl=fetch}={}) {
+export async function scheduleConverselyWeek(db,{env=process.env,log=logger.info,now=()=>Date.now(),isPlayable=playableMp3,fetchImpl=fetch}={}) {
   if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env))return;
   const week=previousConverselyWeek(now(),deploymentProfile(env).timezone);
   const existing=checked(await db.from('conversely_weekly_runs').select('week_start').eq('week_start',week).not('scheduled_at','is',null).maybeSingle());
@@ -81,8 +83,8 @@ export async function scheduleConverselyWeek(db,{env=process.env,log=console.log
   if(audit.length)log(JSON.stringify({event:'conversely_weekly_run',week,selected:audit.filter(row=>row.selected).length}));
 }
 
-export function createComplianceWorker(db,{env=process.env,send=postJson,log=console.log,now=()=>Date.now(),fetchImpl=fetch,
- isPlayable=playableMp3,providers={},scheduleExtras=async()=>{}}={}) {
+export function createComplianceWorker(db,{env=process.env,send=postJson,log=logger.info,now=()=>Date.now(),fetchImpl=fetch,
+ isPlayable=playableMp3,providers={},scheduleExtras=async()=>{},recordSuccess=async()=>{}}={}) {
   deploymentFeatures(env);
   deploymentProfile(env);
   const rpc=async(name,params={})=>checked(await db.rpc(name,params));
@@ -98,10 +100,10 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=con
     if(schedule && featureEnabled('CONVERSELY_UPLOAD_ENABLED',env) && now()>=nextWeeklyCheck){
       nextWeeklyCheck=now()+60*60_000;
       try{await db.from('conversely_worker_status').update({next_check_at:new Date(nextWeeklyCheck).toISOString()}).eq('singleton',true);}catch{/* Older schema remains operational. */}
-      try{await scheduleConverselyWeek(db,{env,log,now,isPlayable,fetchImpl});}
+      try{await scheduleConverselyWeek(db,{env,log,now,isPlayable,fetchImpl});await recordSuccess('compliance_schedule');}
       catch{log(JSON.stringify({event:'compliance_schedule_failed',stage:'conversely_weekly'}));}
     }
-    if(schedule){try{await scheduleExtras();}catch{log(JSON.stringify({event:'compliance_schedule_failed',stage:'ix'}));}}
+    if(schedule){try{await scheduleExtras();await recordSuccess('ix_schedule');}catch{log(JSON.stringify({event:'compliance_schedule_failed',stage:'ix'}));}}
     if(!deliveries)return;
     for(const provider of ['conversely',...Object.keys(providers)]){
       if(!featureEnabled(provider==='conversely'?'CONVERSELY_UPLOAD_ENABLED':'IX_UPLOAD_ENABLED',env))continue;

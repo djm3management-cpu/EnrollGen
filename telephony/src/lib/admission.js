@@ -1,3 +1,4 @@
+import {securityEvent} from './logger.js';
 import { deploymentProfile } from './deploymentProfile.js';
 // Requests, not tokens/dollars. Existing scoring token and STT reconnect fences still apply.
 export const PILOT_LIMITS = Object.freeze({
@@ -30,7 +31,7 @@ export async function admit(db, route, subject, profile) {
   try {result=await db.rpc('consume_admission',{p_rules:admissionRules(route,subject,profile)});}
   catch {throw new AdmissionError(503);}
   if(result.error || typeof result.data?.allowed!=='boolean')throw new AdmissionError(503);
-  if(!result.data.allowed){console.warn(JSON.stringify({event:'admission_limited',route,retry_after:result.data.retry_after}));throw new AdmissionError(429,Math.max(1,Math.ceil(result.data.retry_after || 60)));}
+  if(!result.data.allowed){securityEvent('admission_rejected',{subject,route,retry_after:result.data.retry_after});if(result.data.retry_after>60)securityEvent('budget_rejected',{subject,route,reason:'budget'});throw new AdmissionError(429,Math.max(1,Math.ceil(result.data.retry_after || 60)));}
 }
 export function admissionResponse(error) {
   return Response.json({error:error.code,retry_after:error.retryAfter,retry_at:new Date(Date.now()+error.retryAfter*1000).toISOString()},
@@ -49,7 +50,7 @@ export function createSocketAdmission({now=Date.now,profile=()=>deploymentProfil
     const row=subjects.get(subject)||{until:time+60000,used:0,active:0};
     if(row.until<=time){row.until=time+60000;row.used=0;}
     subjects.set(subject,row);
-    if(row.used>=limit.minute||row.active>=limit.concurrent)throw new AdmissionError(429,Math.max(1,Math.ceil((row.until-time)/1000)));
+    if(row.used>=limit.minute||row.active>=limit.concurrent){securityEvent('admission_rejected',{subject});throw new AdmissionError(429,Math.max(1,Math.ceil((row.until-time)/1000)));}
     row.used++;row.active++;let released=false;
     return ()=>{if(!released){released=true;row.active--;}};
   };

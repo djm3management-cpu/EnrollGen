@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','sync_bulletins');
 /*
   Netlify Scheduled Function: sync-bulletins
   Runs daily to pull fresh CMS bulletins, carrier updates, and relevant
@@ -397,7 +400,7 @@ export function parseFeed(content, feed) {
 }
 
 export async function syncBulletins(supabase, { feeds = ALL_FEEDS, fetchImpl = fetch, now = new Date() } = {}) {
-  console.log("[sync-bulletins] Starting daily bulletin sync...");
+  logger.info("sync_bulletins_starting_daily_bulletin_sync");
 
   let totalInserted = 0;
   let totalSkipped = 0;
@@ -471,8 +474,8 @@ export async function syncBulletins(supabase, { feeds = ALL_FEEDS, fetchImpl = f
           .upsert(row, { onConflict: "source_id" });
 
         if (error) {
-          console.warn(
-            `[sync-bulletins] Upsert error for "${item.title}":`,
+          logger.warn(
+            "sync_bulletins_upsert_error_for",
             error.message
           );
           feedError = `Bulletin upsert failed: ${error.message}`;
@@ -484,12 +487,12 @@ export async function syncBulletins(supabase, { feeds = ALL_FEEDS, fetchImpl = f
         }
       }
 
-      console.log(
-        `[sync-bulletins] ${feed.carrier}/${feed.label}: processed ${items.length} items`
+      logger.info(
+        "sync_bulletins_processed_items"
       );
     } catch (err) {
-      console.error(
-        `[sync-bulletins] ${feed.carrier}/${feed.label} failed:`,
+      logger.error(
+        "sync_bulletins_failed",
         err.message
       );
       feedError = err.message;
@@ -507,20 +510,20 @@ export async function syncBulletins(supabase, { feeds = ALL_FEEDS, fetchImpl = f
       if (statusError) throw statusError;
     } catch {
       statusErrors += 1;
-      console.error("[sync-bulletins] Status write failed:", 'request_failed');
+      logger.error("sync_bulletins_status_write_failed", 'request_failed');
     }
   }
 
-  console.log(
-    `[sync-bulletins] Done. Inserted: ${totalInserted}, Skipped: ${totalSkipped}, Feed errors: ${feedErrors}`
+  logger.info(
+    "sync_bulletins_done_inserted_skipped_feed_errors"
   );
 
   return { upserted: totalInserted, skipped: totalSkipped, feedErrors, statusErrors };
 }
 
-export default async () => {
+export default serverRequest('sync-bulletins',async () => {
   if (!process.env.SUPABASE_URL || !supabaseSecretKey()) {
-    console.error("[sync-bulletins] Missing SUPABASE_URL or SUPABASE_SECRET_KEY (legacy SUPABASE_SERVICE_ROLE_KEY is also accepted)");
+    logger.error("sync_bulletins_missing_supabase_url_or_supabase_secret_key_legacy_supabase_service_role_key_is_");
     return new Response(
       JSON.stringify({
         error: "Missing SUPABASE_URL or SUPABASE_SECRET_KEY (legacy SUPABASE_SERVICE_ROLE_KEY is also accepted)",
@@ -542,7 +545,7 @@ export default async () => {
     status: result.statusErrors ? 500 : 200,
     headers: { "Content-Type": "application/json" },
   });
-};
+});
 
 export const config = {
   schedule: "0 10 * * *",

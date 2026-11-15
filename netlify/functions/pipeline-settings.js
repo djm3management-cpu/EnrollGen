@@ -1,11 +1,12 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {resolveCallAccessIdentity,getEvidenceServiceClient,checked,EvidenceError,evidenceFailure,evidenceJson} from './_evidenceAccess.js';
 export function createPipelineSettingsHandler({authenticate=requireClerkAuth,getDb=getEvidenceServiceClient}={}){
- return async request=>{
+ return serverRequest('pipeline-settings',async request=>{
   if(request.method!=='POST')return evidenceJson(405,{error:'Use POST.'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{
-   const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
+   const db=adminActionClient(getDb()),identity=await resolveCallAccessIdentity(db,auth);
    if(!identity.admin)throw new EvidenceError(403,'Administrator required.');
    const input=await request.json(),tenant=identity.tenant.id,actor=identity.access.roster_id;
    if(input.action==='save'){
@@ -23,6 +24,6 @@ export function createPipelineSettingsHandler({authenticate=requireClerkAuth,get
    }
    throw new EvidenceError(400,'Unknown pipeline operation.');
   }catch(error){return evidenceFailure(error);}
- };
+ });
 }
 export default createPipelineSettingsHandler();

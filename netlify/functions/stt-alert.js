@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {getEvidenceServiceClient,checked,evidenceJson,evidenceFailure} from './_evidenceAccess.js';
 import {sendProviderFailureAlert} from '../lib/postCallProvider.js';
@@ -23,4 +24,4 @@ export function createSttAlertHandler({getDb=getEvidenceServiceClient,sendAlert=
   }catch(error){return evidenceFailure(error);}
  };
 }
-export default createSttAlertHandler();
+export default serverRequest('stt-alert',createSttAlertHandler());

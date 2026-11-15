@@ -1,5 +1,5 @@
 import { redactPromptPayload, safeDiagnosticCode } from '../../../telephony/src/lib/redaction.js';
-import { featureEnabled } from '../../../telephony/src/lib/deploymentFeatures.js';
+import { featureEnabled } from '../../../telephony/src/lib/featureFlags.js';
 import { createOpenAIAdapter } from './openai.ts';
 import { assertNoPublicApiKeys, resolveEngine, resolveProvider, resolveModel } from './config.js';
 import { validateCompletion } from './validation.ts';
@@ -23,7 +23,7 @@ function degraded(request: CompletionRequest, model: string, error: any): Comple
 }
 
 function background(task: Promise<unknown>, runtime: Runtime) {
-  const safe = task.catch(() => { if (process.env.ENROLLGEN_DEBUG_LOGS === 'true' && process.env.NODE_ENV !== 'production') console.debug('[llm] background telemetry failed'); });
+  const safe = task.catch(() => { if (typeof window !== 'undefined' && process.env.ENROLLGEN_DEBUG_LOGS === 'true' && process.env.NODE_ENV !== 'production') console.debug('[llm] background telemetry failed'); });
   if (runtime.waitUntil) runtime.waitUntil(safe);
   else void safe; // CLI/tests are long-lived; serverless callers must supply waitUntil.
 }

@@ -1,3 +1,5 @@
+import {createLogger} from '../lib/logger.js';
+const logger=createLogger('telephony','deepgramtrack');
 import { reserveSttReconnect,registerSttStream } from './sttReconnectBudget.js';
 import { reportSttLimit } from './sttAlert.js';
 import { egressMetrics } from '../egressMetrics.js';
@@ -22,7 +24,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
     type: status === 'connected' ? 'transcription_health' : 'transcription_error',
     speaker, status, message, timestamp: now(), ...extra,
   });
-  const log = (event, extra = {}) => console.info(JSON.stringify({event, call_sid: claims?.parentCallSid || claims?.callSid, call_record_id: claims?.callRecordId || null, speaker, ...extra}));
+  const log = (event, extra = {}) => logger.info(JSON.stringify({event, call_sid: claims?.parentCallSid || claims?.callSid, call_record_id: claims?.callRecordId || null, speaker, ...extra}));
   const label = speaker === 'agent' ? 'Agent' : speaker === 'third_party' ? 'Third party' : 'Customer';
   function enqueue(chunk, startMs) {
     if (closed || exhausted) return;
@@ -48,7 +50,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
       record_type: 'stt_seconds', quantity: (connection.sentBytes || 0) / 8000,
       metadata: { call_sid: claims.parentCallSid || claims.callSid, connection_call_sid: claims.callSid,
         track: speaker, source: 'server', model: 'nova-2', connection_id: connection.streamId } }))
-      .catch(() => console.error(JSON.stringify({ event: 'stt_usage_failed', call_sid: claims.callSid, connection_id: connection.streamId })));
+      .catch(() => logger.error(JSON.stringify({ event: 'stt_usage_failed', call_sid: claims.callSid, connection_id: connection.streamId })));
   }
   function stopSocket(connection) {
     cancel(connection.timeout); cancel(connection.drainTimer); cancelEvery(connection.keepAlive);
@@ -60,6 +62,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
     current = null;
     if(!connection.didClose) closing=connection;
     gapSince ??= now();
+    logger.info('provider_result',{provider:'deepgram',status:502});
     log('stt_stream_close', {reason, reconnects: reconnectBudget.used});
     const canRetry = reconnectBudget.used < limits.reconnects;
     exhausted = !canRetry;
@@ -126,6 +129,7 @@ export function openDeepgramTrack({ speaker, notify, claims, reportUsage = repor
     ws.on('open', () => {
       if (closed || connection.failed || current !== connection) return;
       connection.lastAudioAt=now();
+      logger.info('provider_result',{provider:'deepgram',status:200});
       log('stt_stream_open', {connection_id: connection.streamId, reconnects: reconnectBudget.used});
       cancel(connection.timeout);
       const hadGap = gapSince !== null;

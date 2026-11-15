@@ -1,3 +1,4 @@
+import {setLogSink} from '../telephony/src/lib/logger.js';
 import {completeCall,assessment,installComplianceFixture} from './helpers/complianceFixture.js';
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -162,15 +163,15 @@ test('provider errors keep their code in the response and notify durable post-ca
 });
 test('database initialization failures log their stage and sanitized diagnostic instead of escaping the handler',async()=>{
  const prior=process.env.SCORE_CALL_JOB_SECRET;process.env.SCORE_CALL_JOB_SECRET='logging-test';
- const original=console.error,logs=[];console.error=message=>logs.push(JSON.parse(message));
+ const logs=[],restore=setLogSink(message=>{const row=JSON.parse(message);if(row.level==='error')logs.push(row);});
  try{
   const handler=createScoreCallHandler({admission:async()=>{},getDb:()=>{throw Error('Database unavailable: sk-proj-fixturesecret');}});
   const response=await handler(new Request('https://test',{method:'POST',headers:{'x-enrollgen-job-secret':'logging-test'},
    body:JSON.stringify({callId:randomUUID(),tenantId:tenant})}),{});
   assert.equal(response.status,503);assert.equal(logs[0].event,'scoring_failed');assert.equal(logs[0].stage,'load_call');
-  assert.equal(logs[0].message,'Error text withheld (may contain secrets or personal data)');assert.equal(logs[0].stack,undefined);
+  assert.equal(logs[0].message,'Operation failed');assert.equal(logs[0].stack,undefined);
   assert.ok(!JSON.stringify(logs).includes('sk-proj-fixturesecret'));
- }finally{console.error=original;if(prior===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=prior;}
+ }finally{restore();if(prior===undefined)delete process.env.SCORE_CALL_JOB_SECRET;else process.env.SCORE_CALL_JOB_SECRET=prior;}
 });
 test('non-service roles cannot call job RPCs or mutate/read the ledger', async () => {
   await pg.exec('SET ROLE authenticated');

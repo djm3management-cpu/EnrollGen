@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {resolveCallAccessIdentity,evidenceFailure} from './_evidenceAccess.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -68,4 +69,4 @@ export function createParagonCallbacksHandler({authenticate=requireClerkAuth,get
  }); }catch(error){return evidenceFailure(error);}
  };
 }
-export default createParagonCallbacksHandler();
+export default serverRequest('paragon-zip-confirm',createParagonCallbacksHandler());

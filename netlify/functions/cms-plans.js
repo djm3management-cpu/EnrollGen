@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','cms_plans');
 // Netlify Function: /api/cms-plans?zip=33601
 // Queries your plan database (Supabase example below)
 
@@ -23,7 +26,7 @@ function getSupabase() {
   return createClient(SUPABASE_URL, publicKey);
 }
 
-export default async (req) => {
+export default serverRequest('cms-plans',async (req) => {
   const auth = await requireClerkAuth(req);
   if (auth.response) {
     return auth.response;
@@ -40,7 +43,7 @@ export default async (req) => {
   try {
     supabase = getSupabase();
   } catch {
-    console.error("cms-plans configuration error:", 'request_failed');
+    logger.error("cms_plans_cms_plans_configuration_error", 'request_failed');
     return json(500, {
       error: "Server configuration error",
       detail: "Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in Netlify environment variables.",
@@ -56,7 +59,7 @@ export default async (req) => {
     .single();
 
   if (zipError && zipError.code !== "PGRST116") {
-    console.error("cms-plans zip lookup failed:", zipError);
+    logger.error("cms_plans_cms_plans_zip_lookup_failed", zipError);
     return json(502, { error: "Plan lookup failed" });
   }
 
@@ -73,7 +76,7 @@ export default async (req) => {
     .order("monthly_premium", { ascending: true });
 
   if (plansError) {
-    console.error("cms-plans plan lookup failed:", plansError);
+    logger.error("cms_plans_cms_plans_plan_lookup_failed", plansError);
     return json(502, { error: "Plan lookup failed" });
   }
 
@@ -94,6 +97,6 @@ export default async (req) => {
       },
     }
   );
-};
+});
 
 export const config = { path: "/api/cms-plans" };

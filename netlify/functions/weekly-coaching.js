@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','weekly_coaching');
 import {admitCall} from './_admission.js';
 import {localDay,shiftCalendarDay} from '../../telephony/src/lib/deploymentCalendar.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
@@ -92,7 +95,7 @@ async function fetchCallsWithScores(supabase, tenantId, sinceIso) {
     .order("created_at", { ascending: false });
 
   if (scoreError) {
-    console.warn("[weekly-coaching] Could not fetch scorecards:", 'request_failed');
+    logger.warn("weekly_coaching_could_not_fetch_scorecards", 'request_failed');
     return rows.map((row) => ({ ...row, overall_score: null }));
   }
 
@@ -170,7 +173,7 @@ async function fetchLatestAgentInsights(supabase, tenantId) {
     .order("period_end", { ascending: false });
 
   if (error) {
-    console.warn("[weekly-coaching] Could not fetch agent insights:", 'request_failed');
+    logger.warn("weekly_coaching_could_not_fetch_agent_insights", 'request_failed');
     return new Map();
   }
 
@@ -222,14 +225,14 @@ async function processTenant(supabase, tenant, context) {
       if (error) throw error;
       saved.push(agentName);
     } catch (agentError) {
-      console.error("[weekly-coaching] Agent failed:", tenant.id, agentName, agentError);
+      logger.error("weekly_coaching_agent_failed", tenant.id, agentName, agentError);
     }
   }
 
   return { tenant_id: tenant.id, agents_considered: groups.size, coaching_rows: saved.length };
 }
 
-export default async (_request, context) => {
+export default serverRequest('weekly-coaching',async (_request, context) => {
  const localParts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:deploymentProfile().timezone,weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
  if(localParts.weekday!=='Mon'||Number(localParts.hour)!==7)return new Response('Outside local schedule window');
 
@@ -247,17 +250,17 @@ export default async (_request, context) => {
       try {
         results.push(await processTenant(supabase, tenant, context));
       } catch {
-        console.error("[weekly-coaching] Tenant failed:", tenant.id, 'request_failed');
+        logger.error("weekly_coaching_tenant_failed", tenant.id, 'request_failed');
         results.push({ tenant_id: tenant.id, error: 'request_failed' });
       }
     }
 
     return json(200, { ok: true, tenants: results.length, results });
   } catch {
-    console.error("[weekly-coaching] Failed:", 'request_failed');
+    logger.error("weekly_coaching_failed", 'request_failed');
     return json(500, { ok: false, error: 'request_failed' });
   }
-};
+});
 
 export const config = {
   schedule: "0 * * * *",

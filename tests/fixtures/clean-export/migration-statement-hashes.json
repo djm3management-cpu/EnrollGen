@@ -7,5 +7,6 @@
   "155_owned_workspace_writes.sql": "653361651b37800476352f3b41679e2b433a88f1393ae02033f6a207274abcb6",
   "156_scoped_service_call_views.sql": "c274799afc0dcec1ad83021e9f0bbe05c20f0bc0a87e6c1ddc58bf45e69957b3",
   "159_ghl_delivery_minimization.sql": "9e93c44c390cb41b832d55d7402779651280b59e380c105a2ce0d5d3a5c974df",
-  "160_retention_and_holds.sql": "e5a0ff421c9321aff4db209bcfc737a714c9000f158a0d49f7591fcfc05eb2f7"
+  "160_retention_and_holds.sql": "e5a0ff421c9321aff4db209bcfc737a714c9000f158a0d49f7591fcfc05eb2f7",
+  "161_operational_logging_alerts.sql": "f85336f3df34107d4b326e69537007be593cff8474b7c6b3196ae272527b5035"
 }

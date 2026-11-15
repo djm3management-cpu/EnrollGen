@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { createSupabaseClient, supabaseSecretKey } from '../../integrations/supabase.js';
 import { resolveTenantIdForOrg } from './_subscriptionGate.js';
@@ -30,5 +31,5 @@ export function createSttUsageHandler({ authenticate = requireClerkAuth,
     } catch { return new Response('Usage reporting failed', { status: 503 }); }
   };
 }
-export default createSttUsageHandler();
+export default serverRequest('stt-usage',createSttUsageHandler());
 export const config = { path: '/api/stt-usage' };

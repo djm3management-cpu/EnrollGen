@@ -1,3 +1,4 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient,scopeCallLogToIdentity } from './_evidenceAccess.js';
@@ -36,12 +37,12 @@ async function availableRecordingCalls(db, identity, offset) {
 }
 
 export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb = getEvidenceServiceClient, env = process.env } = {}) {
-  return async request => {
+  return serverRequest('recordings',async request => {
     if (!['GET', 'POST'].includes(request.method)) return evidenceJson(405, { error: 'Method not allowed' });
     const auth = await authenticate(request);
     if (auth.response) return auth.response;
     try {
-      const db=getDb(); return await auditedEvidenceRequest(db,auth,request,'recording',recordingIdentity,async identity=>{
+      const db=adminActionClient(getDb()); return await auditedEvidenceRequest(db,auth,request,'recording',recordingIdentity,async identity=>{
       const params = new URL(request.url).searchParams;
       if (request.method === 'GET' && params.get('catalog') === '1') {
         if ([...params.keys()].some(key => !['catalog', 'offset'].includes(key))) throw new EvidenceError(400, 'Invalid recordings filter.');
@@ -109,6 +110,6 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
       }
       return evidenceJson(200, await recordingMediaGrant(db, identity, row, { download: input.download === true, forceProvider: input.source === 'twilio', env }));
     }); } catch (error) { return evidenceFailure(error); }
-  };
+  });
 }
 export default createRecordingsHandler();

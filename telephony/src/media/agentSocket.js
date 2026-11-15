@@ -1,3 +1,5 @@
+import {createLogger} from '../lib/logger.js';
+const logger=createLogger('telephony','agentsocket');
 import {createSocketAdmission} from '../lib/admission.js';
 import {allowedBrowserOrigin} from '../lib/browserBoundary.js';
 const reserveSocket=createSocketAdmission();
@@ -14,7 +16,7 @@ const socketsByAgent = new Map();
 
 export const agentWss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024, perMessageDeflate: false });
 agentWss.on('wsClientError', (_error, socket) => {
-  console.warn('[agent] rejected: invalid_websocket_handshake');
+  logger.warn("agentsocket_rejected_invalid_websocket_handshake");
   socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
 });
 
@@ -27,7 +29,7 @@ export function handleAgentUpgrade(request, socket, head) {
   } catch { result = { claims: null, reason: "invalid_url" }; }
   const { claims, reason } = result;
   if (!claims) {
-    console.warn(`[agent] rejected: ${reason}`);
+    logger.warn('agent_upgrade_rejected',{reason});
     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
     socket.destroy();
     return;
@@ -49,12 +51,12 @@ agentWss.on("connection", async (ws, _request, claims) => {
   try {
     const agent = await activeTenantAgent(agentId, claims.clerkSubject);
     if (!agent || agent.clerk_user_id !== claims.clerkSubject) {
-      console.warn("[agent] rejected: inactive_identity");
+      logger.warn("agentsocket_rejected_inactive_identity");
       ws.close(1008, "Agent is no longer active");
       return;
     }
   } catch {
-    console.warn("[agent] rejected: identity_check_unavailable");
+    logger.warn("agentsocket_rejected_identity_check_unavailable");
     ws.close(1011, "Identity check failed");
     return;
   }
@@ -71,7 +73,7 @@ agentWss.on("connection", async (ws, _request, claims) => {
       if (!set.size) socketsByAgent.delete(agentId);
     }
   });
-  ws.on("error", () => console.warn("[agent] transport_error"));
+  ws.on("error", () => logger.warn("agentsocket_transport_error"));
 });
 
 export function sendToAgent(agentId, message) {

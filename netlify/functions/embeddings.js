@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','embeddings');
 import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
 import { redactPromptPayload } from './_redaction.js';
 import { requireClerkAuth } from './_clerkAuth.js';
@@ -76,7 +79,7 @@ export function createEmbeddingsHandler({ admission=admitAgent, authenticate, ge
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          console.error(JSON.stringify({event:'embedding_provider_error',status:response.status,code:"provider_error",request_id:response.headers.get('x-request-id'),chunks:chunks.length}));
+          logger.error(JSON.stringify({event:'embedding_provider_error',status:response.status,code:"provider_error",request_id:response.headers.get('x-request-id'),chunks:chunks.length}));
           return await fail(providerErrorCode({...data.error,error:data.error,status:response.status}),response.status===429?429:503);
         }
         const vectors = [...(data.data || [])].sort((a,b) => a.index-b.index);
@@ -93,18 +96,18 @@ export function createEmbeddingsHandler({ admission=admitAgent, authenticate, ge
       const norm = Math.hypot(...mean);
       if (!norm) return await fail('invalid_embedding_response',502);
       if (sessionId) await recordProviderStatus(db,sessionId,'embeddings',null,startedAt);
-      console.log(JSON.stringify({event:'embeddings_complete',session_id:sessionId || null,chunks:chunks.length,dimensions:1536}));
+      logger.info(JSON.stringify({event:'embeddings_complete',session_id:sessionId || null,chunks:chunks.length,dimensions:1536}));
       return json(200,{embedding:mean.map(value=>value/norm),model:MODEL,chunks:chunks.length});
     } catch (error) {
       if(error instanceof AdmissionError)return admissionResponse(error);
       const timeout = error?.name === 'TimeoutError' || error?.name === 'AbortError';
-      console.error(`[embeddings] ${timeout ? 'provider_timeout' : 'request_failed'}`);
+      logger.error("embeddings");
       if (error.status===403 || error.status===401) return json(error.status,{error:'Session unavailable.'});
       const code=timeout?'provider_timeout':providerErrorCode(error);
       try { if (!(error instanceof SyntaxError)) return await fail(code); }
-      catch { console.error(JSON.stringify({event:'provider_failure_status_write_failed',session_id:sessionId})); }
+      catch { logger.error(JSON.stringify({event:'provider_failure_status_write_failed',session_id:sessionId})); }
       return json(error instanceof SyntaxError?400:503,{error:'Embedding request failed.',code});
     }
   };
 }
-export default createEmbeddingsHandler();
+export default serverRequest('embeddings',createEmbeddingsHandler());

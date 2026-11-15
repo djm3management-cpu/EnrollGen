@@ -1,11 +1,12 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {resolveCallAccessIdentity,getEvidenceServiceClient,evidenceJson,evidenceFailure,EvidenceError,checked} from './_evidenceAccess.js';
 export function createRetentionHoldsHandler({authenticate=requireClerkAuth,getDb=getEvidenceServiceClient}={}) {
-  return async request=>{
+  return serverRequest('retention-holds',async request=>{
     if(request.method!=='POST')return evidenceJson(405,{error:'Method not allowed'});
     const auth=await authenticate(request);if(auth.response)return auth.response;
     try {
-      const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
+      const db=adminActionClient(getDb()),identity=await resolveCallAccessIdentity(db,auth);
       // This control intentionally requires the protected database authority.
       if(identity.access.authority!=='admin')throw new EvidenceError(403,'Protected admin required.');
       let body;try{body=await request.json();}catch{throw new EvidenceError(400,'Invalid hold request.');}
@@ -19,7 +20,7 @@ export function createRetentionHoldsHandler({authenticate=requireClerkAuth,getDb
       else throw new EvidenceError(400,'Invalid hold action.');
       return evidenceJson(200,{id:checked(result)||null});
     }catch(error){return evidenceFailure(error);}
-  };
+  });
 }
 export default createRetentionHoldsHandler();
 export const config={path:'/api/retention-holds'};

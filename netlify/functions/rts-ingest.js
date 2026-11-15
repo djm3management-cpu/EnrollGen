@@ -1,3 +1,6 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','rts_ingest');
 import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
 import { complete } from '../../src/lib/llm/client.ts';
 import { rtsFormat } from '../../src/lib/llm/schemas/jobs.js';
@@ -419,13 +422,13 @@ async function handleCommit(supabase, context, body) {
 }
 
 export function createRtsIngestHandler({authenticate=requireClerkAuth,getDb=getSupabase}={}) {
- return async (request) => {
+ return serverRequest('rts-ingest',async (request) => {
   if (request.method !== "POST") return json(405, { error: "Method not allowed" });
   const auth = await authenticate(request);
   if (auth.response) return auth.response;
 
   try {
-    const supabase = getDb();
+    const supabase = adminActionClient(getDb());
     const context = { ...(await resolveTenantContext(supabase, auth)), auth };
     const contentType = request.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
@@ -438,12 +441,12 @@ export function createRtsIngestHandler({authenticate=requireClerkAuth,getDb=getS
     return await handleUpload(request, supabase, context);
   } catch (error) {
     if(error instanceof AdmissionError)return admissionResponse(error);
-    console.error("[rts-ingest] failed", {status:error.status || 500,code:error.code || null});
+    logger.error("rts_ingest_failed", {status:error.status || 500,code:error.code || null});
     return json(error.status || 500, {
       error: error.code === 'model_setting_required' ? error.message : 'RTS ingestion failed.',
     });
   }
-};
+});
 
 }
 export default createRtsIngestHandler();

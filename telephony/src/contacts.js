@@ -1,3 +1,5 @@
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','contacts');
 import { supabase } from "./supabase.js";
 import { config } from "./config.js";
 import { normalizePhoneE164 } from "./phone.js";
@@ -78,5 +80,5 @@ export async function logContactActivity({
     ref_id: refId,
     summary,
   });
-  if (error) console.error("contact_activities insert failed:", 'request_failed');
+  if (error) logger.error("contacts_contact_activities_insert_failed", 'request_failed');
 }

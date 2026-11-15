@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','sync_fema');
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { fetchLiveFemaDisasters } from '../../src/lib/sepFema.js';
 
@@ -14,7 +17,7 @@ export async function refreshFemaSnapshot(client, fetchFeed = fetchLiveFemaDisas
   return { status: feed.apiFailed ? 'unavailable' : 'live', count: feed.disasters.length };
 }
 
-export default async () => {
+export default serverRequest('sync-fema',async () => {
   const url = process.env.SUPABASE_URL;
   const key = supabaseSecretKey();
   if (!url || !key) return new Response('FEMA refresh configuration unavailable', { status: 503 });
@@ -22,8 +25,8 @@ export default async () => {
     const result = await refreshFemaSnapshot(createClient(url, key));
     return Response.json(result, { status: result.status === 'live' ? 200 : 503 });
   } catch {
-    console.error('[sync-fema] Snapshot refresh failed');
+    logger.error("sync_fema_snapshot_refresh_failed");
     return new Response('FEMA snapshot refresh failed', { status: 503 });
   }
-};
+});
 export const config = { schedule: '0 9 * * *' };

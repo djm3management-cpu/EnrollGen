@@ -1,3 +1,5 @@
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','conferencecalling');
 import twilio from 'twilio';
 import { config } from './config.js';
 import { supabase } from './supabase.js';
@@ -18,7 +20,7 @@ const terminal = new Set(['completed', 'canceled', 'failed', 'busy', 'no-answer'
 const live = p => p.status !== 'left';
 export function createConferenceService({ store = createConferenceStore(supabase), settings = config,
   client = twilio(settings.twilioAccountSid, settings.twilioAuthToken, { timeout: 5000, autoRetry: false }),
-  now = () => new Date().toISOString(), logError = entry => console.error(JSON.stringify(entry)) } = {}) {
+  now = () => new Date().toISOString(), logError = entry => logger.error(JSON.stringify(entry)) } = {}) {
   const url = path => settings.publicBaseUrl + path;
   const participantUrl = (p, action) => url(`/twilio/conference/${action}?participantId=${p.id}`);
   const fail = (status, message, code) => { throw new ConferenceError(status, message, code); };

@@ -1,3 +1,5 @@
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','twiliosecurity');
 import twilio from "twilio";
 import { config, publicUrl } from "./config.js";
 
@@ -14,7 +16,7 @@ export function requireTwilioSignature(req, res, next) {
     req.body || {}
   );
   if (!valid) {
-    console.warn('Rejected unsigned Twilio webhook');
+    logger.warn("twiliosecurity_rejected_unsigned_twilio_webhook");
     return res.status(403).send("Invalid Twilio signature");
   }
   return next();

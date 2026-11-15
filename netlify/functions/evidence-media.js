@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {evidenceCheckpoint} from '../../telephony/src/lib/evidenceAudit.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {auditedEvidenceRequest,resolveCallAccessIdentity,getEvidenceServiceClient,checked,EvidenceError,evidenceJson,evidenceFailure} from './_evidenceAccess.js';
@@ -23,4 +24,4 @@ export function createEvidenceMediaHandler({authenticate=r=>requireClerkAuth(r,{
   }catch(error){return evidenceFailure(error);}
  };
 }
-export default createEvidenceMediaHandler();
+export default serverRequest('evidence-media',createEvidenceMediaHandler());

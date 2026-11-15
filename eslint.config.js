@@ -36,6 +36,7 @@ export default [
       'react-refresh/only-export-components': 'off',
     },
   },
+  {files:['netlify/**/*.js','integrations/**/*.js','telephony/src/**/*.js','supabase/functions/**/*.js'],rules:{'no-console':'error'}},
   {
     files: ['scripts/security/**/*.mjs', 'scripts/verify.mjs', 'scripts/clean-export.mjs'],
     rules: {...js.configs.recommended.rules},

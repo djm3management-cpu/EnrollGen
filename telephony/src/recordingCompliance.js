@@ -1,3 +1,5 @@
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','recordingcompliance');
 import {deploymentProfile} from './lib/deploymentProfile.js';
 import { appendEvidenceAudit,auditedEvidenceAccess,evidenceCheckpoint } from './lib/evidenceAudit.js';
 import { createHash } from 'node:crypto';
@@ -45,7 +47,7 @@ async function openAudio(db, ticket, config, signal, range, fetchImpl,authorize)
     { ...options, headers: { ...options.headers, 'Accept-Encoding': 'identity' } }));
 }
 
-export function createRecordingComplianceHandler({ db, config, fetchImpl = fetch, log = console.error, ticketTable='recording_compliance_tickets' }) {
+export function createRecordingComplianceHandler({ db, config, fetchImpl = fetch, log = logger.error, ticketTable='recording_compliance_tickets' }) {
   return async (req, res) => {
     log(JSON.stringify({event:'conversely_recording_hit',timestamp:new Date().toISOString(),method:req.method,
       code:'request_received'}));

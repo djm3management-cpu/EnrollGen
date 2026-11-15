@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','paragon_daily_email');
 import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { paragonReportTotals } from './_paragonControls.js';
@@ -58,7 +61,7 @@ export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,mak
     messageId = result.id;
   } catch (error) {
     errorCode = String(error.message || 'send_failed').slice(0,100);
-    console.error('[paragon-daily-email] Send failed:',errorCode);
+    logger.error("paragon_daily_email_send_failed",errorCode);
   }
   const {error:finishError} = await db.rpc('finish_paragon_report_email',{
     p_log_id:logId,p_status:status,p_message_id:messageId,p_error_code:errorCode,
@@ -67,5 +70,5 @@ export const createDailyHandler = ({now = () => new Date(),fetchImpl = fetch,mak
   return new Response(status === 'sent' ? 'Sent' : 'Send failed',{status:status === 'sent' ? 200 : 503});
 };
 
-export default createDailyHandler();
+export default serverRequest('paragon-daily-email',createDailyHandler());
 export const config = {schedule:'0,15,30 * * * *'};

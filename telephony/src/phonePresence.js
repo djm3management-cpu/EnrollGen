@@ -1,3 +1,5 @@
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','phonepresence');
 import { randomUUID } from "node:crypto";
 import { supabase } from "./supabase.js";
 
@@ -29,7 +31,7 @@ export function attachPhonePresence(ws, agentId, {
         ws.send(JSON.stringify({ type: "presence-ready" }));
       }
     }).catch(() => {
-      console.error(`Phone presence failed (${agentId}):`, 'request_failed');
+      logger.error("phonepresence_phone_presence_failed", 'request_failed');
       // Fail closed. A failed disconnect is still bounded by the DB lease.
       if (!closed) ws.terminate();
     });

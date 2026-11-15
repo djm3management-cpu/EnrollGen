@@ -48,7 +48,9 @@ export async function runLocalLoad({mode='short',output,cohort='standard'}={}) {
  const sessions=[];
  const cleanup=[];
  try {
+  await pg.exec('SET ROLE service_role');
   assert.equal(await provisionDeployment(db,agents,env),12);
+  await pg.exec('RESET ROLE');
   for(const agent of agents)agent.enrolledId=(await q('SELECT id FROM enrolled_agents WHERE clerk_user_id=$1',[agent.clerk_user_id]))[0].id;
   await q('UPDATE telephony_presence_policy SET enforced=true');
   // Real phonePresence logic with fake browser sockets; 15s timer is advanced explicitly.

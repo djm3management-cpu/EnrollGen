@@ -1,13 +1,6 @@
 import {deploymentProfile} from '../telephony/src/lib/deploymentProfile.js';
-const normalize = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g,'');
-export const CARRIER_ALIASES = {
-  UnitedHealthcare:['UHC','United Healthcare','AARP Medicare Advantage'],
-  Devoted:['Devoted Health'], WellCare:['Centene','Wellcare by Allwell','Wellcare / Centene'], Zing:['Zing Health'],
-  Anthem:['Elevance','Anthem Blue Cross','Elevance / Anthem'], Aetna:['Aetna Medicare','CVS'],
-  HealthSpring:['Cigna','Cigna HealthSpring','Cigna / HealthSpring'], Humana:[],
-};
-const aliases=new Map(Object.entries(CARRIER_ALIASES).flatMap(([name,values])=>[name,...values].map(value=>[normalize(value),name])));
-export const canonicalCarrier = value => aliases.get(normalize(value)) || null;
+import {canonicalCarrier,CARRIER_ALIASES} from '../src/lib/carrierAliases.js';
+export {canonicalCarrier,CARRIER_ALIASES};
 export function converselyConfiguration(env={}) {
   const samples=Number(env.CONVERSELY_SAMPLES_PER_AGENT ?? 1);
   if(!Number.isSafeInteger(samples) || samples<1 || samples>100)throw Error('invalid_conversely_sample_count');

@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','backfill_deepgram_intelligence');
 import {admitCall,AdmissionError,admissionResponse} from './_admission.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
@@ -309,7 +312,7 @@ async function parseBody(request) {
   return request.json().catch(() => ({}));
 }
 
-export default async (request) => {
+export default serverRequest('backfill-deepgram-intelligence',async (request) => {
   if (!["GET", "POST"].includes(request.method)) {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -386,10 +389,10 @@ export default async (request) => {
     });
   } catch(error) {
     if(error instanceof AdmissionError)return admissionResponse(error);
-    console.error("[backfill-deepgram-intelligence] Failed:", 'request_failed');
+    logger.error("backfill_deepgram_intelligence_failed", 'request_failed');
     return json(500, {
       ok: false,
       error: 'request_failed',
     });
   }
-};
+});

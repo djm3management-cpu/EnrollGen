@@ -1,3 +1,5 @@
+import {createLogger} from '../../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','handler');
 import {allowedBrowserOrigin} from '../../../telephony/src/lib/browserBoundary.js';
 import {limitsFor} from '../../../telephony/src/lib/admission.js';
 import {deploymentProfile} from '../../../telephony/src/lib/deploymentProfile.js';
@@ -15,7 +17,7 @@ export async function hashKey(key) {
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function createHandler({ rpc, admission, paragonPing, routingEnabled = false, env,  fieldMap, log = console.log, now = () => performance.now() }) {
+export function createHandler({ rpc, admission, paragonPing, routingEnabled = false, env,  fieldMap, log = logger.info, now = () => performance.now() }) {
   return async request => {
     if(!featureEnabled('PARAGON_ENABLED',env))return Response.json({status:'disabled',feature:'PARAGON_ENABLED'},{status:503,headers:cors});
     const origin=request.headers.get('origin');

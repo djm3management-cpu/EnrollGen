@@ -71,7 +71,7 @@ test('pipeline service RPCs derive tenant and actor, and reject foreign pipeline
 test('knowledge trigger resolves protected membership and passes only that tenant to the privileged updater',async()=>{
  process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED='true';const invocations=[];
  try{
-  const handler=identity=>createTriggerKnowledgeUpdateHandler({authenticate:async()=>identity,resolveIdentity:identity=>resolveCallAccessIdentity(db,identity),run:async input=>{invocations.push(input);return {checked:0};}});
+  const handler=identity=>createTriggerKnowledgeUpdateHandler({getDb:()=>db,authenticate:async()=>identity,resolveIdentity:identity=>resolveCallAccessIdentity(db,identity),run:async input=>{invocations.push(input);return {checked:0};}});
   assert.equal((await handler(auth('user_unknown',true))(request({category:'test'}))).status,403);
   assert.equal((await handler(auth())(request({category:'test',role:'admin'}))).status,403);
   assert.equal((await handler(auth(A.clerk_user_id,true))(request({category:'test',tenantId:U,tenant_id:U,actor:B.id,role:'admin'}))).status,200);

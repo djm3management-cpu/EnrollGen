@@ -105,7 +105,7 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
       // from its stored anchor, never inferred from mutable browser content.
       n.callAnchor = candidates.length ? Math.max(...candidates.map(c=>new Date(c.row.retention_started_at).getTime())) : null;
     }
-    n.expires = tenantId && n.row.tenant_id && n.row.tenant_id !== tenantId ? Infinity : field ? afterPeriod(n.callAnchor || n.row.retention_started_at || (n.table === 'evidence_access_log' ? n.row.occurred_at : null),policy[field],unit) : Infinity;
+    n.expires = tenantId && n.row.tenant_id && n.row.tenant_id !== tenantId ? Infinity : field ? afterPeriod(n.callAnchor || n.row.retention_started_at || (['evidence_access_log','admin_action_log'].includes(n.table) ? n.row.occurred_at : null),policy[field],unit) : Infinity;
     if (n.table === 'call_records' && (n.row.soa_on_file || n.row.soa_date)) n.expires=Math.max(n.expires,afterPeriod(n.row.retention_started_at,policy.scopeOfAppointmentYears));
     if (n.containsConsent) {
       const floor=afterPeriod(n.callAnchor || n.row.retention_started_at,policy.textConsentYears);

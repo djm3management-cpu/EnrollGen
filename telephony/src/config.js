@@ -1,3 +1,6 @@
+import {securityEvent} from './lib/logger.js';
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','config');
 import { deploymentProfile } from './lib/deploymentProfile.js';
 const profile = deploymentProfile();
 import { featureEnabled } from './lib/deploymentFeatures.js';
@@ -21,7 +24,8 @@ const REQUIRED_VARS = [
 const missing = REQUIRED_VARS.filter((name) => !process.env[name]);
 if (!supabaseSecretKey()) missing.push("SUPABASE_SECRET_KEY (or legacy SUPABASE_SERVICE_ROLE_KEY)");
 if (missing.length) {
-  console.error(`Missing required environment variables: ${missing.join(", ")}`);
+  securityEvent("configuration_failed");
+  logger.error("config_missing_required_environment_variables");
   process.exit(1);
 }
 

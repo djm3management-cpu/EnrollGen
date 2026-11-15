@@ -1,3 +1,7 @@
+import {withLogContext,inspectInput,securityEvent} from './lib/logger.js';
+import {installOperationalTelemetry,scheduledSuccess} from './lib/operationalTelemetry.js';
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','server');
 import {installSecurityHeaders} from './lib/securityHeaders.js';
 import {allowedBrowserOrigin,assertSingleReplica} from './lib/browserBoundary.js';
 import {verifyDeploymentConfiguration} from './lib/deploymentRoster.js';
@@ -35,16 +39,17 @@ import { expirePhoneSessions } from "./phonePresence.js";
 
 assertSingleReplica();
 await verifyDeploymentConfiguration(supabase);
+installOperationalTelemetry(supabase);
 startEgressMetrics();
-setInterval(()=>void supabase.rpc('prune_admission_counters').then(({error})=>{if(error)console.error('admission_prune_failed');}).catch(()=>console.error('admission_prune_failed')),3600000).unref();
+setInterval(()=>void supabase.rpc('prune_admission_counters').then(({error})=>{if(error)logger.error('admission_prune_failed');else return scheduledSuccess(supabase,'admission_prune');}).catch(()=>logger.error('admission_prune_failed')),3600000).unref();
 
 // Routing checks lease expiry itself, even if this maintenance job is delayed.
 let expiryRunning = false;
 async function sweepPresence() {
   if (expiryRunning) return;
   expiryRunning = true;
-  try { await expirePhoneSessions(); }
-  catch { console.error('Server startup failed'); }
+  try { await expirePhoneSessions();await scheduledSuccess(supabase,"presence_sweep"); }
+  catch { logger.error('presence_sweep_failed'); }
   finally { expiryRunning = false; }
 }
 setInterval(sweepPresence, 15_000).unref();
@@ -52,6 +57,7 @@ void sweepPresence();
 
 const app = express();
 installSecurityHeaders(app);
+app.use((req,res,next)=>withLogContext({service:"telephony"},()=>{res.on("finish",()=>{if(res.statusCode===403)securityEvent("authorization_denied");});next();}));
 void reportSupabaseKeySelection(supabase);
 app.set("trust proxy", false);
 
@@ -70,6 +76,7 @@ app.use((req, res, next) => {
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json({ limit: "256kb" }));
+app.use((req,_res,next)=>{if(req.body)inspectInput(req.body);next();});
 
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
@@ -84,12 +91,12 @@ app.use(voiceOutboundRouter);
 app.use(createConferenceRouter());
 app.use(smsRouter);
 app.use(recordingMediaRouter);
-if (featureEnabled('PARAGON_ENABLED')) startParagonResidenceWorker({db:createRecordingServiceClient()});
-startRecordingWorker({ db: createRecordingServiceClient(), config });
-if (featureEnabled('PARAGON_ENABLED')) startParagonBillingWorker({ db: createRecordingServiceClient(), config });
-startCallStatusRecoveryWorker({ db: createRecordingServiceClient(), config });
+if (featureEnabled('PARAGON_ENABLED')) startParagonResidenceWorker({db:createRecordingServiceClient(),recordSuccess:()=>scheduledSuccess(supabase,'paragon_residence')});
+startRecordingWorker({ db: createRecordingServiceClient(), config,recordSuccess:()=>scheduledSuccess(supabase,'recording_worker') });
+if (featureEnabled('PARAGON_ENABLED')) startParagonBillingWorker({ db: createRecordingServiceClient(), config,recordSuccess:()=>scheduledSuccess(supabase,'paragon_billing') });
+startCallStatusRecoveryWorker({ db: createRecordingServiceClient(), config,recordSuccess:()=>scheduledSuccess(supabase,'call_status_recovery') });
 
-startTranscriptWorker({ db: createRecordingServiceClient(),
+startTranscriptWorker({ db: createRecordingServiceClient(),recordSuccess:()=>scheduledSuccess(supabase,'transcript_worker'),
   scoringUrl: process.env.TRANSCRIPT_SCORING_URL, secret: process.env.SCORE_CALL_JOB_SECRET });
 
 const server = http.createServer(app);
@@ -98,8 +105,8 @@ let conferenceRecoveryRunning = false;
 const recoverConferences = async () => {
   if (!featureEnabled('CONFERENCE_CALLING_ENABLED') || conferenceRecoveryRunning) return;
   conferenceRecoveryRunning = true;
-  try { await conferenceService().tick(); }
-  catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) console.error('Conference recovery pending'); }
+  try { await conferenceService().tick();await scheduledSuccess(supabase,'conference_recovery'); }
+  catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) logger.error("server_conference_recovery_pending"); }
   finally { conferenceRecoveryRunning = false; }
 };
 setInterval(() => void recoverConferences(), 15000).unref();
@@ -109,15 +116,15 @@ try { if (featureEnabled('CONFERENCE_CALLING_ENABLED')) conferenceRuntime.draini
 catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) throw error; }
 void recoverConferences();
 
-server.on("upgrade", (request, socket, head) => {
+server.on("upgrade", (request, socket, head) => withLogContext({service:"telephony"},()=>{
   const { pathname } = new URL(request.url, "http://localhost");
   if (pathname.startsWith('/conference-media/')) return conferenceMedia.handleUpgrade(request, socket, head);
   if (pathname === "/media" || pathname.startsWith("/media/")) return handleMediaUpgrade(request, socket, head);
   if (pathname === "/agent") return handleAgentUpgrade(request, socket, head);
   socket.destroy();
-});
+}));
 
 server.listen(config.port, () => {
-  console.log(`EnrollGen telephony service listening on :${config.port}`);
-  console.log(`Public base URL: ${config.publicBaseUrl}`);
+  logger.info("server_enrollgen_telephony_service_listening_on");
+  logger.info("server_public_base_url");
 });

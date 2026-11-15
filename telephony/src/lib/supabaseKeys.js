@@ -1,3 +1,6 @@
+import {installOperationalTelemetry} from './operationalTelemetry.js';
+import {createLogger} from './logger.js';
+const logger=createLogger('telephony','supabasekeys');
 import { deploymentProfile } from './deploymentProfile.js';
 import { auditedServiceClient } from './evidenceAudit.js';
 import { featureHeaders } from './deploymentFeatures.js';
@@ -8,7 +11,7 @@ export function supabaseSecretKey(env = process.env) {
   return env.SUPABASE_SECRET_KEY?.trim() || env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 }
 
-export async function reportSupabaseKeySelection(db, { env = process.env, log = console.log } = {}) {
+export async function reportSupabaseKeySelection(db, { env = process.env, log = logger.info } = {}) {
   const key = supabaseSecretKey(env);
   const source = env.SUPABASE_SECRET_KEY?.trim() ? 'SUPABASE_SECRET_KEY'
     : env.SUPABASE_SERVICE_ROLE_KEY?.trim() ? 'SUPABASE_SERVICE_ROLE_KEY' : 'missing';
@@ -40,5 +43,7 @@ export function createSupabaseClient(url, key, options = {}) {
       return send(input, { ...init, headers });
     } },
   });
-  return auditedServiceClient(client,{tenant:deploymentProfile().tenantId});
+  const audited=auditedServiceClient(client,{tenant:deploymentProfile().tenantId});
+  installOperationalTelemetry(audited);
+  return audited;
 }

@@ -1,3 +1,5 @@
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','_subscriptiongate');
 import { resolveDeploymentAccess } from '../../telephony/src/lib/deploymentAccess.js';
 import { featureEnabled, billingDisabledEntitlement } from '../../telephony/src/lib/deploymentFeatures.js';
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -34,7 +36,7 @@ export async function requireActiveSubscription(supabase, tenantId) {
     .maybeSingle();
 
   if (error) {
-    console.error("[subscription] lookup failed:", 'request_failed');
+    logger.error("subscriptiongate_lookup_failed", 'request_failed');
     return {
       response: subscriptionError(500, "Unable to verify subscription status."),
     };
@@ -103,7 +105,7 @@ export async function checkSeatLimit(supabase, tenantId, subscription) {
     .eq("is_active", true);
 
   if (error) {
-    console.error("[subscription] seat count failed:", 'request_failed');
+    logger.error("subscriptiongate_seat_count_failed", 'request_failed');
     return {
       response: subscriptionError(500, "Unable to verify seat limit."),
     };
@@ -132,6 +134,6 @@ export async function logUsageRecord(supabase, tenantId, recordType, quantity = 
   });
 
   if (error) {
-    console.warn("[subscription] usage log failed:", 'request_failed');
+    logger.warn("subscriptiongate_usage_log_failed", 'request_failed');
   }
 }

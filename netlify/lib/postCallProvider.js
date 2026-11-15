@@ -1,3 +1,5 @@
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','postcallprovider');
 import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
 import {checked} from '../functions/_evidenceAccess.js';
@@ -16,7 +18,7 @@ export async function recordProviderStatus(db, sessionId, stage, errorCode, star
   }));
   if (errorCode && isProviderQuotaError(errorCode)) {
     try { await sendProviderQuotaAlert(db, sessionId, stage, errorCode); }
-    catch (error) { console.error(JSON.stringify({event:'provider_quota_alert_failed',code:providerErrorCode(error,'alert_send_failed')})); }
+    catch (error) { logger.error(JSON.stringify({event:'provider_quota_alert_failed',code:providerErrorCode(error,'alert_send_failed')})); }
   }
 }
 
@@ -47,5 +49,5 @@ async function sendProviderAlert(db, sessionId, stage, code, subject, options={}
       text:`EnrollGen post-call processing stopped with ${code} during ${stage}. Session: ${sessionId}. The failure is visible in the app and the transcript remains retained.`}),
   });
   if (!response.ok) throw Object.assign(new Error('alert_email_send_failed'),{status:response.status});
-  console.log(JSON.stringify({event:'provider_quota_alert_sent',session_id:sessionId,stage,code}));
+  logger.info(JSON.stringify({event:'provider_quota_alert_sent',session_id:sessionId,stage,code}));
 }

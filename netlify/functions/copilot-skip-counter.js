@@ -1,10 +1,13 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','copilot_skip_counter');
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { requireClerkAuth } from './_clerkAuth.js';
 import { resolveTenantIdForOrg, requireActiveSubscription, requirePlan } from './_subscriptionGate.js';
 import { validSkipCounter, recordSkipCounter } from './_copilotSkipCounter.js';
 
 // Telemetry only: deliberately does not import or invoke an LLM client.
-export default async (request) => {
+export default serverRequest('copilot-skip-counter',async (request) => {
   if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
   const auth = await requireClerkAuth(request);
   if (auth.response) return auth.response;
@@ -21,7 +24,7 @@ export default async (request) => {
     await recordSkipCounter(supabase, tenantId, auth.userId, body);
     return new Response(null, { status: 204 });
   } catch {
-    console.warn('[copilot] skip counter telemetry unavailable');
+    logger.warn("copilot_skip_counter_skip_counter_telemetry_unavailable");
     return new Response('Telemetry unavailable', { status: 503 });
   }
-};
+});

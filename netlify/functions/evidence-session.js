@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import {
@@ -97,4 +98,4 @@ export function createSessionHandler({ authenticate = requireClerkAuth, getDb = 
   };
 }
 
-export default createSessionHandler();
+export default serverRequest('evidence-session',createSessionHandler());

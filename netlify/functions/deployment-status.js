@@ -1,12 +1,20 @@
 import {requireClerkAuth} from './_clerkAuth.js';
-import {resolveCallAccessIdentity,getEvidenceServiceClient,evidenceJson,evidenceFailure,EvidenceError} from './_evidenceAccess.js';
-import {deploymentProfile,publicDeploymentProfile,agencyPhone,staffedHoursLabel} from '../../telephony/src/lib/deploymentProfile.js';
-import {loadDeploymentRoster} from '../../telephony/src/lib/deploymentRoster.js';
-export default async request=>{const auth=await requireClerkAuth(request);if(auth.response)return auth.response;
- try{const db=getEvidenceServiceClient(),identity=await resolveCallAccessIdentity(db,auth),p=deploymentProfile();
- if(identity.tenant.id!==p.tenantId)throw new EvidenceError(403,'Agency unavailable.');
- const roster=await loadDeploymentRoster(db,p),{data,error}=await db.from('agent_availability').select('agent_id,status,available').in('agent_id',roster.map(a=>a.agent_slug));if(error)throw error;
- const agents=roster.map(a=>({...data.find(r=>r.agent_id===a.agent_slug),agent_id:a.agent_slug,agent_name:a.name,licensed_states:a.licensed_states}));const available_count=agents.filter(a=>a.available===true).length;
- return evidenceJson(200,{profile:publicDeploymentProfile(p),agencyLine:agencyPhone(p),agencyHours:staffedHoursLabel(p),agents,available_count,any_available:available_count>0});
- }catch(e){return evidenceFailure(e);}};
+import {resolveCallAccessIdentity,getEvidenceServiceClient,evidenceJson,evidenceFailure,EvidenceError,checked} from './_evidenceAccess.js';
+import {deploymentFeatures} from '../../telephony/src/lib/deploymentFeatures.js';
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+export function createDeploymentStatusHandler({authenticate=requireClerkAuth,getDb=getEvidenceServiceClient,env=process.env}={}){
+ return serverRequest('deployment-status',async request=>{
+  if(request.method!=='GET')return evidenceJson(405,{error:'Use GET.'});
+  const auth=await authenticate(request);if(auth.response)return auth.response;
+  try{
+   const db=getDb(),identity=await resolveCallAccessIdentity(db,auth);
+   if(identity.access.authority!=='admin')throw new EvidenceError(403,'Protected admin required.');
+   const m=checked(await db.rpc('operational_status'));
+   // Explicit projection; internal subject hashes and operational details never
+   // enter this HTTP contract. No roster, contact, transcript or recipient data.
+   return evidenceJson(200,{queues:m.queues,failed_jobs:m.failed_jobs,active_alerts:m.active_alerts,last_success:m.last_success,last_purge_dry_run:m.last_purge_dry_run,features:deploymentFeatures(env)});
+  }catch(error){return evidenceFailure(error);}
+ });
+}
+export default createDeploymentStatusHandler();
 export const config={path:'/api/deployment-status'};

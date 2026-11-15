@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {deploymentProfile,publicDeploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { deploymentFeatures, billingDisabledEntitlement } from '../../telephony/src/lib/deploymentFeatures.js';
 import { requireClerkAuth } from './_clerkAuth.js';
@@ -11,4 +12,4 @@ export function createDeploymentFeaturesHandler({authenticate = request => requi
       {headers:{'Cache-Control':'no-store'}});
   };
 }
-export default createDeploymentFeaturesHandler();
+export default serverRequest('deployment-features',createDeploymentFeaturesHandler());

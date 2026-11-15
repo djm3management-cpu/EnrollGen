@@ -1,3 +1,6 @@
+import {serverRequest,adminActionClient,logAdminDispatch} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','stripe_checkout');
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import Stripe from "stripe";
@@ -45,7 +48,7 @@ export function createStripeCheckoutHandler({
   stripeClient = getStripe,
   env = process.env,
 } = {}) {
-  return async (request) => {
+  return serverRequest('stripe-checkout',async (request) => {
   if (!featureEnabled('STRIPE_BILLING_ENABLED', env)) return disabledResponse('STRIPE_BILLING_ENABLED');
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
@@ -54,10 +57,11 @@ export function createStripeCheckoutHandler({
   const auth = await authenticate(request);
   if (auth.response) return auth.response;
 
-  let supabase, tenantId;
+  let supabase, tenantId,adminIdentity;
   try {
-    supabase = getDb();
+    supabase = adminActionClient(getDb());
     const identity = await resolveCallAccessIdentity(supabase, auth);
+    adminIdentity=identity;
     if (!identity.admin) throw new EvidenceError(403, "Administrator required");
     tenantId = identity.tenant.id;
   } catch (error) {
@@ -92,6 +96,7 @@ export function createStripeCheckoutHandler({
     if (error) throw error;
 
     const appUrl = baseUrl(request);
+    await logAdminDispatch(supabase,adminIdentity,"stripe_checkout");
     const stripe = stripeClient();
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -119,10 +124,10 @@ export function createStripeCheckoutHandler({
 
     return json(200, { url: session.url, session_id: session.id });
   } catch (error) {
-    console.error("[stripe-checkout] failed:", 'request_failed');
+    logger.error("stripe_checkout_failed", 'request_failed');
     return json(500, { error: "Unable to create checkout session", detail: error.message });
   }
-  };
+  });
 }
 
 export default createStripeCheckoutHandler();

@@ -1,3 +1,4 @@
+import {serverRequest,logAdminDispatch} from '../../telephony/src/lib/adminActions.js';
 import {resolveCallAccessIdentity,getEvidenceServiceClient,evidenceFailure,EvidenceError} from './_evidenceAccess.js';
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { runKnowledgeUpdate } from "./_knowledgeUpdate.js";
@@ -14,9 +15,10 @@ function json(status, payload) {
 export function createTriggerKnowledgeUpdateHandler({
   authenticate = request => requireClerkAuth(request, { allowBypass: false }),
   run = runKnowledgeUpdate,
+  getDb = getEvidenceServiceClient,
   resolveIdentity = auth => resolveCallAccessIdentity(getEvidenceServiceClient(),auth),
 } = {}) {
-  return async (request) => {
+  return serverRequest('trigger-knowledge-update',async (request) => {
     if (process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED !== "true") return json(200, { status: "disabled" });
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
@@ -39,6 +41,7 @@ export function createTriggerKnowledgeUpdateHandler({
         });
       }
 
+      await logAdminDispatch(getDb(),{...identity,auth},'knowledge_update');
       const result = await run({
         tenantId: identity.tenant.id,
         budgetSubject: auth.userId,
@@ -51,7 +54,7 @@ export function createTriggerKnowledgeUpdateHandler({
     } catch (error) {
       return evidenceFailure(error);
     }
-  };
+  });
 }
 
 export default createTriggerKnowledgeUpdateHandler();

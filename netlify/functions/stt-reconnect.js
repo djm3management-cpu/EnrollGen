@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {getEvidenceServiceClient,resolveEvidenceIdentity,checked,evidenceJson,evidenceFailure,EvidenceError} from './_evidenceAccess.js';
@@ -19,4 +20,4 @@ export function createSttReconnectHandler({getDb=getEvidenceServiceClient,authen
   }); }catch(error){return evidenceFailure(error);}
  };
 }
-export default createSttReconnectHandler();
+export default serverRequest('stt-reconnect',createSttReconnectHandler());

@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { paragonReportTotals } from './_paragonControls.js';
@@ -97,4 +98,4 @@ export const createHandler = (makeDb = (url,key) => createClient(url,key,{auth:{
     </style></head><body><header><h1>Paragon call report</h1><p class="muted">Times shown in ${deploymentProfile().timezone} · Stored contract rate · billable at 90 seconds from arrival</p></header><section class="card"><form method="get" action="/vendor/paragon"><input type="hidden" name="token" value="${escapeHtml(token)}"><label>From <input type="date" name="start" value="${start}" required></label><label>Through <input type="date" name="end" value="${end}" required></label><label>Serviceability <select name="serviceability"><option value="">All calls</option><option value="not_serviceable"${filter==='not_serviceable'?' selected':''}>Out of state: not serviceable</option></select></label><button type="submit">Apply</button><a class="button" href="${escapeHtml(csvUrl)}">Download CSV</a></form></section><section class="card"><h2>Daily totals (all calls)</h2><div class="table-wrap"><table><thead><tr><th>Date (${deploymentProfile().timezone})</th><th>Calls</th><th>Billable calls</th><th>Amount due</th></tr></thead><tbody>${dailyRows || '<tr><td colspan="4">No calls in this range.</td></tr>'}</tbody></table></div></section><section class="card"><h2>Calls</h2><p class="muted">${rows.length} shown · Out of state: not serviceable: ${notServiceableCount}</p><div class="table-wrap"><table><thead><tr>${COLUMNS.map(column => `<th>${column}</th>`).join('')}</tr></thead><tbody>${reportRows || '<tr><td colspan="${COLUMNS.length}">No calls in this range.</td></tr>'}</tbody></table></div></section></body></html>`);
 };
 
-export default createHandler();
+export default serverRequest('paragon-vendor-report',createHandler());

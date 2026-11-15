@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','compliance');
 /**
  * Compliance Engine API — Netlify serverless function.
  * Handles all compliance-related API routes via path-based routing.
@@ -441,9 +444,9 @@ function evaluateRecalculatedItem({
 // Retire the entire HTTP surface (including direct function URLs) before auth,
 // subscription checks, or service-client creation. Keep the implementation below
 // for historical review; it must not be exported or reachable from a handler.
-export default function retiredComplianceApi() {
+export default serverRequest('compliance',function retiredComplianceApi() {
   return json(410, { error: "Legacy compliance API retired. Use the protected call and Compliance Review APIs." });
-}
+})
 
 // eslint-disable-next-line no-unused-vars -- Retained retired implementation for P0-3 historical review.
 async function legacyComplianceHandler(request) {
@@ -1380,7 +1383,7 @@ async function legacyComplianceHandler(request) {
     return json(404, { error: "Not found", path: parts.join("/") });
 
   } catch (err) {
-    console.error("compliance function error:", 'request_failed');
+    logger.error("compliance_compliance_function_error", 'request_failed');
     return json(500, { error: err.message || "Internal server error" });
   }
 }

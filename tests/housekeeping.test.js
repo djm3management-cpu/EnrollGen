@@ -29,6 +29,7 @@ test('browser Biblia helper forwards bearer credentials without a provider key',
 
 test('Biblia proxy authenticates, validates, withholds upstream errors and key', async () => {
   const source = (await readFile(new URL('../netlify/functions/biblia.js', import.meta.url), 'utf8'))
+    .replace("../../telephony/src/lib/adminActions.js", new URL("../telephony/src/lib/adminActions.js",import.meta.url).href)
     .replace("../../telephony/src/lib/deploymentFeatures.js", new URL("../telephony/src/lib/deploymentFeatures.js",import.meta.url).href)
     .replace("import { requireClerkAuth } from './_clerkAuth.js';", `async function requireClerkAuth(request, options) {
       if (options.allowBypass !== false) throw new Error('bypass allowed');

@@ -1,3 +1,4 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import {appendEvidenceAudit,evidenceGrantId} from '../../telephony/src/lib/evidenceAudit.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { deploymentProfile } from '../../telephony/src/lib/deploymentProfile.js';
@@ -8,11 +9,11 @@ import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceCli
 import {emptyIntake,normalizeIntake,intakeErrors,ghlPayload,carrierKey,CARRIERS,landscapeCarrierMatches} from '../../src/lib/enrollmentIntake.js';
 import {deliverEnrollmentWebhooks} from '../../integrations/enrollmentWebhook.js';
 export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth(r,{allowBypass:false}),getDb=getEvidenceServiceClient,deliver=deliverEnrollmentWebhooks,now=()=>new Date().toISOString()}={}){
- return async request=>{
+ return serverRequest('enrollment-intakes',async request=>{
   if(!['GET','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try{
-   const db=getDb(); return await auditedEvidenceRequest(db,auth,request,'enrollment_intake',resolveCallAccessIdentity,async identity=>{const {agent,tenant}=identity,url=new URL(request.url);
+   const db=adminActionClient(getDb()); return await auditedEvidenceRequest(db,auth,request,'enrollment_intake',resolveCallAccessIdentity,async identity=>{const {agent,tenant}=identity,url=new URL(request.url);
    if(request.method==='GET' && url.searchParams.has('contact_id')){
     const contactId=url.searchParams.get('contact_id');
     if(!/^[0-9a-f-]{36}$/i.test(contactId||''))throw new EvidenceError(400,'Contact ID is required.');
@@ -86,7 +87,7 @@ export function createEnrollmentIntakesHandler({authenticate=r=>requireClerkAuth
    const prefill={...emptyIntake(callAgent?.name||'',roster),firstName:contact.first_name||call.customer_first_name||'',lastName:contact.last_name||call.customer_last_name||'',dob:contact.dob||call.customer_dob||'',phone:contact.phone||call.customer_phone||'',email:contact.email||call.customer_email||'',state:contact.state||call.customer_state||call.state_code||'',zip:contact.zip||call.zip_code||'',mbi:contact.mbi_full||call.customer_mbi||'',prevCarrier:contact.current_carrier||'',sunfireCode:call.sunfire_code||''};
    return evidenceJson(200,{roster:roster.map(({id,name,is_active})=>({id,name,is_active})),admin:identity.admin,intakes,prefill,contact_id:call.contact_id,product_type:call.product_type});
   }); } catch (error) { return evidenceFailure(error);}
- };
+ });
 }
 async function readIntakes(db,rows,identity){
  const intakes=[];

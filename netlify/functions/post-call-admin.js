@@ -1,3 +1,4 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {randomUUID} from 'node:crypto';
 import {requireClerkAuth} from './_clerkAuth.js';
@@ -5,11 +6,11 @@ import {EvidenceError,checked,evidenceJson,evidenceFailure,getEvidenceServiceCli
 import {verifyPostCallEnded} from '../lib/postCallGuard.js';
 import {postCallRequestKey} from './post-call.js';
 export function createPostCallAdminHandler({authenticate=r=>requireClerkAuth(r,{allowBypass:false}),getDb=getEvidenceServiceClient,verifyEnded=verifyPostCallEnded,send=fetch}={}) {
- return async request=>{
+ return serverRequest('post-call-admin',async request=>{
   if(!['GET','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed'});
   const auth=await authenticate(request);if(auth.response)return auth.response;
   try {
-   const db=getDb();return await auditedEvidenceRequest(db,auth,request,'call_evidence',resolveCallAccessIdentity,async identity=>{
+   const db=adminActionClient(getDb());return await auditedEvidenceRequest(db,auth,request,'call_evidence',resolveCallAccessIdentity,async identity=>{
    const id=new URL(request.url).searchParams.get('call_record_id');
    if(!/^[0-9a-f-]{36}$/i.test(id||''))throw new EvidenceError(400,'Call record ID is required.');
    const record=checked(await scopeCallToIdentity(db.from('call_records').select(request.method==='GET'?'id,tenant_id,agent_id,post_call_status,post_call_last_error':'*').eq('id',id),identity).maybeSingle());
@@ -30,6 +31,6 @@ export function createPostCallAdminHandler({authenticate=r=>requireClerkAuth(r,{
    if(response.status!==202)throw new EvidenceError(503,'Request saved; dispatch needs retry.');
    return evidenceJson(202,{status:'pending',request_key:queued});
   }); }catch(error){return evidenceFailure(error);}
- };
+ });
 }
 export default createPostCallAdminHandler();

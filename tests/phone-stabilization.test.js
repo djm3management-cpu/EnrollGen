@@ -1,3 +1,4 @@
+import {createLogger} from '../telephony/src/lib/logger.js';
 import {deploymentPublic} from '../src/lib/deploymentPublic.js';
 import { egressMetrics } from '../telephony/src/egressMetrics.js';
 import {createSessionLock,IDLE_LOCK_MS} from '../src/lib/sessionLock.js';
@@ -107,7 +108,7 @@ test('Deepgram dual-channel stream reaches the rendered panel with the latest in
  const read=file=>readFileSync(new URL(`../${file}`,import.meta.url),'utf8');
  const open=vm.runInNewContext(stripImports(read('telephony/src/media/deepgramTrack.js'))
   .replace(/^export /gm,'')+';openDeepgramTrack',{
-   egressMetrics,WebSocket:Socket,randomUUID,reportServerSttUsage:async()=>{},reportSttLimit:async()=>{},reserveSttReconnect:async()=>true,registerSttStream:async()=>true,config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
+   createLogger,egressMetrics,WebSocket:Socket,randomUUID,reportServerSttUsage:async()=>{},reportSttLimit:async()=>{},reserveSttReconnect:async()=>true,registerSttStream:async()=>true,config:{deepgramApiKey:'fixture'},setTimeout,clearTimeout,setInterval,clearInterval,
   });
  const merge=vm.runInNewContext(stripImports(read('src/hooks/useMergedTranscript.js'))
   .replace(/^export /gm,'')+';useMergedTranscript',view.hooks);

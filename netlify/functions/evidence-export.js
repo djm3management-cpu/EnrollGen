@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {auditedEvidenceRequest,resolveCallAccessIdentity,requireOwnedSession,getEvidenceServiceClient,evidenceJson,evidenceFailure,EvidenceError} from './_evidenceAccess.js';
 import {recordingIdentity,authorizeRecordingTarget} from './_recordingAccess.js';
@@ -16,4 +17,4 @@ export function createEvidenceExportHandler({authenticate=r=>requireClerkAuth(r,
   }catch(error){return evidenceFailure(error);}
  };
 }
-export default createEvidenceExportHandler();
+export default serverRequest('evidence-export',createEvidenceExportHandler());

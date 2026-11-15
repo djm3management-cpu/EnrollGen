@@ -22,6 +22,11 @@
     },
     {
       "schema": "public",
+      "name": "admin_safe_summary",
+      "arguments": "p_value jsonb"
+    },
+    {
+      "schema": "public",
       "name": "admit_vendor",
       "arguments": "p_key_hash text, p_route text, p_limit integer"
     },
@@ -157,6 +162,11 @@
     },
     {
       "schema": "public",
+      "name": "claim_operational_alerts",
+      "arguments": "p_retry integer"
+    },
+    {
+      "schema": "public",
       "name": "claim_paragon_billing_jobs",
       "arguments": "p_limit integer"
     },
@@ -244,6 +254,11 @@
       "schema": "public",
       "name": "configure_deployment_vendor",
       "arguments": "p_vendor jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "configure_operational_profile",
+      "arguments": "p_summary jsonb"
     },
     {
       "schema": "public",
@@ -462,6 +477,16 @@
     },
     {
       "schema": "public",
+      "name": "execute_admin_action",
+      "arguments": "p_actor text, p_org text, p_action text, p_request uuid, p_command jsonb, p_verified_admin boolean"
+    },
+    {
+      "schema": "public",
+      "name": "execute_operator_action",
+      "arguments": "p_routine text, p_args jsonb"
+    },
+    {
+      "schema": "public",
       "name": "expire_agent_phone_sessions",
       "arguments": ""
     },
@@ -539,6 +564,11 @@
       "schema": "public",
       "name": "finish_ix_upload",
       "arguments": "p_id uuid, p_token uuid, p_outcome text, p_error text, p_message text, p_receipt jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "finish_operational_alert",
+      "arguments": "p_id uuid, p_token uuid, p_delivered boolean, p_channels text[]"
     },
     {
       "schema": "public",
@@ -657,6 +687,11 @@
     },
     {
       "schema": "public",
+      "name": "log_operator_admin_change",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "log_pii_access",
       "arguments": "p_contact_id uuid, p_requesting_agent_id uuid, p_action text, p_ip_address text, p_user_agent text"
     },
@@ -749,6 +784,26 @@
       "schema": "public",
       "name": "normalize_phone_e164",
       "arguments": "raw text"
+    },
+    {
+      "schema": "public",
+      "name": "operational_count_summary",
+      "arguments": "p_value jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "operational_paid_budget",
+      "arguments": "p_budgets jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "operational_routing_anomalies",
+      "arguments": "p_window integer"
+    },
+    {
+      "schema": "public",
+      "name": "operational_status",
+      "arguments": "p_window integer"
     },
     {
       "schema": "public",
@@ -1097,8 +1152,18 @@
     },
     {
       "schema": "public",
+      "name": "record_operational_event",
+      "arguments": "p_event text, p_level text, p_subject text, p_status integer"
+    },
+    {
+      "schema": "public",
       "name": "record_paragon_billing_snapshot",
       "arguments": "p_sid text, p_lease uuid, p_account text, p_arrived timestamp with time zone, p_ended timestamp with time zone, p_answered timestamp with time zone, p_talk integer, p_evidence jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "record_scheduled_success",
+      "arguments": "p_job text"
     },
     {
       "schema": "public",
@@ -1144,6 +1209,11 @@
       "schema": "public",
       "name": "register_stt_stream",
       "arguments": "p_tenant_id uuid, p_call_sid text, p_channel text"
+    },
+    {
+      "schema": "public",
+      "name": "reject_admin_log_mutation",
+      "arguments": ""
     },
     {
       "schema": "public",
@@ -1297,6 +1367,11 @@
     },
     {
       "schema": "public",
+      "name": "retention_delete_admin_audit",
+      "arguments": "p_id uuid, p_years integer, p_override jsonb"
+    },
+    {
+      "schema": "public",
       "name": "retention_delete_audit",
       "arguments": "p_id uuid, p_years integer, p_override jsonb"
     },
@@ -1313,6 +1388,11 @@
     {
       "schema": "public",
       "name": "retention_lock_batch",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "retention_operational_status",
       "arguments": ""
     },
     {
@@ -1524,6 +1604,11 @@
       "schema": "public",
       "name": "track_call_wrap_up",
       "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "transition_operational_alerts",
+      "arguments": "p_conditions jsonb"
     },
     {
       "schema": "public",

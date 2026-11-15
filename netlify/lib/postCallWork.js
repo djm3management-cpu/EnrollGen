@@ -1,3 +1,5 @@
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','postcallwork');
 import {allowlistedGhlPayload,GHL_POST_CALL_FIELDS} from '../../src/lib/ghlFields.js';
 import {evidenceCheckpoint} from '../../telephony/src/lib/evidenceAudit.js';
 import { auditedEvidenceRequest } from '../functions/_evidenceAccess.js';
@@ -637,7 +639,7 @@ async function handleWrapUp(supabase, payload, auth, tenant, tenantAgents, subsc
           : `Call wrap-up: ${outcome}`,
     });
     if (activityError) {
-      console.error("contact_activities insert failed:", 'request_failed');
+      logger.error("postcallwork_contact_activities_insert_failed", 'request_failed');
     }
   }
 
@@ -804,7 +806,7 @@ return async request => {
 
     return json(400, { error: `Unknown action: ${action}` });
   }); } catch (error) {
-    console.error(JSON.stringify({event:'post_call_storage_error',session_id:body.session_id,action,code:/^[A-Za-z0-9_]{1,64}$/.test(error.code || '')?error.code:null,status:error.status || null,exception:postCallExceptionDetails(error)}));
+    logger.error(JSON.stringify({event:'post_call_storage_error',session_id:body.session_id,action,code:/^[A-Za-z0-9_]{1,64}$/.test(error.code || '')?error.code:null,status:error.status || null,exception:postCallExceptionDetails(error)}));
     return evidenceFailure(error);
   }
 };

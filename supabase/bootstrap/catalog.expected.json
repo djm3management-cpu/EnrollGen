@@ -47,6 +47,24 @@
     },
     {
       "schema": "public",
+      "name": "admin_action_log",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "admin_action_permit",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "admission_counters",
       "kind": "r",
       "owner": "postgres",
@@ -1002,6 +1020,42 @@
     },
     {
       "schema": "public",
+      "name": "operational_alert_history",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "operational_alert_state",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "operational_configuration",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "operational_events",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "opportunities",
       "kind": "r",
       "owner": "postgres",
@@ -1487,6 +1541,15 @@
       "kind": "S",
       "owner": "postgres",
       "rls": false,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "scheduled_job_status",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
       "force_rls": false,
       "options": null
     },
@@ -2114,6 +2177,149 @@
       "position": 6,
       "type": "timestamp with time zone",
       "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "request_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "actor_id",
+      "position": 3,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "tenant_id",
+      "position": 4,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "action",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "target_type",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "target_id",
+      "position": 7,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "result",
+      "position": 8,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "occurred_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "before_summary",
+      "position": 10,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "after_summary",
+      "position": 11,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "name": "transaction_id",
+      "position": 1,
+      "type": "bigint",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "name": "request_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
       "identity": "",
       "generated": "",
       "default_expression": null
@@ -15463,6 +15669,259 @@
     },
     {
       "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "occurred_at",
+      "position": 2,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "rule",
+      "position": 3,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "condition_key",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "state",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "count",
+      "position": 6,
+      "type": "numeric",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "threshold",
+      "position": 7,
+      "type": "numeric",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "delivered_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "attempted_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "delivery_token",
+      "position": 10,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "delivered_channels",
+      "position": 11,
+      "type": "text[]",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::text[]"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "name": "rule",
+      "position": 1,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "name": "condition_key",
+      "position": 2,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "name": "active",
+      "position": 3,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "false"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "name": "tenant_id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "name": "summary",
+      "position": 2,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "occurred_at",
+      "position": 2,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "event",
+      "position": 3,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "level",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "subject",
+      "position": 5,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "status",
+      "position": 6,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "retention_started_at",
+      "position": 7,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
       "relation": "opportunities",
       "name": "id",
       "position": 1,
@@ -20718,6 +21177,28 @@
       "identity": "",
       "generated": "",
       "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "name": "job",
+      "position": 1,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "name": "last_success_at",
+      "position": 2,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
     },
     {
       "schema": "public",
@@ -26883,6 +27364,18 @@
   "policies": [
     {
       "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM current_deployment_identity() s(tenant_id, agent_id, roster_id, agent_slug, authority, team_agent_ids)\n  WHERE ((s.tenant_id = admin_action_log.tenant_id) AND (s.authority = 'admin'::text))))",
+      "with_check": null
+    },
+    {
+      "schema": "public",
       "relation": "agent_coaching",
       "name": "pilot_scoped_read",
       "permissive": "PERMISSIVE",
@@ -27466,6 +27959,18 @@
       "cmd": "UPDATE",
       "qual": "deployment_row_writable('messages'::text, to_jsonb(messages.*))",
       "with_check": "deployment_row_writable('messages'::text, to_jsonb(messages.*))"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "operational_alert_admin_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM current_deployment_identity() current_deployment_identity(tenant_id, agent_id, roster_id, agent_slug, authority, team_agent_ids)\n  WHERE (current_deployment_identity.authority = 'admin'::text)))",
+      "with_check": null
     },
     {
       "schema": "public",
@@ -28473,6 +28978,142 @@
     },
     {
       "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "authenticated",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
       "relation": "admission_counters",
       "grantor": "postgres",
       "grantee": "postgres",
@@ -39325,6 +39966,278 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "authenticated",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -44405,6 +45318,70 @@
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "scheduled_job_status",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
       "grantable": "NO"
     },
     {
@@ -50858,6 +51835,19 @@
     },
     {
       "schema": "public",
+      "name": "admin_safe_summary",
+      "arguments": "p_value jsonb",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_safe_summary(p_value jsonb)\n RETURNS jsonb\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'pg_catalog'\nAS $function$\n SELECT coalesce(jsonb_object_agg(key,value),'{}') FROM jsonb_each(coalesce(p_value,'{}'))\n WHERE key IN ('is_active','vendor_pause','is_default','is_test_enrollment','version','enabled','authority','assigned_agent_id')\n AND (jsonb_typeof(value) IN ('boolean','number','null') OR key='authority' AND value#>>'{}' IN ('admin','manager','agent') OR value#>>'{}' ~ '^[a-f0-9]{8}-[a-f0-9-]{27}$')\n$function$\n"
+    },
+    {
+      "schema": "public",
       "name": "admit_vendor",
       "arguments": "p_key_hash text, p_route text, p_limit integer",
       "result": "jsonb",
@@ -51209,6 +52199,19 @@
     },
     {
       "schema": "public",
+      "name": "claim_operational_alerts",
+      "arguments": "p_retry integer",
+      "result": "SETOF operational_alert_history",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.claim_operational_alerts(p_retry integer DEFAULT 300)\n RETURNS SETOF operational_alert_history\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF current_setting('role',true)<>'service_role' OR p_retry<60 THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n RETURN QUERY UPDATE public.operational_alert_history h SET attempted_at=clock_timestamp(),delivery_token=gen_random_uuid()\n WHERE h.id IN(SELECT id FROM public.operational_alert_history WHERE delivered_at IS NULL AND (attempted_at IS NULL OR attempted_at<clock_timestamp()-make_interval(secs=>p_retry)) ORDER BY occurred_at FOR UPDATE SKIP LOCKED LIMIT 20) RETURNING h.*;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "claim_paragon_billing_jobs",
       "arguments": "p_limit integer",
       "result": "SETOF paragon_call_billing",
@@ -51440,6 +52443,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.configure_deployment_vendor(p_vendor jsonb)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE deployment deployment_settings; source uuid; item jsonb; required text[]; critical text[]; states text[];\nBEGIN\n SELECT * INTO STRICT deployment FROM deployment_settings WHERE singleton;\n INSERT INTO deployment_vendor_settings(singleton,source_name) VALUES(true,p_vendor->>'sourceName') ON CONFLICT(singleton) DO UPDATE SET source_name=excluded.source_name;\n SELECT array_agg(value) INTO states FROM jsonb_array_elements_text(p_vendor->'states');\n SELECT array_agg(value) INTO required FROM jsonb_array_elements_text(p_vendor->'requiredCarriers');\n SELECT array_agg(value) INTO critical FROM jsonb_array_elements_text(p_vendor->'criticalCarriers');\n INSERT INTO lead_sources(tenant_id,name,type,ping_key_hash,postback_url,postback_secret,report_emails,active)\n VALUES(deployment.tenant_id,p_vendor->>'sourceName','publisher',p_vendor->>'pingKeyHash',p_vendor->>'postbackUrl',p_vendor->>'postbackSecret',ARRAY(SELECT jsonb_array_elements_text(coalesce(p_vendor->'reportRecipients','[]'))),true)\n ON CONFLICT(tenant_id,name) DO UPDATE SET ping_key_hash=excluded.ping_key_hash,postback_url=excluded.postback_url,postback_secret=excluded.postback_secret,report_emails=excluded.report_emails,active=true RETURNING id INTO source;\n INSERT INTO availability_consumers(name,key_hash,active,push_url,push_secret,push_enabled)\n VALUES(p_vendor->>'sourceName',p_vendor->>'availabilityKeyHash',true,p_vendor->>'pushUrl',p_vendor->>'pushSecret',true)\n ON CONFLICT(name) DO UPDATE SET key_hash=excluded.key_hash,active=true,push_url=excluded.push_url,push_secret=excluded.push_secret,push_enabled=true;\n INSERT INTO vendor_routing_config(source_id,allowed_states,required_carriers,critical_carriers,plan_year,reservation_ttl_seconds)\n VALUES(source,states,required,critical,(p_vendor->>'planYear')::integer,(p_vendor->>'reservationTtlSeconds')::integer)\n ON CONFLICT(source_id) DO UPDATE SET allowed_states=excluded.allowed_states,required_carriers=excluded.required_carriers,critical_carriers=excluded.critical_carriers,plan_year=excluded.plan_year,reservation_ttl_seconds=excluded.reservation_ttl_seconds;\n INSERT INTO vendor_controls(tenant_id,vendor_pause,staffed_hours,paragon_daily_cap,paragon_cap_mode,paragon_rate,updated_by)\n VALUES(deployment.tenant_id,true,jsonb_build_object('timezone',deployment.public_profile->>'timezone','days',deployment.public_profile->'staffedHours'),(p_vendor->>'dailyCap')::integer,p_vendor->>'capMode',(p_vendor->>'rate')::numeric,'deployment-operator')\n ON CONFLICT(tenant_id) DO UPDATE SET staffed_hours=excluded.staffed_hours,paragon_daily_cap=excluded.paragon_daily_cap,paragon_cap_mode=excluded.paragon_cap_mode,paragon_rate=excluded.paragon_rate,updated_by=excluded.updated_by;\n INSERT INTO paragon_report_tokens(source_id,token_hash,updated_by) VALUES(source,p_vendor->>'reportTokenHash','deployment-operator')\n ON CONFLICT(source_id) DO UPDATE SET token_hash=excluded.token_hash,updated_by=excluded.updated_by;\n DELETE FROM vendor_agent_state_eligibility WHERE source_id=source;\n FOR item IN SELECT * FROM jsonb_array_elements(p_vendor->'eligibility') LOOP\n  IF NOT EXISTS(SELECT 1 FROM tenant_agents WHERE tenant_id=deployment.tenant_id AND id=(item->>'agentId')::uuid AND is_active AND licensed_states ? (item->>'state')) THEN RAISE EXCEPTION 'Vendor matrix requires an active licensed roster binding'; END IF;\n  INSERT INTO vendor_agent_state_eligibility(source_id,plan_year,agent_id,state,aetna,humana,uhc,wellcare,devoted,healthspring,updated_by)\n  VALUES(source,(p_vendor->>'planYear')::integer,(item->>'agentId')::uuid,item->>'state',(item->'carriers')?'aetna',(item->'carriers')?'humana',(item->'carriers')?'uhc',(item->'carriers')?'wellcare',(item->'carriers')?'devoted',(item->'carriers')?'healthspring','deployment-operator');\n END LOOP;\n RETURN source;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "configure_operational_profile",
+      "arguments": "p_summary jsonb",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.configure_operational_profile(p_summary jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; previous jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Operator required' USING ERRCODE='42501'; END IF;\n IF jsonb_typeof(p_summary)<>'object' OR EXISTS(SELECT 1 FROM jsonb_each(p_summary) WHERE key NOT IN ('alert_audit_failures','alert_delivery_retry_seconds','alert_evaluation_seconds','alert_exhausted_jobs','alert_lease_conflicts','alert_paid_budget_percent','alert_provider_error_percent','alert_provider_minimum_requests','alert_purge_failures','alert_queue_age_seconds','alert_queue_depth','alert_rate_rejections','alert_routing_anomalies','alert_secret_review_days','alert_subject_denials','alert_window_seconds','approved_retention_overrides','feature_conference_calling_enabled','feature_conversely_upload_enabled','feature_daily_verse_enabled','feature_ghl_enabled','feature_ix_report_enabled','feature_ix_upload_enabled','feature_operational_email_enabled','feature_paragon_enabled','feature_paragon_state_routing_enabled','feature_retention_purge_enabled','feature_scoring_enabled','feature_stripe_billing_enabled','feature_transcript_auto_recovery_enabled','feature_transcript_gap_fill_enabled','retention_contact_review_years','retention_enrollment_recording_years','retention_enrollment_transcript_years','retention_enrollment_years','retention_evidence_audit_years','retention_marketing_recording_years','retention_marketing_transcript_years','retention_operational_days','retention_reduced_marketing_rule','retention_scope_of_appointment_years','retention_service_call_years','retention_text_consent_years') OR jsonb_typeof(value) NOT IN ('number','boolean')) THEN RAISE EXCEPTION 'Invalid operational profile'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n SELECT summary INTO previous FROM public.operational_configuration WHERE tenant_id=tenant FOR UPDATE;\n IF previous IS NOT DISTINCT FROM p_summary THEN RETURN; END IF;\n INSERT INTO public.operational_configuration VALUES(tenant,p_summary) ON CONFLICT(tenant_id) DO UPDATE SET summary=excluded.summary;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(gen_random_uuid(),'service:deployment_operator',tenant,'operator_operational_profile','operational_configuration',tenant::text,'succeeded',coalesce(previous,'{}'),p_summary);\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -52002,6 +53018,32 @@
     },
     {
       "schema": "public",
+      "name": "execute_admin_action",
+      "arguments": "p_actor text, p_org text, p_action text, p_request uuid, p_command jsonb, p_verified_admin boolean",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.execute_admin_action(p_actor text, p_org text, p_action text, p_request uuid, p_command jsonb, p_verified_admin boolean DEFAULT false)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; relation text:=p_command->>'name'; operation text:=p_command->>'operation';\n args text; query text; answer jsonb; before_value jsonb:='{}'; after_value jsonb:='{}'; cols text; updates text; predicate text; row_value jsonb; routine record; target text:='collection';\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n SELECT tenant_id INTO tenant FROM public.resolve_deployment_subject(p_actor,p_org) WHERE authority='admin' OR p_verified_admin;\n IF tenant IS NULL THEN RAISE EXCEPTION 'Protected admin required' USING ERRCODE='42501'; END IF;\n IF p_action NOT IN ('tenant_settings','contact_assignment','pipeline_settings','script_settings','vendor_pause','compliance_review','compliance_uploads','post_call_admin','retention_holds','trigger_knowledge_update','rts_ingest','recordings','enrollment_intakes','transcript_import','set_availability','test_ghl_webhook','stripe_checkout','stripe_portal','paragon_residence') THEN RAISE EXCEPTION 'Unknown administrator action'; END IF;\n INSERT INTO public.admin_action_permit VALUES(txid_current(),p_request);\n IF p_command->>'kind'='rpc' THEN\n  target:=coalesce(p_command->'args'->>'p_call_id',p_command->'args'->>'p_contact',p_command->'args'->>'p_hold',p_command->'args'->>'p_transcript',p_command->'args'->>'p_pipeline_id',p_command->'args'->>'p_stage_id',p_command->'args'->>'p_target',p_command->'args'->>'p_session_id',p_command->'args'->>'p_id','collection');\n  IF target !~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:='collection'; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO before_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n  IF relation NOT IN ('set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket') THEN RAISE EXCEPTION 'Unreviewed admin routine'; END IF;\n  SELECT p.oid,p.proargnames,p.proargtypes,p.proretset INTO STRICT routine FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname=relation;\n  SELECT string_agg(format('%I => %s',e.key,CASE WHEN e.value='null'::jsonb THEN format('NULL::%s',t.oid::regtype) WHEN t.typname IN ('json','jsonb') THEN format('%L::%s',e.value::text,t.oid::regtype) ELSE format('%L::%s',e.value#>>'{}',t.oid::regtype) END),',') INTO args\n  FROM jsonb_each(p_command->'args') e JOIN unnest(routine.proargnames,routine.proargtypes::oid[]) a(name,type) ON a.name=e.key JOIN pg_type t ON t.oid=a.type;\n  IF (SELECT count(*) FROM jsonb_each(p_command->'args'))<>(SELECT count(*) FROM unnest(routine.proargnames) n WHERE p_command->'args' ? n) THEN RAISE EXCEPTION 'Invalid argument'; END IF;\n  -- Original routine retains all ownership, feature, lease and budget fences.\n  EXECUTE format('SELECT %s FROM public.%I(%s) x',CASE WHEN routine.proretset THEN 'coalesce(jsonb_agg(to_jsonb(x)),''[]'')' ELSE 'to_jsonb(x)' END,relation,args) INTO answer;\n  IF NOT routine.proretset AND jsonb_typeof(answer)='object' AND answer ? relation THEN answer:=answer->relation; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO after_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n ELSE\n  IF relation NOT IN ('tenants','contacts','script_templates','manual_transcript_gap_fills','compliance_llm_passes','call_records','knowledge_entries','knowledge_update_drafts','knowledge_updates','knowledge_base','agent_availability','recording_compliance_tickets','transcript_ingestion_jobs','call_transcripts','transcript_chunks') OR operation NOT IN ('insert','update','delete','upsert') THEN RAISE EXCEPTION 'Unreviewed admin table mutation'; END IF;\n  IF relation='tenants' THEN predicate:=format('t.id=%L::uuid',tenant); ELSIF relation='knowledge_updates' THEN predicate:=format('t.knowledge_base_id IN (SELECT id FROM public.knowledge_base WHERE tenant_id IS NULL OR tenant_id=%L::uuid)',tenant); ELSIF relation='agent_availability' THEN predicate:=format('t.agent_id IN (SELECT agent_slug FROM public.tenant_agents WHERE tenant_id=%L::uuid)',tenant); ELSE predicate:=format('t.tenant_id=%L::uuid',tenant); END IF;\n  FOR row_value IN SELECT value FROM jsonb_array_elements(coalesce(p_command->'filters','[]')) LOOP\n   IF NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=format('public.%I',relation)::regclass AND attname=row_value->>'column' AND attnum>0 AND NOT attisdropped) THEN RAISE EXCEPTION 'Invalid filter'; END IF;\n   predicate:=predicate||format(' AND t.%I::text=%L',row_value->>'column',row_value->>'value');\n   IF row_value->>'column'='id' AND row_value->>'value' ~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:=row_value->>'value'; END IF;\n  END LOOP;\n  IF operation IN ('update','delete') THEN EXECUTE format('SELECT public.admin_safe_summary(to_jsonb(t)) FROM public.%I t WHERE %s LIMIT 1',relation,predicate) INTO before_value; END IF;\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO before_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  row_value:=p_command->'values';\n  IF jsonb_typeof(row_value)='array' THEN RAISE EXCEPTION 'Bulk administrator changes require a reviewed routine'; END IF;\n  IF operation IN ('insert','upsert','update') THEN\n   IF relation<>'tenants' AND row_value ? 'tenant_id' AND row_value->>'tenant_id'<>tenant::text THEN RAISE EXCEPTION 'Foreign tenant'; END IF;\n   IF operation IN ('insert','upsert') AND relation NOT IN ('tenants','agent_availability','knowledge_updates') THEN row_value:=row_value||jsonb_build_object('tenant_id',tenant); END IF;\n   SELECT string_agg(format('%I',key),','),string_agg(format('%I=r.%I',key,key),',') INTO cols,updates FROM jsonb_object_keys(row_value) key;\n   IF operation='update' THEN query:=format('UPDATE public.%I t SET %s FROM jsonb_populate_record(NULL::public.%I,$1) r WHERE %s RETURNING t.*',relation,updates,relation,predicate);\n   ELSE query:=format('INSERT INTO public.%I(%s) SELECT %s FROM jsonb_populate_record(NULL::public.%I,$1) r RETURNING *',relation,cols,cols,relation); END IF;\n  ELSE query:=format('DELETE FROM public.%I t WHERE %s RETURNING t.*',relation,predicate); END IF;\n  EXECUTE 'WITH changed AS ('||query||') SELECT coalesce(jsonb_agg(to_jsonb(changed)),''[]'') FROM changed' INTO answer USING row_value;\n  after_value:=public.admin_safe_summary(answer->0);\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO after_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  IF p_command->>'projection' IS NULL THEN answer:='null'::jsonb;\n  ELSIF p_command->>'projection'<>'*' THEN\n   IF p_command->>'projection' !~ '^[a-z_][a-z0-9_,]*$' THEN RAISE EXCEPTION 'Invalid projection'; END IF;\n   SELECT coalesce(jsonb_agg((SELECT coalesce(jsonb_object_agg(e.key,e.value),'{}') FROM jsonb_each(row_data) e WHERE e.key=ANY(string_to_array(p_command->>'projection',',')))),'[]') INTO answer FROM jsonb_array_elements(answer) row_data;\n  END IF;\n END IF;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(p_request,p_actor,tenant,p_action,relation,target,'succeeded',coalesce(before_value,'{}'),coalesce(after_value,'{}')) ON CONFLICT(request_id) DO NOTHING;\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\n DELETE FROM public.admin_action_permit WHERE transaction_id=txid_current();\n RETURN answer;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "execute_operator_action",
+      "arguments": "p_routine text, p_args jsonb",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.execute_operator_action(p_routine text, p_args jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; request uuid:=gen_random_uuid(); before_value jsonb; after_value jsonb; answer jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR p_routine NOT IN ('provision_deployment_roster','configure_deployment_vendor') THEN RAISE EXCEPTION 'Reviewed server operator required' USING ERRCODE='42501'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n IF p_routine='provision_deployment_roster' THEN\n  tenant:=coalesce(tenant,(p_args->'p_profile'->>'tenantId')::uuid);\n  SELECT jsonb_build_object('active_agent_ids',coalesce(jsonb_agg(id ORDER BY id) FILTER(WHERE is_active),'[]'),'active_count',count(*) FILTER(WHERE is_active),'inactive_count',count(*) FILTER(WHERE NOT is_active)) INTO before_value FROM public.tenant_agents WHERE tenant_id=tenant;\n ELSE\n  SELECT jsonb_build_object('configured_sources',count(*)) INTO before_value FROM public.lead_sources WHERE tenant_id=tenant;\n END IF;\n INSERT INTO public.admin_action_permit VALUES(txid_current(),request);\n IF p_routine='provision_deployment_roster' THEN\n  answer:=to_jsonb(public.provision_deployment_roster(p_args->'p_profile',p_args->'p_agents'));\n  SELECT jsonb_build_object('active_agent_ids',coalesce(jsonb_agg(id ORDER BY id) FILTER(WHERE is_active),'[]'),'active_count',count(*) FILTER(WHERE is_active),'inactive_count',count(*) FILTER(WHERE NOT is_active)) INTO after_value FROM public.tenant_agents WHERE tenant_id=tenant;\n ELSE\n  answer:=to_jsonb(public.configure_deployment_vendor(p_args->'p_vendor'));\n  SELECT jsonb_build_object('configured_sources',count(*)) INTO after_value FROM public.lead_sources WHERE tenant_id=tenant;\n END IF;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(request,'service:deployment_operator',tenant,p_routine,CASE WHEN p_routine='provision_deployment_roster' THEN 'tenant_agents' ELSE 'vendor_settings' END,tenant::text,'succeeded',before_value,after_value);\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\n DELETE FROM public.admin_action_permit WHERE transaction_id=txid_current();RETURN answer;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "expire_agent_phone_sessions",
       "arguments": "",
       "result": "void",
@@ -52207,6 +53249,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.finish_ix_upload(p_id uuid, p_token uuid, p_outcome text, p_error text, p_message text, p_receipt jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nBEGIN\n IF p_outcome NOT IN ('uploaded','retry','failed','needs_attention','duplicate_on_sunfire') THEN RAISE EXCEPTION 'Invalid IX outcome'; END IF;\n UPDATE ix_uploads SET status=CASE WHEN p_outcome='retry' THEN CASE WHEN attempts>=5 THEN 'failed' ELSE 'pending' END ELSE p_outcome END,\n retryable=p_outcome='retry' AND attempts<5,last_error=CASE WHEN p_outcome='uploaded' THEN NULL ELSE p_error END,\n provider_message=nullif(left(p_message,500),''),\n ix_receipt_id=CASE WHEN p_outcome='uploaded' THEN p_receipt->>'callRecordingId' ELSE ix_receipt_id END,\n finalize_receipt=CASE WHEN p_outcome='uploaded' THEN p_receipt ELSE finalize_receipt END,\n finalized_at=CASE WHEN p_outcome='uploaded' THEN now() ELSE finalized_at END,\n uploaded_at=CASE WHEN p_outcome='uploaded' THEN now() ELSE uploaded_at END,\n next_attempt_at=now()+make_interval(secs=>60*power(2,attempts-1)::integer),lease_until=NULL,lease_token=NULL,updated_at=now()\n WHERE id=p_id AND lease_token=p_token AND status='uploading' AND lease_until>=now();\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "finish_operational_alert",
+      "arguments": "p_id uuid, p_token uuid, p_delivered boolean, p_channels text[]",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.finish_operational_alert(p_id uuid, p_token uuid, p_delivered boolean, p_channels text[] DEFAULT '{}'::text[])\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n UPDATE public.operational_alert_history SET delivered_at=CASE WHEN p_delivered THEN clock_timestamp() ELSE NULL END,delivered_channels=ARRAY(SELECT DISTINCT channel FROM unnest(delivered_channels||p_channels) channel WHERE channel IN ('email','webhook')) WHERE id=p_id AND delivery_token=p_token;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -52509,6 +53564,19 @@
     },
     {
       "schema": "public",
+      "name": "log_operator_admin_change",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.log_operator_admin_change()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE value jsonb:=CASE WHEN TG_OP='DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END; tenant uuid; request uuid;\nBEGIN\n IF current_setting('role',true) NOT IN ('service_role','none') THEN RAISE EXCEPTION 'Server operator required' USING ERRCODE='42501'; END IF;\n IF EXISTS(SELECT 1 FROM public.admin_action_permit WHERE transaction_id=txid_current()) THEN RETURN NULL; END IF;\n tenant:=nullif(value->>'tenant_id','')::uuid;\n IF tenant IS NULL THEN SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton; END IF;\n IF tenant IS NULL THEN RETURN NULL; END IF;\n request:=md5(txid_current()::text||':'||tenant::text)::uuid;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(request,'service:deployment_operator',tenant,'operator_'||TG_TABLE_NAME,TG_TABLE_NAME,coalesce(value->>'id',tenant::text),'succeeded',public.admin_safe_summary(CASE WHEN TG_OP<>'INSERT' THEN to_jsonb(OLD) ELSE '{}' END),public.admin_safe_summary(CASE WHEN TG_OP<>'DELETE' THEN to_jsonb(NEW) ELSE '{}' END)) ON CONFLICT(request_id) DO NOTHING;\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\n RETURN NULL;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "log_pii_access",
       "arguments": "p_contact_id uuid, p_requesting_agent_id uuid, p_action text, p_ip_address text, p_user_agent text",
       "result": "void",
@@ -52753,6 +53821,58 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.normalize_phone_e164(raw text)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\n  SELECT CASE\n    WHEN raw IS NULL OR btrim(raw) = '' THEN NULL\n    WHEN regexp_replace(raw, '[^0-9]', '', 'g') ~ '^1[0-9]{10}$'\n      THEN '+' || regexp_replace(raw, '[^0-9]', '', 'g')\n    WHEN regexp_replace(raw, '[^0-9]', '', 'g') ~ '^[0-9]{10}$'\n      THEN '+1' || regexp_replace(raw, '[^0-9]', '', 'g')\n    WHEN btrim(raw) ~ '^\\+[1-9][0-9]{7,14}$' THEN btrim(raw)\n    ELSE NULL\n  END;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "operational_count_summary",
+      "arguments": "p_value jsonb",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.operational_count_summary(p_value jsonb)\n RETURNS jsonb\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'pg_catalog'\nAS $function$\n SELECT coalesce(jsonb_object_agg(key,value),'{}') FROM jsonb_each(coalesce(p_value,'{}'))\n WHERE key IN ('call','enrollment','audit','textConsent','operational','recording','contact','enrollmentRecording','enrollmentTranscript','marketingRecording','marketingTranscript','scopeOfAppointment','serviceCall','evidenceAudit','contactReview','run_failed','delete_failed','dependent_records','atomic_storage_unavailable') AND jsonb_typeof(value)='number'\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "operational_paid_budget",
+      "arguments": "p_budgets jsonb",
+      "result": "numeric",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.operational_paid_budget(p_budgets jsonb)\n RETURNS numeric\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE budget jsonb; used_requests integer; percentage numeric:=0; scoring_percentage numeric;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR jsonb_array_length(p_budgets)>12 THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n FOR budget IN SELECT value FROM jsonb_array_elements(p_budgets) LOOP\n IF (budget->>'limit')::integer<1 OR length(budget->>'key')>256 THEN RAISE EXCEPTION 'Invalid budget'; END IF;\n SELECT used INTO used_requests FROM public.admission_counters WHERE key_hash=encode(sha256(convert_to(budget->>'key','UTF8')),'hex') AND window_seconds=86400 AND window_start=floor(extract(epoch FROM clock_timestamp())/86400)::bigint*86400;\n percentage:=greatest(percentage,100.0*coalesce(used_requests,0)/(budget->>'limit')::integer);\n END LOOP;\n SELECT CASE WHEN halted THEN 100 ELSE 100.0*reserved_tokens/token_cap END INTO scoring_percentage FROM public.compliance_daily_budget WHERE day=(clock_timestamp() AT TIME ZONE 'UTC')::date;\n RETURN greatest(percentage,coalesce(scoring_percentage,0));\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "operational_routing_anomalies",
+      "arguments": "p_window integer",
+      "result": "bigint",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.operational_routing_anomalies(p_window integer)\n RETURNS bigint\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\n SELECT (SELECT count(*) FROM public.agent_phone_sessions WHERE expires_at<clock_timestamp()-interval '60 seconds')+\n (SELECT count(*) FROM public.inbound_calls c WHERE c.created_at>clock_timestamp()-make_interval(secs=>p_window)\n AND coalesce(to_jsonb(c)->'metadata'->>'false_overflow','false')='true')+\n coalesce((SELECT CASE WHEN last_success_at<clock_timestamp()-interval '60 seconds' THEN 1 ELSE 0 END FROM public.scheduled_job_status WHERE job='presence_sweep'),0)\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "operational_status",
+      "arguments": "p_window integer",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.operational_status(p_window integer DEFAULT 900)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE queues jsonb:='[]'; t text; depth bigint; age numeric; failed bigint; failures bigint:=0; tenant uuid; dry jsonb; result jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n IF p_window<1 OR p_window>86400 THEN RAISE EXCEPTION 'Invalid operational window'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n FOREACH t IN ARRAY ARRAY['integration_deliveries','post_call_jobs','post_call_requests','scoring_jobs','recording_ingestion','conversely_submissions','ix_uploads','ghl_enrollment_deliveries','manual_transcript_gap_fills','paragon_residence_jobs'] LOOP\n EXECUTE format('SELECT count(*) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'') IN (''pending'',''queued'',''processing'',''running'',''uploading'',''retry'')),coalesce(max(extract(epoch FROM clock_timestamp()-coalesce((j->>''created_at'')::timestamptz,(j->>''started_at'')::timestamptz,(j->>''first_seen_at'')::timestamptz,(j->>''updated_at'')::timestamptz))) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'') IN (''pending'',''queued'',''processing'',''running'',''uploading'',''retry'')),0),count(*) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'')=''failed'') FROM (SELECT to_jsonb(t) j FROM public.%I t) q WHERE NOT(j ? ''tenant_id'') OR j->>''tenant_id''=$1',t) INTO depth,age,failed USING tenant::text;\n queues:=queues||jsonb_build_array(jsonb_build_object('queue',t,'depth',depth,'oldest_age_seconds',greatest(0,floor(age))));failures:=failures+failed;\n END LOOP;\n SELECT jsonb_build_object('finished_at',finished_at,'counts',public.operational_count_summary(r.counts),'deleted',public.operational_count_summary(r.deleted),'skipped_by_hold',public.operational_count_summary(r.skipped_by_hold),'skipped_by_reference',public.operational_count_summary(r.skipped_by_reference),'failures',public.operational_count_summary(r.failures)) INTO dry FROM public.retention_runs r WHERE mode='dry-run' AND status='complete' ORDER BY started_at DESC LIMIT 1;\n SELECT jsonb_build_object('queues',queues,'failed_jobs',failures,'active_alerts',(SELECT count(*) FROM public.operational_alert_state WHERE active),\n 'last_success',(SELECT jsonb_object_agg(job_name,s.last_success_at) FROM unnest(ARRAY['alert_evaluator','repair_telephony_record_links','enqueue_availability_push','enqueue_disposition_postbacks','enqueue_daily_vendor_reports','compliance_schedule','ix_schedule','presence_sweep','recording_worker','transcript_worker','paragon_billing','paragon_residence','call_status_recovery','conference_recovery','admission_prune','nightly_analytics','weekly_coaching','sync_fema','sync_bulletins','paragon_daily_email','retention']) job_name LEFT JOIN public.scheduled_job_status s ON s.job=job_name), 'last_purge_dry_run',dry,\n 'lease_conflicts',count(*) FILTER(WHERE event LIKE '%lease%denied%' OR event LIKE '%lease%conflict%'),\n 'audit_failures',count(*) FILTER(WHERE event IN ('audit_write_failed','admin_log_write_failed')),\n 'rate_rejections',count(*) FILTER(WHERE event='admission_rejected'),\n 'provider_requests',count(*) FILTER(WHERE event='provider_result'),\n 'provider_errors',count(*) FILTER(WHERE event='provider_result' AND status>=400),\n 'routing_anomalies',count(*) FILTER(WHERE event IN ('presence_sweep_failed','false_overflow','routing_anomaly'))+coalesce(public.operational_routing_anomalies(p_window),0),\n 'purge_failures',(SELECT count(*) FROM public.retention_runs pr WHERE (pr.status='failed' OR pr.failures<>'{}'::jsonb) AND pr.started_at>clock_timestamp()-make_interval(secs=>p_window)),\n 'paid_usd',(SELECT coalesce(sum(estimated_cost_usd),0) FROM public.compliance_llm_requests WHERE created_at>=date_trunc('day',clock_timestamp())),\n 'subject_denials',(SELECT coalesce(jsonb_agg(to_jsonb(s)),'[]') FROM (SELECT subject,count(*) count FROM public.operational_events WHERE occurred_at>clock_timestamp()-make_interval(secs=>p_window) AND event IN ('authorization_denied','verification_failed') AND subject IS NOT NULL GROUP BY subject) s)) INTO result\n FROM public.operational_events WHERE occurred_at>clock_timestamp()-make_interval(secs=>p_window);\n RETURN result;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -53653,6 +54773,19 @@
     },
     {
       "schema": "public",
+      "name": "record_operational_event",
+      "arguments": "p_event text, p_level text, p_subject text, p_status integer",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.record_operational_event(p_event text, p_level text, p_subject text DEFAULT NULL::text, p_status integer DEFAULT NULL::integer)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n INSERT INTO public.operational_events(event,level,subject,status) VALUES(p_event,p_level,p_subject,p_status);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "record_paragon_billing_snapshot",
       "arguments": "p_sid text, p_lease uuid, p_account text, p_arrived timestamp with time zone, p_ended timestamp with time zone, p_answered timestamp with time zone, p_talk integer, p_evidence jsonb",
       "result": "text",
@@ -53663,6 +54796,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.record_paragon_billing_snapshot(p_sid text, p_lease uuid, p_account text, p_arrived timestamp with time zone, p_ended timestamp with time zone, p_answered timestamp with time zone, p_talk integer, p_evidence jsonb)\n RETURNS text\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE b paragon_call_billing; finished boolean;\nBEGIN\n SELECT * INTO b FROM paragon_call_billing WHERE parent_call_sid=p_sid FOR UPDATE;\n IF b.parent_call_sid IS NULL OR b.lease_token IS DISTINCT FROM p_lease THEN RETURN 'lease_lost'; END IF;\n IF p_account IS NULL OR p_account !~ '^AC[0-9a-fA-F]{32}$' OR p_arrived IS NULL OR\n (p_ended IS NOT NULL AND p_ended<p_arrived) OR (p_answered IS NOT NULL AND p_answered<p_arrived)\n OR (p_answered IS NOT NULL AND p_ended IS NOT NULL AND p_answered>p_ended)\n OR p_talk<0 THEN RAISE EXCEPTION 'Invalid verified provider snapshot'; END IF;\n IF b.finalized_at IS NOT NULL AND (b.account_sid,b.arrived_at,b.ended_at) IS DISTINCT FROM (p_account,p_arrived,p_ended)\n THEN\n  UPDATE paragon_call_billing SET error_code='provider_evidence_conflict',lease_token=NULL,lease_until=NULL,\n   next_attempt_at=clock_timestamp()+interval '1 hour' WHERE parent_call_sid=p_sid;\n  RETURN 'conflict';\n END IF;\n finished:=p_ended IS NOT NULL;\n UPDATE paragon_call_billing SET account_sid=p_account,arrived_at=p_arrived,ended_at=p_ended,\n  answered_at=p_answered,talk_seconds=p_talk,\n  ring_seconds=CASE WHEN coalesce(p_answered,p_ended) IS NOT NULL THEN floor(extract(epoch FROM coalesce(p_answered,p_ended)-p_arrived))::integer END,\n  billable_seconds=CASE WHEN finished THEN floor(extract(epoch FROM p_ended-p_arrived))::integer END,\n  finalized_at=CASE WHEN finished THEN coalesce(b.finalized_at,clock_timestamp()) END,\n  evidence=p_evidence,error_code=NULL,lease_token=NULL,lease_until=NULL,\n  next_attempt_at=clock_timestamp()+CASE WHEN finished AND p_talk IS NOT NULL THEN interval '1 day' ELSE interval '30 seconds' END\n WHERE parent_call_sid=p_sid;\n RETURN CASE WHEN finished THEN 'finalized' ELSE 'pending' END;\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "record_scheduled_success",
+      "arguments": "p_job text",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.record_scheduled_success(p_job text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF current_setting('role',true)<>'service_role' OR p_job NOT IN ('alert_evaluator','repair_telephony_record_links','enqueue_availability_push','enqueue_disposition_postbacks','enqueue_daily_vendor_reports','compliance_schedule','ix_schedule','admission_prune','presence_sweep','recording_worker','transcript_worker','paragon_billing','paragon_residence','conference_recovery','call_status_recovery','paragon_daily_email','update_knowledge','nightly_analytics','weekly_coaching','sync_fema','sync_bulletins','retention') THEN RAISE EXCEPTION 'Server scheduled job required' USING ERRCODE='42501'; END IF;\n INSERT INTO public.scheduled_job_status(job) VALUES(p_job) ON CONFLICT(job) DO UPDATE SET last_success_at=clock_timestamp();\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -53780,6 +54926,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.register_stt_stream(p_tenant_id uuid, p_call_sid text, p_channel text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE budget stt_call_reconnects; prior integer;\nBEGIN\n IF length(p_channel)>100 OR NOT (EXISTS(SELECT 1 FROM telephony_call_attempts WHERE tenant_id=p_tenant_id AND parent_call_sid=p_call_sid AND ended_at IS NULL AND answered_at IS NOT NULL) OR EXISTS(SELECT 1 FROM call_conferences WHERE tenant_id=p_tenant_id AND parent_call_sid=p_call_sid AND ended_at IS NULL)) THEN RETURN false; END IF;\n INSERT INTO stt_call_reconnects(tenant_id,call_sid) VALUES(p_tenant_id,p_call_sid) ON CONFLICT DO NOTHING;\n SELECT * INTO STRICT budget FROM stt_call_reconnects WHERE tenant_id=p_tenant_id AND call_sid=p_call_sid FOR UPDATE;\n prior:=coalesce((budget.channels->>p_channel)::integer,0);\n IF prior>0 AND budget.reconnects>=20 THEN RETURN false; END IF;\n UPDATE stt_call_reconnects SET channels=jsonb_set(channels,ARRAY[p_channel],to_jsonb(prior+1)),reconnects=reconnects+CASE WHEN prior>0 THEN 1 ELSE 0 END,updated_at=clock_timestamp() WHERE tenant_id=p_tenant_id AND call_sid=p_call_sid;\n RETURN true;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "reject_admin_log_mutation",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.reject_admin_log_mutation()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF TG_OP='DELETE' AND EXISTS(SELECT 1 FROM public.retention_audit_permit WHERE transaction_id=txid_current()) THEN RETURN NULL; END IF;\n RAISE EXCEPTION 'Administrator action log is append only' USING ERRCODE='42501';\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -54173,6 +55332,19 @@
     },
     {
       "schema": "public",
+      "name": "retention_delete_admin_audit",
+      "arguments": "p_id uuid, p_years integer, p_override jsonb",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.retention_delete_admin_audit(p_id uuid, p_years integer, p_override jsonb DEFAULT '{}'::jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE removed boolean;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('RETENTION_PURGE_ENABLED') THEN RAISE EXCEPTION 'Retention deletion disabled' USING ERRCODE='42501'; END IF;\n IF p_years IS NULL OR p_years<1 OR p_years>100 OR (p_years<10 AND (coalesce(p_override->>'approved','')<>'true' OR length(btrim(coalesce(p_override->>'reason','')))<10)) THEN RAISE EXCEPTION 'Invalid audit period'; END IF;\n LOCK TABLE public.retention_holds IN SHARE ROW EXCLUSIVE MODE;\n IF EXISTS(SELECT 1 FROM public.retention_holds WHERE released_at IS NULL) THEN RETURN false; END IF;\n INSERT INTO public.retention_audit_permit VALUES(txid_current(),p_id);\n DELETE FROM public.admin_action_log WHERE id=p_id AND occurred_at<clock_timestamp()-make_interval(years=>p_years);\n removed:=FOUND; DELETE FROM public.retention_audit_permit WHERE transaction_id=txid_current();RETURN removed;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "retention_delete_audit",
       "arguments": "p_id uuid, p_years integer, p_override jsonb",
       "result": "boolean",
@@ -54222,6 +55394,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.retention_lock_batch()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE names text;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server authority required' USING ERRCODE='42501'; END IF;\n SELECT string_agg(format('public.%I',tablename),',' ORDER BY tablename) INTO names FROM pg_tables WHERE schemaname='public';\n EXECUTE 'LOCK TABLE '||names||' IN SHARE ROW EXCLUSIVE MODE';\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "retention_operational_status",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.retention_operational_status()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF NEW.status='complete' THEN INSERT INTO public.scheduled_job_status(job) VALUES('retention') ON CONFLICT(job) DO UPDATE SET last_success_at=clock_timestamp(); END IF;\n RETURN NULL;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -54771,6 +55956,19 @@
     },
     {
       "schema": "public",
+      "name": "transition_operational_alerts",
+      "arguments": "p_conditions jsonb",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.transition_operational_alerts(p_conditions jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE c jsonb; old record;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n PERFORM pg_advisory_xact_lock(161,1);\n FOR c IN SELECT value FROM jsonb_array_elements(p_conditions) LOOP\n IF c->>'rule' NOT IN ('queue_depth','queue_age','exhausted_jobs','lease_conflicts','audit_failures','subject_denials','rate_rejections','provider_error_rate','paid_budget','purge_failures','routing_anomalies','secret_review') OR c->>'key' !~ '^(deployment|active_exception|[a-z_]{1,64}|sha256:[a-f0-9]{64})$' THEN RAISE EXCEPTION 'Invalid alert dimension'; END IF;\n IF NOT EXISTS(SELECT 1 FROM public.operational_alert_state WHERE rule=c->>'rule' AND condition_key=c->>'key' AND active) THEN\n INSERT INTO public.operational_alert_history(rule,condition_key,state,count,threshold) VALUES(c->>'rule',c->>'key','raised',(c->>'count')::numeric,(c->>'threshold')::numeric);\n INSERT INTO public.operational_alert_state VALUES(c->>'rule',c->>'key',true) ON CONFLICT(rule,condition_key) DO UPDATE SET active=true;\n END IF;\n END LOOP;\n FOR old IN SELECT * FROM public.operational_alert_state s WHERE active AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(p_conditions) candidate WHERE candidate->>'rule'=s.rule AND candidate->>'key'=s.condition_key) LOOP\n INSERT INTO public.operational_alert_history(rule,condition_key,state,count,threshold) VALUES(old.rule,old.condition_key,'cleared',0,0);\n UPDATE public.operational_alert_state SET active=false WHERE rule=old.rule AND condition_key=old.condition_key;\n END LOOP;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "unlock_call_conference",
       "arguments": "p_call_id uuid, p_token uuid",
       "result": "boolean",
@@ -55150,6 +56348,42 @@
       "relation": "encryption_keys",
       "name": "encryption_keys_pkey",
       "definition": "PRIMARY KEY (key_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_log_action_check",
+      "definition": "CHECK ((action ~ '^[a-z][a-z0-9_]{1,95}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_log_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_log_request_id_key",
+      "definition": "UNIQUE (request_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_log_result_check",
+      "definition": "CHECK ((result = ANY (ARRAY['succeeded'::text, 'denied'::text, 'authorized'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_log_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "name": "admin_action_permit_pkey",
+      "definition": "PRIMARY KEY (transaction_id)"
     },
     {
       "schema": "public",
@@ -57373,6 +58607,60 @@
     },
     {
       "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "operational_alert_history_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "operational_alert_history_state_check",
+      "definition": "CHECK ((state = ANY (ARRAY['raised'::text, 'cleared'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "name": "operational_alert_state_pkey",
+      "definition": "PRIMARY KEY (rule, condition_key)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "name": "operational_configuration_pkey",
+      "definition": "PRIMARY KEY (tenant_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "name": "operational_configuration_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "operational_events_event_check",
+      "definition": "CHECK ((event ~ '^[a-z][a-z0-9_]{1,95}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "operational_events_level_check",
+      "definition": "CHECK ((level = ANY (ARRAY['info'::text, 'warn'::text, 'error'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "operational_events_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "operational_events_subject_check",
+      "definition": "CHECK ((subject ~ '^sha256:[a-f0-9]{64}$'::text))"
+    },
+    {
+      "schema": "public",
       "relation": "opportunities",
       "name": "opportunities_assigned_agent_id_fkey",
       "definition": "FOREIGN KEY (assigned_agent_id) REFERENCES tenant_agents(id)"
@@ -58531,6 +59819,12 @@
     },
     {
       "schema": "public",
+      "relation": "scheduled_job_status",
+      "name": "scheduled_job_status_pkey",
+      "definition": "PRIMARY KEY (job)"
+    },
+    {
+      "schema": "public",
       "relation": "scorecard_items",
       "name": "scorecard_items_decided_by_check",
       "definition": "CHECK ((decided_by = ANY (ARRAY['Code'::text, 'AI'::text, 'Admin'::text])))"
@@ -59250,6 +60544,30 @@
       "relation": "encryption_keys",
       "name": "idx_pii_encryption_keys_active",
       "definition": "CREATE UNIQUE INDEX idx_pii_encryption_keys_active ON pii_vault.encryption_keys USING btree (is_active) WHERE (is_active = true)"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_log_pkey",
+      "definition": "CREATE UNIQUE INDEX admin_action_log_pkey ON public.admin_action_log USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_log_request_id_key",
+      "definition": "CREATE UNIQUE INDEX admin_action_log_request_id_key ON public.admin_action_log USING btree (request_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_time",
+      "definition": "CREATE INDEX admin_action_time ON public.admin_action_log USING btree (tenant_id, occurred_at)"
+    },
+    {
+      "schema": "public",
+      "relation": "admin_action_permit",
+      "name": "admin_action_permit_pkey",
+      "definition": "CREATE UNIQUE INDEX admin_action_permit_pkey ON public.admin_action_permit USING btree (transaction_id)"
     },
     {
       "schema": "public",
@@ -60843,6 +62161,42 @@
     },
     {
       "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "operational_alert_history_pkey",
+      "definition": "CREATE UNIQUE INDEX operational_alert_history_pkey ON public.operational_alert_history USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_history",
+      "name": "operational_alert_pending",
+      "definition": "CREATE INDEX operational_alert_pending ON public.operational_alert_history USING btree (occurred_at) WHERE (delivered_at IS NULL)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_alert_state",
+      "name": "operational_alert_state_pkey",
+      "definition": "CREATE UNIQUE INDEX operational_alert_state_pkey ON public.operational_alert_state USING btree (rule, condition_key)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_configuration",
+      "name": "operational_configuration_pkey",
+      "definition": "CREATE UNIQUE INDEX operational_configuration_pkey ON public.operational_configuration USING btree (tenant_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "operational_events_pkey",
+      "definition": "CREATE UNIQUE INDEX operational_events_pkey ON public.operational_events USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "operational_events_time",
+      "definition": "CREATE INDEX operational_events_time ON public.operational_events USING btree (occurred_at, event)"
+    },
+    {
+      "schema": "public",
       "relation": "opportunities",
       "name": "opportunities_active_board",
       "definition": "CREATE INDEX opportunities_active_board ON public.opportunities USING btree (tenant_id, pipeline_id, stage_id) WHERE (deleted_at IS NULL)"
@@ -61407,6 +62761,12 @@
     },
     {
       "schema": "public",
+      "relation": "scheduled_job_status",
+      "name": "scheduled_job_status_pkey",
+      "definition": "CREATE UNIQUE INDEX scheduled_job_status_pkey ON public.scheduled_job_status USING btree (job)"
+    },
+    {
+      "schema": "public",
       "relation": "scorecard_items",
       "name": "idx_scorecard_items_scorecard",
       "definition": "CREATE INDEX idx_scorecard_items_scorecard ON public.scorecard_items USING btree (scorecard_id)"
@@ -61925,6 +63285,12 @@
   "triggers": [
     {
       "schema": "public",
+      "relation": "admin_action_log",
+      "name": "admin_action_immutable",
+      "definition": "CREATE TRIGGER admin_action_immutable BEFORE DELETE OR UPDATE OR TRUNCATE ON public.admin_action_log FOR EACH STATEMENT EXECUTE FUNCTION reject_admin_log_mutation()"
+    },
+    {
+      "schema": "public",
       "relation": "admission_counters",
       "name": "retention_anchor_immutable",
       "definition": "CREATE TRIGGER retention_anchor_immutable BEFORE UPDATE ON public.admission_counters FOR EACH ROW EXECUTE FUNCTION retention_anchor_immutable()"
@@ -62030,6 +63396,12 @@
       "relation": "availability_agent_subjects",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.availability_agent_subjects FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "availability_consumers",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.availability_consumers FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
     },
     {
       "schema": "public",
@@ -62610,6 +63982,12 @@
     {
       "schema": "public",
       "relation": "contacts",
+      "name": "operator_contact_assignment",
+      "definition": "CREATE TRIGGER operator_contact_assignment AFTER UPDATE OF assigned_agent_id ON public.contacts FOR EACH ROW WHEN ((old.assigned_agent_id IS DISTINCT FROM new.assigned_agent_id)) EXECUTE FUNCTION log_operator_admin_change()"
+    },
+    {
+      "schema": "public",
+      "relation": "contacts",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.contacts FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
     },
@@ -62826,8 +64204,20 @@
     {
       "schema": "public",
       "relation": "deployment_authorities",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.deployment_authorities FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
+    },
+    {
+      "schema": "public",
+      "relation": "deployment_authorities",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.deployment_authorities FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "deployment_settings",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.deployment_settings FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
     },
     {
       "schema": "public",
@@ -63204,6 +64594,12 @@
     {
       "schema": "public",
       "relation": "lead_sources",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.lead_sources FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
+    },
+    {
+      "schema": "public",
+      "relation": "lead_sources",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.lead_sources FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
     },
@@ -63314,6 +64710,12 @@
       "relation": "messages",
       "name": "retention_anchor_insert",
       "definition": "CREATE TRIGGER retention_anchor_insert BEFORE INSERT ON public.messages FOR EACH ROW EXECUTE FUNCTION retention_anchor_insert('created_at')"
+    },
+    {
+      "schema": "public",
+      "relation": "operational_events",
+      "name": "retention_anchor_immutable",
+      "definition": "CREATE TRIGGER retention_anchor_immutable BEFORE UPDATE ON public.operational_events FOR EACH ROW EXECUTE FUNCTION retention_anchor_immutable()"
     },
     {
       "schema": "public",
@@ -63911,6 +65313,18 @@
     },
     {
       "schema": "public",
+      "relation": "retention_holds",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.retention_holds FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_runs",
+      "name": "retention_operational_status",
+      "definition": "CREATE TRIGGER retention_operational_status AFTER UPDATE ON public.retention_runs FOR EACH ROW WHEN ((old.status IS DISTINCT FROM new.status)) EXECUTE FUNCTION retention_operational_status()"
+    },
+    {
+      "schema": "public",
       "relation": "rts_ingestion_log",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.rts_ingestion_log FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -64034,6 +65448,12 @@
       "relation": "scoring_templates",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.scoring_templates FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "script_templates",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.script_templates FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
     },
     {
       "schema": "public",
@@ -64242,8 +65662,20 @@
     {
       "schema": "public",
       "relation": "tenant_agents",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.tenant_agents FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
+    },
+    {
+      "schema": "public",
+      "relation": "tenant_agents",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.tenant_agents FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "tenants",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.tenants FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
     },
     {
       "schema": "public",
@@ -64386,6 +65818,12 @@
     {
       "schema": "public",
       "relation": "vendor_agent_state_eligibility",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.vendor_agent_state_eligibility FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
+    },
+    {
+      "schema": "public",
+      "relation": "vendor_agent_state_eligibility",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.vendor_agent_state_eligibility FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
     },
@@ -64416,8 +65854,20 @@
     {
       "schema": "public",
       "relation": "vendor_controls",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.vendor_controls FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
+    },
+    {
+      "schema": "public",
+      "relation": "vendor_controls",
       "name": "pilot_require_member_write",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.vendor_controls FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "vendor_routing_config",
+      "name": "operator_admin_change",
+      "definition": "CREATE TRIGGER operator_admin_change AFTER INSERT OR DELETE OR UPDATE ON public.vendor_routing_config FOR EACH ROW EXECUTE FUNCTION log_operator_admin_change()"
     },
     {
       "schema": "public",

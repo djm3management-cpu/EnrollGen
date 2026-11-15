@@ -1,3 +1,4 @@
+import {setLogSink} from '../telephony/src/lib/logger.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {postCallExceptionDetails} from '../netlify/lib/postCallException.js';
@@ -25,13 +26,13 @@ test('plain PostgREST/storage exceptions retain diagnostics while credentials, i
 test('actual checkpoint failure emits the exception with session/action and keeps diagnostics out of the agent response',async()=>{
  const {createPostCallHandler}=await import('../netlify/lib/postCallWork.js');
  const error=Object.assign(new Error('Storage connection failed'),{code:'08006',details:'Database connection terminated',hint:'Inspect pool health'});
- const original=console.error,logs=[];console.error=value=>logs.push(JSON.parse(value));
+ const logs=[],restore=setLogSink(value=>{const row=JSON.parse(value);if(row.level==='error')logs.push(row);});
  try {
   const handler=createPostCallHandler({authenticate:async()=>({userId:'fixture'}),getDb:()=>{throw error;}});
   const response=await handler(new Request('https://app.test/api/post-call',{method:'POST',body:JSON.stringify({action:'checkpoint',session_id:'fixture-session'})}));
   assert.equal(response.status,503);
-  assert.equal(logs[0].event,'post_call_storage_error');assert.equal(logs[0].action,'checkpoint');assert.equal(logs[0].session_id,'fixture-session');
-  assert.equal(logs[0].exception.code,'08006');assert.equal(logs[0].exception.stack,undefined);assert.equal(logs[0].exception.details,undefined);
+  assert.equal(logs[0].event,'post_call_storage_error');assert.equal(logs[0].action,'checkpoint');assert.equal(logs[0].session_id,undefined);
+  assert.equal(logs[0].code,'08006');assert.equal(logs[0].exception,undefined);
   assert.doesNotMatch(await response.text(),/Storage connection failed|pool health|08006/);
- }finally{console.error=original;}
+ }finally{restore();}
 });

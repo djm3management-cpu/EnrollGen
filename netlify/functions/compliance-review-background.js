@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','compliance_review_background');
 import {admitCall} from './_admission.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import {scoringEligibility} from '../../src/compliance/rules/callStages.js';
@@ -55,11 +58,11 @@ export function createManualScoringHandler({admission=admitCall,getDb=getEvidenc
      Object.assign(payload.scorecard,{scoring_state:'incomplete',overall_score:null,overall_grade:null,pass_fail:null,total_points_earned:null,total_points_possible:null,auto_fail_triggered:false,auto_fail_item_ids:[],auto_fail_reasons:[],risk_flags:[String(error.message).slice(0,2000)],llm_pass_id:pass.id});
      for(const item of payload.items)item.auto_fail_triggered=false;
      await saveVersion(db,call,payload,{requestId:pass.request_id,userId:pass.requested_by});
-    }catch{console.error(JSON.stringify({event:'manual_scoring_incomplete_write_failed',call_id:call.id,pass_id:pass.id}));}
+    }catch{logger.error(JSON.stringify({event:'manual_scoring_incomplete_write_failed',call_id:call.id,pass_id:pass.id}));}
    }
 
    return evidenceFailure(error);
   }
  };
 }
-export default createManualScoringHandler();
+export default serverRequest('compliance-review-background',createManualScoringHandler());

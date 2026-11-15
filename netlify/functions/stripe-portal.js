@@ -1,3 +1,6 @@
+import {serverRequest,adminActionClient,logAdminDispatch} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','stripe_portal');
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import Stripe from "stripe";
@@ -39,7 +42,7 @@ export function createStripePortalHandler({
   stripeClient = getStripe,
   env = process.env,
 } = {}) {
-  return async (request) => {
+  return serverRequest('stripe-portal',async (request) => {
   if (!featureEnabled('STRIPE_BILLING_ENABLED', env)) return disabledResponse('STRIPE_BILLING_ENABLED');
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
@@ -48,10 +51,11 @@ export function createStripePortalHandler({
   const auth = await authenticate(request);
   if (auth.response) return auth.response;
 
-  let supabase, tenantId;
+  let supabase, tenantId,adminIdentity;
   try {
-    supabase = getDb();
+    supabase = adminActionClient(getDb());
     const identity = await resolveCallAccessIdentity(supabase, auth);
+    adminIdentity=identity;
     if (!identity.admin) throw new EvidenceError(403, "Administrator required");
     tenantId = identity.tenant.id;
   } catch (error) {
@@ -74,6 +78,7 @@ export function createStripePortalHandler({
       });
     }
 
+    await logAdminDispatch(supabase,adminIdentity,"stripe_portal");
     const portalSession = await stripeClient().billingPortal.sessions.create({
       customer: subscription.stripe_customer_id,
       return_url: `${baseUrl(request)}/?billing=portal`,
@@ -81,10 +86,10 @@ export function createStripePortalHandler({
 
     return json(200, { url: portalSession.url });
   } catch (error) {
-    console.error("[stripe-portal] failed:", 'request_failed');
+    logger.error("stripe_portal_failed", 'request_failed');
     return json(500, { error: "Unable to create billing portal session", detail: error.message });
   }
-  };
+  });
 }
 
 export default createStripePortalHandler();

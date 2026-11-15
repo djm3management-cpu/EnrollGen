@@ -1,3 +1,4 @@
+import {securityEvent} from './lib/logger.js';
 import process from "node:process";
 
 // Retired auth switches are rejected even when empty or set to "false".
@@ -10,6 +11,7 @@ export function assertSafeAuthEnvironment(env = process.env, { build = false } =
   const forbidden = [...retired, ...(!local ? ["ALLOW_INSECURE_WEBHOOK_TESTS"] : [])]
     .filter(name => Object.hasOwn(env, name));
   if (forbidden.length) {
+    securityEvent("configuration_failed");
     throw new Error(`Unsafe authentication configuration: remove ${forbidden.join(", ")}. Auth bypass switches are retired; insecure webhook tests require local development.`);
   }
 }

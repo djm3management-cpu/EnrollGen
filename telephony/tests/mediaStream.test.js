@@ -1,3 +1,4 @@
+import {setLogSink} from '../src/lib/logger.js';
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
@@ -426,10 +427,10 @@ test('production inbound parent/child identity accepts documented MZ start and d
 
 test('SM IDs from the old synthetic fixture are rejected and log only a reason',async t=>{
   const h=await harness(t),claims=await seedCall(),ws=await h.connect(claims);
-  const lines=[],warn=console.warn;console.warn=line=>lines.push(line);
+  const lines=[],restore=setLogSink(line=>lines.push(JSON.parse(line)));
   try{const closed=once(ws,'close');ws.send(JSON.stringify(start(claims,sid('SM'))));assert.equal((await closed)[0],1008);}
-  finally{console.warn=warn;}
-  assert.deepEqual(lines,['[media] rejected: Invalid stream SID']);assert.equal(h.tracks.length,0);
+  finally{restore();}
+  assert.deepEqual(lines.map(r=>[r.event,r.reason]),[['media_stream_rejected','invalid_stream_sid']]);assert.equal(h.tracks.length,0);
 });
 
 test('forward SQL repair upgrades already-applied 074 and is safe to apply twice',async()=>{
@@ -446,13 +447,13 @@ test('forward SQL repair upgrades already-applied 074 and is safe to apply twice
 });
 
 test('media upgrade and failed lease logging never contains credentials or caller parameters',async t=>{
-  const h=await harness(t),lines=[],warn=console.warn;console.warn=line=>lines.push(line);
+  const h=await harness(t),lines=[],restore=setLogSink(line=>lines.push(JSON.parse(line)));
   try{
     h.media.handleUpgrade({url:'/media/secret-capability.invalid'}, {write(){},destroy(){}},Buffer.alloc(0));
     const badDb={rpc(){return {abortSignal:async()=>({data:false})};}};
     assert.equal(await createMediaLeaseClient(badDb).claim({callSid:'secret-call',agentId:'secret-agent'},'MZsecret','secret-owner'),false);
-  }finally{console.warn=warn;}
-  assert.deepEqual(lines,['[media] rejected: invalid_upgrade_token_or_path','[media] rejected: lease_claim_denied']);
+  }finally{restore();}
+  assert.deepEqual(lines.map(r=>[r.event,r.reason]),[['media_upgrade_rejected','invalid_upgrade_token_or_path'],['lease_claim_denied','lease_conflict'],['authorization_denied','lease_conflict']]);assert.doesNotMatch(JSON.stringify(lines),/secret-capability|secret-call|secret-agent|secret-owner/);
 });
 
 test('Deepgram flushes the last short-call final after media stop', () => {

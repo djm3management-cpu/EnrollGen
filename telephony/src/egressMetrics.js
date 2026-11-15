@@ -1,3 +1,5 @@
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','egressmetrics');
 import { Socket } from 'node:net';
 
 const destinations = ['twilio', 'deepgram', 'supabase', 'browser', 'other'];
@@ -26,7 +28,7 @@ export function destinationFor(socket) {
 // Count application bytes at the shared TCP/TLS write boundary, including HTTP
 // uploads streamed by fetch and Twilio SDK requests. Never inspect/log content.
 // TLS framing and TCP retransmission overhead are excluded.
-export function startEgressMetrics({ metrics = egressMetrics, log = console.log } = {}) {
+export function startEgressMetrics({ metrics = egressMetrics, log = logger.info } = {}) {
   const original = Socket.prototype.write;
   Socket.prototype.write = function(chunk, encoding, callback) {
     if (this !== process.stdout && this !== process.stderr && (typeof chunk === 'string' || ArrayBuffer.isView(chunk))) {

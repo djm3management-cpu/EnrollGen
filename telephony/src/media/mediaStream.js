@@ -1,3 +1,5 @@
+import {createLogger} from '../lib/logger.js';
+const logger=createLogger('telephony','mediastream');
 import {reportSttLimit} from './sttAlert.js';
 import { egressMetrics } from '../egressMetrics.js';
 import { config } from '../config.js';
@@ -34,13 +36,13 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     return Boolean(data);
   },
   schedule = setTimeout, cancel = clearTimeout,
-  log = entry => console.info(JSON.stringify(entry)) } = {}) {
+  log = entry => logger.info(JSON.stringify(entry)) } = {}) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: limits.frameBytes, perMessageDeflate: false });
   const active = new Map();
   const recovery = new Map();
   const restClient = () => client || twilio(config.twilioAccountSid, config.twilioAuthToken, { timeout: 5000, autoRetry: false });
   wss.on('wsClientError', (_error, socket) => {
-    console.warn('[media] rejected: invalid_websocket_handshake');
+    logger.warn("mediastream_rejected_invalid_websocket_handshake");
     socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
   });
 
@@ -54,7 +56,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       if (!url.search && url.pathname.startsWith(pathPrefix + '/') && token && !token.includes('/')) claims = verify(token);
     } catch { /* deny */ }
     if (!claims) {
-      console.warn('[media] rejected: invalid_upgrade_token_or_path');
+      logger.warn('media_upgrade_rejected',{reason:'invalid_upgrade_token_or_path'});
       socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n'); socket.destroy(); return;
     }
     wss.handleUpgrade(request, socket, head, ws => wss.emit('connection', ws, claims));
@@ -182,7 +184,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     }
     function end(code = 1000, reason = 'Stream stopped') {
       if (stopped) return;
-      if (code !== 1000) console.warn(`[media] rejected: ${reason}`);
+      if (code !== 1000) logger.warn('media_stream_rejected',{reason:reason==='Invalid stream SID'?'invalid_stream_sid':'invalid_input'});
       const recoverable = reason === 'twilio_stop_event' || reason === 'Media heartbeat timeout' || reason === 'Media start timeout' ||
         reason === 'Media transport error' || reason.startsWith('websocket_close_');
       if (reason === 'Call attempt replaced') allowRecovery = false;
@@ -192,8 +194,8 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         try {
         emit({type:'transcription_incident',reason:incidentReason,atMs:lastAudioMs,timestamp:timelineOrigin+lastAudioMs});
         for (const speaker of Object.values(speakers)) emit({type:'transcription_error',speaker,status:'unavailable',message:'Live transcription stopped. The recording will be checked after the call.',coverageGap:true});
-        void Promise.resolve().then(()=>onUnexpectedStop({claims,reason:incidentReason})).catch(()=>console.error(JSON.stringify({event:'stt_alert_delivery_failed',call_sid:claims.parentCallSid||claims.callSid})));
-        } catch {console.error(JSON.stringify({event:'stt_incident_notification_failed',call_sid:claims.parentCallSid||claims.callSid,reason:incidentReason}));}
+        void Promise.resolve().then(()=>onUnexpectedStop({claims,reason:incidentReason})).catch(()=>logger.error(JSON.stringify({event:'stt_alert_delivery_failed',call_sid:claims.parentCallSid||claims.callSid})));
+        } catch {logger.error(JSON.stringify({event:'stt_incident_notification_failed',call_sid:claims.parentCallSid||claims.callSid,reason:incidentReason}));}
       }
       stopped = true; state = 'stopped'; clearInterval(watchdog); clearTimeout(timer); clearInterval(renewal);
       clearInterval(answerTimer); unsubscribe();

@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceFailure, evidenceJson, getEvidenceServiceClient,scopeCallLogToIdentity } from './_evidenceAccess.js';
@@ -58,4 +59,4 @@ export function createCombineCallsHandler({ authenticate = requireClerkAuth, get
     }); } catch (error) { return evidenceFailure(error); }
   };
 }
-export default createCombineCallsHandler();
+export default serverRequest('combine-calls',createCombineCallsHandler());

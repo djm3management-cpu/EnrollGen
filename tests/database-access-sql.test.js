@@ -178,6 +178,7 @@ test('catalog: all public tables RLS; no broad browser policies; no browser gran
  for(const p of policies){
   if(publicReferences.includes(p.tablename)){assert.equal(p.cmd,'SELECT');continue;} // reviewed public-reference allowlist above, no writes
   assert.doesNotMatch(p.qual||'',/^\(?\s*true\s*\)?$|auth\.role\(\).*authenticated|auth\.uid\(\) IS NOT NULL/i,p.tablename);
+  if(['admin_action_log','operational_alert_history'].includes(p.tablename)){assert.equal(p.cmd,'SELECT');assert.match(p.qual,/current_deployment_identity/);assert.match(p.qual,/authority = 'admin'/);continue;}
   assert.match(p.qual||'',p.tablename==='evidence_access_log'?/deployment_is_admin/:/deployment_row_(visible|writable)/,p.tablename);
  }
  const protectedColumns=/^(id|tenant_id|clerk_.*|org.*|role|authority|team_agent_ids|agent_id|agent_slug|assigned_agent_id|writing_agent_id|created_by|owner_agent_id|subject)$/;

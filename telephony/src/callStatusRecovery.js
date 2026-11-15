@@ -1,3 +1,6 @@
+import {loggedJob} from './lib/logger.js';
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','callstatusrecovery');
 import twilio from 'twilio';
 
 export const verifiedTerminalCallStatuses = new Set([
@@ -9,7 +12,7 @@ const RECOVERY_INTERVAL_MS = 60 * 1000;
 
 // A blocked outbound dial can recover immediately, even before the watchdog's
 // age window. Never infer completion from a browser disconnect or a 404.
-export async function recoverTerminalAgentReservation({ db, config, agentId, fetchCall, log = console.error }) {
+export async function recoverTerminalAgentReservation({ db, config, agentId, fetchCall, log = logger.error }) {
   try {
     const { data: reservation, error } = await db.from('agent_availability')
       .select('active_call_sid').eq('agent_id', agentId).maybeSingle();
@@ -39,14 +42,15 @@ export function startCallStatusRecoveryWorker({
   config,
   interval = setInterval,
   fetchCall,
-  log = console.error,
+  log = logger.error,
   now = () => Date.now(),
+  recordSuccess=async()=>{},
 }) {
   const client = twilio(config.twilioAccountSid, config.twilioAuthToken,
     { timeout: 8000, autoRetry: false });
   const fetchVerifiedCall = fetchCall || (sid => client.calls(sid).fetch());
   let running = null;
-  const tick = () => {
+  const tick = loggedJob('telephony',() => {
     if (running) return running;
     running = (async () => {
       try {
@@ -86,12 +90,13 @@ export function startCallStatusRecoveryWorker({
             log('Call status recovery release failed');
           }
         }
+        await recordSuccess();
       } finally {
         running = null;
       }
     })();
     return running;
-  };
+  });
   const timer = interval(() => void tick().catch(() => log('Call status recovery worker failed')),
     RECOVERY_INTERVAL_MS);
   timer.unref?.();

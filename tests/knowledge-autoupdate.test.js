@@ -11,6 +11,7 @@ import triggerHandler,{createTriggerKnowledgeUpdateHandler} from '../netlify/fun
 import {runKnowledgeUpdate,runAllKnowledgeCategoryUpdates} from '../netlify/functions/_knowledgeUpdate.js';
 const read=path=>readFileSync(new URL(`../${path}`,import.meta.url),'utf8');
 const resolveIdentity=async auth=>({admin:auth.userId==='admin',tenant:{id:'tenant'}});
+const adminDb={from(table){assert.equal(table,'admin_action_log');return {insert:async row=>{assert.equal(row.result,'authorized');assert.ok(row.actor_id);return {error:null};}};}};
 const request=body=>new Request('https://app.test/api/trigger-knowledge-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{category:'compliance_aca'})});
 async function withFlag(value,callback){
  const previous=process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED;
@@ -24,7 +25,7 @@ test('both real endpoints and shared runners default to disabled without auth, D
    const response=await handler(request());assert.equal(response.status,200);assert.deepEqual(await response.json(),{status:'disabled'});
   }
   const fail=()=>{throw Error('Disabled work executed');};
-  const manual=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:fail,run:fail});
+  const manual=createTriggerKnowledgeUpdateHandler({getDb:()=>adminDb,resolveIdentity,authenticate:fail,run:fail});
   const automatic=createUpdateKnowledgeHandler({run:fail,runAll:fail});
   assert.deepEqual(await (await manual(request())).json(),{status:'disabled'});
   assert.deepEqual(await (await automatic(request())).json(),{status:'disabled'});
@@ -35,13 +36,13 @@ test('both real endpoints and shared runners default to disabled without auth, D
 
 test('enabled manual trigger requires Clerk authentication and the existing admin check',async()=>withFlag('true',async()=>{
  let runs=0;const run=async()=>{runs++;return {checked:1,results:[{result:'pending_review'}]};};
- const unauthenticated=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:async()=>({response:Response.json({error:'Unauthorized'},{status:401})}),run});
+ const unauthenticated=createTriggerKnowledgeUpdateHandler({getDb:()=>adminDb,resolveIdentity,authenticate:async()=>({response:Response.json({error:'Unauthorized'},{status:401})}),run});
  assert.equal((await unauthenticated(request())).status,401);
  for(const auth of [{userId:'agent',tokenPayload:{}},{userId:'agent',tokenPayload:{org_role:'org:member'}},{userId:'agent',tokenPayload:{unsafe_metadata:{role:'admin'}}}]){
-  const handler=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:async()=>auth,run});assert.equal((await handler(request())).status,403);
+  const handler=createTriggerKnowledgeUpdateHandler({getDb:()=>adminDb,resolveIdentity,authenticate:async()=>auth,run});assert.equal((await handler(request())).status,403);
  }
  assert.equal(runs,0);
- const admin=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:async()=>({userId:'admin',tokenPayload:{org_role:'org:admin'}}),run});
+ const admin=createTriggerKnowledgeUpdateHandler({getDb:()=>adminDb,resolveIdentity,authenticate:async()=>({userId:'admin',tokenPayload:{org_role:'org:admin'}}),run});
  assert.equal((await admin(new Request('https://app.test/api',{method:'GET'}))).status,405);
  assert.equal((await admin(request({}))).status,400);
  assert.equal((await admin(request())).status,200);assert.equal(runs,1);
@@ -72,7 +73,7 @@ test('real enabled updater persists every confidence as pending review, preserve
   let sourceReads=0,aiCalls=0;
   for(const confidence of [0,0.2,0.59,0.6,0.84,0.85,0.99,1]){
    const run=options=>runKnowledgeUpdate(options,{getDb:()=>db,fetchSources:async()=>{sourceReads++;return 'Fixture source';},generateUpdate:async()=>{aiCalls++;return {changed:true,confidence,summary:'Detected change',updatedContent:`Proposed at ${confidence}`};}});
-   const handler=createTriggerKnowledgeUpdateHandler({resolveIdentity,authenticate:async()=>({userId:'admin',tokenPayload:{org_role:'org:admin'}}),run});
+   const handler=createTriggerKnowledgeUpdateHandler({getDb:()=>adminDb,resolveIdentity,authenticate:async()=>({userId:'admin',tokenPayload:{org_role:'org:admin'}}),run});
    const response=await handler(request({category:'compliance_aca',key:'fixture'}));assert.equal(response.status,200);
    assert.equal((await response.json()).results[0].result,'pending_review');
   }

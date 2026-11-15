@@ -1,3 +1,8 @@
+import {createAlertEvaluator} from './alerts.js';
+import {installOperationalTelemetry,scheduledSuccess} from '../telephony/src/lib/operationalTelemetry.js';
+import {withLogContext} from '../telephony/src/lib/logger.js';
+import {createLogger} from '../telephony/src/lib/logger.js';
+const logger=createLogger('integrations','worker');
 import {verifyDeploymentConfiguration} from '../telephony/src/lib/deploymentRoster.js';
 import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, deploymentFeatures } from '../telephony/src/lib/deploymentFeatures.js';
@@ -46,18 +51,21 @@ export async function deliver(job, target, { send=postJson, env=process.env } = 
   return {status:response.status,result:sent?'sent':'http_error',
     ...(!sent && response.error ? {error:deliveryDiagnostic(response.error,{provider:job.kind==='report'})} : {})};
 }
-export function createWorker(db, { send, env=process.env, log=console.log }={}) {
+export function createWorker(db, { send, env=process.env, log=logger.info, evaluate=null }={}) {
   deploymentFeatures(env);
   deploymentProfile(env);
   const rpc=async(name,params={})=>{const {data,error}=await db.rpc(name,params);if(error)throw Error(name+' failed');return data;};
-  const complianceTick=createComplianceWorker(db,{env,send,log,...createIxIntegration(db,{env,send})});
+  const complianceTick=createComplianceWorker(db,{env,send,log,...createIxIntegration(db,{env,send}),recordSuccess:evaluate?(job=>scheduledSuccess(db,job)):async()=>{}});
+  const alertTick=evaluate;
   let reportTick=0;
   return async function tick({schedule=true,deliveries=true}={}) {
+    return withLogContext({service:"integrations"},async()=>{
+    if(schedule&&alertTick){try{await alertTick();}catch{logger.error("alert_evaluation_failed");}}
     // Each stage fails independently; a vendor outage cannot prevent others' jobs.
     const reportsDue=Date.now()>=reportTick;
     if(schedule && featureEnabled('PARAGON_ENABLED',env)) {
     for(const task of ['repair_telephony_record_links','enqueue_availability_push','enqueue_disposition_postbacks',...(reportsDue && featureEnabled('OPERATIONAL_EMAIL_ENABLED',env)?['enqueue_daily_vendor_reports']:[])]) {
-      try{await rpc(task);}catch{log(JSON.stringify({event:'integration_stage_failed',stage:task}));}
+      try{await rpc(task);await scheduledSuccess(db,task);}catch{log(JSON.stringify({event:'integration_stage_failed',stage:task}));}
     }
     if(reportsDue)reportTick=Date.now()+60000;
     }
@@ -81,6 +89,7 @@ export function createWorker(db, { send, env=process.env, log=console.log }={}) 
       log(JSON.stringify({event:'integration_delivery',delivery_id:job.id,kind:job.kind,attempt:job.attempts,...result,
         exhausted:result.result!=='sent' && Date.now()+delay*1000>=new Date(job.expires_at).getTime()}));
     }
+    });
   };
 }
 // Explicit operator-only probe: synthetic data, one fixed recipient, no queue,
@@ -111,10 +120,10 @@ if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
   if (process.argv.length > 2) {
     try {
       const result = await runManualReport(process.argv.slice(2));
-      console.log(JSON.stringify({ event: 'integration_manual_report', ...result }));
+      logger.info(JSON.stringify({ event: 'integration_manual_report', ...result }));
       if (result.result !== 'sent') process.exitCode = 1;
     } catch (error) {
-      console.error(JSON.stringify({ event: 'integration_manual_report_failed', error: deliveryDiagnostic(error, { env: process.env }) }));
+      logger.error(JSON.stringify({ event: 'integration_manual_report_failed', error: deliveryDiagnostic(error, { env: process.env }) }));
       process.exitCode = 1;
     }
   } else {
@@ -122,15 +131,16 @@ if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
     global:{fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(15000)})}});
   await verifyDeploymentConfiguration(db,deploymentProfile());
   await reportSupabaseKeySelection(db, { service: 'integrations-worker' });
-  const tick=createWorker(db);
+  installOperationalTelemetry(db);
+  const tick=createWorker(db,{evaluate:createAlertEvaluator(db)});
   let stopped=false; process.on('SIGTERM',()=>{stopped=true;});process.on('SIGINT',()=>{stopped=true;});
   // Vendor response time cannot stall debounce/heartbeat/report scheduling.
   let scheduling=false;
   const schedule=async()=>{if(stopped || scheduling)return;scheduling=true;
-    try{await tick({deliveries:false});}catch{console.error('integration_scheduler_failed');}finally{scheduling=false;}};
+    try{await tick({deliveries:false});}catch{logger.error('integration_scheduler_failed');}finally{scheduling=false;}};
   const timer=setInterval(()=>void schedule(),1000);
   void schedule();
-  while(!stopped){try{await tick({schedule:false});}catch{console.error('integration_worker_tick_failed');}await new Promise(r=>setTimeout(r,250));}
+  while(!stopped){try{await tick({schedule:false});}catch{logger.error('integration_worker_tick_failed');}await new Promise(r=>setTimeout(r,250));}
   clearInterval(timer);
   }
 }

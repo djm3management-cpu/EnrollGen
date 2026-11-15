@@ -1,3 +1,5 @@
+import {createLogger,securityEvent} from '../telephony/src/lib/logger.js';
+const logger=createLogger('integrations');
 import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
 import { createHmac } from 'node:crypto';
 import { lookup } from 'node:dns/promises';
@@ -28,7 +30,7 @@ export async function postJson(urlString, body, headers = {}) {
     lookup(hostname,{all:true}),
     new Promise((_,reject)=>{dnsTimer=setTimeout(()=>reject(Error('DNS timeout')),5000);}),
   ]).finally(()=>clearTimeout(dnsTimer));
-  if (!addresses.length || addresses.some(a=>!publicAddress(a.address))) throw Error('Non-public destination');
+  if (!addresses.length || addresses.some(a=>!publicAddress(a.address))){securityEvent('destination_rejected');throw Error('Non-public destination');}
   const address = addresses[0];
   // Pin the vetted DNS address for this connection; redirects are never followed.
   return new Promise((resolve,reject)=>{
@@ -42,6 +44,7 @@ export async function postJson(urlString, body, headers = {}) {
       res.on('end', () => {
         let error;
         if (size<=4096) { try { const parsed=JSON.parse(body);error={name:parsed.name,message:parsed.message}; } catch { /* no raw text */ } }
+        logger.info('provider_result',{status:res.statusCode});
         resolve({status:res.statusCode,error,body:size<=4096?body:null});
       });
       res.on('error', reject);

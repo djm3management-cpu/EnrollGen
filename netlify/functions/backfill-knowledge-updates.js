@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','backfill_knowledge_updates');
 import {AdmissionError,admissionResponse} from './_admission.js';
 import {
   runAllKnowledgeCategoryUpdates,
@@ -21,7 +24,7 @@ async function parseBody(request) {
   return request.json().catch(() => ({}));
 }
 
-export default async (request) => {
+export default serverRequest('backfill-knowledge-updates',async (request) => {
   if (!["GET", "POST"].includes(request.method)) {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -42,10 +45,10 @@ export default async (request) => {
     });
   } catch(error) {
     if(error instanceof AdmissionError)return admissionResponse(error);
-    console.error("[backfill-knowledge-updates] Failed:", 'request_failed');
+    logger.error("backfill_knowledge_updates_failed", 'request_failed');
     return json(500, {
       ok: false,
       error: 'request_failed',
     });
   }
-};
+});

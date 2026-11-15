@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','backfill_followups');
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
@@ -88,7 +91,7 @@ async function upsertFollowups(supabase, rows) {
   return rows.length;
 }
 
-export default async (request) => {
+export default serverRequest('backfill-followups',async (request) => {
   if (!["GET", "POST"].includes(request.method)) {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -124,10 +127,10 @@ export default async (request) => {
       queued,
     });
   } catch {
-    console.error("[backfill-followups] Failed:", 'request_failed');
+    logger.error("backfill_followups_failed", 'request_failed');
     return json(500, {
       ok: false,
       error: 'request_failed',
     });
   }
-};
+});

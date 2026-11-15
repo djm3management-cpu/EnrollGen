@@ -1,3 +1,4 @@
+import {securityEvent} from './logger.js';
 import { randomUUID, createHash } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 const scope = new AsyncLocalStorage();
@@ -22,7 +23,7 @@ export async function appendEvidenceAudit(db,{actor,tenant,resource,resourceId,a
   const row={actor_id:actor,tenant_id:tenant,resource_type:resource,resource_id:evidenceResourceId(resourceId),action,result,grant_id:grantId || randomUUID()};
   const response=await db.from('evidence_access_log').insert(row);
   if(response.error) throw new EvidenceAuditError();
- } catch { throw new EvidenceAuditError(); }
+ } catch { securityEvent('audit_write_failed',{subject:actor});throw new EvidenceAuditError(); }
 }
 // The response/capability stays inside this boundary until its durable audit
 // succeeds. Nested helpers share the request grant instead of duplicating rows.

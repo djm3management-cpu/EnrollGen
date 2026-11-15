@@ -1,3 +1,5 @@
+import {createLogger} from '../lib/logger.js';
+const logger=createLogger('telephony','twiliovoice');
 import {deploymentProfile} from '../lib/deploymentProfile.js';
 import { resolveParagonArrival, claimParagonArrival, enqueueBillingCallback, verifiedParagonArrival } from "../paragonBilling.js";
 import { Router } from "express";
@@ -64,7 +66,7 @@ async function logEvent({ inboundCallId, callSid, event, payload }) {
     event,
     payload: payload || {},
   });
-  if (error) console.error("telephony_events insert failed:", 'request_failed');
+  if (error) logger.error("twiliovoice_telephony_events_insert_failed", 'request_failed');
 }
 
 async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
@@ -273,12 +275,12 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req,res,next)=>
       await dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds: [] })
     );
   } catch {
-    console.error("/twilio/voice failed:", 'request_failed');
+    logger.error("twiliovoice_twilio_voice_failed", 'request_failed');
     // Don't strand a claimed agent as busy if we never actually dialed
     // them (e.g. the inbound_calls insert failed after the claim).
     if (claimedAgent) {
       try { await releaseAgent(claimedAgent.agent_id, callSid); }
-      catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
+      catch (releaseError) { logger.error("twiliovoice_reservation_cleanup_failed", releaseError); return res.status(503).end(); }
     }
     return sendTwiml(res, voicemailTwiml());
   }
@@ -377,10 +379,10 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, conference
       })
     );
   } catch {
-    console.error("/twilio/dial-result failed:", 'request_failed');
+    logger.error("twiliovoice_twilio_dial_result_failed", 'request_failed');
     if (claimedAgent) {
       try { await releaseAgent(claimedAgent.agent_id, callSid); }
-      catch (releaseError) { console.error("Reservation cleanup failed:", releaseError); return res.status(503).end(); }
+      catch (releaseError) { logger.error("twiliovoice_reservation_cleanup_failed", releaseError); return res.status(503).end(); }
     }
     return sendTwiml(res, paragonCall ? busyRejectTwiml() : voicemailTwiml());
   }

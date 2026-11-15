@@ -1,3 +1,4 @@
+import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceJson, evidenceFailure, getEvidenceServiceClient, resolveCallAccessIdentity } from './_evidenceAccess.js';
 
@@ -38,7 +39,7 @@ export function createAvailabilityHandler({
   getDb = getEvidenceServiceClient,
   now = () => new Date().toISOString(),
 } = {}) {
-  return async request => {
+  return serverRequest('set-availability',async request => {
     if (!['GET', 'POST'].includes(request.method)) {
       return new Response(null, { status: 405, headers: { Allow: 'GET, POST' } });
     }
@@ -56,7 +57,7 @@ export function createAvailabilityHandler({
       if (requestedId != null && (typeof requestedId !== 'string' || !requestedId || requestedId.length > 128)) {
         throw new EvidenceError(400, 'Invalid agent ID.');
       }
-      const db = getDb();
+      const db = adminActionClient(getDb());
       const slug = await availabilityTarget(db, auth, requestedId);
       const table = db.from('agent_availability');
       // Exactly the deployed v11 write fields. Existing triggers protect live
@@ -70,7 +71,7 @@ export function createAvailabilityHandler({
     } catch (error) {
       return evidenceFailure(error);
     }
-  };
+  });
 }
 
 export default createAvailabilityHandler();

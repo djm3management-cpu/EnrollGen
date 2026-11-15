@@ -1,3 +1,4 @@
+import {adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import {admit,AdmissionError} from './_admission.js';
 import { complete } from '../../src/lib/llm/client.ts';
@@ -169,7 +170,7 @@ export async function runKnowledgeUpdate(
   { getDb = getSupabase, fetchSources = fetchSourceMaterial, generateUpdate = generateKnowledgeUpdate, runtime = {} } = {},
 ) {
   if (process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED !== "true") return { status: "disabled" };
-  const supabase = getDb();
+  const supabase = adminActionClient(getDb());
   const entries = await fetchEntries(supabase, { category, key, limit, tenantId });
   const results = [];
 

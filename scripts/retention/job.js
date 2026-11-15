@@ -13,12 +13,12 @@ export async function loadSnapshot(db) {
     JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum=k.attnum
     WHERE n.nspname='public' AND c.relkind='r' GROUP BY c.relname ORDER BY c.relname`)).rows;
   for(const {name,keys} of catalog) {
-    if(name.startsWith('retention_'))continue;
+    if(name.startsWith('retention_')||name==='admin_action_permit')continue;
     primaryKeys[name]=keys;
     tables[name]=(await db.query(`SELECT * FROM public.${quote(name)}`)).rows;
   }
   const allTables=(await db.query("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")).rows;
-  for(const {tablename:name} of allTables)if(!name.startsWith('retention_')&&!primaryKeys[name]) {
+  for(const {tablename:name} of allTables)if(!name.startsWith('retention_')&&name!=='admin_action_permit'&&!primaryKeys[name]) {
     primaryKeys[name]=['_retention_ctid'];
     tables[name]=(await db.query(`SELECT ctid::text AS _retention_ctid,* FROM public.${quote(name)}`)).rows;
   }
@@ -87,8 +87,8 @@ export async function runRetention({db,env=process.env,deleteRequested=false,bat
               if(await storage.deleteInTransaction({db,table:n.table,row:n.row})!==true)throw Error('storage_unconfirmed');
             }
             for(const n of group) {
-              if(n.table==='evidence_access_log') {
-                const [{removed}]=(await db.query('SELECT retention_delete_audit($1,$2,$3) removed',[n.row.id,profile.retention.evidenceAuditYears,profile.retention.overrides.evidenceAuditYears||{}])).rows;
+              if(['evidence_access_log','admin_action_log'].includes(n.table)) {
+                const [{removed}]=(await db.query(`SELECT ${n.table==='admin_action_log'?'retention_delete_admin_audit':'retention_delete_audit'}($1,$2,$3) removed`,[n.row.id,profile.retention.evidenceAuditYears,profile.retention.overrides.evidenceAuditYears||{}])).rows;
                 if(!removed)throw Error('audit_retained');
               } else {
                 const where=n.keys.map((k,i)=>`${quote(k)}=$${i+1}`).join(' AND ');

@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','post_call');
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { createHash } from 'node:crypto';
@@ -79,9 +82,9 @@ export function createPostCallQueueHandler({authenticate = request=>requireClerk
       }
       return evidenceJson(202,{session_id:body.session_id,request_key:key,status:queued.status,result:queued.result});
     }); } catch(error) {
-      console.error(JSON.stringify({event:'post_call_queue_error',code:error.code || error.status || 'request_failed'}));
+      logger.error(JSON.stringify({event:'post_call_queue_error',code:error.code || error.status || 'request_failed'}));
       return evidenceFailure(error);
     }
   };
 }
-export default createPostCallQueueHandler();
+export default serverRequest('post-call',createPostCallQueueHandler());

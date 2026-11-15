@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','coach');
 import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
 import { complete, completeStream } from "../../src/lib/llm/client.ts";
 import { resolveEngine } from "../../src/lib/llm/config.js";
@@ -28,7 +31,7 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-export default async (request, context) => {
+export default serverRequest('coach',async (request, context) => {
   if (request.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
@@ -93,10 +96,10 @@ export default async (request, context) => {
     }
     return jsonResponse(200, await complete(input, runtime));
   } catch {
-    console.error("coach request failed");
+    logger.error("coach_coach_request_failed");
     return jsonResponse(500, {
       error: "AI request failed",
       detail: "Please retry shortly.",
     });
   }
-};
+});

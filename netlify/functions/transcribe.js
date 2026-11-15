@@ -1,3 +1,4 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {admitAgent} from './_admission.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 /**
@@ -345,4 +346,4 @@ export function createTranscribeHandler({
   };
 }
 
-export default createTranscribeHandler();
+export default serverRequest('transcribe',createTranscribeHandler());

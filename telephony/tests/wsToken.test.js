@@ -1,3 +1,4 @@
+import {setLogSink} from '../src/lib/logger.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import process from 'node:process';
@@ -23,14 +24,14 @@ test('existing agent token format and signing remain compatible, with no media p
   assert.equal(verifyAgentWsToken(mintMediaStreamToken({callSid:'CAfixture',agentId:'pilot_agent_01',attemptId:'fixture',tenantId:'fixture',inboundCallId:'fixture'})),null);
 });
 test('agent rejection logging reports only a safe reason, never the URL or credential',()=>{
-  const lines=[],writes=[];const warn=console.warn;console.warn=line=>lines.push(line);
+  const lines=[],writes=[];const restore=setLogSink(line=>lines.push(JSON.parse(line)));
   try{
     for(const token of [null,'secret-token','payload.signature']){
       const url=token?'/agent?token='+token:'/agent';
       handleAgentUpgrade({url},{write:line=>writes.push(line),destroy(){}},Buffer.alloc(0));
     }
-  }finally{console.warn=warn;}
-  assert.deepEqual(lines,['[agent] rejected: missing_token','[agent] rejected: malformed_token','[agent] rejected: signature_mismatch']);
+  }finally{restore();}
+  assert.deepEqual(lines.map(r=>r.reason),['missing_token','malformed_token','signature_mismatch']);assert.ok(lines.every(r=>r.event==='agent_upgrade_rejected'));assert.doesNotMatch(JSON.stringify(lines),/secret-token|payload.signature/);
   assert.ok(writes.every(line=>line.includes('401')));
 });
 

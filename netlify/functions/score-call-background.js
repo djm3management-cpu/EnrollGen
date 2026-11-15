@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','score_call_background');
 import {admitCall,AdmissionError,admissionResponse} from './_admission.js';
 import {postCallExceptionDetails} from '../lib/postCallException.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -40,24 +43,24 @@ return async (request, context) => {
   if(!featureEnabled('SCORING_ENABLED'))return disabledResponse('SCORING_ENABLED');
   if (request.method !== "POST") return new Response('Method not allowed', { status: 405 });
   if (!hasInternalJobAuthorization(request)) {
-    console.warn('[score-bg] Rejected unauthorized scoring request');
+    logger.warn("score_call_background_rejected_unauthorized_scoring_request");
     return new Response("Unauthorized", { status: 401 });
   }
 
   let body;
   try { body = await request.json(); } catch {
-    console.error('[score-bg] Invalid JSON request');
+    logger.error("score_call_background_invalid_json_request");
     return new Response('Invalid JSON', { status: 400 });
   }
 
   const { callId, tenantId } = body || {};
   if (!callId || !tenantId) {
-    console.error('[score-bg] Missing callId or tenantId');
+    logger.error("score_call_background_missing_callid_or_tenantid");
     return new Response('Missing callId or tenantId', { status: 400 });
   }
 
   if(!featureEnabled('SCORING_ENABLED')||process.env.COMPLIANCE_RULES_VERSION!==RULES_VERSION)return Response.json({status:'disabled'},{status:503});
-  console.log(`[score-bg] Starting scoring for call ${callId}`);
+  logger.info("score_call_background_starting_scoring_for_call");
   const startedAt=new Date().toISOString();
   let sb, callRecord;
   let stage = 'load_call';
@@ -85,7 +88,7 @@ return async (request, context) => {
     // Check the saved disposition, never a client/job-supplied outcome. The
     // database repeats this check under lock before claiming and saving a job.
     if (!isComplianceSale(callRecord.call_outcome)) {
-      console.log(JSON.stringify({ event: 'scoring_skipped', call_record_id: callId, reason: 'non_sale_disposition' }));
+      logger.info(JSON.stringify({ event: 'scoring_skipped', call_record_id: callId, reason: 'non_sale_disposition' }));
       return Response.json({ skipped: true, reason: 'non_sale_disposition' });
     }
 
@@ -126,7 +129,7 @@ return async (request, context) => {
       supabase: sb,
       callRecord,
       callLLM: classify || (async (system, user, options = {}) => {
-        console.log(JSON.stringify({ event: 'scoring_llm_request', call_record_id: callId, provider: 'openai' }));
+        logger.info(JSON.stringify({ event: 'scoring_llm_request', call_record_id: callId, provider: 'openai' }));
         const response = await complete({
           engine: resolveEngine(callRecord.product_type || 'MA'), path: 'scoring',
           system, messages: [{ role: 'user', content: user }], max_completion_tokens: 4096,
@@ -136,20 +139,20 @@ return async (request, context) => {
       }),
       onProgress: (percent, message) => {
         stage = message;
-        console.log(JSON.stringify({ event: 'scoring_progress', call_record_id: callId, percent, stage }));
+        logger.info(JSON.stringify({ event: 'scoring_progress', call_record_id: callId, percent, stage }));
       },
     });
     if(result.notApplicable)return Response.json({status:'N/A',reason:result.reason,scorecard_id:result.scorecard_id});
     if (result.incomplete) return Response.json({status:'SCORING INCOMPLETE',reason:result.reason,coverage:result.coverage});
     // The scoring transaction owns completion and linkage; busy/replayed jobs don't rerun side effects.
     if (result.skipped || result.pending) {
-      console.log(JSON.stringify({ event: result.pending ? 'scoring_pending' : 'scoring_skipped', call_record_id: callId, reason: result.reason }));
+      logger.info(JSON.stringify({ event: result.pending ? 'scoring_pending' : 'scoring_skipped', call_record_id: callId, reason: result.reason }));
       return Response.json(result.pending ? { pending: true, reason: result.reason } : { skipped: true, reason: result.reason }, { status: result.pending ? 202 : 200 });
     }
     stage = 'record_completion';
     await recordStatus(sb,callRecord.session_id,'scoring',null,startedAt);
     if (result.reused) {
-      console.log(JSON.stringify({ event: 'scoring_reused', call_record_id: callId, scorecard_id: result.scorecard?.id }));
+      logger.info(JSON.stringify({ event: 'scoring_reused', call_record_id: callId, scorecard_id: result.scorecard?.id }));
       return Response.json({scorecard_id:result.scorecard?.id,reused:true});
     }
 
@@ -160,12 +163,12 @@ return async (request, context) => {
       overall_grade: result.scorecard?.overall_grade || null,
     });
 
-    console.log(`[score-bg] Scoring complete for ${callId}: ${result.scorecard?.overall_grade} (${result.scorecard?.overall_score?.toFixed(1)}%)`);
+    logger.info("score_call_background_scoring_complete_for");
     return Response.json({scorecard_id:result.scorecard?.id});
   } catch (err) {
     if(err instanceof AdmissionError){if(sb&&callRecord)await recordStatus(sb,callRecord.session_id,'scoring',err.code,startedAt);return admissionResponse(err);}
     const code=providerErrorCode(err,'scoring_failed');
-    console.error(JSON.stringify({event:'scoring_failed',call_record_id:callId,session_id:callRecord?.session_id,stage,code,status:err?.status || null,...errorDetails(err)}));
+    logger.error(JSON.stringify({event:'scoring_failed',call_record_id:callId,session_id:callRecord?.session_id,stage,code,status:err?.status || null,...errorDetails(err)}));
     // Preflight failures happen before generateScorecard can record a failed job.
     if (sb && callRecord && ['subscription_gate', 'seat_limit'].includes(stage)) {
       try {
@@ -175,17 +178,17 @@ return async (request, context) => {
         }}).eq('id', callId).eq('tenant_id', tenantId);
         if (statusError) throw statusError;
       } catch (statusError) {
-        console.error(JSON.stringify({event:'scoring_failure_status_write_failed',call_record_id:callId,...errorDetails(statusError)}));
+        logger.error(JSON.stringify({event:'scoring_failure_status_write_failed',call_record_id:callId,...errorDetails(statusError)}));
       }
     }
     try {
       if (sb && callRecord) await recordStatus(sb,callRecord.session_id,'scoring',code,startedAt);
     } catch (statusError) {
-      console.error(JSON.stringify({event:'provider_failure_status_write_failed',call_record_id:callId,code,...errorDetails(statusError)}));
+      logger.error(JSON.stringify({event:'provider_failure_status_write_failed',call_record_id:callId,code,...errorDetails(statusError)}));
     }
     if (code === 'scoring_attempts_exhausted' || code === 'call_token_budget_exceeded') {
       try { await sendProviderFailureAlert(sb,callRecord.session_id,'scoring',code); }
-      catch (alertError) { console.error(JSON.stringify({event:'scoring_safety_alert_failed',call_record_id:callId,code:providerErrorCode(alertError,'alert_send_failed')})); }
+      catch (alertError) { logger.error(JSON.stringify({event:'scoring_safety_alert_failed',call_record_id:callId,code:providerErrorCode(alertError,'alert_send_failed')})); }
       try {
         const { data: dispatch, error: dispatchReadError } = await sb.from('transcript_score_dispatch')
           .select('revision').eq('call_id',callId).maybeSingle();
@@ -197,7 +200,7 @@ return async (request, context) => {
           if (dispatchError) throw dispatchError;
         }
       } catch (dispatchError) {
-        console.error(JSON.stringify({event:'scoring_dispatch_stop_failed',call_record_id:callId,...errorDetails(dispatchError)}));
+        logger.error(JSON.stringify({event:'scoring_dispatch_stop_failed',call_record_id:callId,...errorDetails(dispatchError)}));
       }
     }
     // generateScorecard records a checked failed status using the claimed worker token.
@@ -207,4 +210,4 @@ return async (request, context) => {
 };
 }
 
-export default createScoreCallHandler();
+export default serverRequest('score-call-background',createScoreCallHandler());

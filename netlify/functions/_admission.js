@@ -1,8 +1,10 @@
+import {setVerifiedLogSubject} from '../../telephony/src/lib/logger.js';
 import {admit,AdmissionError,admissionResponse} from '../../telephony/src/lib/admission.js';
 import {resolveDeploymentAccess} from '../../telephony/src/lib/deploymentAccess.js';
 export {admit,AdmissionError,admissionResponse};
 export async function admitAgent(db,route,auth) {
  await resolveDeploymentAccess(db,auth.userId,auth.orgId||null);
+ setVerifiedLogSubject(auth.userId);
  await admit(db,route,auth.userId);
 }
 // Background identities come from protected persisted ownership, never request JSON.

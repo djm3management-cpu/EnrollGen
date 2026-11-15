@@ -1,3 +1,6 @@
+import {serverRequest,logAdminDispatch} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','test_ghl_webhook');
 import {resolveCallAccessIdentity,EvidenceError} from './_evidenceAccess.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -28,7 +31,7 @@ function buildTestPayload(body, tenant, auth) {
   };
 }
 
-export default async (request) => {
+export default serverRequest('test-ghl-webhook',async (request) => {
   if (!featureEnabled('GHL_ENABLED')) return disabledResponse('GHL_ENABLED');
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
@@ -52,6 +55,7 @@ export default async (request) => {
 
     const webhookUrl = validateWebhookUrl(resolveWebhookUrl(body, tenant));
     const payload = buildTestPayload(body, tenant, auth);
+    await logAdminDispatch(supabase,identity,'test_ghl_webhook');
     const response = await postJsonWithTimeout(webhookUrl, payload, 10000);
     const responseText = await response.text();
 
@@ -63,13 +67,13 @@ export default async (request) => {
       response_body: responseText.slice(0, 1000),
     });
   } catch (error) {
-    console.error("[test-ghl-webhook] failed:", 'request_failed');
+    logger.error("test_ghl_webhook_failed", 'request_failed');
     const timedOut = error?.name === "AbortError";
     return json(timedOut ? 504 : 500, {
       error: timedOut ? "Webhook test timed out" : "Webhook test failed",
       detail: error.message || String(error),
     });
   }
-};
+});
 
 export const config = { path: "/api/test-ghl-webhook" };

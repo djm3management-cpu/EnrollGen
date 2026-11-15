@@ -1,3 +1,5 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {securityEvent} from '../../telephony/src/lib/logger.js';
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import { requireClerkAuth } from './_clerkAuth.js';
 import { EvidenceError, checked, evidenceJson, evidenceFailure, getEvidenceServiceClient, resolveEvidenceIdentity } from './_evidenceAccess.js';
@@ -16,6 +18,7 @@ export function createSessionLockEventsHandler({ authenticate = request => requi
       let input;
       try { input = await request.json(); } catch { throw new EvidenceError(400, 'Invalid event'); }
       if (!EVENTS.has(input?.event)) throw new EvidenceError(400, 'Invalid event');
+      if(input.event==='session_unlock_failed')securityEvent('session_lock_failed',{subject:auth.userId,reason:'client_reported'});
       checked(await db.from('telephony_events').insert({
         tenant_id: identity.tenant.id, event: input.event,
         payload: { source: 'browser_session_lock', clerk_user_id: auth.userId, result: input.event === 'session_unlock_failed' ? 'failed' : 'success' },
@@ -24,4 +27,4 @@ export function createSessionLockEventsHandler({ authenticate = request => requi
     }); } catch (error) { return evidenceFailure(error); }
   };
 }
-export default createSessionLockEventsHandler();
+export default serverRequest('session-lock-events',createSessionLockEventsHandler());

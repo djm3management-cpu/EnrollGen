@@ -1,3 +1,6 @@
+import {loggedJob} from './lib/logger.js';
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','paragonresidenceworker');
 import { featureEnabled } from './lib/deploymentFeatures.js';
 import {extractResidence,resolveResidence} from './paragonResidenceExtraction.js';
 const checked=r=>{if(r.error)throw r.error;return r.data;};
@@ -29,7 +32,7 @@ export async function processResidenceJob(db,job,{env=process.env}={}){
  }
  return checked(await db.rpc('finish_paragon_residence_job',{p_call:job.inbound_call_id,p_token:job.lease_token,p_candidate:transcript||fallback||{},p_metadata:{question_at:extracted.question_at,answer_at:extracted.answer_at,transcript_zips:[...zips],ambiguous}}));
 }
-export async function runParagonResidenceWorker({db,log=console.error,env=process.env}){
+export async function runParagonResidenceWorker({db,log=logger.error,env=process.env}){
  if(!featureEnabled('PARAGON_ENABLED',env))return;
  const jobs=checked(await db.rpc('claim_paragon_residence_jobs',{p_limit:5}));
  for(const job of jobs||[]){
@@ -45,7 +48,7 @@ export async function runParagonResidenceWorker({db,log=console.error,env=proces
 export function startParagonResidenceWorker(options){
  if(!featureEnabled('PARAGON_ENABLED',options.env || process.env))return ()=>{};
  let running=false,stopped=false;
- const tick=async()=>{if(running||stopped)return;running=true;try{await runParagonResidenceWorker(options);}catch(error){console.error(JSON.stringify({event:'paragon_residence_worker_error',code:error.code||'database_unavailable'}));}finally{running=false;}};
+ const tick=loggedJob('telephony',async()=>{if(running||stopped)return;running=true;try{await runParagonResidenceWorker(options);await options.recordSuccess?.();}catch(error){logger.error(JSON.stringify({event:'paragon_residence_worker_error',code:error.code||'database_unavailable'}));}finally{running=false;}});
  const timer=setInterval(tick,3000);timer.unref();void tick();
  return()=>{stopped=true;clearInterval(timer);};
 }

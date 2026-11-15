@@ -1,3 +1,5 @@
+import {createLogger} from '../lib/logger.js';
+const logger=createLogger('telephony','twiliostatus');
 import {verifyTerminalParentCall} from '../parentCallStatus.js';
 import { signalMediaLifecycle } from '../media/mediaLifecycle.js';
 import { enqueueBillingCallback } from "../paragonBilling.js";
@@ -33,7 +35,7 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, conferenceGuar
     const inboundCall = await findInboundCall(callSid);
 
     if (terminalStatuses.has(callStatus) && !(await verifyTerminalParentCall({callSid,config}))) {
-      console.warn(JSON.stringify({event:'ignored_nonterminal_parent_callback',call_sid:callSid,status:callStatus}));
+      logger.warn(JSON.stringify({event:'ignored_nonterminal_parent_callback',call_sid:callSid,status:callStatus}));
       return res.status(204).end();
     }
     const { error: eventError } = await supabase.from("telephony_events").insert({
@@ -57,7 +59,7 @@ twilioStatusRouter.post("/twilio/status", requireTwilioSignature, conferenceGuar
       if (finalized.error) throw finalized.error;
     }
   } catch {
-    console.error("/twilio/status failed:", 'request_failed');
+    logger.error("twiliostatus_twilio_status_failed", 'request_failed');
     return res.status(503).end();
   }
   return res.status(204).end();
@@ -75,7 +77,7 @@ twilioStatusRouter.post("/twilio/agent-status", requireTwilioSignature, conferen
     }
     return res.status(204).end();
   } catch {
-    console.error("Agent completion failed:", 'request_failed');
+    logger.error("twiliostatus_agent_completion_failed", 'request_failed');
     return res.status(503).end();
   }
 });

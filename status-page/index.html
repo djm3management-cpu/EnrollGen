@@ -150,9 +150,9 @@ async function fetchStatus() {
     const res = await fetch(API_URL, { headers:{Authorization:`Bearer ${token}`}, cache: 'no-store', signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    document.getElementById('agencyName').textContent=data.profile.agencyName;
-    document.getElementById('agencyContact').textContent=data.agencyLine+' · '+data.agencyHours;
-    document.title=data.profile.agencyName+' Agent Status';
+    document.getElementById('agencyName').textContent='Deployment operations';
+    document.getElementById('agencyContact').textContent='Protected administrator status';
+    document.title='Deployment operations';
     render(data);
   } catch (err) {
     const summary = document.getElementById('summary');
@@ -164,37 +164,15 @@ async function fetchStatus() {
 }
 
 function render(data) {
-  const { any_available, available_count, agents } = data;
-
-  const summary = document.getElementById('summary');
-  if (any_available) {
-    summary.className = 'summary is-available';
-    summary.innerHTML = `<span class="dot available"></span>${available_count} AGENT${available_count > 1 ? 'S' : ''} READY FOR CALLS`;
-  } else {
-    summary.className = 'summary is-unavailable';
-    summary.innerHTML = `<span class="dot offline"></span>NO AGENTS AVAILABLE`;
-  }
-
-  const cardsEl = document.getElementById('cards');
-  cardsEl.innerHTML = agents.map(a => {
-    const s = a.available === true ? 'available' : a.status === 'busy' ? 'busy' : 'offline';
-    const name = a.agent_name || a.agent_id;
-    return `
-      <div class="card ${s}">
-        <div class="avatar ${s}">${escapeHtml(getInitials(name))}</div>
-        <div class="info">
-          <div class="agent-name">${escapeHtml(name)}</div>
-          <div class="status-row">
-            <span class="dot ${s}"></span>
-            <span class="status-label ${s}">${statusLabel(s)}</span>
-            <span class="since">${escapeHtml((a.licensed_states || []).join(', '))}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  document.getElementById('lastSync').textContent = `LAST SYNC ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit',timeZone:data.profile.timezone })}`;
+  const summary=document.getElementById('summary');
+  summary.className='summary '+(data.active_alerts?'is-unavailable':'is-available');
+  summary.textContent=`${data.active_alerts} ACTIVE ALERTS · ${data.failed_jobs} FAILED JOBS`;
+  const card=(title,text)=>`<div class="card"><div class="info"><div class="agent-name">${escapeHtml(title)}</div><div class="status-row">${escapeHtml(text)}</div></div></div>`;
+  document.getElementById('cards').innerHTML=(data.queues||[]).map(q=>card(q.queue,`${q.depth} queued · oldest ${q.oldest_age_seconds}s`)).join('')+
+    Object.entries(data.last_success||{}).map(([job,time])=>card(job,`Last success ${time}`)).join('')+
+    Object.entries(data.features||{}).map(([feature,on])=>card(feature,on?'Enabled':'Disabled')).join('')+
+    card('Last purge dry run',data.last_purge_dry_run?JSON.stringify(data.last_purge_dry_run):'No completed dry run');
+  document.getElementById('lastSync').textContent=`LAST SYNC ${new Date().toISOString()}`;
 }
 
 setInterval(()=>void fetchStatus(), 10000);

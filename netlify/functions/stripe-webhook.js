@@ -1,3 +1,6 @@
+import {serverRequest} from '../../telephony/src/lib/adminActions.js';
+import {createLogger} from '../../telephony/src/lib/logger.js';
+const logger=createLogger('netlify','stripe_webhook');
 import { featureEnabled, disabledResponse } from '../../telephony/src/lib/deploymentFeatures.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import Stripe from "stripe";
@@ -69,7 +72,7 @@ async function upsertSubscriptionFromStripe(supabase, subscription, overrides = 
     await findTenantIdForStripeSubscription(supabase, subscription?.id);
 
   if (!tenantId) {
-    console.warn("[stripe-webhook] missing tenant_id for subscription", subscription?.id);
+    logger.warn("stripe_webhook_missing_tenant_id_for_subscription", subscription?.id);
     return;
   }
 
@@ -123,7 +126,7 @@ async function markSubscriptionStatus(supabase, subscriptionId, status) {
   if (error) throw error;
 }
 
-export default async (request) => {
+export default serverRequest('stripe-webhook',async (request) => {
   if (!featureEnabled('STRIPE_BILLING_ENABLED')) return disabledResponse('STRIPE_BILLING_ENABLED');
   if (request.method !== "POST") {
     return json(405, { error: "Method not allowed" });
@@ -142,7 +145,7 @@ export default async (request) => {
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch {
-    console.error("[stripe-webhook] signature verification failed:", 'request_failed');
+    logger.error("stripe_webhook_signature_verification_failed", 'request_failed');
     return json(400, { error: "Invalid Stripe signature" });
   }
 
@@ -172,9 +175,9 @@ export default async (request) => {
 
     return json(200, { received: true });
   } catch (error) {
-    console.error("[stripe-webhook] handler failed:", 'request_failed');
+    logger.error("stripe_webhook_handler_failed", 'request_failed');
     return json(500, { error: "Stripe webhook failed", detail: error.message });
   }
-};
+});
 
 export const config = { path: "/api/stripe-webhook" };

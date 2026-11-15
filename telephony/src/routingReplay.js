@@ -1,3 +1,5 @@
+import {createLogger} from './lib/logger.js';
+const logger=createLogger('telephony','routingreplay');
 import { supabase } from "./supabase.js";
 
 // Persist routing responses so webhook retries cannot consume another agent.
@@ -20,7 +22,7 @@ export async function routingReplay(req, res, next) {
     res.locals.routingRequestKey = requestKey;
     return next();
   } catch {
-    console.error("Routing replay guard failed:", 'request_failed');
+    logger.error("routingreplay_routing_replay_guard_failed", 'request_failed');
     return res.status(503).send("Routing unavailable");
   }
 }
@@ -30,7 +32,7 @@ export async function sendRoutingTwiml(res, response) {
   const { error } = await supabase.from("telephony_routing_responses")
     .update({ response_xml: xml }).eq("request_key", res.locals.routingRequestKey);
   if (error) {
-    console.error("Could not persist routing response:", 'request_failed');
+    logger.error("routingreplay_could_not_persist_routing_response", 'request_failed');
     return res.status(503).send("Routing unavailable");
   }
   return res.type("text/xml").send(xml);
