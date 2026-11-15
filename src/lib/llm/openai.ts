@@ -72,7 +72,7 @@ export function normalizeResponse(response: Json): Completion {
   };
 }
 
-// Emit the Anthropic event envelope retained by existing streaming consumers.
+// Emit the normalized event envelope retained by existing streaming consumers.
 export async function* mapResponsesStream(events: AsyncIterable<Json>): AsyncGenerator<Json> {
   const indices = new Map<string, number>();
   let nextIndex = 0;

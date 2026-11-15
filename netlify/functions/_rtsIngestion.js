@@ -262,7 +262,7 @@ function normalizeCertifications(certifications) {
     .filter(Boolean);
 }
 
-export function parseAnthropicJson(text) {
+export function parseModelJson(text) {
   const raw = String(text || "").trim();
   if (!raw) throw new Error("The AI returned an empty response.");
   try {

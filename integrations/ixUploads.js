@@ -17,8 +17,8 @@ function uploadUrl(target,profile) {
 export function ixMetadata(call,recordings,profile=deploymentProfile()) {
   const m=call.metadata || {};
   const result={recordings:recordings.map(({filename,startTime,endTime})=>({filename,startTime,endTime})),teamName:profile.ix.teamName};
-  const fields={leadSource:call.lead_source || m.lead_source,leadChannel:m.lead_channel || m.channel,leadMedium:m.lead_medium || m.utm_medium,
-    leadCampaign:m.campaign_name || m.lead_campaign || m.utm_campaign || call.campaign_name};
+  const fields={leadSource:call.lead_source || m.lead_source,leadChannel:call.lead_channel || m.lead_channel || m.channel,leadMedium:call.lead_medium || m.lead_medium || m.utm_medium,
+    leadCampaign:call.lead_campaign || m.campaign_name || m.lead_campaign || m.utm_campaign || call.campaign_name};
   for(const [key,value] of Object.entries(fields))if(typeof value==='string' && value.trim())result[key]=value;
   const cost=call.lead_cost ?? call.call_cost ?? call.cost ?? m.lead_cost ?? m.call_cost ?? m.cost;
   if(cost!==null && cost!==undefined && cost!=='' && Number.isFinite(Number(cost)))result.leadCost=Number(cost);

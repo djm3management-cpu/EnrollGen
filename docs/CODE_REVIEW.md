@@ -32,7 +32,7 @@ Status: partially built.
 - `src/main.jsx` wraps the app in Clerk unless `VITE_DISABLE_CLERK_AUTH=true`.
 - `vite.config.js` uses manual chunks for React, Clerk, Supabase, Framer, lucide, jspdf, and xlsx.
 - `netlify.toml` has SPA fallback, `/api/*` function redirect, Netlify functions, and one scheduled `sync-bulletins` cron.
-- Env names found: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_ENABLE_CUSTOMER_AUDIO`, `VITE_AGENT_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPGRAM_API_KEY`, `VITE_BIBLIA_API_KEY`.
+- Env names found: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_ENABLE_CUSTOMER_AUDIO`, `VITE_AGENT_API_KEY`, `DEEPGRAM_API_KEY`, `VITE_BIBLIA_API_KEY`.
 - Supabase client setup exists in `src/lib/supabase.js`, including `getAuthSupabase(token)`.
 - Clerk/Supabase JWT use was inconsistent. Session tracking and call history now request `getToken({ template: "supabase" })`.
 - Bundle splitting is present, but no bundle analyzer output was reviewed. Unused/dead code exists, including features that are built but not wired everywhere.

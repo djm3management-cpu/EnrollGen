@@ -51059,6 +51059,19 @@
     },
     {
       "schema": "public",
+      "name": "minimize_ghl_delivery_snapshot",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.minimize_ghl_delivery_snapshot()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE payload jsonb; reduced jsonb;\nBEGIN\n payload := public.decrypt_pii_value(NEW.payload_encrypted)::jsonb;\n IF payload IS NULL OR jsonb_typeof(payload) <> 'object' THEN\n  RAISE EXCEPTION 'Invalid CRM delivery snapshot';\n END IF;\n SELECT coalesce(jsonb_object_agg(key,value),'{}'::jsonb) INTO reduced\n FROM jsonb_each(payload) WHERE key = ANY(ARRAY[\n'planType','zip','firstName','lastName','phone','email','state','medicaid',\n  'prevCarrier','newCarrier','planName','enrollCode','premium','sunfireCode',\n  'effectiveDate','sixtyDayDate','sep','contractId','planId','segmentId',\n  'enrollmentId','pcpName','agency','aor','assignedUserId','assignedTo','hra','hraDate','submittedAt'\n ]::text[]);\n NEW.payload_encrypted := public.encrypt_pii_value(reduced::text);\n RETURN NEW;\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "move_opportunity_stage",
       "arguments": "p_opportunity_id uuid, p_to_stage_id uuid, p_requesting_agent_id uuid, p_expected_stage_id uuid",
       "result": "jsonb",
@@ -60591,6 +60604,12 @@
       "relation": "ghl_enrollment_deliveries",
       "name": "deployment_feature_fence",
       "definition": "CREATE TRIGGER deployment_feature_fence BEFORE INSERT OR UPDATE ON public.ghl_enrollment_deliveries FOR EACH ROW EXECUTE FUNCTION fence_deployment_queue('GHL_ENABLED')"
+    },
+    {
+      "schema": "public",
+      "relation": "ghl_enrollment_deliveries",
+      "name": "minimize_ghl_delivery_snapshot",
+      "definition": "CREATE TRIGGER minimize_ghl_delivery_snapshot BEFORE INSERT OR UPDATE OF payload_encrypted ON public.ghl_enrollment_deliveries FOR EACH ROW EXECUTE FUNCTION minimize_ghl_delivery_snapshot()"
     },
     {
       "schema": "public",

@@ -823,6 +823,11 @@
       "sha256": "5654b96317860910a77796f034a495fb23856caf3cad1ebde6179d79fc475ff6"
     },
     {
+      "file": "sql/m159.sql",
+      "source": "Migration 159 (complete; CRM delivery allowlist)",
+      "sha256": "ffcaf6cba6d739e3ee3f151239bfb2e0c0cec0a27aaf097d1e381595c5bb9d42"
+    },
+    {
       "file": "sql/seal.sql",
       "source": "Fresh-install baseline",
       "sha256": "dd9b7c0825a817adb95f753b72532304ca4d0c2c3e46b9cd971e3969dd65afea"

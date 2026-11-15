@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import { engineFiles, engineBuilders, promptOptions } from './helpers/copilotPrompts.js';
 import { buildCachedPrompt } from '../src/lib/llm/prompts.js';
 import { toResponsesRequest } from '../src/lib/llm/openai.ts';
-import { toAnthropicRequest } from '../src/lib/llm/anthropic.ts';
 
 for (const engine of Object.keys(engineFiles)) {
   for (const name of ['buildCoachingSystemPrompt', 'buildAskSystemPrompt']) {
@@ -37,11 +36,7 @@ test('provider cache boundaries preserve both prompt blocks and live message rol
   assert.equal(openai.input[1].content, scrubbed.messages[0].content);
   assert.ok(!JSON.stringify(openai).includes('cache_control'));
   assert.ok(!JSON.stringify(openai).includes('cache_prefix'));
-  const anthropic = toAnthropicRequest(request, 'claude-sonnet-4-6');
-  assert.equal(anthropic.system[0].cache_control.type, 'ephemeral');
-  assert.equal(anthropic.system[1].cache_control, undefined);
-  assert.equal(anthropic.system.map(b => b.text).join(''), scrubbed.system.map(b => b.text).join(''));
-  assert.ok(!JSON.stringify(anthropic).includes('cache_prefix'));
+
 });
 
 test('unmarked classifier-style requests retain their previous provider body', () => {

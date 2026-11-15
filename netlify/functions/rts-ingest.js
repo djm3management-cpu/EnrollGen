@@ -1,5 +1,7 @@
 import {admitAgent,AdmissionError,admissionResponse} from './_admission.js';
-import { redactPromptPayload } from './_redaction.js';
+import { complete } from '../../src/lib/llm/client.ts';
+import { rtsFormat } from '../../src/lib/llm/schemas/jobs.js';
+import { llmRuntime } from './_llmTelemetry.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 import { requireClerkAuth } from "./_clerkAuth.js";
 import { resolveCallAccessIdentity, checked } from "./_evidenceAccess.js";
@@ -11,14 +13,12 @@ import {
   formatStateAppointments,
   mergeChunkResults,
   normalizeChunkResult,
-  parseAnthropicJson,
   parseRtsFile,
   readRtsUploadForm,
   sha256Hex,
 } from "./_rtsIngestion.js";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
-const AI_TIMEOUT_MS = 90000;
 const MAX_ROWS = 3000;
 const AI_CONCURRENCY = 3;
 
@@ -99,53 +99,17 @@ async function getKnownData(supabase, tenantId) {
   };
 }
 
-async function callNormalizer(knownCarriers, knownAgents, rows) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured.");
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify(redactPromptPayload({
-        model: process.env.RTS_INGESTION_MODEL || "claude-sonnet-4-6",
-        max_tokens: 12000,
-        temperature: 0,
-        system: RTS_INGESTION_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: `KNOWN_CARRIERS: ${JSON.stringify(knownCarriers)}\nKNOWN_AGENTS: ${JSON.stringify(
-              knownAgents
-            )}\nRAW_ROWS: ${JSON.stringify(rows)}`,
-          },
-        ],
-      })),
-      signal: controller.signal,
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(`Anthropic API returned HTTP ${response.status}.`);
-    }
-    const text = (data.content || [])
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
-    return parseAnthropicJson(text);
-  } catch (error) {
-    if(error instanceof AdmissionError)return admissionResponse(error);
-    if (error?.name === "AbortError") throw new Error("The RTS normalization request timed out.");
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
+export async function normalizeRtsChunk(supabase, context, known, chunk, runtime = {}) {
+  await admitAgent(supabase,'summary',{userId:context.actor.clerk_user_id});
+  const headers = [...new Set(chunk.rows.flatMap(row => Object.keys(row)))];
+  const result = await complete({
+    engine: 'MA', path: 'summary', task: 'rts_ingestion', max_completion_tokens: 12000,
+    system: RTS_INGESTION_SYSTEM_PROMPT,
+    messages: [{role:'user',content:`KNOWN_CARRIERS: ${JSON.stringify(known.carriers)}\nKNOWN_AGENTS: ${JSON.stringify(known.agents)}\nRAW_ROWS: ${JSON.stringify(chunk.rows)}`}],
+    response_format: rtsFormat(headers),
+  }, {...llmRuntime(supabase,context.tenant.id,null,{endpoint:'rts-ingest',user_id:context.actor.clerk_user_id}), ...runtime});
+  if (result.tool_calls.length || !result.parsed) throw new Error('Invalid RTS normalization output');
+  return normalizeChunkResult(result.parsed,chunk.start,chunk.rows.length);
 }
 
 async function mapConcurrent(items, concurrency, mapper) {
@@ -220,9 +184,7 @@ async function handleUpload(request, supabase, context) {
 
   const chunks = chunkRows(parsed.rows, RTS_CHUNK_SIZE);
   const chunkResults = await mapConcurrent(chunks, AI_CONCURRENCY, async (chunk) => {
-    await admitAgent(supabase,'summary',{userId:context.actor.clerk_user_id});
-    const raw = await callNormalizer(known.carriers, known.agents, chunk.rows);
-    return normalizeChunkResult(raw, chunk.start, chunk.rows.length);
+    return normalizeRtsChunk(supabase, context, known, chunk);
   });
   const result = mergeChunkResults(chunkResults, parsed.rows.length);
   if (parsed.sheetNames.length > 1) {
@@ -478,7 +440,7 @@ export function createRtsIngestHandler({authenticate=requireClerkAuth,getDb=getS
     if(error instanceof AdmissionError)return admissionResponse(error);
     console.error("[rts-ingest] failed", {status:error.status || 500,code:error.code || null});
     return json(error.status || 500, {
-      error: "RTS ingestion failed.",
+      error: error.code === 'model_setting_required' ? error.message : 'RTS ingestion failed.',
     });
   }
 };

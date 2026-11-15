@@ -37,16 +37,17 @@ test('prompt scrub traverses nested text, structured identifiers, tool arguments
  clean(value);for(const key of ['phone','dob','address','account_number'])assert.equal(value[key],'[REDACTED]');
  assert.doesNotMatch(value.tools[0].arguments,/19550228|5550199|nonstandard/);
 });
-for(const stream of [false,true])for(const provider of ['openai','anthropic'])test(`${provider} ${stream?'stream':'completion'} cannot send synthetic protected values from any prompt component`,async()=>{
+for(const stream of [false,true])for(const engine of ['MA','ANCILLARY','ANNUITY'])test(`${engine} ${stream?'stream':'completion'} cannot send synthetic protected values from any prompt component`,async()=>{
  const sent=[],completion={id:'fixture',model:'fixture',content:[{type:'text',text:'Continue checklist'}],tool_calls:[],stop_reason:'end_turn',usage:{input_tokens:1,output_tokens:1,cached_tokens:0,reasoning_tokens:0}};
  const adapter={complete:async request=>{sent.push(request);return completion;},async *stream(request){sent.push(request);yield {type:'message_stop',completion};}};
- const request={engine:'MA',system:text,messages:[{role:'user',content:text}],static_messages:[{role:'user',content:text}],tools:[{type:'function',function:{name:'test',description:text,parameters:{type:'object',properties:{note:{type:'string',description:text}}}}}]};
- const runtime={env:{LLM_PROVIDER_MA:provider},adapters:{openai:adapter,anthropic:adapter}};
+ const request={engine,system:text,messages:[{role:'user',content:text}],static_messages:[{role:'user',content:text}],tools:[{type:'function',function:{name:'test',description:text,parameters:{type:'object',properties:{note:{type:'string',description:text}}}}}]};
+ const runtime={env:{},adapters:{openai:adapter}};
  if(stream){for await(const event of completeStream(request,runtime)){assert.ok(event);}}else await complete(request,runtime);
  assert.equal(sent.length,1);clean(sent);
 });
-test('all direct embedding and Anthropic boundaries use the server redaction module',()=>{
- for(const file of ['embeddings','transcript-import','rts-ingest','_knowledgeUpdate'])assert.match(readFileSync(new URL('../netlify/functions/'+file+'.js',import.meta.url),'utf8'),/redactPromptPayload/);
+test('embedding boundaries and shared job client preserve server scrubbing',()=>{
+ for(const file of ['embeddings','transcript-import'])assert.match(readFileSync(new URL('../netlify/functions/'+file+'.js',import.meta.url),'utf8'),/redactPromptPayload/);
+ for(const file of ['rts-ingest','_knowledgeUpdate'])assert.match(readFileSync(new URL('../netlify/functions/'+file+'.js',import.meta.url),'utf8'),/src\/lib\/llm\/client/);
  assert.doesNotMatch(readFileSync(new URL('../integrations/complianceUploads.js',import.meta.url),'utf8'),/body:typeof result\.body/);
 });
 test('dropping vendor extras cannot bypass the earlier Paragon publisher gate',async()=>{

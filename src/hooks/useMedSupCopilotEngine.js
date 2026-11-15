@@ -27,7 +27,7 @@ import {
   useCopilotEngineCore,
   shouldSuppressDuplicateIssue,
   readErrorDetail, getCopilotHttpErrorMessage,
-  parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
+  parseCompletionResponse, parseCoachingJson, buildTranscriptWindows,
   formatSectionDuration, makeIsHighRisk, buildTranscriptRetrievalTrace,
 } from "./useCopilotEngineCore";
 import { medicare2026, resolveMedSupStateGIRules } from "../data/medicareReference2026";
@@ -457,7 +457,7 @@ SECTION CONTEXT (rolling window):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = parseAnthropicResponse(data);
+      const raw = parseCompletionResponse(data);
 
       let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
@@ -609,7 +609,7 @@ SECTION CONTEXT (rolling window):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = shortLiveMessage(parseAnthropicResponse(data));
+      const raw = shortLiveMessage(parseCompletionResponse(data));
 
       if (raw) {
         const prefix = isSpoken ? `"${question}"` : `? ${question}`;

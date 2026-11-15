@@ -5,7 +5,7 @@ import {
   formatStateAppointments,
   mergeChunkResults,
   normalizeChunkResult,
-  parseAnthropicJson,
+  parseModelJson,
   parseRtsFile,
 } from "../netlify/functions/_rtsIngestion.js";
 
@@ -92,7 +92,7 @@ test("mergeChunkResults deduplicates mappings and preserves records", () => {
 });
 
 test("JSON and matrix formatting helpers are resilient", () => {
-  assert.deepEqual(parseAnthropicJson("```json\n{\"ok\":true}\n```"), { ok: true });
+  assert.deepEqual(parseModelJson("```json\n{\"ok\":true}\n```"), { ok: true });
   assert.equal(contractStatusForMatrix("BLACKOUT"), "Blackout");
   assert.equal(
     formatStateAppointments([

@@ -29,7 +29,7 @@ import {
   useCopilotEngineCore,
   shouldSuppressDuplicateIssue,
   readErrorDetail, getCopilotHttpErrorMessage,
-  parseAnthropicResponse, parseCoachingJson, buildTranscriptWindows,
+  parseCompletionResponse, parseCoachingJson, buildTranscriptWindows,
   formatSectionDuration, makeIsHighRisk, buildTranscriptRetrievalTrace,
 } from "./useCopilotEngineCore";
 import {
@@ -566,7 +566,7 @@ SECTION CONTEXT (rolling window):
       clearServiceIssue();
       const data = await response.json();
       if (controller.signal.aborted) return;
-      const raw = parseAnthropicResponse(data);
+      const raw = parseCompletionResponse(data);
       let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
       // Silent
@@ -703,7 +703,7 @@ SECTION CONTEXT (rolling window):
       clearServiceIssue();
       const data = await response.json();
       if (controller.signal.aborted) return;
-      const raw = shortLiveMessage(parseAnthropicResponse(data));
+      const raw = shortLiveMessage(parseCompletionResponse(data));
       if (raw) {
         const prefix = isSpoken ? `"${question}"` : `? ${question}`;
         setMessages((prev) => [...prev.slice(-19), {

@@ -1,3 +1,4 @@
+import {allowlistedGhlPayload,GHL_POST_CALL_FIELDS} from '../../src/lib/ghlFields.js';
 import {evidenceCheckpoint} from '../../telephony/src/lib/evidenceAudit.js';
 import { auditedEvidenceRequest } from '../functions/_evidenceAccess.js';
 import {deploymentProfile,validateDestination} from '../../telephony/src/lib/deploymentProfile.js';
@@ -463,19 +464,16 @@ async function saveCheckpoint(supabase, payload, auth, tenant, { final = false }
   };
 }
 
-function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
+export function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
   const writer=(payload.clerk_user_id?tenantAgents.find(a=>a.clerk_user_id===payload.clerk_user_id):tenantAgents.find(a=>a.id===payload.writing_agent_id));
   const writingAgent=writer?.name||'';
-  return {
+  return allowlistedGhlPayload({
     firstName: safeText(payload.customer_first_name),
     lastName: safeText(payload.customer_last_name),
-    dob: payload.customer_dob || "",
     phone: safeText(payload.customer_phone),
     email: safeText(payload.customer_email),
     state: safeText(payload.customer_state),
-    mbi: safeText(payload.customer_mbi),
     medicaid: safeText(payload.medicaid) || "No",
-    medicaidNum: safeText(payload.medicaid_number),
     prevCarrier: safeText(payload.previous_carrier),
     newCarrier: safeText(payload.carrier_name),
     enrollCode: safeText(payload.enrollment_code || payload.application_id),
@@ -491,7 +489,7 @@ function buildGhlWebhookPayload(payload, tenant, tenantAgents) {
     hra: safeText(payload.hra) || "No",
     hraDate: payload.hra_date || "",
     submittedAt: new Date().toISOString(),
-  };
+  },GHL_POST_CALL_FIELDS);
 }
 
 export async function sendEnrollmentWebhook(tenant, tenantAgents, payload, {send=postJson,db}={}) {

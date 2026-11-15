@@ -1,9 +1,10 @@
-export type Provider = 'openai' | 'anthropic';
+export type Provider = 'openai';
 export type Engine = 'MA' | 'MEDSUP' | 'ACA' | 'U65' | 'ANCILLARY' | 'ANNUITY';
 // Provider payloads are JSON; adapters are the only place that handles SDK types.
 export type Json = Record<string, any>;
 export interface CompletionRequest {
   engine: Engine;
+  task?: 'rts_ingestion' | 'knowledge_update';
   path?: 'live' | 'summary' | 'scoring';
   system: string | Json[];
   static_messages?: Json[];

@@ -1,16 +1,14 @@
 import { redactPromptPayload, safeDiagnosticCode } from '../../../telephony/src/lib/redaction.js';
 import { featureEnabled } from '../../../telephony/src/lib/deploymentFeatures.js';
 import { createOpenAIAdapter } from './openai.ts';
-import { createAnthropicAdapter } from './anthropic.ts';
-import { assertNoPublicApiKeys, resolveEngine, resolveProvider } from './config.js';
+import { assertNoPublicApiKeys, resolveEngine, resolveProvider, resolveModel } from './config.js';
 import { validateCompletion } from './validation.ts';
 import type { Completion, CompletionRequest, Json, Runtime, Provider } from './types.ts';
 
 if (typeof window !== 'undefined') throw new Error('LLM client is server-only');
 assertNoPublicApiKeys(process.env);
 
-const PRIMARY_MODEL = 'gpt-5.6-luna'; // No dated snapshot listed in the official model catalog.
-const ANTHROPIC_MODEL = 'claude-sonnet-4-6';
+const PRIMARY_MODEL = resolveModel(undefined, {});
 const EMPTY_USAGE = { input_tokens: 0, output_tokens: 0, cached_tokens: 0, reasoning_tokens: 0 };
 const errorCode = (error: any) => String(Number.isInteger(error.status) ? error.status : safeDiagnosticCode(error));
 const transient = (error: any) => error.status === 429 || (error.status >= 500 && error.status <= 599)
@@ -31,25 +29,22 @@ function background(task: Promise<unknown>, runtime: Runtime) {
 }
 
 async function record(runtime: Runtime, row: Json) {
-  if(row.metadata?.path==='scoring') {await runtime.telemetry?.(row);return;}
+  if(row.metadata?.path==='scoring' || row.metadata?.task) {await runtime.telemetry?.(row);return;}
   background(Promise.resolve().then(() => runtime.telemetry?.(row)), runtime);
 }
 
-function comparisonKey(result: Completion, request: CompletionRequest) {
-  if (request.response_format?.json_schema.name === 'compliance_intents') {
-    // intent_code is the catalog's stable resolved ID, not the model's prose/reasoning.
-    return JSON.stringify([...new Set((result.parsed?.detections || []).filter((d: Json) => d.detected).map((d: Json) => d.intent_code))].sort());
+async function run(request: CompletionRequest, runtime: Runtime, stream: boolean): Promise<{ result: Completion; events: Json[] }> {
+  // Preserve the jobs' original total deadlines across shared-client retries.
+  if (request.task) {
+    const deadline = AbortSignal.timeout(request.task === 'rts_ingestion' ? 90000 : 60000);
+    runtime = {...runtime, signal: runtime.signal ? AbortSignal.any([runtime.signal, deadline]) : deadline};
   }
-  return JSON.stringify(result.parsed || { content: result.content, tool_calls: result.tool_calls });
-}
-
-async function run(request: CompletionRequest, runtime: Runtime, stream: boolean, shadowModel?: string): Promise<{ result: Completion; events: Json[] }> {
   const env = runtime.env || process.env;
   const engine = resolveEngine(request.engine);
   // Compliance scoring must stay on OpenAI, including legacy product engines.
-  const provider: Provider = request.path === 'scoring' ? 'openai' : shadowModel ? 'anthropic' : resolveProvider(engine, env);
-  const adapters = runtime.adapters || { openai: createOpenAIAdapter(env), anthropic: createAnthropicAdapter(env) };
-  let model = shadowModel || (provider === 'openai' ? PRIMARY_MODEL : ANTHROPIC_MODEL);
+  const provider: Provider = resolveProvider(engine, env);
+  const adapters = runtime.adapters || { openai: createOpenAIAdapter(env) };
+  let model = resolveModel(request.task, env);
   const fallback = env.LLM_FALLBACK_MODEL === undefined ? 'gpt-5.6-terra' : env.LLM_FALLBACK_MODEL.trim();
   const started = Date.now();
   const requestId = crypto.randomUUID();
@@ -68,13 +63,13 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
   // Three primary attempts, followed by exactly one fallback attempt when eligible.
   for (let attempt = 1; attempt <= (request.path === 'scoring' ? 1 : 4); attempt++) {
     if (attempt === 4) {
-      if (provider !== 'openai' || model !== PRIMARY_MODEL || !fallback || !transient(lastError) || runtime.signal?.aborted) break;
+      if (request.task || model !== PRIMARY_MODEL || !fallback || !transient(lastError) || runtime.signal?.aborted) break;
       originalError = errorCode(lastError);
       model = fallback;
       fallbackUsed = true;
     }
     const attemptStarted = Date.now();
-    const timeout = AbortSignal.timeout(request.path === 'summary' || request.path === 'scoring' ? 120000 : 9000);
+    const timeout = AbortSignal.timeout(request.task === 'rts_ingestion' ? 90000 : request.task === 'knowledge_update' ? 60000 : request.path === 'summary' || request.path === 'scoring' ? 120000 : 9000);
     const signal = runtime.signal ? AbortSignal.any([runtime.signal, timeout]) : timeout;
     let result: Completion | undefined;
     try {
@@ -92,7 +87,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
         prompt_tokens: result.usage.input_tokens, cached_tokens: result.usage.cached_tokens,
         completion_tokens: result.usage.output_tokens, reasoning_tokens: result.usage.reasoning_tokens,
         latency_ms: Date.now() - attemptStarted, fallback_used: fallbackUsed, original_error_code: originalError,
-        metadata: { attempt, provider, path: request.path || 'live', shadow: !!shadowModel, total_latency_ms: Date.now() - started } });
+        metadata: { attempt, provider, path: request.path || 'live', task: request.task, total_latency_ms: Date.now() - started } });
       return { result, events };
     } catch (caught) {
       const error = caught as any;
@@ -101,34 +96,18 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
       await record(runtime, { request_id: requestId, engine_name: engine, model,
         prompt_tokens: usage.input_tokens, cached_tokens: usage.cached_tokens, completion_tokens: usage.output_tokens, reasoning_tokens: usage.reasoning_tokens,
         latency_ms: Date.now() - attemptStarted, fallback_used: fallbackUsed, original_error_code: originalError,
-        metadata: { attempt, provider, path: request.path || 'live', shadow: !!shadowModel, error_code: errorCode(lastError) } });
+        metadata: { attempt, provider, path: request.path || 'live', task: request.task, error_code: errorCode(lastError) } });
       if (request.path==='scoring' || !transient(lastError) || runtime.signal?.aborted || attempt === 4) break;
       if (attempt < 3) await sleep(250 * 2 ** (attempt - 1) * (0.5 + random()));
     }
   }
-  if (request.path === 'summary' || request.path === 'scoring' || shadowModel || runtime.signal?.aborted) throw lastError;
+  if (request.path === 'summary' || request.path === 'scoring' || runtime.signal?.aborted) throw lastError;
   return { result: degraded(request, model, lastError), events: [] };
 }
 
 function start(request: CompletionRequest, runtime: Runtime, stream: boolean) {
   request = redactPromptPayload(request);
-  const primary = run(request, runtime, stream);
-  const shadowModel = request.path === 'scoring' ? undefined : (runtime.env || process.env)[`LLM_SHADOW_${resolveEngine(request.engine)}`];
-  if (shadowModel) {
-    const shadow = run(request, { ...runtime, signal: undefined }, false, shadowModel);
-    background(Promise.allSettled([primary, shadow]).then(async ([p, s]) => {
-      const primaryResult = p.status === 'fulfilled' ? p.value.result : null;
-      const shadowResult = s.status === 'fulfilled' ? s.value.result : null;
-      await runtime.telemetry?.({ engine_name: request.engine, model: shadowModel,
-        prompt_tokens: 0, cached_tokens: 0, completion_tokens: 0, reasoning_tokens: 0, latency_ms: 0,
-        fallback_used: false, original_error_code: null,
-        primary_output: null, shadow_output: null,
-        shadow_match: primaryResult && shadowResult && !primaryResult.degraded ? comparisonKey(primaryResult, request) === comparisonKey(shadowResult, request) : null,
-        metadata: { event: 'shadow_compare', primary_error: p.status === 'rejected' ? errorCode(p.reason) : null,
-          shadow_error: s.status === 'rejected' ? errorCode(s.reason) : null } });
-    }), runtime);
-  }
-  return primary;
+  return run(request, runtime, stream);
 }
 
 export async function complete(request: CompletionRequest, runtime: Runtime = {}): Promise<Completion> {

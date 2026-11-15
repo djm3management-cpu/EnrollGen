@@ -4,7 +4,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { complete, completeStream } from '../src/lib/llm/client.ts';
 import { createOpenAIAdapter, toResponsesRequest, mapResponsesStream } from '../src/lib/llm/openai.ts';
-import { createAnthropicAdapter, toAnthropicRequest } from '../src/lib/llm/anthropic.ts';
 import { assertNoPublicApiKeys, resolveProvider } from '../src/lib/llm/config.js';
 import { coachingFormat } from '../src/lib/llm/schemas/coaching.js';
 import { classificationFormat, assessmentFormat } from '../src/lib/llm/schemas/compliance.js';
@@ -33,12 +32,7 @@ function harness(fetchImpl, env = {}) {
         assert.equal(String(url), 'https://api.openai.com/v1/responses');
         return fetchImpl(body, requests.length);
       }),
-      anthropic: createAnthropicAdapter({ ANTHROPIC_API_KEY: 'mock-key' }, async (_url, init) => {
-        const body = JSON.parse(init.body); requests.push(body);
-        return json({ id: 'ant_1', type: 'message', role: 'assistant', model: body.model,
-          content: [{ type: 'text', text: JSON.stringify(coaching) }], stop_reason: 'end_turn',
-          usage: { input_tokens: 20, cache_read_input_tokens: 80, output_tokens: 30 } });
-      }),
+
     },
   };
   return { runtime, requests, rows, sleeps, flush: async () => { for (const task of tasks) await task; } };
@@ -64,7 +58,6 @@ test('Responses SDK tool-call round trip and cache marker removal', async () => 
   assert.equal(h.requests[1].input.at(-1).type, 'function_call_output');
   const canonical = { ...request, messages: [{ role: 'assistant', tool_calls: first.tool_calls }, { role: 'tool', tool_call_id: 'call_1', content: 'Found' }] };
   assert.equal(toResponsesRequest(canonical, 'test').input.at(-1).call_id, 'call_1');
-  assert.equal(toAnthropicRequest(canonical, 'test').messages.at(-1).content[0].tool_use_id, 'call_1');
   await h.flush();
   assert.deepEqual([h.rows[0].prompt_tokens, h.rows[0].cached_tokens, h.rows[0].completion_tokens, h.rows[0].reasoning_tokens], [100, 80, 30, 10]);
 });
@@ -98,38 +91,31 @@ test('summary schema failures throw and never fabricate a scorecard', async () =
   assert.equal(h.requests.length, 1);
 });
 
-test('scoring always uses OpenAI for every engine despite Anthropic overrides and shadows',async()=>{
+test('scoring stays OpenAI for every engine with one ledger-authorized request and no duplicate work',async()=>{
  for(const engine of ['MA','MEDSUP','ACA','U65','ANCILLARY','ANNUITY']){
-  const h=harness(body=>json(response('scored',body.model)),{
-   SCORING_ENABLED:'true',LLM_PROVIDER:'anthropic',[`LLM_PROVIDER_${engine}`]:'anthropic',[`LLM_SHADOW_${engine}`]:'claude-sonnet-4-6',
-  });
-  h.runtime.adapters.anthropic.complete=()=>assert.fail('scoring must never call Anthropic');
+  const h=harness(body=>json(response('scored',body.model)),{SCORING_ENABLED:'true'});
   h.runtime.authorizeScoringRequest=async()=>{};
   const result=await complete({...request,messages:[{role:'user',content:'Full transcript. '.repeat(30)}],engine,path:'scoring'},h.runtime);await h.flush();
   assert.equal(result.model,'gpt-5.6-luna');assert.equal(h.requests.length,1);
   assert.equal(h.requests[0].reasoning.effort,'low');assert.equal(h.requests[0].max_output_tokens,4096);
-  assert.ok(!h.rows.some(row=>row.metadata.shadow));
  }
- const failed=harness(()=>errorResponse(401),{SCORING_ENABLED:'true',LLM_PROVIDER:'anthropic'});failed.runtime.authorizeScoringRequest=async()=>{};
+ const failed=harness(()=>errorResponse(401),{SCORING_ENABLED:'true'});failed.runtime.authorizeScoringRequest=async()=>{};
  await assert.rejects(complete({...request,messages:[{role:'user',content:'Full transcript. '.repeat(30)}],path:'scoring'},failed.runtime));
  assert.equal(failed.requests.length,1);
 });
 
-test('global provider and each engine override select Anthropic with normalized usage', async () => {
-  assert.equal(resolveProvider('MA', {}), 'openai');
-  assert.equal(resolveProvider('ANCILLARY', { LLM_PROVIDER: 'openai' }), 'anthropic');
-  assert.equal(resolveProvider('ANNUITY', { LLM_PROVIDER: 'openai' }), 'anthropic');
-  for (const engine of ['MA', 'MEDSUP', 'ACA', 'U65']) {
-    const h = harness(() => { throw new Error('OpenAI must not be called'); }, { LLM_PROVIDER: 'openai', [`LLM_PROVIDER_${engine}`]: 'anthropic' });
-    const result = await complete({ ...request, engine, response_format: coachingFormat }, h.runtime);
-    assert.equal(result.model, 'claude-sonnet-4-6');
-    assert.equal(result.usage.input_tokens, 100);
-    assert.equal(h.requests[0].output_config.format.type, 'json_schema');
-    assert.equal('minimum' in h.requests[0].output_config.format.schema.properties.confidence, false);
-    assert.equal(coachingFormat.json_schema.schema.properties.confidence.minimum, 0);
-    assert.equal(resolveProvider(engine, { LLM_PROVIDER: 'anthropic', [`LLM_PROVIDER_${engine}`]: 'openai' }), 'openai');
+test('all engines resolve OpenAI and reject a removed or unknown provider', async () => {
+ for (const engine of ['MA','MEDSUP','ACA','U65','ANCILLARY','ANNUITY']) {
+  assert.equal(resolveProvider(engine,{}),'openai');
+  const h=harness(body=>json(response(JSON.stringify(coaching),body.model)));
+  const result=await complete({...request,engine,response_format:coachingFormat},h.runtime);
+  assert.deepEqual(result.parsed,coaching);assert.equal(result.model,'gpt-5.6-luna');
+  assert.equal(result.usage.input_tokens,100);assert.equal(h.requests[0].text.format.strict,true);
+  for(const provider of [['anth','ropic'].join(''),'bad']){
+   assert.throws(()=>resolveProvider(engine,{LLM_PROVIDER:provider}),/Invalid/);
+   await assert.rejects(complete({...request,engine},harness(()=>assert.fail(),{[`LLM_PROVIDER_${engine}`]:provider}).runtime),/Invalid/);
   }
-  assert.throws(() => resolveProvider('MA', { LLM_PROVIDER: 'bad' }), /Invalid/);
+ }
 });
 
 for (const status of [500, 503, 429]) test(`fallback after three ${status} attempts preserves body and logs invocation`, async () => {
@@ -179,7 +165,7 @@ const streamEvents = (text = 'Hello') => [
   { type: 'response.completed', response: response(text) },
 ];
 
-test('streaming text/tool events map to the existing Anthropic consumer envelope', async () => {
+test('streaming text/tool events map to the existing consumer envelope', async () => {
   const events = streamEvents();
   events.splice(4, 0,
     { type: 'response.output_item.added', item: { type: 'function_call', id: 'fc_1', call_id: 'call_1', name: 'lookup' } },
@@ -213,41 +199,14 @@ test('stream schema failure yields a complete degraded envelope', async () => {
   assert.equal(h.requests.length, 1);
 });
 
-test('shadow never delays primary and compares resolved intent IDs, ignoring prose/order', async () => {
-  const detection = (code, reasoning) => ({ intent_code: code, detected: true, applicable: true, confidence: 0.9, speaker: 'agent', evidence_text: 'text', reasoning, anti_pattern: false, hard_cms_violation: false, anti_pattern_detail: null, sequence_position: 1 });
-  const result = { detections: [detection(ALL_INTENTS[0].intent_code, 'primary')], risk_indicators: [], sentiment: { agent: 'professional', beneficiary: 'engaged' } };
-  const h = harness(() => json(response(JSON.stringify(result))), { LLM_SHADOW_MA: 'claude-sonnet-4-6' });
-  let release;
-  let shadowStarted = false;
-  const gate = new Promise(resolve => { release = resolve; });
-  h.runtime.adapters.anthropic.complete = async () => {
-    shadowStarted = true;
-    await gate;
-    return { id: 'shadow', model: 'claude-sonnet-4-6', content: [{ type: 'text', text: JSON.stringify({ ...result, detections: [detection(ALL_INTENTS[0].intent_code, 'different prose')] }) }], tool_calls: [], stop_reason: 'end_turn', usage: { input_tokens: 1, cached_tokens: 0, output_tokens: 1, reasoning_tokens: 0 } };
-  };
-  const primary = await complete({ ...request, response_format: classificationFormat }, h.runtime);
-  assert.equal(shadowStarted, true);
-  assert.equal(primary.degraded, undefined);
-  assert.equal(h.rows.some(row => row.metadata.event === 'shadow_compare'), false);
-  release();
-  await h.flush();
-  const comparison = h.rows.find(row => row.metadata.event === 'shadow_compare');
-  assert.equal(comparison.shadow_match, true);
-  assert.equal(comparison.primary_output,null);assert.equal(comparison.shadow_output,null);
+test('retired shadow settings cannot duplicate a completion',async()=>{
+ const h=harness(()=>json(response('primary')),{LLM_SHADOW_MA:'retired-provider-model'});
+ assert.equal((await complete(request,h.runtime)).content[0].text,'primary');await h.flush();
+ assert.equal(h.requests.length,1);assert.equal(h.rows.length,1);
 });
-
-test('shadow mismatch and shadow failures never affect primary', async () => {
-  const h = harness(() => json(response('primary')), { LLM_SHADOW_MA: 'claude-sonnet-4-6' });
-  assert.equal((await complete(request, h.runtime)).content[0].text, 'primary');
-  await h.flush();
-  assert.equal(h.rows.find(row => row.metadata.event === 'shadow_compare').shadow_match, false);
-  const failed = harness(() => json(response()), { LLM_SHADOW_MA: 'claude-sonnet-4-6' });
-  failed.runtime.adapters.anthropic.complete = async () => { throw Object.assign(new Error('bad'), { status: 400 }); };
-  assert.equal((await complete(request, failed.runtime)).degraded, undefined);
-  await failed.flush();
-  const comparison = failed.rows.find(row => row.metadata.event === 'shadow_compare');
-  assert.equal(comparison.shadow_match, null);
-  assert.equal(comparison.metadata.shadow_error, '400');
+test('invalid global provider fails before even a scoring request',async()=>{
+ const h=harness(()=>assert.fail('transport reached'),{LLM_PROVIDER:'removed',SCORING_ENABLED:'true'});
+ await assert.rejects(complete({...request,path:'scoring'},h.runtime),/Invalid/);assert.equal(h.requests.length,0);
 });
 
 test('startup rejects public API keys without disclosing secret values', () => {
@@ -263,7 +222,7 @@ test('startup allows exactly the migration exceptions but rejects disguised prov
     for (const env of [
       { [name]: 'sk-proj-private12345' },
       { [name]: 'private', OPENAI_API_KEY: 'private' },
-      { [name]: 'private', ANTHROPIC_API_KEY: 'private' },
+      { [name]: 'private', OPENAI_API_KEY: 'private' },
     ]) assert.throws(() => assertNoPublicApiKeys(env), /Unsafe public secret/);
   }
   for (const env of [

@@ -45,9 +45,9 @@ export function converselyPayload(call, recordingPath, agent = {},profile=deploy
     ContractYear:contractYear, ContractID:requiredConversely(m.contract_id,'contract_id'),
     PlanID:planId.padStart(3,'0'), SegmentID:String(m.segment_id??'').trim() || '0', Conversion:'1', Billable:'1',
   };
-  const optional={AgentEmail:agent.email || m.agent_email, Disposition:call.call_outcome,
-    CampaignName:m.campaign_name || call.lead_source, PCPName:agent.pcpName};
-  for(const [key,value] of Object.entries(optional))if(String(value??'').trim())record[key]=String(value).trim();
+  const standard={AgentEmail:agent.email || call.agent_email || m.agent_email, Disposition:call.call_outcome,
+    CampaignName:call.campaign_name || m.campaign_name || call.lead_source, PCPName:agent.pcpName || call.pcp_name || m.pcp_name};
+  for(const [key,value] of Object.entries(standard))if(String(value??'').trim())record[key]=String(value).trim();
   if(call.call_duration_seconds!=null && Number.isFinite(Number(call.call_duration_seconds)) && Number(call.call_duration_seconds)>=0)
     record.CallDuration=Number(call.call_duration_seconds);
   return record;

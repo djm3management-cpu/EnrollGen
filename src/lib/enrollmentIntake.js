@@ -1,3 +1,4 @@
+import {GHL_INTAKE_FIELDS} from './ghlFields.js';
 import { agencyName } from './deploymentPublic.js';
 import {canonicalCarrier} from '../../integrations/converselySelection.js';
 export const CARRIERS=['Devoted Health','Aetna','Elevance / Anthem','UnitedHealthcare','Humana','Cigna / HealthSpring','Wellcare / Centene','Zing Health','HCSC / BCBS','Manhattan Life','Other'];
@@ -35,7 +36,7 @@ export function intakeErrors(d,roster=[]){const errors={};for(const [key,label,t
  if(d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email))errors.email='Email (valid email required)';
  return errors;}
 export const planAutofill=plan=>({planName:plan.plan_name,contractId:plan.contract_id,planId:plan.plan_id,segmentId:plan.segment_id||'0',premium:plan.monthly_premium==null?'':formatPremium(plan.monthly_premium)});
-export function ghlPayload(d,submittedAt,roster=[]){const agent=roster.find(a=>a.is_active===true && a.name===d.aor && a.id===d.writingAgentId);if(!agent)throw Error('Unknown writing agent');const assigned=agent.ghl_user_id||'';return Object.fromEntries(['planType','zip','firstName','lastName','dob','phone','email','state','mbi','medicaid','medicaidNum','prevCarrier','newCarrier','planName','enrollCode','premium','sunfireCode','effectiveDate','sixtyDayDate','sep','contractId','planId','segmentId','enrollmentId','pcpName','agency','aor','assignedUserId','assignedTo','hra','hraDate','submittedAt'].map(key=>[key,({assignedUserId:assigned,assignedTo:assigned,submittedAt,agency:agencyName})[key]??d[key]??'']));}
+export function ghlPayload(d,submittedAt,roster=[]){const agent=roster.find(a=>a.is_active===true && a.name===d.aor && a.id===d.writingAgentId);if(!agent)throw Error('Unknown writing agent');const assigned=agent.ghl_user_id||'';return Object.fromEntries(GHL_INTAKE_FIELDS.map(key=>[key,({assignedUserId:assigned,assignedTo:assigned,submittedAt,agency:agencyName})[key]??d[key]??'']));}
 export function intakeCallFields(call,intake){const d=intake.data;return {...call,enrollment_intake_id:intake.id,carrier_name:d.newCarrier,plan_name:d.planName,plan_id:d.planId,effective_date:d.effectiveDate,enrollment_confirmation_number:d.enrollmentId,sunfire_code:d.sunfireCode,customer_first_name:d.firstName,customer_last_name:d.lastName,customer_phone:d.phone,customer_state:d.state,zip_code:d.zip,metadata:{...call.metadata,contract_id:d.contractId,segment_id:d.segmentId,submission_date:intake.submitted_at}};}
 
 // Selected script branches use internal values; persisted intakes use display labels.

@@ -35,7 +35,7 @@ test('Conversely record has every exact required key and normalized values',()=>
   assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(payload.SubmissionDate));
 });
 
-test('optional keys appear only when present and keep their required types',()=>{
+test('standard reporting fields are always populated when data exists',()=>{
   const payload=converselyPayload({...call,call_duration_seconds:'42',call_outcome:'enrolled',lead_source:'Campaign'},
     'https://recording.test/audio.mp3',{email:'agent@example.test',pcpName:'Dr Test'});
   assert.equal(payload.AgentEmail,'agent@example.test');
@@ -49,4 +49,14 @@ test('missing enrollment ID and invalid required dates stop submission',()=>{
   assert.throws(()=>converselyPayload({...call,enrollment_confirmation_number:''},'https://recording.test/audio.mp3'),/conversely_missing_enrollment_id/);
   assert.throws(()=>converselyPayload({...call,call_start:'not-a-date'},'https://recording.test/audio.mp3'),/conversely_invalid_call_datetime/);
   assert.throws(()=>converselyPayload({...call,metadata:{...call.metadata,submission_date:''}},'https://recording.test/audio.mp3'),/conversely_missing_submission_date/);
+});
+
+test('absent standard reporting values are omitted without blocking a valid compliance payload',()=>{
+ const payload=converselyPayload(call,'https://recording.test/audio.mp3');
+ for(const key of ['AgentEmail','Disposition','CampaignName','PCPName','CallDuration'])assert.equal(Object.hasOwn(payload,key),false);
+ assert.equal(payload.CallID,call.id);
+});
+test('standard reporting fields use existing call metadata and preserve zero duration',()=>{
+ const payload=converselyPayload({...call,call_duration_seconds:0,call_outcome:'enrolled',metadata:{...call.metadata,agent_email:'staff@example.test',campaign_name:'Campaign',pcp_name:'Dr Fixture'}},'https://recording.test/audio.mp3');
+ for(const [key,value] of Object.entries({AgentEmail:'staff@example.test',Disposition:'enrolled',CampaignName:'Campaign',PCPName:'Dr Fixture',CallDuration:0}))assert.equal(payload[key],value);
 });

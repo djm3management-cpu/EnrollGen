@@ -64,8 +64,8 @@ export function getCopilotHttpErrorMessage(status, detail) {
   return `Co-Pilot returned an error (HTTP ${status}). Check that the Netlify function is running and the selected provider API key is set.`;
 }
 
-/** Extract text from an Anthropic API response body. */
-export function parseAnthropicResponse(data) {
+/** Extract text from a normalized completion response body. */
+export function parseCompletionResponse(data) {
   return data.content
     ?.map((b) => (b.type === "text" ? b.text : ""))
     .filter(Boolean)

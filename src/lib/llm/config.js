@@ -28,10 +28,15 @@ export function resolveEngine(value = 'MA') {
 }
 
 export function resolveProvider(engine, env) {
-  // Legacy Co-Pilot engines retain their provider. The scoring path bypasses
-  // this configuration and always uses OpenAI.
-  if (engine === 'ANCILLARY' || engine === 'ANNUITY') return 'anthropic';
   const provider = env[`LLM_PROVIDER_${engine}`] || env.LLM_PROVIDER || 'openai';
-  if (!['openai', 'anthropic'].includes(provider)) throw new Error(`Invalid LLM provider for ${engine}`);
+  if (provider !== 'openai') throw new Error(`Invalid LLM provider for ${engine}; only openai is supported`);
   return provider;
+}
+
+export function resolveModel(task, env) {
+  const setting = { rts_ingestion: 'RTS_INGESTION_OPENAI_MODEL', knowledge_update: 'KNOWLEDGE_UPDATE_OPENAI_MODEL' }[task];
+  if (!setting) return 'gpt-5.6-luna';
+  const model = env[setting]?.trim();
+  if (!model) throw Object.assign(new Error(`${setting} must be configured with an approved small, low-cost OpenAI model`), { code: 'model_setting_required' });
+  return model;
 }

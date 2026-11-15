@@ -1,3 +1,5 @@
+> Current owner-decision update: OpenAI is now the only provider. The rollback adapter and shadow execution described in this historical implementation report have been removed. See [pilot-owner-decisions-1.md](pilot-owner-decisions-1.md) for current required settings.
+
 The MA, MedSup, ACA, and U65 Co-Pilot engines now use the shared server-side LLM client. OpenAI is the default provider; Anthropic remains available for per-engine rollback and shadow comparison. The deterministic annuity hook, deterministic scoring engine, and site styling are unchanged.
 
 The primary model is `gpt-5.6-luna`. No dated snapshot was listed when the [official Luna model catalog](https://developers.openai.com/api/docs/models/gpt-5.6-luna) was checked on September 9, 2026. The fallback defaults to `gpt-5.6-terra`.
@@ -19,17 +21,12 @@ Environment variables are listed individually below. Engine overrides take prece
 | Variable | Default / example | Status and purpose |
 | --- | --- | --- |
 | `OPENAI_API_KEY` | `replace-with-openai-api-key` | New; server-side OpenAI credential |
-| `ANTHROPIC_API_KEY` | `replace-with-anthropic-api-key` | Existing; rollback, shadow, and remaining Anthropic paths |
-| `LLM_PROVIDER` | `openai` | New; global provider, `openai` or `anthropic` |
+| `LLM_PROVIDER` | `openai` | Global provider; only `openai` is accepted |
 | `LLM_PROVIDER_MA` | empty | New; Medicare Advantage override |
 | `LLM_PROVIDER_MEDSUP` | empty | New; Medicare Supplement override |
 | `LLM_PROVIDER_ACA` | empty | New; ACA override |
 | `LLM_PROVIDER_U65` | empty | New; U65 override |
 | `LLM_FALLBACK_MODEL` | `gpt-5.6-terra` | New; empty disables fallback |
-| `LLM_SHADOW_MA` | empty | New; set `claude-sonnet-4-6` to shadow MA |
-| `LLM_SHADOW_MEDSUP` | empty | New; set `claude-sonnet-4-6` to shadow MedSup |
-| `LLM_SHADOW_ACA` | empty | New; set `claude-sonnet-4-6` to shadow ACA |
-| `LLM_SHADOW_U65` | empty | New; set `claude-sonnet-4-6` to shadow U65 |
 | `SUPABASE_URL` | `https://your-project.supabase.co` | Existing; telemetry database URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | placeholder | Existing; server-side telemetry writer credential |
 | `SUPABASE_ANON_KEY` | placeholder | Existing legacy connection fallback; service role is needed for telemetry writes under RLS |

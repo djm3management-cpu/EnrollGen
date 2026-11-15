@@ -331,7 +331,7 @@ for approved features; never copy another deployment's values.
 - Authentication/telephony: `CLERK_SECRET_KEY`, `AGENT_WS_SIGNING_SECRET`,
   `TWILIO_AUTH_TOKEN`, `TWILIO_API_KEY_SECRET`, `INBOUND_VENDOR_API_KEY`,
   `DEEPGRAM_API_KEY`.
-- LLM/jobs: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `SCORE_CALL_JOB_SECRET`,
+- LLM/jobs (owner decision follow-up: `RTS_INGESTION_OPENAI_MODEL`, `KNOWLEDGE_UPDATE_OPENAI_MODEL`): `OPENAI_API_KEY`, `SCORE_CALL_JOB_SECRET`,
   `KNOWLEDGE_UPDATE_SECRET`, `BACKFILL_SECRET`. Historical Appendix B classified
   `SCORING_DAILY_TOKEN_CAP` as secret; it is an approved limit, never authority to
   raise the code-owned budget.

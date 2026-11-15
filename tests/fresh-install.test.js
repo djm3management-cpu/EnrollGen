@@ -137,3 +137,27 @@ test('actual operator provisioning + protected authority + service pipeline + HT
   globalThis.fetch=savedFetch;for(const key of Object.keys(process.env))if(!(key in savedEnv))delete process.env[key];Object.assign(process.env,savedEnv);await pg.exec('RESET ROLE');
  }
 });
+
+test('migration 159 cleans historical CRM snapshots while GHL is off and restores the exact feature fence',async()=>{
+ const [job]=await q('SELECT * FROM ghl_enrollment_deliveries LIMIT 1');assert.ok(job);
+ const [{payload}]=await q('SELECT decrypt_pii_value(payload_encrypted)::jsonb payload FROM ghl_enrollment_deliveries WHERE id=$1',[job.id]);
+ const [{headers}]=await q("SELECT current_setting('request.headers',true) headers");
+ const fence=()=>q("SELECT pg_get_triggerdef(oid) definition,tgenabled FROM pg_trigger WHERE tgrelid='ghl_enrollment_deliveries'::regclass AND tgname='deployment_feature_fence'");
+ const beforeFence=await fence();
+ // Synthetic pre-upgrade queue contents; the real feature fence is still on.
+ await pg.exec('ALTER TABLE ghl_enrollment_deliveries DISABLE TRIGGER minimize_ghl_delivery_snapshot');
+ await q('UPDATE ghl_enrollment_deliveries SET payload_encrypted=encrypt_pii_value($1) WHERE id=$2',[JSON.stringify({...payload,dob:'1955-02-28',mbi:'1EG4-TE5-MK73',medicaidNum:'PRIVATE',futurePrivate:'PRIVATE'}),job.id]);
+ await pg.exec('ALTER TABLE ghl_enrollment_deliveries ENABLE TRIGGER minimize_ghl_delivery_snapshot');
+ await q("SELECT set_config('request.headers','{}',false)");
+ assert.equal((await q("SELECT deployment_feature_enabled('GHL_ENABLED') enabled"))[0].enabled,false);
+ await pg.exec('DROP TRIGGER minimize_ghl_delivery_snapshot ON ghl_enrollment_deliveries; DROP FUNCTION minimize_ghl_delivery_snapshot()');
+ await pg.exec(readFileSync(new URL('../supabase/migrations/159_ghl_delivery_minimization.sql',import.meta.url),'utf8'));
+ const [after]=await q('SELECT * FROM ghl_enrollment_deliveries WHERE id=$1',[job.id]);
+ assert.deepEqual((await q('SELECT decrypt_pii_value(payload_encrypted)::jsonb payload FROM ghl_enrollment_deliveries WHERE id=$1',[job.id]))[0].payload,payload);
+ const {payload_encrypted:beforeCipher,...beforeState}=job,{payload_encrypted:afterCipher,...afterState}=after;
+ assert.ok(beforeCipher&&afterCipher);assert.deepEqual(afterState,beforeState);assert.deepEqual(await fence(),beforeFence);
+ await q('UPDATE ghl_enrollment_deliveries SET attempts=attempts+1 WHERE id=$1',[job.id]);
+ assert.equal((await q('SELECT attempts FROM ghl_enrollment_deliveries WHERE id=$1',[job.id]))[0].attempts,job.attempts);
+ assert.deepEqual(await q("SELECT * FROM claim_compliance_upload('ghl')"),[]);
+ await q("SELECT set_config('request.headers',$1,false)",[headers]);
+});

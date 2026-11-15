@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
           if (id.includes("@clerk")) return "vendor-clerk";
           if (id.includes("@supabase")) return "vendor-supabase";
           if (id.includes("recharts")) return "vendor-charts";
-          if (id.includes("openai") || id.includes("@anthropic-ai")) return "vendor-llm";
+          if (id.includes("openai")) return "vendor-llm";
           if (id.includes("framer-motion")) return "vendor-motion";
           if (id.includes("lucide-react")) return "vendor-icons";
           if (id.includes("jspdf-autotable")) return "vendor-jspdf-autotable";

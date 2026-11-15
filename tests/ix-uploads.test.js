@@ -115,3 +115,13 @@ test('dual-channel identity and reliable recording timestamps are required',asyn
   await assert.rejects(()=>uploadIx(job,[leg(1)],{environment:'test',register:()=>assert.fail('unverified recording')},{db:auditDb,env,checkpoint:async()=>{},fetchImpl:async()=>Response.json({sid:leg(1).recording_sid,account_sid:account,call_sid:parent,channels:2,start_time:'2026-10-30T12:00:00Z',duration:120,...changed})}),/dual_channel|identity_mismatch|times_missing/);
  }
 });
+
+for(const present of [true,false])test(`IX uploads proceed with ${present?'all standard attribution values':'legitimately absent attribution values'}`,async()=>{
+ const call=present?{lead_source:'Source',lead_channel:'Phone',lead_medium:'Inbound',lead_campaign:'Campaign',lead_cost:0}:{};
+ let registered;
+ const client={environment:'test',register:async payload=>{registered=payload;return registration(payload);},finalize:async()=>({status:'finalized'})};
+ const receipt=await uploadIx(job,[leg(1)],client,{db:auditDb,env,fetchImpl:twilio,checkpoint:async()=>{},call});
+ assert.equal(receipt.status,'finalized');
+ const expected={leadSource:'Source',leadChannel:'Phone',leadMedium:'Inbound',leadCampaign:'Campaign',leadCost:0};
+ for(const [key,value] of Object.entries(expected))if(present)assert.equal(registered.callMetadata[key],value);else assert.equal(Object.hasOwn(registered.callMetadata,key),false);
+});

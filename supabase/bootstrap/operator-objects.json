@@ -62,6 +62,11 @@
     },
     {
       "schema": "public",
+      "name": "audit_browser_evidence",
+      "arguments": "p_type text, p_resource uuid, p_action text, p_allowed boolean"
+    },
+    {
+      "schema": "public",
       "name": "authorize_paragon_report",
       "arguments": "p_hash text, p_ip text"
     },
@@ -467,6 +472,11 @@
     },
     {
       "schema": "public",
+      "name": "export_evidence_calls",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "fail_conversely_run",
       "arguments": "p_id uuid, p_token uuid, p_error text, p_disabled boolean"
     },
@@ -657,6 +667,11 @@
     },
     {
       "schema": "public",
+      "name": "mark_evidence_messages_read",
+      "arguments": "p_contact uuid, p_read_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
       "name": "mark_manual_opportunity_stage",
       "arguments": ""
     },
@@ -713,6 +728,11 @@
     {
       "schema": "public",
       "name": "messages_touch_contact",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "minimize_ghl_delivery_snapshot",
       "arguments": ""
     },
     {
@@ -832,6 +852,16 @@
     },
     {
       "schema": "public",
+      "name": "private_search_transcript_chunks",
+      "arguments": "query_embedding vector, match_count integer, filter_product_line text, filter_carrier text, filter_disposition text, filter_topics text[], similarity_threshold double precision"
+    },
+    {
+      "schema": "public",
+      "name": "private_search_transcript_chunks",
+      "arguments": "query_embedding vector, similarity_threshold double precision, match_count integer"
+    },
+    {
+      "schema": "public",
       "name": "protect_agent_call_reservation",
       "arguments": ""
     },
@@ -869,6 +899,166 @@
       "schema": "public",
       "name": "read_contact_tags",
       "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_contact_ids uuid[]"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_agent_coaching",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_insights",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_logs",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_records",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_threads",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_call_transcripts",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_compliance_flags",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_compliance_scorecards",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_compliance_scores",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_contact_activities",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_contact_lead_intel",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_contact_notes",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_follow_ups",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_followup_queue",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_inbound_calls",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_intent_detections",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_messages",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_opportunities",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_opportunity_events",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_opportunity_stage_history",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_phi_redactions",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_sales_log",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_scorecard_items",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_section_scores",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_sessions",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_telephony_events",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_transcript_chunks",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_agent_performance",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_compliance_overview",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_daily_activity",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_enrollment_summary",
+      "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_evidence_v_pipeline_status",
+      "arguments": "p_resource uuid, p_action text"
     },
     {
       "schema": "public",
@@ -954,6 +1144,11 @@
       "schema": "public",
       "name": "register_stt_stream",
       "arguments": "p_tenant_id uuid, p_call_sid text, p_channel text"
+    },
+    {
+      "schema": "public",
+      "name": "reject_evidence_audit_mutation",
+      "arguments": ""
     },
     {
       "schema": "public",
@@ -1277,6 +1472,31 @@
     },
     {
       "schema": "public",
+      "name": "update_evidence_call_records",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "update_evidence_contact_notes",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "update_evidence_follow_ups",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "update_evidence_followup_queue",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "update_evidence_messages",
+      "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb"
+    },
+    {
+      "schema": "public",
       "name": "update_pii_field",
       "arguments": "p_contact_id uuid, p_requesting_agent_id uuid, p_field text, p_value text"
     },
@@ -1378,7 +1598,6 @@
   "supabase_application_cron_jobs": [],
   "audit_appendix_b_secret_classified_names": [
     "AGENT_WS_SIGNING_SECRET",
-    "ANTHROPIC_API_KEY",
     "BACKFILL_SECRET",
     "BIBLIA_API_KEY",
     "CLERK_SECRET_KEY",

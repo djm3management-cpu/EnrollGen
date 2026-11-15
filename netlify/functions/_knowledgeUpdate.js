@@ -1,9 +1,11 @@
+import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import {admit,AdmissionError} from './_admission.js';
-import { redactPromptPayload } from './_redaction.js';
+import { complete } from '../../src/lib/llm/client.ts';
+import { knowledgeUpdateFormat } from '../../src/lib/llm/schemas/jobs.js';
+import { llmRuntime } from './_llmTelemetry.js';
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
 
 const SOURCE_FETCH_TIMEOUT_MS = 15000;
-const AI_TIMEOUT_MS = 60000;
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
@@ -76,71 +78,17 @@ async function fetchSourceMaterial(sourceUrls = []) {
     .join("\n\n---\n\n");
 }
 
-function parseClaudeText(data) {
-  return data?.content
-    ?.map((block) => (block.type === "text" ? block.text : ""))
-    .filter(Boolean)
-    .join("")
-    .trim() || "";
-}
-
-function parseUpdateResponse(text) {
-  const trimmed = String(text || "").trim();
-  if (!trimmed || /^NO_CHANGES\b/i.test(trimmed)) {
-    return { changed: false, raw: trimmed };
+export async function generateKnowledgeUpdate(entry, sourceMaterial, runtime = {}) {
+  const result = await complete({
+    engine:'MA', path:'summary', task:'knowledge_update', max_completion_tokens:5000,
+    system: 'You are a Medicare compliance knowledge base editor. Return only the requested update format.',
+    messages:[{role:'user',content:`You are a Medicare compliance knowledge base editor. Compare the existing knowledge entry below with the latest source material. If there are meaningful changes (new regulations, updated guidance, changed dates, new carriers, etc.), produce an updated version of the knowledge entry. If no changes are needed, set changed to false.\n\nExisting entry:\n${truncate(entry.content, 18000)}\n\nSource material:\n${truncate(sourceMaterial, 28000)}\n\nRespond with JSON: changed (boolean), summary (1-2 sentence summary of what changed), confidence (0.0-1.0 how confident you are this update is correct), updatedContent (the full updated entry content). For no changes use an empty summary and updatedContent and confidence 0.`}],
+    response_format:knowledgeUpdateFormat,
+  },runtime);
+  if (result.tool_calls.length || !result.parsed || (result.parsed.changed && (!result.parsed.updatedContent.trim() || !result.parsed.summary.trim()))) {
+    throw Object.assign(new Error('Invalid knowledge update output'),{code:'schema_validation'});
   }
-
-  const summaryMatch = /Summary:\s*([\s\S]*?)(?:\nConfidence:|\nUpdated content:|$)/i.exec(trimmed);
-  const confidenceMatch = /Confidence:\s*([0-9.]+)/i.exec(trimmed);
-  const contentMatch = /Updated content:\s*([\s\S]*)/i.exec(trimmed);
-  const confidence = confidenceMatch ? Number(confidenceMatch[1]) : 0;
-  const normalizedConfidence = confidence > 1 ? confidence / 100 : confidence;
-
-  return {
-    changed: /CHANGES_DETECTED/i.test(trimmed) || Boolean(contentMatch),
-    summary: summaryMatch?.[1]?.trim() || "Knowledge update detected.",
-    confidence: Number.isFinite(normalizedConfidence) ? normalizedConfidence : 0,
-    updatedContent: contentMatch?.[1]?.trim() || "",
-    raw: trimmed,
-  };
-}
-
-async function callClaude(entry, sourceMaterial) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify(redactPromptPayload({
-        model: process.env.KNOWLEDGE_UPDATE_MODEL || "claude-sonnet-4-6",
-        max_tokens: 5000,
-        system: "You are a Medicare compliance knowledge base editor. Return only the requested update format.",
-        messages: [
-          {
-            role: "user",
-            content: `You are a Medicare compliance knowledge base editor. Compare the existing knowledge entry below with the latest source material. If there are meaningful changes (new regulations, updated guidance, changed dates, new carriers, etc.), produce an updated version of the knowledge entry. If no changes are needed, respond with "NO_CHANGES".\n\nExisting entry:\n${truncate(entry.content, 18000)}\n\nSource material:\n${truncate(sourceMaterial, 28000)}\n\nIf changes are needed, respond with:\nCHANGES_DETECTED\nSummary: [1-2 sentence summary of what changed]\nConfidence: [0.0-1.0 how confident you are this update is correct]\n\nUpdated content:\n[the full updated entry content]`,
-          },
-        ],
-      })),
-      signal: controller.signal,
-    });
-
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(`Anthropic request failed with HTTP ${response.status}`);
-    }
-    return parseUpdateResponse(parseClaudeText(data));
-  } finally {
-    clearTimeout(timeout);
-  }
+  return result.parsed;
 }
 
 async function logKnowledgeUpdate(supabase, entryId, payload) {
@@ -159,14 +107,14 @@ async function logKnowledgeUpdate(supabase, entryId, payload) {
   if (error) throw error;
 }
 
-async function processEntry(supabase, entry, { fetchSources, generateUpdate, budgetSubject }) {
+async function processEntry(supabase, entry, { fetchSources, generateUpdate, budgetSubject, runtime }) {
   if (!entry.source_urls?.length) {
     return { id: entry.id, key: entry.key, result: "skipped_no_sources" };
   }
 
   const sourceMaterial = await fetchSources(entry.source_urls);
   await admit(supabase,'summary',budgetSubject);
-  const parsed = await generateUpdate(entry, sourceMaterial);
+  const parsed = await generateUpdate(entry, sourceMaterial, runtime);
   if (!parsed.changed) return { id: entry.id, key: entry.key, result: "no_changes" };
 
   // Confidence is informational only. No agentic proposal can publish live knowledge.
@@ -218,7 +166,7 @@ export async function listKnowledgeCategories() {
 
 export async function runKnowledgeUpdate(
   { category = null, key = null, limit = 12, tenantId = null, budgetSubject = 'service:knowledge-update' } = {},
-  { getDb = getSupabase, fetchSources = fetchSourceMaterial, generateUpdate = callClaude } = {},
+  { getDb = getSupabase, fetchSources = fetchSourceMaterial, generateUpdate = generateKnowledgeUpdate, runtime = {} } = {},
 ) {
   if (process.env.KNOWLEDGE_AUTO_UPDATE_ENABLED !== "true") return { status: "disabled" };
   const supabase = getDb();
@@ -227,13 +175,13 @@ export async function runKnowledgeUpdate(
 
   for (const entry of entries) {
     try {
-      results.push(await processEntry(supabase, entry, { fetchSources, generateUpdate, budgetSubject }));
+      results.push(await processEntry(supabase, entry, { fetchSources, generateUpdate, budgetSubject, runtime: {...llmRuntime(supabase,entry.tenant_id || tenantId || deploymentProfile().tenantId,null,{endpoint:'knowledge-update',entry_id:entry.id}),...runtime} }));
     } catch (error) {
       if(error instanceof AdmissionError)throw error;
       await logKnowledgeUpdate(supabase, entry.id, {
         previousContent: entry.content,
         newContent: null,
-        summary: error?.message || "Agentic update failed.",
+        summary: error?.code === 'model_setting_required' ? error.message : 'Agentic update failed.',
         changeSource: "agentic_auto",
         confidence: 0,
         status: "draft",
@@ -242,7 +190,7 @@ export async function runKnowledgeUpdate(
         id: entry.id,
         key: entry.key,
         result: "error",
-        error: 'request_failed',
+        error: error.code === 'model_setting_required' ? error.message : 'request_failed',
       });
     }
   }

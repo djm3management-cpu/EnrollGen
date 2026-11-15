@@ -24,7 +24,7 @@ import {
   shouldSuppressDuplicateIssue,
   readErrorDetail,
   getCopilotHttpErrorMessage,
-  parseAnthropicResponse,
+  parseCompletionResponse,
   parseCoachingJson,
   buildTranscriptWindows,
   formatSectionDuration,
@@ -523,7 +523,7 @@ SECTION CONTEXT (rolling window):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = parseAnthropicResponse(data);
+      const raw = parseCompletionResponse(data);
 
       let { level, message, issueTag, confidence } = parseCoachingJson(raw);
 
@@ -665,7 +665,7 @@ SECTION CONTEXT (rolling window):
 
       clearServiceIssue();
       const data = await response.json();
-      const raw = shortLiveMessage(parseAnthropicResponse(data));
+      const raw = shortLiveMessage(parseCompletionResponse(data));
 
       if (raw) {
         const prefix = isSpoken ? `"${question}"` : `? ${question}`;

@@ -64,7 +64,7 @@ before(async()=>{
  const pii=readFileSync(new URL('../supabase/migrations/022_pii_protection_phase1.sql',import.meta.url),'utf8');
  await pg.exec(pii.slice(pii.indexOf('CREATE OR REPLACE FUNCTION pii_vault.get_active_key()'),pii.indexOf('-- Blind-index HMAC key')));
  await pg.exec(readFileSync(new URL('../supabase/migrations/071_contacts_pii_json_null.sql',import.meta.url),'utf8'));
- for(const migration of ['123_compliance_uploads.sql','124_ix_uploads.sql','125_enrollment_intakes.sql','127_conversely_manual_runs.sql','128_sunfire_ix_api.sql','132_ix_test_enrollment_safeguards.sql','149_conversely_run_events.sql'])await pg.exec(readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),'utf8'));
+ for(const migration of ['123_compliance_uploads.sql','124_ix_uploads.sql','125_enrollment_intakes.sql','127_conversely_manual_runs.sql','128_sunfire_ix_api.sql','132_ix_test_enrollment_safeguards.sql','149_conversely_run_events.sql','159_ghl_delivery_minimization.sql'])await pg.exec(readFileSync(new URL(`../supabase/migrations/${migration}`,import.meta.url),'utf8'));
 });
 after(()=>pg.close());
 test('every required field and UHC-only confirmation rule are enforced; defaults are valid',()=>{
@@ -90,10 +90,10 @@ test('typing formats phone and uppercase MBI, premiums accept zero, and calendar
  assert.equal(followUpDate('2027-01-01'),'2027-03-02');assert.equal(followUpDate('2028-01-01'),'2028-03-01');assert.equal(followUpDate('2026-10-01'),'2026-11-30');assert.equal(followUpDate('2027-02-30'),'');
  assert.deepEqual(planAutofill({plan_name:'Landscape',contract_id:'H9999',plan_id:'012',segment_id:'',monthly_premium:0}),{planName:'Landscape',contractId:'H9999',planId:'012',segmentId:'0',premium:'$0.00'});
 });
-test('GHL has the legacy keys plus plan type and ZIP, date/phone/MBI/premium formats and mapped agent assignment',()=>{
+test('GHL allowlist keeps all enrollment fields except full identifiers and preserves formats and assignment',()=>{
  const payload=ghlPayload(valid({medicaid:'Yes',medicaidNum:'CASE',hra:'Yes',hraDate:'2026-10-29'}),'2026-10-29T16:00:00.000Z',roster);
- assert.deepEqual(Object.keys(payload).sort(),'planType,zip,firstName,lastName,dob,phone,email,state,mbi,medicaid,medicaidNum,prevCarrier,newCarrier,planName,enrollCode,premium,sunfireCode,effectiveDate,sixtyDayDate,sep,contractId,planId,segmentId,enrollmentId,pcpName,agency,aor,assignedUserId,assignedTo,hra,hraDate,submittedAt'.split(',').sort());
- assert.equal(payload.phone,'(212) 555-0101');assert.equal(payload.mbi,'1AB2-CD3-EF45');assert.equal(payload.premium,'$0.00');assert.equal(payload.dob,'1955-02-28');assert.equal(payload.medicaid,'Yes');assert.equal(payload.sep,'No');assert.equal(payload.hra,'Yes');
+ assert.deepEqual(Object.keys(payload).sort(),'planType,zip,firstName,lastName,phone,email,state,medicaid,prevCarrier,newCarrier,planName,enrollCode,premium,sunfireCode,effectiveDate,sixtyDayDate,sep,contractId,planId,segmentId,enrollmentId,pcpName,agency,aor,assignedUserId,assignedTo,hra,hraDate,submittedAt'.split(',').sort());
+ assert.equal(payload.phone,'(212) 555-0101');assert.equal(payload.mbi,undefined);assert.equal(payload.premium,'$0.00');assert.equal(payload.dob,undefined);assert.equal(payload.medicaidNum,undefined);assert.equal(payload.medicaid,'Yes');assert.equal(payload.sep,'No');assert.equal(payload.hra,'Yes');
  assert.equal(payload.agency,'Pilot Benefit Agency');assert.equal(payload.assignedUserId,'pilot-ghl-01');assert.equal(payload.assignedTo,payload.assignedUserId);
  assert.equal(ghlPayload(valid({aor:'Pilot Agent 03',writingAgentId:roster[2].id}),'now',roster).assignedUserId,'pilot-ghl-03');
 });
@@ -122,7 +122,8 @@ test('saving survives GHL failure, encrypts all sensitive fields and creates ass
  const [task]=await query('SELECT * FROM follow_ups WHERE id=$1',[row.follow_up_id]);assert.equal(task.agent_id,'pilot_agent_01');assert.equal(task.contact_id,contact);assert.equal(new Date(task.due_at).toISOString(),'2027-03-02T14:00:00.000Z');
  const [delivery]=await query('SELECT * FROM ghl_enrollment_deliveries');assert.equal(delivery.status,'pending');
  const sent=JSON.parse((await db.rpc('decrypt_pii_value',{p_encrypted:delivery.payload_encrypted})).data);
- for(const [key] of INTAKE_FIELDS)if(key!=='personalCode')assert.equal(sent[key],data[key],`GHL ${key}`);
+ for(const [key] of INTAKE_FIELDS)if(!['personalCode','dob','mbi','medicaidNum'].includes(key))assert.equal(sent[key],data[key],`GHL ${key}`);
+ for(const key of ['dob','mbi','medicaidNum'])assert.equal(Object.hasOwn(sent,key),false);
  assert.ok(delivery.payload_encrypted.c);assert.ok(!JSON.stringify(delivery).includes('SECRET-CASE'));
  await query(`UPDATE call_records SET call_outcome='enrolled' WHERE id=$1`,[call]);assert.equal((await query('SELECT * FROM ix_uploads')).length,1);
 });
@@ -148,7 +149,7 @@ test('GHL uses durable leases, exponential retries, stable idempotency, and sani
   const [job]=await query(`SELECT *,extract(epoch FROM(next_attempt_at-updated_at))::integer AS delay FROM ghl_enrollment_deliveries ORDER BY created_at LIMIT 1`);
   assert.equal(job.attempts,attempt);assert.equal(job.delay,60*2**(attempt-1));assert.equal(job.last_error,'ghl_delivery_failed');
  }
- assert.equal(sent.length,5);assert.equal(new Set(sent.map(s=>s.headers['Idempotency-Key'])).size,1);assert.equal(sent[0].body.mbi,'1AB2-CD3-EF45');
+ assert.equal(sent.length,5);assert.equal(new Set(sent.map(s=>s.headers['Idempotency-Key'])).size,1);assert.equal(sent[0].body.mbi,undefined);assert.equal(sent[0].body.dob,undefined);assert.equal(sent[0].body.medicaidNum,undefined);
  await query(`UPDATE ghl_enrollment_deliveries SET next_attempt_at=now()-interval '1 second'`);
  await deliverEnrollmentWebhooks(db,{env,send:async()=>({status:200})});
  assert.equal((await query(`SELECT count(*)::integer AS n FROM ghl_enrollment_deliveries WHERE status='uploaded'`))[0].n,2);
@@ -440,7 +441,7 @@ test('test enrollments create no GHL jobs, are excluded from Conversely candidat
  assert.equal((await query('SELECT is_test_enrollment FROM call_records WHERE id=$1',[dylanCall]))[0].is_test_enrollment,false);
  assert.equal((await query(`SELECT * FROM conversely_week_candidates('2026-10-19') WHERE enrollment_key=$1`,[real])).length,0,'fixture call has no call_start');
  // Even a pre-existing/manual GHL or Conversely queue row cannot bypass the claim guard.
- await query(`INSERT INTO ghl_enrollment_deliveries(tenant_id,call_id,twilio_recording_sid,enrollment_key,intake_id,payload_encrypted) VALUES($1,$2,'ghl','test-legacy',$3,'{}')`,[tenant,dylanCall,sandbox]);
+ await query(`INSERT INTO ghl_enrollment_deliveries(tenant_id,call_id,twilio_recording_sid,enrollment_key,intake_id,payload_encrypted) VALUES($1,$2,'ghl','test-legacy',$3,encrypt_pii_value('{}'))`,[tenant,dylanCall,sandbox]);
  await query(`INSERT INTO conversely_submissions(tenant_id,call_id,twilio_recording_sid,enrollment_key) VALUES($1,$2,'REtest',$3)`,[tenant,dylanCall,sandbox]);
  await query(`UPDATE ghl_enrollment_deliveries SET attempts=5 WHERE intake_id<>$1`,[sandbox]);
  assert.equal((await query(`SELECT * FROM claim_compliance_upload('ghl')`)).length,0);
@@ -499,4 +500,21 @@ test('migration preserves historical fields in encrypted native drafts, keeps ne
  const response=await handler()(new Request(`https://app.test/api/enrollment-intakes?call_id=${historical}`,{method:'POST',body:JSON.stringify({id:draft.id,contact_id:contact,data:valid({planType:'C-SNP'})})}));
  assert.equal(response.status,200);const [completed]=await query('SELECT * FROM enrollment_intakes WHERE id=$1',[draft.id]);assert.ok(completed.completed_at);assert.equal(completed.data.legacyStep7.applicationId,'OLD-APP');
  const summary=await handler()(new Request(`https://app.test/api/enrollment-intakes?contact_id=${contact}`));assert.equal(summary.status,200);assert.ok((await summary.json()).intakes.some(row=>row.id===draft.id));
+});
+
+test('migration 159 minimizes old encrypted delivery snapshots and enforces the allowlist on subsequent writes',async()=>{
+ const [before]=await query('SELECT * FROM ghl_enrollment_deliveries ORDER BY created_at LIMIT 1');assert.ok(before);
+ const original=JSON.parse((await db.rpc('decrypt_pii_value',{p_encrypted:before.payload_encrypted})).data);
+ const canonical=(await query('SELECT pii_encrypted FROM enrollment_intakes WHERE id=$1',[before.intake_id]))[0];
+ await pg.exec('DROP TRIGGER minimize_ghl_delivery_snapshot ON ghl_enrollment_deliveries; DROP FUNCTION minimize_ghl_delivery_snapshot()');
+ await query('UPDATE ghl_enrollment_deliveries SET payload_encrypted=encrypt_pii_value($1) WHERE id=$2',[JSON.stringify({...original,dob:'1955-02-28',mbi:'1EG4-TE5-MK73',medicaidNum:'PRIVATE',futurePrivate:{dob:'PRIVATE'}}),before.id]);
+ await pg.exec(readFileSync(new URL('../supabase/migrations/159_ghl_delivery_minimization.sql',import.meta.url),'utf8'));
+ const [after]=await query('SELECT * FROM ghl_enrollment_deliveries WHERE id=$1',[before.id]);
+ assert.deepEqual(JSON.parse((await db.rpc('decrypt_pii_value',{p_encrypted:after.payload_encrypted})).data),original);
+ const {payload_encrypted:a,...afterState}=after,{payload_encrypted:b,...beforeState}=before;
+ assert.deepEqual(afterState,beforeState);assert.notDeepEqual(a,b);
+ assert.deepEqual((await query('SELECT pii_encrypted FROM enrollment_intakes WHERE id=$1',[before.intake_id]))[0],canonical);
+ await query('UPDATE ghl_enrollment_deliveries SET payload_encrypted=encrypt_pii_value($1) WHERE id=$2',[JSON.stringify({...original,dob:'PRIVATE',futurePrivate:'PRIVATE'}),before.id]);
+ const [again]=await query('SELECT decrypt_pii_value(payload_encrypted)::jsonb payload FROM ghl_enrollment_deliveries WHERE id=$1',[before.id]);assert.deepEqual(again.payload,original);
+ for(const role of ['anon','authenticated'])assert.equal((await query(`SELECT has_function_privilege($1,'public.minimize_ghl_delivery_snapshot()','EXECUTE') allowed`,[role]))[0].allowed,false);
 });
