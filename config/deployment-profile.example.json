@@ -61,5 +61,20 @@
     "clerkOrigin": "https://auth.example",
     "clerkAccountsOrigin": "https://accounts.example",
     "databaseOrigin": "https://database.example"
+  },
+  "retention": {
+    "enrollmentRecordingYears": 10,
+    "enrollmentTranscriptYears": 10,
+    "marketingRecordingYears": 10,
+    "marketingTranscriptYears": 10,
+    "reducedMarketingRule": false,
+    "scopeOfAppointmentYears": 10,
+    "enrollmentYears": 10,
+    "evidenceAuditYears": 10,
+    "serviceCallYears": 2,
+    "textConsentYears": 5,
+    "operationalDays": 90,
+    "contactReviewYears": 10,
+    "overrides": {}
   }
 }

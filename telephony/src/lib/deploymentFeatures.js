@@ -1,7 +1,7 @@
 // Shared server-only module. Kept inside telephony so its independent image
 // ships the exact same parser as Netlify and the integrations worker.
 export const FEATURE_NAMES = Object.freeze([
-  'PARAGON_ENABLED', 'PARAGON_STATE_ROUTING_ENABLED', 'GHL_ENABLED',
+  'RETENTION_PURGE_ENABLED', 'PARAGON_ENABLED', 'PARAGON_STATE_ROUTING_ENABLED', 'GHL_ENABLED',
   'STRIPE_BILLING_ENABLED', 'DAILY_VERSE_ENABLED', 'CONVERSELY_UPLOAD_ENABLED',
   'IX_UPLOAD_ENABLED', 'IX_REPORT_ENABLED', 'CONFERENCE_CALLING_ENABLED',
   'SCORING_ENABLED', 'TRANSCRIPT_GAP_FILL_ENABLED',

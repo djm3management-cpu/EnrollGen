@@ -1,3 +1,4 @@
+import { validateRetention } from './retentionPolicy.js';
 // Server-held, per-deployment configuration. This file ships in every service.
 import { deploymentFeatures, serverFeatureEnvironment } from './deploymentFeatures.js';
 const fail = key => { throw new Error(`Invalid deployment profile: ${key}`); };
@@ -87,6 +88,7 @@ export function parseDeploymentProfile(raw, features = deploymentFeatures()) {
       for(const [key,value] of Object.entries(limits))if(!['minute','subjectDay','deploymentDay','concurrent'].includes(key)||!Number.isInteger(value)||value<1||value>1000000)fail('admissionLimits value');
     }
   }
+  p.retention = validateRetention(p.retention);
   return deepFreeze(p);
 }
 function deepFreeze(value) { if (value && typeof value === 'object') { Object.values(value).forEach(deepFreeze); Object.freeze(value); } return value; }

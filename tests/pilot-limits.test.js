@@ -45,7 +45,10 @@ test('counter is service only, hash only, and can be pruned in bounded batches',
  }
  const rows=(await pg.query('SELECT key_hash FROM admission_counters')).rows;assert.ok(rows.every(r=>/^[a-f0-9]{64}$/.test(r.key_hash)));
  await pg.exec("UPDATE admission_counters SET expires_at=now()-interval '2 days'");
- assert.ok((await db.rpc('prune_admission_counters')).data>0);
+ assert.equal((await db.rpc('prune_admission_counters')).data,0);
+ // Expiry still denies old windows; deletion now requires the retention job's
+ // switch, age, reference and hold checks. Recent counters remain present.
+ assert.equal((await pg.query('SELECT count(*)::int n FROM admission_counters')).rows[0].n,rows.length);
 });
 test('vendor admission verifies active hashes and ignores supplied vendor names and client addresses',async()=>{
  await pg.exec('TRUNCATE admission_counters');const hash='a'.repeat(64);

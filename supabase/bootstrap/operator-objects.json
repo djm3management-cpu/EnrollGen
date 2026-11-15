@@ -1262,6 +1262,81 @@
     },
     {
       "schema": "public",
+      "name": "retention_admin",
+      "arguments": "p_actor text, p_org text"
+    },
+    {
+      "schema": "public",
+      "name": "retention_anchor_immutable",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "retention_anchor_insert",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "retention_certify_transcript",
+      "arguments": "p_actor text, p_org text, p_transcript uuid, p_reason text"
+    },
+    {
+      "schema": "public",
+      "name": "retention_classification",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "retention_complaint_trigger",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "retention_contact_activity",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "retention_delete_audit",
+      "arguments": "p_id uuid, p_years integer, p_override jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "retention_flag_complaint",
+      "arguments": "p_actor text, p_org text, p_contact uuid, p_reason text"
+    },
+    {
+      "schema": "public",
+      "name": "retention_intake_classification",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "retention_lock_batch",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "retention_place_hold",
+      "arguments": "p_actor text, p_org text, p_type text, p_target uuid, p_reason text, p_source text"
+    },
+    {
+      "schema": "public",
+      "name": "retention_release_hold",
+      "arguments": "p_actor text, p_org text, p_hold uuid, p_reason text"
+    },
+    {
+      "schema": "public",
+      "name": "retention_resolve_complaint",
+      "arguments": "p_actor text, p_org text, p_contact uuid, p_reason text"
+    },
+    {
+      "schema": "public",
+      "name": "retention_transcript_edit",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "retry_failed_scoring",
       "arguments": "p_call_id uuid, p_tenant_id uuid, p_request_id uuid, p_reason text, p_requested_by text, p_execute boolean"
     },
@@ -1512,6 +1587,23 @@
     }
   ],
   "netlify_function_source_modules": [
+    "_admission.js",
+    "_clerkAuth.js",
+    "_conferencePlayback.js",
+    "_copilotSkipCounter.js",
+    "_deterministicBlockers.js",
+    "_evidenceAccess.js",
+    "_knowledgeUpdate.js",
+    "_llmTelemetry.js",
+    "_paragonControls.js",
+    "_recordingAccess.js",
+    "_recordingCompliance.js",
+    "_redaction.js",
+    "_rtsIngestion.js",
+    "_spreadsheet.js",
+    "_subscriptionGate.js",
+    "_telephonyLink.js",
+    "_tenantSettings.js",
     "agent-status-log.js",
     "backfill-analytics.js",
     "backfill-deepgram-intelligence.js",
@@ -1536,6 +1628,8 @@
     "deployment-status.js",
     "embeddings.js",
     "enrollment-intakes.js",
+    "evidence-export.js",
+    "evidence-media.js",
     "evidence-session.js",
     "live-bulletins.js",
     "nightly-analytics.js",
@@ -1548,6 +1642,7 @@
     "post-call-background.js",
     "post-call.js",
     "recordings.js",
+    "retention-holds.js",
     "rts-ingest.js",
     "score-call-background.js",
     "script-settings.js",

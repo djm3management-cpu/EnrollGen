@@ -261,13 +261,8 @@ export function startRecordingWorker({ db, config, log = console.error }) {
       if (Date.now() - seededAt > 60_000) {
         checked(await db.rpc('seed_recording_reconciliation', { p_account_sid: config.twilioAccountSid }));
         seededAt = Date.now();
-        // Expired capability rows have no further use; this is not audio deletion.
-        checked(await db.from('recording_download_tickets').delete().lt('expires_at', new Date().toISOString()));
-        // Compliance-table rollout or cleanup failures must not stop recording
-        // ingestion/reconciliation or affect existing playback capabilities.
-        try {
-          checked(await db.from('recording_compliance_tickets').delete().lt('expires_at', new Date().toISOString()));
-        } catch { log(JSON.stringify({ event: 'recording_compliance_cleanup_failed', code: 'database_error' })); }
+        // Expiry still rejects old capabilities. Row cleanup belongs to the
+        // retention job so references and legal holds are checked together.
       }
       const jobs = checked(await db.rpc('claim_recording_ingestion', { p_limit: 2 })) || [];
       const checks = checked(await db.rpc('claim_recording_reconciliation', { p_limit: 2 })) || [];

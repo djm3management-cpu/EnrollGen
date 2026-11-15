@@ -45,3 +45,8 @@ GRANT ALL ON storage.objects,storage.buckets TO service_role;
 
 -- P0-11 is append only even for server transports.
 REVOKE UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.evidence_access_log FROM service_role;
+
+-- Retention control mutations remain server routines; transaction permits are owner-only.
+REVOKE ALL ON public.retention_holds,public.retention_complaint_resolution,public.retention_audit_permit FROM service_role;
+GRANT SELECT ON public.retention_holds TO service_role;
+REVOKE DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.retention_runs FROM service_role;
