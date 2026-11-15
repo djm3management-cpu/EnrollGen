@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, existsSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -8,14 +8,13 @@ import { createRequire } from 'node:module';
 import { build } from 'esbuild';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import XLSX from 'xlsx';
 import { PGlite } from '@electric-sql/pglite';
 import { parseDsnpWorkbook, loadDsnpPlans, renderDsnpSql } from '../scripts/parse_cms_dsnp.js';
 import { INTEGRATED_LANE, PDP_LANE } from '../src/lib/dualLisSep.js';
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const migration = read('supabase/migrations/081_dsnp_alignment_2027.sql');
 const row = { 'Contract ID': 'H1234', 'Plan ID': '001', 'Legal Entity Name': 'Fixture', State: 'NJ', 'D-SNP Integration Status': 'CO', 'Applicable Integrated Plan': 'Yes' };
-const workbook = (rows, sheet = 'CY 2027 Data') => ({ SheetNames: [sheet], Sheets: { [sheet]: XLSX.utils.json_to_sheet(rows) } });
+const workbook = (rows, sheet = 'CY 2027 Data') => [{ sheet, data: rows.length ? [Object.keys(Object.assign({}, ...rows)), ...rows.map(row => Object.keys(Object.assign({}, ...rows)).map(header => row[header] ?? null))] : [] }];
 const options = { live: true, fileName: 'cy-2027-list.xlsx' };
 
 test('CY2027 layout preserves AIP, leading zeros and unknown EAE/MCO; legacy layout remains readable', () => {
@@ -74,12 +73,12 @@ test('SQL CLI needs no database credentials and enforces live validation before 
     const run = (...args) => spawnSync(process.execPath, ['scripts/parse_cms_dsnp.js', '--file', file, ...args], {
       encoding: 'utf8', env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON, ...process.env, SUPABASE_DB_URL: '', SUPABASE_DB_PASSWORD: '' },
     });
-    XLSX.writeFile(workbook([row]), file);
+    copyFileSync('tests/fixtures/spreadsheets/cy2027-dsnp.xlsx', file);
     const result = run('--sql-out', output);
     assert.equal(result.status, 0, result.stderr);
     assert.match(readFileSync(output, 'utf8'), /VALUES \(2027,'NJ',NULL,'Fixture'/);
     rmSync(output);
-    XLSX.writeFile(workbook([row], 'Data'), file);
+    copyFileSync('tests/fixtures/spreadsheets/cy2027-invalid.xlsx', file);
     assert.notEqual(run('--sql-out', output).status, 0);
     assert.equal(existsSync(output), false);
     assert.match(run('--sql-out').stderr, /requires an output path/);

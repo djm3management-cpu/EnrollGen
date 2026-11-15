@@ -5,6 +5,8 @@
 
 [functions]
   node_bundler = "esbuild"
+  # Worker entry points resolve these installed Node packages at runtime.
+  external_node_modules = ["read-excel-file", "papaparse"]
 
 # Redirect /api/* to Netlify Functions
 [[redirects]]

@@ -37,7 +37,6 @@ export default defineConfig(({ mode }) => {
           if (id.includes("jspdf")) return "vendor-jspdf";
           if (id.includes("html2canvas")) return "vendor-html2canvas";
           if (id.includes("dompurify") || id.includes("purify")) return "vendor-dompurify";
-          if (id.includes("xlsx")) return "vendor-xlsx";
           if (id.includes("react") || id.includes("react-dom")) return "vendor-react";
         },
       },

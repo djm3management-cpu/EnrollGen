@@ -13,6 +13,7 @@ import {
   normalizeChunkResult,
   parseAnthropicJson,
   parseRtsFile,
+  readRtsUploadForm,
   sha256Hex,
 } from "./_rtsIngestion.js";
 
@@ -184,26 +185,31 @@ async function findExistingLog(supabase, tenantId, fileHash) {
 async function handleUpload(request, supabase, context) {
   let form;
   try {
-    form = await request.formData();
-  } catch {
-    return json(400, { error: "Expected a multipart file upload." });
+    form = await readRtsUploadForm(request);
+  } catch (error) {
+    return json(400, { error: error.message });
   }
   const file = form.get("file");
   if (!file || typeof file.arrayBuffer !== "function") {
-    return json(400, { error: "Choose a CSV, TSV, XLSX, or XLS file to upload." });
+    return json(400, { error: "Choose a CSV, TSV, or XLSX file to upload. Save legacy or macro-enabled workbooks as .xlsx." });
   }
 
-  const [parsed, fileHash, known] = await Promise.all([
-    parseRtsFile(file),
-    sha256Hex(file),
-    getKnownData(supabase, context.tenant.id),
-  ]);
+  let parsed;
+  try {
+    parsed = await parseRtsFile(file);
+  } catch (error) {
+    return json(400, { error: error.message });
+  }
   if (!parsed.rows.length) return json(400, { error: "The uploaded file does not contain data rows." });
   if (parsed.rows.length > MAX_ROWS) {
     return json(413, {
       error: `The file contains ${parsed.rows.length} rows. RTS ingestion currently supports up to ${MAX_ROWS} rows per upload.`,
     });
   }
+  const [fileHash, known] = await Promise.all([
+    sha256Hex(file),
+    getKnownData(supabase, context.tenant.id),
+  ]);
   const duplicate = await findExistingLog(supabase, context.tenant.id, fileHash);
   if (duplicate) {
     return json(409, {

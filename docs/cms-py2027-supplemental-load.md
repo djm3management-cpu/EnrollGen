@@ -118,3 +118,13 @@ Netlify published commit `131de11014be1ca05346894d099365c69339f0e6` on October 1
 - The final repeat of the data audit passed with `publicAlignmentCount: 949`; all four tables still had zero PY2026 and non-PY2027 rows.
 
 The follow-up commit contains only the public CMS SELECT policy, its test, the visibility check, and these notes. The deployed frontend and site styling are unchanged by that follow-up.
+
+## Local spreadsheet tooling after P0-9
+
+Workbook reads use pinned `read-excel-file` 9.3.17. Save legacy XLS or macro-enabled files as ordinary XLSX first; filename changes do not change their format. `prepareDsnp2027` is now async and must be awaited. Existing local validation, SQL export and JSON reconciliation workflows remain available. Normalized spreadsheet-style exports are CSV, using the already installed Papa Parse package:
+
+```sh
+node scripts/parse_cms_dsnp.js --file /path/to/cy2027-list.xlsx --csv-out /tmp/dsnp-2027.csv
+```
+
+This export needs no database credentials and does not connect to a database. `--csv-out`, `--sql-out` and `--dry-run` are mutually exclusive. See [P0-9 limits, parity and package provenance](pilot-p0-9-spreadsheet-library.md).

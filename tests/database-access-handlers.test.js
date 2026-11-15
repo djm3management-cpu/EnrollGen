@@ -119,3 +119,17 @@ test('RTS commit uses the verified active admin actor and tenant rather than sub
  assert.deepEqual(row,{tenant_id:T,uploaded_by:A.id});
  assert.equal((await query('SELECT tenant_id FROM carrier_rts WHERE source_file_hash=$1',[payload.file_hash]))[0].tenant_id,T);
 });
+
+test('invalid RTS upload returns a clear error before roster, carrier, hash, model or ingestion work', async () => {
+ const beforeCount=(await query('SELECT count(*)::int n FROM rts_ingestion_log'))[0].n;
+ const operations=[];
+ const guarded={...db,from(table){operations.push(table);if(['carrier_rts','rts_ingestion_log'].includes(table))assert.fail('rejected upload performed further work');return db.from(table);}};
+ const handler=createRtsIngestHandler({authenticate:async()=>auth(A.clerk_user_id,true),getDb:()=>guarded});
+ const form=new FormData();form.set('file',new File(['%PDF-1.7 synthetic'], 'renamed.xlsx'));
+ const response=await handler(new Request('https://offline.example/api/rts-ingest',{method:'POST',body:form}));
+ assert.equal(response.status,400);
+ assert.match((await response.json()).error,/signature.*\.xlsx/);
+ // The only roster query is the pre-existing verified actor resolution.
+ assert.equal(operations.filter(table=>table==='tenant_agents').length,1);
+ assert.equal((await query('SELECT count(*)::int n FROM rts_ingestion_log'))[0].n,beforeCount);
+});

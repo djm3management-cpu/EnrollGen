@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createSupabaseClient as createClient, supabaseSecretKey } from "../../integrations/supabase.js";
-import XLSX from "xlsx";
+import { readWorkbook, sheetArrays, excelSerialIsoDate } from "../../netlify/functions/_spreadsheet.js";
 
 export const DEFAULT_COUNTY_REFERENCE_URL =
   "https://www2.census.gov/geo/docs/reference/codes2020/national_county2020.txt";
@@ -178,10 +178,8 @@ export function toIsoDate(value) {
     return value.toISOString().slice(0, 10);
   }
   if (typeof value === "number") {
-    const parsed = XLSX.SSF.parse_date_code(value);
-    if (parsed) {
-      return new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d)).toISOString().slice(0, 10);
-    }
+    const parsed = excelSerialIsoDate(value);
+    if (parsed) return parsed;
   }
   const date = new Date(String(value));
   if (Number.isNaN(date.getTime())) return null;
@@ -303,18 +301,12 @@ export async function readTabularFile({ file, url, sheet, headerRow, headerInclu
   const buffer = await readSource(source);
   const sourceName = String(source || "").toLowerCase();
 
-  if (sourceName.endsWith(".xlsx") || sourceName.endsWith(".xls")) {
-    const workbook = XLSX.read(buffer, { type: "buffer", cellDates: true });
-    const sheetName = sheet || workbook.SheetNames[0];
-    if (!workbook.Sheets[sheetName]) {
-      throw new Error(`Sheet not found: ${sheetName}`);
-    }
-    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
-      header: 1,
-      defval: "",
-      raw: false,
-      blankrows: false,
-    });
+  if ((buffer.length >= 2 && buffer.readUInt16LE(0) === 0x4b50) || buffer.subarray(0, 8).equals(Buffer.from("d0cf11e0a1b11e1", "hex")) || /\.(xlsx|xls|xlsm|xlsb)$/.test(sourceName)) {
+    const workbook = await readWorkbook(buffer);
+    const sheetName = sheet || workbook[0]?.sheet;
+    const data = workbook.find(item => item.sheet === sheetName)?.data;
+    if (!data) throw new Error(`Sheet not found: ${sheetName}`);
+    const rows = sheetArrays(data);
     return rowsToObjects(rows, { headerRow, headerIncludes });
   }
 

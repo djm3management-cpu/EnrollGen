@@ -30,7 +30,7 @@
         "npm:react@19",
         "npm:stripe@^22.1.0",
         "npm:vite@^6.0.3",
-        "npm:xlsx@~0.18.5"
+        "npm:read-excel-file@9.3.17"
       ]
     }
   }

@@ -1,9 +1,34 @@
-import Papa from "papaparse";
-import * as XLSX from "xlsx";
+import { SPREADSHEET_LIMITS, runSpreadsheetWorker, sheetObjects } from "./_spreadsheet.js";
 
-export const MAX_RTS_FILE_BYTES = 10 * 1024 * 1024;
+export const MAX_RTS_FILE_BYTES = SPREADSHEET_LIMITS.uploadBytes;
+export const MAX_RTS_MULTIPART_BYTES = MAX_RTS_FILE_BYTES + 64 * 1024;
+
+export async function readRtsUploadForm(request) {
+  const declared = Number(request.headers.get("content-length"));
+  if (declared > MAX_RTS_MULTIPART_BYTES) throw new Error("The upload body exceeds the 10 MB file limit.");
+  const reader = request.body?.getReader();
+  if (!reader) throw new Error("Expected a multipart file upload.");
+  const chunks = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_RTS_MULTIPART_BYTES) throw new Error("The upload body exceeds the 10 MB file limit.");
+      chunks.push(value);
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  } finally { reader.releaseLock(); }
+  try {
+    return await new Response(Buffer.concat(chunks), { headers: { "content-type": request.headers.get("content-type") || "" } }).formData();
+  } catch { throw new Error("Expected a multipart file upload."); }
+}
+
 export const RTS_CHUNK_SIZE = 30;
-export const RTS_ALLOWED_EXTENSIONS = new Set(["csv", "tsv", "xlsx", "xls"]);
+export const RTS_ALLOWED_EXTENSIONS = new Set(["csv", "tsv", "xlsx", "xls", "xlsm", "xlsb"]);
 export const RTS_PRODUCT_LINES = new Set([
   "Medicare Advantage",
   "Medicare Supplement",
@@ -31,7 +56,7 @@ export const RTS_CONTRACT_STATUSES = new Set([
 export const RTS_INGESTION_SYSTEM_PROMPT = `You are an insurance carrier data normalizer for EnrollGen, an insurance compliance platform.
 
 You will receive:
-1. RAW_ROWS: Rows from an uploaded file (CSV, XLSX, XLS, TSV). The file could come from ANY FMO, upline, or carrier system. Column names, formatting, and carrier naming conventions will vary wildly between sources. There is no standard format.
+1. RAW_ROWS: Rows from an uploaded file (CSV, XLSX, TSV). The file could come from ANY FMO, upline, or carrier system. Column names, formatting, and carrier naming conventions will vary wildly between sources. There is no standard format.
 2. KNOWN_CARRIERS: The current list of carriers in the EnrollGen carrier_rts table with their internal IDs, names, and product lines.
 3. KNOWN_AGENTS: The agents in this tenant with their NPNs and internal IDs.
 
@@ -160,55 +185,21 @@ export async function parseRtsFile(file) {
   const filename = String(file?.name || "");
   const extension = extensionOf(filename);
   if (!RTS_ALLOWED_EXTENSIONS.has(extension)) {
-    throw new Error("Unsupported file type. Upload a CSV, TSV, XLSX, or XLS file.");
+    throw new Error("Unsupported file type. Upload a CSV, TSV, or XLSX file. Save legacy or macro-enabled workbooks as .xlsx.");
   }
   if (!file?.size) throw new Error("The uploaded file is empty.");
   if (file.size > MAX_RTS_FILE_BYTES) throw new Error("The uploaded file must be smaller than 10 MB.");
 
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const parsed = await runSpreadsheetWorker(bytes, extension);
   if (extension === "csv" || extension === "tsv") {
-    const text = await file.text();
-    const parsed = Papa.parse(text, {
-      header: true,
-      delimiter: extension === "tsv" ? "\t" : "",
-      skipEmptyLines: "greedy",
-      transformHeader: (header) => header.trim(),
-    });
-    const fatalErrors = (parsed.errors || []).filter((error) => error.code !== "TooFewFields");
-    if (fatalErrors.length) {
-      const detail = fatalErrors
-        .slice(0, 5)
-        .map((error) => `row ${Number(error.row || 0) + 2}: ${error.message}`)
-        .join("; ");
-      throw new Error(`Unable to parse ${extension.toUpperCase()}: ${detail}`);
-    }
-    const rows = cleanRows(parsed.data);
-    return {
-      rows,
-      headers: parsed.meta?.fields || Object.keys(rows[0] || {}),
-      sheetName: null,
-      sheetNames: [],
-    };
+    // Binary workbooks are always identified by their contents, even when renamed.
+    if (!Array.isArray(parsed)) return { ...parsed, rows: cleanRows(parsed.rows) };
   }
-
-  const workbook = XLSX.read(await file.arrayBuffer(), {
-    type: "array",
-    cellDates: true,
-    dense: true,
-  });
-  const sheetName = workbook.SheetNames[0];
+  const sheetName = parsed[0]?.sheet;
   if (!sheetName) throw new Error("The workbook does not contain a worksheet.");
-  const rawRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
-    defval: null,
-    raw: false,
-    blankrows: false,
-  });
-  const rows = cleanRows(rawRows);
-  return {
-    rows,
-    headers: Object.keys(rows[0] || {}),
-    sheetName,
-    sheetNames: workbook.SheetNames,
-  };
+  const rows = cleanRows(sheetObjects(parsed[0].data, null));
+  return { rows, headers: Object.keys(rows[0] || {}), sheetName, sheetNames: parsed.map(item => item.sheet) };
 }
 
 export async function sha256Hex(file) {

@@ -89,7 +89,7 @@ async function main() {
   if (planYear !== 2027) throw new Error("Only PY2027 Medicare data may be ingested");
   if (args["integration-file"] || args["status-file"]) {
     if (!args["integration-file"] || !args["status-file"]) throw new Error("Provide both --integration-file and --status-file");
-    const result = prepareDsnp2027(args["integration-file"], args["status-file"], await readLandscape2027(args));
+    const result = await prepareDsnp2027(args["integration-file"], args["status-file"], await readLandscape2027(args));
     console.log(JSON.stringify(result.report, null, 2));
     if (args.output) await fs.writeFile(args.output, JSON.stringify(result));
     if (args["dry-run"]) return;

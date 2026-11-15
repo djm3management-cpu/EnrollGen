@@ -11,7 +11,7 @@ import {
 import { useAppAuth } from "../context/AuthContext";
 import { fetchWithClerk } from "../lib/clerkFetch";
 
-const ACCEPTED_FILE_TYPES = ".csv,.tsv,.xlsx,.xls";
+const ACCEPTED_FILE_TYPES = ".csv,.tsv,.xlsx,.xls,.xlsm,.xlsb";
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const CONTRACT_STATUSES = [
   "ACTIVE",
@@ -117,8 +117,8 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
     setError("");
     if (!file) return;
     const extension = file.name.split(".").pop()?.toLowerCase();
-    if (!["csv", "tsv", "xlsx", "xls"].includes(extension)) {
-      setError("Upload a CSV, TSV, XLSX, or XLS file.");
+    if (!["csv", "tsv", "xlsx", "xls", "xlsm", "xlsb"].includes(extension)) {
+      setError("Upload a CSV, TSV, or XLSX file. Save legacy or macro-enabled workbooks as .xlsx.");
       return;
     }
     if (!file.size || file.size > MAX_FILE_BYTES) {
@@ -335,7 +335,7 @@ export default function RTSIngestionPanel({ currentAgent, tenantAgents, onCommit
                 </div>
                 <div>
                   <h4>Choose an appointment report</h4>
-                  <p>CSV, TSV, XLSX, or XLS · maximum 10 MB · first worksheet is used</p>
+                  <p>CSV, TSV, or XLSX · maximum 10 MB · first worksheet is used</p>
                 </div>
                 <input
                   ref={inputRef}

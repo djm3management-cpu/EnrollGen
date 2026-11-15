@@ -2,7 +2,8 @@
 import path from "node:path";
 import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import XLSX from "xlsx";
+import Papa from "papaparse";
+import { readWorkbook, sheetObjects } from "../netlify/functions/_spreadsheet.js";
 import pg from "pg";
 import { loadLocalEnv, parseArgs } from "./sep-data/common.js";
 
@@ -14,9 +15,10 @@ export function parseDsnpWorkbook(workbook, { year = 2027, sheet, live = false, 
   if (!Number.isInteger(year) || (live && (year !== 2027 || !/2027/.test(fileName)))) {
     throw new Error("Live D-SNP alignment ingest requires PY2027 and a filename containing 2027.");
   }
-  const sheetName = sheet || workbook.SheetNames.find((name) => new RegExp(`^CY\\s*${year}\\s+Data$`, "i").test(name)) || workbook.SheetNames[0];
-  if (!workbook.Sheets[sheetName]) throw new Error(`Sheet not found: ${sheetName}`);
-  const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "", raw: false });
+  const sheetName = sheet || workbook.map(item => item.sheet).find((name) => new RegExp(`^CY\\s*${year}\\s+Data$`, "i").test(name)) || workbook[0]?.sheet;
+  const data = workbook.find(item => item.sheet === sheetName)?.data;
+  if (!data) throw new Error(`Sheet not found: ${sheetName}`);
+  const rows = sheetObjects(data, "");
   const headers = rows.length ? Object.keys(rows[0]) : [];
   const integrationHeader = headers.includes("D-SNP Integration Status") ? "D-SNP Integration Status" : "Integration Status";
   const missing = [...required, integrationHeader].filter((header) => !headers.includes(header));
@@ -97,17 +99,24 @@ export async function renderDsnpSql(plans) {
 
 async function main() {
   const args = parseArgs();
-  if (!args.file) throw new Error("Usage: node scripts/parse_cms_dsnp.js --file PATH [--dry-run | --sql-out PATH]");
+  if (!args.file) throw new Error("Usage: node scripts/parse_cms_dsnp.js --file PATH [--dry-run | --sql-out PATH | --csv-out PATH]");
   if (args["sql-out"] !== undefined && (typeof args["sql-out"] !== "string" || !args["sql-out"].trim())) {
     throw new Error("--sql-out requires an output path.");
   }
+  if (args["csv-out"] !== undefined && (typeof args["csv-out"] !== "string" || !args["csv-out"].trim())) throw new Error("--csv-out requires an output path.");
+  if (args["csv-out"] && (args["sql-out"] || args["dry-run"])) throw new Error("--csv-out, --sql-out and --dry-run are mutually exclusive.");
   if (args["sql-out"] && args["dry-run"]) throw new Error("--sql-out and --dry-run are mutually exclusive.");
   const fileName = path.basename(args.file);
-  const { plans, sheetName } = parseDsnpWorkbook(XLSX.readFile(args.file), {
+  const { plans, sheetName } = parseDsnpWorkbook(await readWorkbook(args.file), {
     year: args.year || 2027, sheet: args.sheet, live: !args["dry-run"], fileName,
   });
   console.log(`Parsed ${plans.length} plans from ${fileName} / ${sheetName}. EAE explicitly reported for ${plans.filter((plan) => plan.eaeStatus !== null).length}; affiliated MCO reported for ${plans.filter((plan) => plan.affiliatedMco).length}.`);
   if (args["dry-run"]) return;
+  if (args["csv-out"]) {
+    await writeFile(args["csv-out"], Papa.unparse(plans, { newline: "\n" }) + "\n", "utf8");
+    console.log(`Wrote ${plans.length} PY2027 D-SNP integration rows to ${args["csv-out"]}.`);
+    return;
+  }
   if (args["sql-out"]) {
     await writeFile(args["sql-out"], await renderDsnpSql(plans), "utf8");
     console.log(`Wrote ${plans.length} PY2027 D-SNP integration rows to ${args["sql-out"]}.`);
@@ -115,7 +124,6 @@ async function main() {
   }
   await loadLocalEnv();
   const connectionString = process.env.SUPABASE_DB_URL;
-  const password = process.env.SUPABASE_DB_PASSWORD;
   if (!connectionString) throw new Error("Set explicit SUPABASE_DB_URL locally. Apply migration 081 before loading.");
   const client = new pg.Client({ connectionString, ssl: { rejectUnauthorized: false } });
   await client.connect();

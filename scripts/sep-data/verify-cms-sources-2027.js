@@ -13,7 +13,7 @@ for (const key of ['landscape-file', 'crosswalk-file', 'integration-file', 'stat
 const landscape = (await fs.readFile(args['landscape-file'], 'utf8')).trim().split(/\r?\n/).map(JSON.parse);
 assert.ok(landscape.every(row => row.plan_year === 2027));
 const crosswalk = prepareCrosswalk(await readTabularFile({ file: args['crosswalk-file'], headerIncludes: ['PREVIOUS_CONTRACT_ID', 'CURRENT_CONTRACT_ID', 'STATUS'] }), landscape);
-const dsnp = prepareDsnp2027(args['integration-file'], args['status-file'], landscape);
+const dsnp = await prepareDsnp2027(args['integration-file'], args['status-file'], landscape);
 const sourceStars = await readTabularFile({ file: args['stars-file'], headerIncludes: ['Contract Number', '2027 Overall'] });
 const ratingByContract = new Map(sourceStars.map(row => [row['Contract Number'].trim(), Number(row['2027 Overall'])]));
 const lowRows = await readTabularFile({ file: args['low-performing-file'], headerIncludes: ['Contract Number', 'Reason for LPI'] });

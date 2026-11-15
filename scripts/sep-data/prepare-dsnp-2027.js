@@ -1,12 +1,12 @@
-import XLSX from 'xlsx';
+import { readWorkbook, sheetObjects } from '../../netlify/functions/_spreadsheet.js';
 import { parseDsnpWorkbook } from '../parse_cms_dsnp.js';
 
-export function prepareDsnp2027(integratedFile, statusFile, landscape) {
+export async function prepareDsnp2027(integratedFile, statusFile, landscape) {
   const options = { year: 2027, sheet: 'CY 2027 Data', live: true, fileName: '2027.xlsx' };
-  const listed = parseDsnpWorkbook(XLSX.readFile(integratedFile), options).plans;
-  const detailedWorkbook = XLSX.readFile(statusFile);
+  const listed = parseDsnpWorkbook(await readWorkbook(integratedFile), options).plans;
+  const detailedWorkbook = await readWorkbook(statusFile);
   const detailed = parseDsnpWorkbook(detailedWorkbook, options).plans;
-  const aipByKey = new Map(XLSX.utils.sheet_to_json(detailedWorkbook.Sheets['CY 2027 Data'], { raw: false }).map(r => [`${r.State}:${r['Contract ID']}:${String(r['Plan ID']).padStart(3, '0')}`, r['Applicable Integrated Plan'] === 'Yes']));
+  const aipByKey = new Map(sheetObjects(detailedWorkbook.find(item => item.sheet === 'CY 2027 Data').data).map(r => [`${r.State}:${r['Contract ID']}:${String(r['Plan ID']).padStart(3, '0')}`, r['Applicable Integrated Plan'] === 'Yes']));
   const key = p => `${p.state}:${p.contractId}:${p.planId}`;
   const byKey = new Map(detailed.map(p => [key(p), p]));
   for (const p of listed) {
