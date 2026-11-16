@@ -49,7 +49,7 @@ export async function evidenceCheckpoint(db,details) {
 }
 
 export const PROTECTED_TABLES=new Set(['call_transcripts','transcript_chunks','call_records','sessions','call_logs','call_threads','compliance_flags','section_scores','compliance_scorecards','compliance_scores','intent_detections','phi_redactions','scorecard_items','inbound_calls','telephony_events','enrollment_intakes','contact_lead_intel','manual_transcript_gap_fills','transcript_segments','telephony_transcript_segments','transcript_ingestion_jobs','post_call_jobs','ghl_enrollment_deliveries','post_call_requests','manual_transcript_gap_requests']);
-export const PROTECTED_RPCS=new Set(['decrypt_pii_value','read_contact_details','decrypt_pii','search_transcript_chunks','next_post_call_request','persist_manual_gap_result','claim_compliance_upload','claim_ix_upload','conversely_week_candidates','conversely_run_results','claim_paragon_residence_jobs','finalize_telephony_transcript','reconcile_telephony_transcripts']);
+export const PROTECTED_RPCS=new Set(['consumer_lifecycle_files','read_consumer_lifecycle','decrypt_pii_value','read_contact_details','decrypt_pii','search_transcript_chunks','next_post_call_request','persist_manual_gap_result','claim_compliance_upload','claim_ix_upload','conversely_week_candidates','conversely_run_results','claim_paragon_residence_jobs','finalize_telephony_transcript','reconcile_telephony_transcripts']);
 // Every server client factory installs this boundary. Queries retain the SDK's
 // fluent API. Background access is a service principal, never a fictitious user.
 export function auditedServiceClient(db,{actor='service:background',tenant}={}) {
@@ -86,8 +86,8 @@ export function auditedServiceClient(db,{actor='service:background',tenant}={}) 
   }});
   if(key==='rpc'){const rpc=target.rpc.bind(target);return (name,args)=>{
    if(!PROTECTED_RPCS.has(name))return rpc(name,args);
-   const resource=name.includes('pii') || name==='read_contact_details'?'contact':/compliance|ix_upload/.test(name)?'enrollment_intake':/conversely/.test(name)?'call_evidence':'transcript';
-   return auditedEvidenceAccess(target,details(resource,args?.p_contact_id || args?.p_call_id || args?.p_session_id,name.includes('pii')?'decrypt':'read'),()=>rpc(name,args),{before:true});
+   const resource=['read_consumer_lifecycle','consumer_lifecycle_files'].includes(name)?'consumer_lifecycle':name.includes('pii') || name==='read_contact_details'?'contact':/compliance|ix_upload/.test(name)?'enrollment_intake':/conversely/.test(name)?'call_evidence':'transcript';
+   return auditedEvidenceAccess(target,details(resource,args?.p_contact || args?.p_contact_id || args?.p_call_id || args?.p_session_id,name.includes('pii')?'decrypt':'read'),()=>rpc(name,args),{before:true});
   };}
   const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;
  }});

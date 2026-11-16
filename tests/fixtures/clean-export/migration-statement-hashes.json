@@ -9,5 +9,6 @@
   "159_ghl_delivery_minimization.sql": "9e93c44c390cb41b832d55d7402779651280b59e380c105a2ce0d5d3a5c974df",
   "160_retention_and_holds.sql": "e5a0ff421c9321aff4db209bcfc737a714c9000f158a0d49f7591fcfc05eb2f7",
   "161_operational_logging_alerts.sql": "f85336f3df34107d4b326e69537007be593cff8474b7c6b3196ae272527b5035",
-  "162_recovery_access_recording_purge.sql": "9690bef920a462e3d23b161c07081135d79ac131abdd19ab52f060e910f1b8aa"
+  "162_recovery_access_recording_purge.sql": "9690bef920a462e3d23b161c07081135d79ac131abdd19ab52f060e910f1b8aa",
+  "163_consumer_lifecycle.sql": "b56d9c387c8488968296b872832b8a002ece04788afdf4b92d00926b5feb1b89"
 }

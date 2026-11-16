@@ -1474,6 +1474,15 @@
     },
     {
       "schema": "public",
+      "name": "retention_purge_items",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "retention_recording_purges",
       "kind": "r",
       "owner": "postgres",
@@ -20670,6 +20679,83 @@
     },
     {
       "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "contact_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "source_table",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "resource_id",
+      "position": 5,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "call_id",
+      "position": 6,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "occurred_at",
+      "position": 7,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
       "relation": "retention_recording_purges",
       "name": "recording_id",
       "position": 1,
@@ -20763,6 +20849,39 @@
       "position": 9,
       "type": "text",
       "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "retention_recording_purges",
+      "name": "contact_id",
+      "position": 10,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "retention_recording_purges",
+      "name": "call_id",
+      "position": 11,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "retention_recording_purges",
+      "name": "sha256",
+      "position": 12,
+      "type": "text",
+      "not_null": false,
       "identity": "",
       "generated": "",
       "default_expression": null
@@ -44954,6 +45073,70 @@
     },
     {
       "schema": "public",
+      "relation": "retention_purge_items",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "retention_recording_purges",
       "grantor": "postgres",
       "grantee": "postgres",
@@ -52483,6 +52666,19 @@
     },
     {
       "schema": "public",
+      "name": "capture_lifecycle_purge_marker",
+      "arguments": "p_table text, p_id uuid",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.capture_lifecycle_purge_marker(p_table text, p_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE r jsonb; consumer uuid; call uuid; tenant uuid;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('RETENTION_PURGE_ENABLED') THEN RETURN; END IF;\n IF p_table<>ALL(ARRAY['call_records','inbound_calls','telephony_call_attempts','sessions','messages','message_media','call_transcripts','enrollment_intakes','policies','compliance_scorecards','compliance_scores','recording_ingestion','ghl_enrollment_deliveries','ix_uploads','conversely_submissions','transcript_chunks','intent_detections','scorecard_items','section_scores','compliance_flags','manual_transcript_gap_fills']) THEN RETURN; END IF;\n EXECUTE format('SELECT to_jsonb(t) FROM public.%I t WHERE id=$1',p_table) INTO r USING p_id;\n IF r IS NULL THEN RETURN; END IF;\n tenant:=nullif(r->>'tenant_id','')::uuid;\n consumer:=nullif(r->>'contact_id','')::uuid;\n call:=nullif(coalesce(r->>'call_record_id',r->>'call_id'),'')::uuid;\n IF p_table='call_records' THEN call:=p_id; END IF;\n IF call IS NOT NULL AND consumer IS NULL THEN SELECT contact_id,tenant_id INTO consumer,tenant FROM public.call_records WHERE id=call; END IF;\n IF p_table='message_media' THEN SELECT contact_id,tenant_id INTO consumer,tenant FROM public.messages WHERE id=(r->>'message_id')::uuid; END IF;\n IF consumer IS NULL AND nullif(r->>'session_id','') IS NOT NULL THEN SELECT contact_id,tenant_id,coalesce(call,call_record_id) INTO consumer,tenant,call FROM public.sessions WHERE id=(r->>'session_id')::uuid; END IF;\n IF consumer IS NULL AND nullif(r->>'scorecard_id','') IS NOT NULL THEN SELECT c.contact_id,c.tenant_id,c.id INTO consumer,tenant,call FROM public.compliance_scorecards s JOIN public.call_records c ON c.id=s.call_id WHERE s.id=(r->>'scorecard_id')::uuid; END IF;\n IF consumer IS NULL AND nullif(r->>'transcript_id','') IS NOT NULL THEN SELECT coalesce(c.contact_id,s.contact_id),t.tenant_id,coalesce(c.id,s.call_record_id) INTO consumer,tenant,call FROM public.call_transcripts t LEFT JOIN public.call_records c ON c.id=t.call_record_id LEFT JOIN public.sessions s ON s.id=t.session_id WHERE t.id=(r->>'transcript_id')::uuid; END IF;\n IF p_table='recording_ingestion' THEN\n  SELECT coalesce(consumer,i.contact_id,c.contact_id),coalesce(call,i.call_record_id,c.id) INTO consumer,call\n  FROM (SELECT 1) x LEFT JOIN public.inbound_calls i ON i.id=nullif(r->>'inbound_call_id','')::uuid\n  LEFT JOIN public.telephony_call_attempts a ON a.id=nullif(r->>'attempt_id','')::uuid\n  LEFT JOIN public.call_records c ON c.id=coalesce(nullif(r->>'call_record_id','')::uuid,a.call_record_id);\n  UPDATE public.retention_recording_purges SET contact_id=consumer,call_id=call,sha256=r->>'sha256' WHERE recording_id=p_id;\n END IF;\n IF consumer IS NOT NULL AND tenant IS NOT NULL THEN\n INSERT INTO public.retention_purge_items(tenant_id,contact_id,source_table,resource_id,call_id) VALUES(tenant,consumer,p_table,p_id,call) ON CONFLICT DO NOTHING;\n END IF;\n RETURN;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "claim_automatic_transcript_recovery",
       "arguments": "p_call_id uuid, p_tenant_id uuid, p_recording_id uuid, p_ranges jsonb, p_mapping jsonb, p_cost numeric",
       "result": "jsonb",
@@ -52895,7 +53091,7 @@
         "search_path=pg_catalog, public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.configure_operational_profile(p_summary jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; previous jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Operator required' USING ERRCODE='42501'; END IF;\n IF jsonb_typeof(p_summary)<>'object' OR EXISTS(SELECT 1 FROM jsonb_each(p_summary) WHERE key NOT IN ('alert_audit_failures','alert_delivery_retry_seconds','alert_evaluation_seconds','alert_exhausted_jobs','alert_lease_conflicts','alert_paid_budget_percent','alert_provider_error_percent','alert_provider_minimum_requests','alert_purge_failures','alert_queue_age_seconds','alert_queue_depth','alert_rate_rejections','alert_routing_anomalies','alert_secret_review_days','alert_subject_denials','alert_window_seconds','approved_retention_overrides','feature_conference_calling_enabled','feature_conversely_upload_enabled','feature_daily_verse_enabled','feature_ghl_enabled','feature_ix_report_enabled','feature_ix_upload_enabled','feature_operational_email_enabled','feature_paragon_enabled','feature_paragon_state_routing_enabled','feature_retention_purge_enabled','feature_scoring_enabled','feature_stripe_billing_enabled','feature_transcript_auto_recovery_enabled','feature_transcript_gap_fill_enabled','retention_contact_review_years','retention_enrollment_recording_years','retention_enrollment_transcript_years','retention_enrollment_years','retention_evidence_audit_years','retention_marketing_recording_years','retention_marketing_transcript_years','retention_operational_days','retention_reduced_marketing_rule','retention_scope_of_appointment_years','retention_service_call_years','retention_text_consent_years') OR jsonb_typeof(value) NOT IN ('number','boolean')) THEN RAISE EXCEPTION 'Invalid operational profile'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n SELECT summary INTO previous FROM public.operational_configuration WHERE tenant_id=tenant FOR UPDATE;\n IF previous IS NOT DISTINCT FROM p_summary THEN RETURN; END IF;\n INSERT INTO public.operational_configuration VALUES(tenant,p_summary) ON CONFLICT(tenant_id) DO UPDATE SET summary=excluded.summary;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(gen_random_uuid(),'service:deployment_operator',tenant,'operator_operational_profile','operational_configuration',tenant::text,'succeeded',coalesce(previous,'{}'),p_summary);\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.configure_operational_profile(p_summary jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; previous jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Operator required' USING ERRCODE='42501'; END IF;\n IF jsonb_typeof(p_summary)<>'object' OR EXISTS(SELECT 1 FROM jsonb_each(p_summary) WHERE key NOT IN ('alert_audit_failures','alert_delivery_retry_seconds','alert_evaluation_seconds','alert_exhausted_jobs','alert_lease_conflicts','alert_paid_budget_percent','alert_provider_error_percent','alert_provider_minimum_requests','alert_purge_failures','alert_queue_age_seconds','alert_queue_depth','alert_rate_rejections','alert_routing_anomalies','alert_secret_review_days','alert_subject_denials','alert_window_seconds','approved_retention_overrides','feature_consumer_lifecycle_enabled','feature_conference_calling_enabled','feature_conversely_upload_enabled','feature_daily_verse_enabled','feature_ghl_enabled','feature_ix_report_enabled','feature_ix_upload_enabled','feature_operational_email_enabled','feature_paragon_enabled','feature_paragon_state_routing_enabled','feature_retention_purge_enabled','feature_scoring_enabled','feature_stripe_billing_enabled','feature_transcript_auto_recovery_enabled','feature_transcript_gap_fill_enabled','retention_contact_review_years','retention_enrollment_recording_years','retention_enrollment_transcript_years','retention_enrollment_years','retention_evidence_audit_years','retention_marketing_recording_years','retention_marketing_transcript_years','retention_operational_days','retention_reduced_marketing_rule','retention_scope_of_appointment_years','retention_service_call_years','retention_text_consent_years') OR jsonb_typeof(value) NOT IN ('number','boolean')) THEN RAISE EXCEPTION 'Invalid operational profile'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n SELECT summary INTO previous FROM public.operational_configuration WHERE tenant_id=tenant FOR UPDATE;\n IF previous IS NOT DISTINCT FROM p_summary THEN RETURN; END IF;\n INSERT INTO public.operational_configuration VALUES(tenant,p_summary) ON CONFLICT(tenant_id) DO UPDATE SET summary=excluded.summary;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(gen_random_uuid(),'service:deployment_operator',tenant,'operator_operational_profile','operational_configuration',tenant::text,'succeeded',coalesce(previous,'{}'),p_summary);\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -52922,6 +53118,32 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.consume_admission(p_rules jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE r jsonb; k text; s integer; cap integer; w bigint; n integer; retry integer:=0;\n t bigint:=floor(extract(epoch FROM clock_timestamp()));\nBEGIN\n IF jsonb_typeof(p_rules)<>'array' OR jsonb_array_length(p_rules) NOT BETWEEN 1 AND 12 THEN RAISE EXCEPTION 'Invalid admission rules'; END IF;\n -- Lock all keys in a stable order BEFORE reading. Shared daily budgets serialize\n -- requests from different function instances. No read/count then insert race.\n FOR k IN SELECT DISTINCT encode(sha256(convert_to(value->>'key','UTF8')),'hex') FROM jsonb_array_elements(p_rules) ORDER BY 1 LOOP\n  PERFORM pg_advisory_xact_lock(hashtextextended('admission:'||k,0));\n END LOOP;\n FOR r IN SELECT value FROM jsonb_array_elements(p_rules) LOOP\n  IF r->>'key' IS NULL OR length(r->>'key') NOT BETWEEN 1 AND 1024 THEN RAISE EXCEPTION 'Invalid admission key'; END IF;\n  s:=(r->>'seconds')::integer;cap:=(r->>'limit')::integer;\n  IF s IS NULL OR cap IS NULL OR s NOT IN (60,300,86400) OR cap NOT BETWEEN 1 AND 1000000 THEN RAISE EXCEPTION 'Invalid admission limit'; END IF;\n  k:=encode(sha256(convert_to(r->>'key','UTF8')),'hex');w:=(t/s)*s;\n  SELECT used INTO n FROM admission_counters WHERE key_hash=k AND window_start=w AND window_seconds=s;\n  IF coalesce(n,0)>=cap THEN retry:=greatest(retry,(w+s-t)::integer); END IF;\n END LOOP;\n IF retry>0 THEN RETURN jsonb_build_object('allowed',false,'retry_after',retry); END IF;\n FOR r IN SELECT DISTINCT value FROM jsonb_array_elements(p_rules) LOOP\n  s:=(r->>'seconds')::integer;k:=encode(sha256(convert_to(r->>'key','UTF8')),'hex');w:=(t/s)*s;\n  INSERT INTO admission_counters VALUES(k,w,s,1,to_timestamp(w+s))\n  ON CONFLICT(key_hash,window_start,window_seconds) DO UPDATE SET used=admission_counters.used+1;\n END LOOP;\n RETURN jsonb_build_object('allowed',true,'retry_after',0);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "consumer_lifecycle_files",
+      "arguments": "p_actor text, p_org text, p_contact uuid",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.consumer_lifecycle_files(p_actor text, p_org text, p_contact uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE scoped jsonb; tenant uuid; result jsonb;\nBEGIN\n scoped:=public.read_consumer_lifecycle(p_actor,p_org,p_contact,p_limit=>1,p_export=>true);\n SELECT tenant_id INTO tenant FROM public.resolve_deployment_subject(p_actor,p_org);\n WITH calls AS (SELECT * FROM public.call_records WHERE tenant_id=tenant AND contact_id=p_contact),\n files AS (\n SELECT 'recording_ingestion' AS source_table,r.id,r.first_seen_at AS occurred_at,coalesce(r.storage_bucket,'call-recordings') AS bucket,r.storage_path,r.sha256\n FROM public.recording_ingestion r WHERE r.tenant_id=tenant AND r.copy_status='stored' AND r.deletion_pending_at IS NULL AND r.storage_path IS NOT NULL AND\n (r.call_record_id IN (SELECT id FROM calls) OR r.inbound_call_id IN (SELECT id FROM public.inbound_calls WHERE tenant_id=tenant AND contact_id=p_contact) OR r.attempt_id IN (SELECT id FROM public.telephony_call_attempts WHERE tenant_id=tenant AND contact_id=p_contact) OR r.callback_call_sid IN (SELECT twilio_call_sid FROM calls) OR r.parent_call_sid IN (SELECT twilio_call_sid FROM calls))\n UNION ALL\n SELECT 'message_media',m.id,m.created_at,'message-media',m.storage_path,NULL::text FROM public.message_media m JOIN public.messages msg ON msg.id=m.message_id AND msg.tenant_id=tenant WHERE m.tenant_id=tenant AND msg.contact_id=p_contact AND m.storage_path IS NOT NULL\n UNION ALL\n SELECT 'call_records',c.id,c.call_start,'call-recordings',c.recording_storage_path,NULL::text FROM calls c WHERE c.recording_storage_path IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.recording_ingestion r WHERE r.tenant_id=tenant AND r.storage_path=c.recording_storage_path) AND NOT EXISTS(SELECT 1 FROM public.retention_recording_purges p WHERE p.tenant_id=tenant AND p.storage_path=c.recording_storage_path AND p.status IN ('pending','held_missing','complete'))\n UNION ALL\n SELECT 'inbound_calls',c.id,c.created_at,'call-recordings',c.recording_storage_path,NULL::text FROM public.inbound_calls c WHERE c.tenant_id=tenant AND c.contact_id=p_contact AND c.recording_storage_path IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.recording_ingestion r WHERE r.tenant_id=tenant AND r.storage_path=c.recording_storage_path) AND NOT EXISTS(SELECT 1 FROM public.retention_recording_purges p WHERE p.tenant_id=tenant AND p.storage_path=c.recording_storage_path AND p.status IN ('pending','held_missing','complete'))\n\n ) SELECT coalesce(jsonb_agg(to_jsonb(f)),'[]') INTO result FROM files f;\n RETURN result;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "consumer_lifecycle_rows",
+      "arguments": "p_contact uuid, p_tenant uuid",
+      "result": "TABLE(key text, type text, \"time\" timestamp with time zone, staff text, status text, summary text, evidence jsonb, details jsonb)",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.consumer_lifecycle_rows(p_contact uuid, p_tenant uuid)\n RETURNS TABLE(key text, type text, \"time\" timestamp with time zone, staff text, status text, summary text, evidence jsonb, details jsonb)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nWITH c AS (SELECT * FROM public.contacts WHERE id=p_contact AND tenant_id=p_tenant),\n calls AS (SELECT * FROM public.call_records WHERE contact_id=p_contact AND tenant_id=p_tenant),\n incoming AS (SELECT * FROM public.inbound_calls WHERE contact_id=p_contact AND tenant_id=p_tenant),\n attempts AS (SELECT * FROM public.telephony_call_attempts WHERE tenant_id=p_tenant AND (contact_id=p_contact OR call_record_id IN (SELECT id FROM calls) OR inbound_call_id IN (SELECT id FROM incoming))),\n transcripts AS (SELECT t.* FROM public.call_transcripts t WHERE t.tenant_id=p_tenant AND (t.call_record_id IN (SELECT id FROM calls) OR t.id IN (SELECT transcript_id FROM calls) OR t.session_id IN (SELECT id FROM public.sessions WHERE contact_id=p_contact AND tenant_id=p_tenant))),\n records AS (SELECT r.* FROM public.recording_ingestion r WHERE r.tenant_id=p_tenant AND (r.call_record_id IN (SELECT id FROM calls) OR r.inbound_call_id IN (SELECT id FROM incoming) OR r.attempt_id IN (SELECT id FROM attempts) OR r.callback_call_sid IN (SELECT twilio_call_sid FROM calls) OR r.parent_call_sid IN (SELECT twilio_call_sid FROM calls))),\n intakes AS (SELECT * FROM public.enrollment_intakes WHERE tenant_id=p_tenant AND (contact_id=p_contact OR call_id IN (SELECT id FROM calls))),\n cards AS (SELECT * FROM public.compliance_scorecards WHERE tenant_id=p_tenant AND call_id IN (SELECT id FROM calls))\nSELECT 'contacts:'||x.id::text||':arrival' key,'arrival'::text type,(x.created_at)::timestamptz \"time\",(x.assigned_agent_id)::text staff,('recorded')::text status,'Consumer created'::text summary,jsonb_build_array(jsonb_build_object('table','contacts','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('source',x.source,'firstContact',(SELECT min(t) FROM (SELECT coalesce(call_start,created_at) t FROM calls UNION ALL SELECT created_at FROM incoming UNION ALL SELECT created_at FROM public.messages WHERE tenant_id=p_tenant AND contact_id=p_contact) first_contact)) details FROM c x\nUNION ALL\nSELECT 'contact_lead_intel:'||x.id::text||':attribution' key,'attribution'::text type,(x.received_at)::timestamptz \"time\",(NULL)::text staff,('recorded')::text status,'Lead received'::text summary,jsonb_build_array(jsonb_build_object('table','contact_lead_intel','id',x.id,'time',x.received_at)) evidence,jsonb_build_object('vendor',x.vendor_source,'source',x.payload->>'vendor_source') details FROM contact_lead_intel x WHERE x.tenant_id=p_tenant AND x.contact_id=p_contact\nUNION ALL\nSELECT 'call_records:'||x.id::text||':attribution' key,'attribution'::text type,(coalesce(x.call_start,x.created_at))::timestamptz \"time\",(x.agent_id)::text staff,('recorded')::text status,'Call attribution'::text summary,jsonb_build_array(jsonb_build_object('table','call_records','id',x.id,'time',coalesce(x.call_start,x.created_at))) evidence,jsonb_build_object('source',x.lead_source,'vendor',x.metadata->>'vendor_source','campaign',coalesce(x.metadata->>'campaign_name',x.metadata->>'campaignName')) details FROM calls x WHERE x.lead_source IS NOT NULL OR x.metadata ?| ARRAY['vendor_source','campaign_name','campaignName']\nUNION ALL\nSELECT 'inbound_calls:'||x.id::text||':attribution' key,'attribution'::text type,(x.created_at)::timestamptz \"time\",(x.answered_agent_id)::text staff,('recorded')::text status,'Inbound attribution'::text summary,jsonb_build_array(jsonb_build_object('table','inbound_calls','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('source',s.name,'vendor',v.name,'campaign',coalesce(x.vendor_metadata->>'campaign_name',x.vendor_metadata->>'campaignName')) details FROM incoming x LEFT JOIN public.lead_sources s ON s.id=x.lead_source_id AND s.tenant_id=p_tenant LEFT JOIN public.lead_sources v ON v.id=x.aggregator_source_id AND v.tenant_id=p_tenant\nUNION ALL\nSELECT 'call_records:'||x.id::text||':consent' key,'consent'::text type,coalesce(x.ptc_date::timestamptz,x.created_at) \"time\",(x.agent_id)::text staff,(CASE WHEN x.ptc_date IS NULL THEN 'unknown' ELSE 'recorded' END)::text status,'Permission record'::text summary,jsonb_build_array(jsonb_build_object('table','call_records','id',x.id,'time',coalesce(x.ptc_date::timestamptz,x.created_at))) evidence,jsonb_build_object('source',coalesce(x.metadata->>'ptc_source',x.metadata->'consent'->>'source',x.lead_source,'call_record'),'dated',x.ptc_date IS NOT NULL,'expires',x.ptc_expiry,'callId',x.id) details FROM calls x WHERE x.ptc_on_file IS TRUE\nUNION ALL\nSELECT 'call_records:'||x.id::text||':soa' key,'soa'::text type,coalesce(x.soa_date::timestamptz,x.created_at) \"time\",(x.agent_id)::text staff,(CASE WHEN x.soa_date IS NULL THEN 'unknown' ELSE 'recorded' END)::text status,'Scope of appointment record'::text summary,jsonb_build_array(jsonb_build_object('table','call_records','id',x.id,'time',coalesce(x.soa_date::timestamptz,x.created_at))) evidence,jsonb_build_object('source',coalesce(x.metadata->>'soa_source','call_record'),'dated',x.soa_date IS NOT NULL,'callId',x.id) details FROM calls x WHERE x.soa_on_file IS TRUE\nUNION ALL\nSELECT 'call_records:'||x.id::text||':call' key,'call'::text type,(coalesce(x.call_start,x.created_at))::timestamptz \"time\",(x.agent_id)::text staff,(coalesce(x.call_outcome,'unknown'))::text status,'Call'::text summary,jsonb_build_array(jsonb_build_object('table','call_records','id',x.id,'time',coalesce(x.call_start,x.created_at))) evidence,jsonb_build_object('callId',x.id,'direction',x.call_direction,'duration',x.call_duration_seconds,'callType',x.call_type,'recording',EXISTS(SELECT 1 FROM records r WHERE r.deletion_pending_at IS NULL AND (r.call_record_id=x.id OR r.callback_call_sid=x.twilio_call_sid OR r.parent_call_sid=x.twilio_call_sid)) OR ((x.recording_storage_path IS NOT NULL OR x.recording_url IS NOT NULL) AND NOT EXISTS(SELECT 1 FROM public.retention_recording_purges p WHERE p.tenant_id=p_tenant AND (p.call_id=x.id OR p.storage_path=x.recording_storage_path) AND p.status IN ('pending','held_missing','complete'))),'transcript',EXISTS(SELECT 1 FROM transcripts t WHERE (t.call_record_id=x.id OR t.id=x.transcript_id) AND nullif(btrim(t.transcript_text),'') IS NOT NULL) OR nullif(x.transcript_raw,'') IS NOT NULL OR CASE WHEN jsonb_typeof(x.transcript_diarized)='array' THEN jsonb_array_length(x.transcript_diarized)>0 ELSE false END,'sales',x.call_type IN ('sales','enrollment') OR x.enrollment_completed IS TRUE OR x.retention_enrollment_evidence IS TRUE OR x.retention_marketing_evidence IS TRUE,'product',x.product_type,'confirmation',x.enrollment_confirmation_number,'effectiveDate',x.effective_date) details FROM calls x\nUNION ALL\nSELECT 'inbound_calls:'||x.id::text||':call' key,'call'::text type,(x.created_at)::timestamptz \"time\",(coalesce(x.answered_agent_id,x.routed_agent_id))::text staff,(x.status)::text status,'Inbound call'::text summary,jsonb_build_array(jsonb_build_object('table','inbound_calls','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('direction','inbound','duration',x.duration_seconds,'inboundCallId',x.id,'recording',(x.recording_storage_path IS NOT NULL OR x.recording_url IS NOT NULL) AND NOT EXISTS(SELECT 1 FROM public.retention_recording_purges p WHERE p.tenant_id=p_tenant AND (p.storage_path=x.recording_storage_path OR p.contact_id=p_contact AND p.recording_sid IN (SELECT recording_sid FROM records WHERE inbound_call_id=x.id)) AND p.status IN ('pending','held_missing','complete')),'transcript',false) details FROM incoming x WHERE x.call_record_id IS NULL AND NOT EXISTS(SELECT 1 FROM calls r WHERE r.twilio_call_sid=x.twilio_call_sid)\nUNION ALL\nSELECT 'telephony_call_attempts:'||x.id::text||':call' key,'call'::text type,(x.created_at)::timestamptz \"time\",(x.agent_id)::text staff,(x.status)::text status,'Call attempt'::text summary,jsonb_build_array(jsonb_build_object('table','telephony_call_attempts','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('direction',x.direction,'duration',x.talk_seconds,'attemptId',x.id,'recording',EXISTS(SELECT 1 FROM records r WHERE r.attempt_id=x.id AND r.deletion_pending_at IS NULL),'transcript',false) details FROM attempts x WHERE x.call_record_id IS NULL AND (x.direction='outbound' OR x.inbound_call_id IS NULL)\nUNION ALL\nSELECT 'messages:'||x.id::text||':message' key,'message'::text type,(x.created_at)::timestamptz \"time\",(x.agent_id)::text staff,(x.status)::text status,'Text message'::text summary,jsonb_build_array(jsonb_build_object('table','messages','id',x.id,'time',x.created_at)) || coalesce((SELECT jsonb_agg(jsonb_build_object('table','message_media','id',m.id,'time',m.created_at)) FROM public.message_media m WHERE m.message_id=x.id AND m.tenant_id=p_tenant),'[]'::jsonb) evidence,jsonb_build_object('direction',x.direction,'channel',x.channel) details FROM messages x WHERE x.tenant_id=p_tenant AND x.contact_id=p_contact\nUNION ALL\nSELECT 'call_transcripts:'||x.id::text||':transcript' key,'transcript'::text type,(x.created_at)::timestamptz \"time\",(x.owner_agent_id)::text staff,('recorded')::text status,'Transcript captured'::text summary,jsonb_build_array(jsonb_build_object('table','call_transcripts','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('callId',coalesce(x.call_record_id,(SELECT id FROM calls WHERE transcript_id=x.id LIMIT 1))) details FROM transcripts x\nUNION ALL\nSELECT 'recording_ingestion:'||x.id::text||':recording' key,'recording'::text type,(x.first_seen_at)::timestamptz \"time\",((SELECT agent_id FROM calls WHERE id=x.call_record_id))::text staff,(x.copy_status)::text status,'Recording captured'::text summary,jsonb_build_array(jsonb_build_object('table','recording_ingestion','id',x.id,'time',x.first_seen_at)) evidence,jsonb_build_object('callId',coalesce(x.call_record_id,(SELECT id FROM calls WHERE twilio_call_sid IN (x.callback_call_sid,x.parent_call_sid) LIMIT 1)),'inboundCallId',x.inbound_call_id,'attemptId',x.attempt_id,'sha256',CASE WHEN x.deletion_pending_at IS NULL AND x.copy_status='stored' THEN x.sha256 END,'stored',x.copy_status='stored' AND x.deletion_pending_at IS NULL,'available',x.deletion_pending_at IS NULL) details FROM records x\nUNION ALL\nSELECT 'compliance_scorecards:'||x.id::text||':review' key,'review'::text type,(x.created_at)::timestamptz \"time\",((SELECT agent_id FROM calls WHERE id=x.call_id))::text staff,(coalesce(x.pass_fail,x.scoring_state))::text status,'Compliance review'::text summary,jsonb_build_array(jsonb_build_object('table','compliance_scorecards','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('callId',x.call_id,'score',x.overall_score) details FROM cards x\nUNION ALL\nSELECT 'scorecard_items:'||x.id::text||':disclosure' key,'disclosure'::text type,(c.created_at)::timestamptz \"time\",((SELECT agent_id FROM calls WHERE id=c.call_id))::text staff,(x.result)::text status,'Disclosure result'::text summary,jsonb_build_array(jsonb_build_object('table','scorecard_items','id',x.id,'time',c.created_at)) evidence,jsonb_build_object('callId',c.call_id,'rule',coalesce(x.rule_id,intent.intent_code),'required',t.is_critical OR t.is_auto_fail,'category',x.category) details FROM scorecard_items x JOIN cards c ON c.id=x.scorecard_id LEFT JOIN public.scoring_template_items t ON t.id=x.template_item_id LEFT JOIN public.compliance_intents intent ON intent.id=coalesce(x.intent_id,t.intent_id) WHERE lower(x.category) ~ 'disclos|opening|scope|consent' OR coalesce(x.rule_id,intent.intent_code) ~ '^(CALL_OPEN_|SOA_|ENROLL_|PECL_|IMPACT_)'\nUNION ALL\nSELECT 'compliance_review_decisions:'||x.id::text||':review' key,'review'::text type,(x.decided_at)::timestamptz \"time\",(x.decided_by)::text staff,(x.decision)::text status,'Review decision'::text summary,jsonb_build_array(jsonb_build_object('table','compliance_review_decisions','id',x.id,'time',x.decided_at)) evidence,jsonb_build_object('callId',c.call_id) details FROM compliance_review_decisions x JOIN public.scorecard_items i ON i.id=x.scorecard_item_id JOIN cards c ON c.id=i.scorecard_id WHERE x.tenant_id=p_tenant\nUNION ALL\nSELECT 'enrollment_intakes:'||x.id::text||':enrollment' key,'enrollment'::text type,(x.submitted_at)::timestamptz \"time\",((SELECT agent_id FROM calls WHERE id=x.call_id))::text staff,('recorded')::text status,'Enrollment submitted'::text summary,jsonb_build_array(jsonb_build_object('table','enrollment_intakes','id',x.id,'time',x.submitted_at)) evidence,jsonb_build_object('callId',x.call_id,'plan',x.data->>'planName','carrier',x.data->>'newCarrier','effectiveDate',x.data->>'effectiveDate','confirmation',coalesce(x.data->>'sunfireCode',x.data->>'enrollmentId'),'test',x.is_test_enrollment) details FROM intakes x\nUNION ALL\nSELECT 'enrollment_intakes:'||x.id::text||':revision' key,'revision'::text type,(x.updated_at)::timestamptz \"time\",((SELECT agent_id FROM calls WHERE id=x.call_id))::text staff,('recorded')::text status,'Enrollment updated'::text summary,jsonb_build_array(jsonb_build_object('table','enrollment_intakes','id',x.id,'time',x.updated_at)) evidence,jsonb_build_object('callId',x.call_id) details FROM intakes x WHERE x.updated_at>x.submitted_at\nUNION ALL\nSELECT 'policies:'||x.id::text||':enrollment' key,'enrollment'::text type,(x.created_at)::timestamptz \"time\",(x.writing_agent_id)::text staff,(x.status)::text status,'Policy recorded'::text summary,jsonb_build_array(jsonb_build_object('table','policies','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('plan',x.plan_name,'carrier',x.carrier,'effectiveDate',x.effective_date) details FROM policies x WHERE x.tenant_id=p_tenant AND x.contact_id=p_contact\nUNION ALL\nSELECT 'ghl_enrollment_deliveries:'||x.id::text||':delivery' key,'delivery'::text type,(coalesce(x.uploaded_at,x.updated_at,x.created_at))::timestamptz \"time\",((SELECT agent_id FROM calls WHERE id=x.call_id))::text staff,(x.status)::text status,'Enrollment delivery'::text summary,jsonb_build_array(jsonb_build_object('table','ghl_enrollment_deliveries','id',x.id,'time',coalesce(x.uploaded_at,x.updated_at,x.created_at))) evidence,jsonb_build_object('callId',x.call_id,'destination','ghl_enrollment_deliveries') details FROM ghl_enrollment_deliveries x WHERE x.tenant_id=p_tenant AND x.call_id IN (SELECT id FROM calls) AND public.deployment_feature_enabled('GHL_ENABLED')\nUNION ALL\nSELECT 'ix_uploads:'||x.id::text||':delivery' key,'delivery'::text type,(coalesce(x.uploaded_at,x.updated_at,x.created_at))::timestamptz \"time\",((SELECT agent_id FROM calls WHERE id=x.call_id))::text staff,(x.status)::text status,'Enrollment delivery'::text summary,jsonb_build_array(jsonb_build_object('table','ix_uploads','id',x.id,'time',coalesce(x.uploaded_at,x.updated_at,x.created_at))) evidence,jsonb_build_object('callId',x.call_id,'destination','ix_uploads') details FROM ix_uploads x WHERE x.tenant_id=p_tenant AND x.call_id IN (SELECT id FROM calls) AND public.deployment_feature_enabled('IX_UPLOAD_ENABLED')\nUNION ALL\nSELECT 'conversely_submissions:'||x.id::text||':delivery' key,'delivery'::text type,(coalesce(x.uploaded_at,x.updated_at,x.created_at))::timestamptz \"time\",((SELECT agent_id FROM calls WHERE id=x.call_id))::text staff,(x.status)::text status,'Enrollment delivery'::text summary,jsonb_build_array(jsonb_build_object('table','conversely_submissions','id',x.id,'time',coalesce(x.uploaded_at,x.updated_at,x.created_at))) evidence,jsonb_build_object('callId',x.call_id,'destination','conversely_submissions') details FROM conversely_submissions x WHERE x.tenant_id=p_tenant AND x.call_id IN (SELECT id FROM calls) AND public.deployment_feature_enabled('CONVERSELY_UPLOAD_ENABLED')\nUNION ALL\nSELECT 'follow_ups:'||x.id::text||':task' key,'task'::text type,(x.created_at)::timestamptz \"time\",(x.agent_id)::text staff,(x.status)::text status,'Follow-up task'::text summary,jsonb_build_array(jsonb_build_object('table','follow_ups','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('due',x.due_at) details FROM follow_ups x WHERE x.tenant_id=p_tenant AND x.contact_id=p_contact\nUNION ALL\nSELECT 'follow_ups:'||x.id::text||':callback' key,'callback'::text type,(x.due_at)::timestamptz \"time\",(x.agent_id)::text staff,(x.status)::text status,'Callback scheduled'::text summary,jsonb_build_array(jsonb_build_object('table','follow_ups','id',x.id,'time',x.due_at)) evidence,'{}'::jsonb details FROM follow_ups x WHERE x.tenant_id=p_tenant AND x.contact_id=p_contact\nUNION ALL\nSELECT 'contact_activities:'||x.id::text||':activity' key,'activity'::text type,(x.occurred_at)::timestamptz \"time\",(x.actor_clerk_user_id)::text staff,('recorded')::text status,'Contact activity'::text summary,jsonb_build_array(jsonb_build_object('table','contact_activities','id',x.id,'time',x.occurred_at)) evidence,jsonb_build_object('activityType',x.type) details FROM contact_activities x WHERE x.tenant_id=p_tenant AND x.contact_id=p_contact\nUNION ALL\nSELECT 'opportunity_events:'||x.id::text||':opportunity' key,'opportunity'::text type,(x.created_at)::timestamptz \"time\",(NULL)::text staff,(x.event_type)::text status,'Opportunity event'::text summary,jsonb_build_array(jsonb_build_object('table','opportunity_events','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('opportunityId',x.opportunity_id,'fromStage',x.payload->>'from_stage_id','toStage',x.payload->>'to_stage_id') details FROM opportunity_events x JOIN public.opportunities o ON o.id=x.opportunity_id AND o.tenant_id=p_tenant WHERE x.tenant_id=p_tenant AND o.contact_id=p_contact\nUNION ALL\nSELECT 'admin_action_log:'||x.id::text||':reassignment' key,'reassignment'::text type,(x.occurred_at)::timestamptz \"time\",(x.actor_id)::text staff,(x.result)::text status,'Consumer reassigned'::text summary,jsonb_build_array(jsonb_build_object('table','admin_action_log','id',x.id,'time',x.occurred_at)) evidence,jsonb_build_object('fromAgent',x.before_summary->>'assigned_agent_id','toAgent',x.after_summary->>'assigned_agent_id') details FROM admin_action_log x WHERE x.tenant_id=p_tenant AND x.target_type='contacts' AND x.target_id=p_contact::text AND x.before_summary->'assigned_agent_id' IS DISTINCT FROM x.after_summary->'assigned_agent_id'\nUNION ALL\nSELECT 'admin_action_log:'||x.id::text||':revision' key,'revision'::text type,(x.occurred_at)::timestamptz \"time\",(x.actor_id)::text staff,(x.result)::text status,'Enrollment revision'::text summary,jsonb_build_array(jsonb_build_object('table','admin_action_log','id',x.id,'time',x.occurred_at)) evidence,'{}'::jsonb details FROM admin_action_log x WHERE x.tenant_id=p_tenant AND x.action='enrollment_intakes' AND (x.target_id IN (SELECT id::text FROM intakes) OR x.target_id IN (SELECT call_id::text FROM intakes))\nUNION ALL\nSELECT 'retention_holds:'||x.id::text||':hold' key,'hold'::text type,(x.created_at)::timestamptz \"time\",(x.created_by)::text staff,(CASE WHEN x.released_at IS NULL THEN 'open' ELSE 'resolved' END)::text status,'Legal hold placed'::text summary,jsonb_build_array(jsonb_build_object('table','retention_holds','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('targetType',x.target_type) details FROM retention_holds x WHERE x.tenant_id=p_tenant AND (x.target_type='contact' AND x.target_id=p_contact OR x.target_type='call' AND x.target_id IN (SELECT id FROM calls) OR x.target_type='agent' AND x.target_id IN (SELECT agent_id FROM calls))\nUNION ALL\nSELECT 'retention_holds:'||x.id::text||':hold_release' key,'hold'::text type,(x.released_at)::timestamptz \"time\",(x.released_by)::text staff,(CASE WHEN x.released_at IS NULL THEN 'open' ELSE 'resolved' END)::text status,'Legal hold released'::text summary,jsonb_build_array(jsonb_build_object('table','retention_holds','id',x.id,'time',x.released_at)) evidence,jsonb_build_object('targetType',x.target_type) details FROM retention_holds x WHERE x.tenant_id=p_tenant AND (x.target_type='contact' AND x.target_id=p_contact OR x.target_type='call' AND x.target_id IN (SELECT id FROM calls) OR x.target_type='agent' AND x.target_id IN (SELECT agent_id FROM calls)) AND x.released_at IS NOT NULL\nUNION ALL\nSELECT 'retention_holds:'||x.id::text||':complaint' key,'complaint'::text type,(x.created_at)::timestamptz \"time\",(x.created_by)::text staff,(CASE WHEN x.released_at IS NULL THEN 'open' ELSE 'resolved' END)::text status,'Complaint flagged'::text summary,jsonb_build_array(jsonb_build_object('table','retention_holds','id',x.id,'time',x.created_at)) evidence,jsonb_build_object('targetType',x.target_type) details FROM retention_holds x WHERE x.tenant_id=p_tenant AND (x.target_type='contact' AND x.target_id=p_contact OR x.target_type='call' AND x.target_id IN (SELECT id FROM calls) OR x.target_type='agent' AND x.target_id IN (SELECT agent_id FROM calls)) AND x.source='complaint'\nUNION ALL\nSELECT 'retention_holds:'||x.id::text||':complaint_resolution' key,'complaint_resolution'::text type,(x.released_at)::timestamptz \"time\",(x.released_by)::text staff,(CASE WHEN x.released_at IS NULL THEN 'open' ELSE 'resolved' END)::text status,'Complaint resolved'::text summary,jsonb_build_array(jsonb_build_object('table','retention_holds','id',x.id,'time',x.released_at)) evidence,jsonb_build_object('targetType',x.target_type) details FROM retention_holds x WHERE x.tenant_id=p_tenant AND (x.target_type='contact' AND x.target_id=p_contact OR x.target_type='call' AND x.target_id IN (SELECT id FROM calls) OR x.target_type='agent' AND x.target_id IN (SELECT agent_id FROM calls)) AND x.source='complaint' AND x.released_at IS NOT NULL\nUNION ALL\nSELECT 'retention_purge_items:'||x.id::text||':retention' key,'retention'::text type,(x.occurred_at)::timestamptz \"time\",(NULL)::text staff,('removed')::text status,'Removed under retention schedule'::text summary,jsonb_build_array(jsonb_build_object('table','retention_purge_items','id',x.id,'time',x.occurred_at)) evidence,jsonb_build_object('sourceTable',x.source_table,'resourceId',x.resource_id,'callId',x.call_id) details FROM retention_purge_items x WHERE x.tenant_id=p_tenant AND x.contact_id=p_contact\nUNION ALL\nSELECT 'retention_recording_purges:'||x.recording_id::text||':retention' key,'retention'::text type,(coalesce(x.finished_at,x.object_deleted_at,x.started_at))::timestamptz \"time\",(NULL)::text staff,(x.status)::text status,'Recording retention marker'::text summary,jsonb_build_array(jsonb_build_object('table','retention_recording_purges','id',x.recording_id,'time',coalesce(x.finished_at,x.object_deleted_at,x.started_at))) evidence,jsonb_build_object('sourceTable','recording_ingestion','resourceId',x.recording_id,'callId',x.call_id) details FROM retention_recording_purges x WHERE x.tenant_id=p_tenant AND (x.contact_id=p_contact OR EXISTS(SELECT 1 FROM calls c WHERE c.recording_storage_path=x.storage_path)) AND NOT EXISTS(SELECT 1 FROM public.retention_purge_items i WHERE i.source_table='recording_ingestion' AND i.resource_id=x.recording_id)\nUNION ALL\nSELECT 'opportunity_stage_history:'||h.id::text,'opportunity',h.changed_at,h.changed_by::text,'recorded','Opportunity stage changed',jsonb_build_array(jsonb_build_object('table','opportunity_stage_history','id',h.id,'time',h.changed_at)),jsonb_build_object('fromStage',h.from_stage_id,'toStage',h.to_stage_id) FROM public.opportunity_stage_history h JOIN public.opportunities o ON o.id=h.opportunity_id AND o.tenant_id=p_tenant WHERE h.tenant_id=p_tenant AND o.contact_id=p_contact\nUNION ALL\nSELECT 'paragon_callback_tasks:'||t.id::text,'callback',t.created_at,t.assigned_agent_id,t.status,'Callback task',jsonb_build_array(jsonb_build_object('table','paragon_callback_tasks','id',t.id,'time',t.created_at)),jsonb_build_object('due',t.due_at,'closed',t.closed_at) FROM public.paragon_callback_tasks t JOIN incoming i ON i.id=t.inbound_call_id WHERE t.tenant_id=p_tenant\nUNION ALL\nSELECT 'followup_queue:'||t.id::text,'task',t.created_at,c.agent_id::text,t.followup_status,'Enrollment follow-up',jsonb_build_array(jsonb_build_object('table','followup_queue','id',t.id,'time',t.created_at)),jsonb_build_object('due',t.recommended_followup_date) FROM public.followup_queue t JOIN calls c ON c.id=t.call_id WHERE t.tenant_id=p_tenant\nUNION ALL\nSELECT 'compliance_scores:'||t.id::text,'review',t.created_at,t.agent_id::text,'recorded','Session compliance result',jsonb_build_array(jsonb_build_object('table','compliance_scores','id',t.id,'time',t.created_at)),jsonb_build_object('score',t.score,'callId',to_jsonb(t)->>'call_id') FROM public.compliance_scores t WHERE t.tenant_id=p_tenant AND (to_jsonb(t)->>'call_id' IN (SELECT id::text FROM calls) OR t.session_id IN (SELECT id FROM public.sessions WHERE tenant_id=p_tenant AND contact_id=p_contact))\n\nUNION ALL\nSELECT 'call_records:'||r.id::text||':enrollment','enrollment',coalesce(r.call_end,r.call_start,r.created_at),r.agent_id::text,'recorded','Legacy enrollment recorded',jsonb_build_array(jsonb_build_object('table','call_records','id',r.id,'time',coalesce(r.call_end,r.call_start,r.created_at))),jsonb_build_object('callId',r.id,'plan',r.plan_name,'carrier',r.carrier_name,'effectiveDate',r.effective_date,'confirmation',r.enrollment_confirmation_number) FROM calls r WHERE (r.enrollment_completed IS TRUE OR r.app_written IS TRUE OR nullif(r.enrollment_confirmation_number,'') IS NOT NULL) AND NOT EXISTS(SELECT 1 FROM intakes i WHERE i.call_id=r.id)\n\nUNION ALL\nSELECT 'opportunities:'||o.id::text,'opportunity',coalesce(o.stage_entered_at,o.created_at),o.assigned_agent_id::text,o.status,'Opportunity stage recorded',jsonb_build_array(jsonb_build_object('table','opportunities','id',o.id,'time',coalesce(o.stage_entered_at,o.created_at))),jsonb_build_object('stageId',o.stage_id,'source',o.stage_change_source) FROM public.opportunities o WHERE o.tenant_id=p_tenant AND o.contact_id=p_contact\nUNION ALL\nSELECT 'follow_ups:'||f.id::text||':updated','task',f.updated_at,f.agent_id,f.status,'Follow-up updated',jsonb_build_array(jsonb_build_object('table','follow_ups','id',f.id,'time',f.updated_at)),jsonb_build_object('due',f.due_at) FROM public.follow_ups f WHERE f.tenant_id=p_tenant AND f.contact_id=p_contact AND f.updated_at>f.created_at\n;\n$function$\n"
     },
     {
       "schema": "public",
@@ -53467,7 +53689,7 @@
         "search_path=pg_catalog, public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.execute_admin_action(p_actor text, p_org text, p_action text, p_request uuid, p_command jsonb, p_verified_admin boolean DEFAULT false)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; relation text:=p_command->>'name'; operation text:=p_command->>'operation';\n args text; query text; answer jsonb; before_value jsonb:='{}'; after_value jsonb:='{}'; cols text; updates text; predicate text; row_value jsonb; routine record; target text:='collection';\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n SELECT tenant_id INTO tenant FROM public.resolve_deployment_subject(p_actor,p_org) WHERE authority='admin' OR p_verified_admin;\n IF tenant IS NULL THEN RAISE EXCEPTION 'Protected admin required' USING ERRCODE='42501'; END IF;\n IF p_action NOT IN ('access_review','tenant_settings','contact_assignment','pipeline_settings','script_settings','vendor_pause','compliance_review','compliance_uploads','post_call_admin','retention_holds','trigger_knowledge_update','rts_ingest','recordings','enrollment_intakes','transcript_import','set_availability','test_ghl_webhook','stripe_checkout','stripe_portal','paragon_residence') THEN RAISE EXCEPTION 'Unknown administrator action'; END IF;\n INSERT INTO public.admin_action_permit VALUES(txid_current(),p_request);\n IF p_command->>'kind'='rpc' THEN\n  target:=coalesce(p_command->'args'->>'p_call_id',p_command->'args'->>'p_contact',p_command->'args'->>'p_hold',p_command->'args'->>'p_transcript',p_command->'args'->>'p_pipeline_id',p_command->'args'->>'p_stage_id',p_command->'args'->>'p_target',p_command->'args'->>'p_session_id',p_command->'args'->>'p_id','collection');\n  IF target !~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:='collection'; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO before_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n  IF relation NOT IN ('set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket') THEN RAISE EXCEPTION 'Unreviewed admin routine'; END IF;\n  SELECT p.oid,p.proargnames,p.proargtypes,p.proretset INTO STRICT routine FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname=relation;\n  SELECT string_agg(format('%I => %s',e.key,CASE WHEN e.value='null'::jsonb THEN format('NULL::%s',t.oid::regtype) WHEN t.typname IN ('json','jsonb') THEN format('%L::%s',e.value::text,t.oid::regtype) ELSE format('%L::%s',e.value#>>'{}',t.oid::regtype) END),',') INTO args\n  FROM jsonb_each(p_command->'args') e JOIN unnest(routine.proargnames,routine.proargtypes::oid[]) a(name,type) ON a.name=e.key JOIN pg_type t ON t.oid=a.type;\n  IF (SELECT count(*) FROM jsonb_each(p_command->'args'))<>(SELECT count(*) FROM unnest(routine.proargnames) n WHERE p_command->'args' ? n) THEN RAISE EXCEPTION 'Invalid argument'; END IF;\n  -- Original routine retains all ownership, feature, lease and budget fences.\n  EXECUTE format('SELECT %s FROM public.%I(%s) x',CASE WHEN routine.proretset THEN 'coalesce(jsonb_agg(to_jsonb(x)),''[]'')' ELSE 'to_jsonb(x)' END,relation,args) INTO answer;\n  IF NOT routine.proretset AND jsonb_typeof(answer)='object' AND answer ? relation THEN answer:=answer->relation; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO after_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n ELSE\n  IF relation NOT IN ('tenants','contacts','script_templates','manual_transcript_gap_fills','compliance_llm_passes','call_records','knowledge_entries','knowledge_update_drafts','knowledge_updates','knowledge_base','agent_availability','recording_compliance_tickets','transcript_ingestion_jobs','call_transcripts','transcript_chunks') OR operation NOT IN ('insert','update','delete','upsert') THEN RAISE EXCEPTION 'Unreviewed admin table mutation'; END IF;\n  IF relation='tenants' THEN predicate:=format('t.id=%L::uuid',tenant); ELSIF relation='knowledge_updates' THEN predicate:=format('t.knowledge_base_id IN (SELECT id FROM public.knowledge_base WHERE tenant_id IS NULL OR tenant_id=%L::uuid)',tenant); ELSIF relation='agent_availability' THEN predicate:=format('t.agent_id IN (SELECT agent_slug FROM public.tenant_agents WHERE tenant_id=%L::uuid)',tenant); ELSE predicate:=format('t.tenant_id=%L::uuid',tenant); END IF;\n  FOR row_value IN SELECT value FROM jsonb_array_elements(coalesce(p_command->'filters','[]')) LOOP\n   IF NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=format('public.%I',relation)::regclass AND attname=row_value->>'column' AND attnum>0 AND NOT attisdropped) THEN RAISE EXCEPTION 'Invalid filter'; END IF;\n   predicate:=predicate||format(' AND t.%I::text=%L',row_value->>'column',row_value->>'value');\n   IF row_value->>'column'='id' AND row_value->>'value' ~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:=row_value->>'value'; END IF;\n  END LOOP;\n  IF operation IN ('update','delete') THEN EXECUTE format('SELECT public.admin_safe_summary(to_jsonb(t)) FROM public.%I t WHERE %s LIMIT 1',relation,predicate) INTO before_value; END IF;\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO before_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  row_value:=p_command->'values';\n  IF jsonb_typeof(row_value)='array' THEN RAISE EXCEPTION 'Bulk administrator changes require a reviewed routine'; END IF;\n  IF operation IN ('insert','upsert','update') THEN\n   IF relation<>'tenants' AND row_value ? 'tenant_id' AND row_value->>'tenant_id'<>tenant::text THEN RAISE EXCEPTION 'Foreign tenant'; END IF;\n   IF operation IN ('insert','upsert') AND relation NOT IN ('tenants','agent_availability','knowledge_updates') THEN row_value:=row_value||jsonb_build_object('tenant_id',tenant); END IF;\n   SELECT string_agg(format('%I',key),','),string_agg(format('%I=r.%I',key,key),',') INTO cols,updates FROM jsonb_object_keys(row_value) key;\n   IF operation='update' THEN query:=format('UPDATE public.%I t SET %s FROM jsonb_populate_record(NULL::public.%I,$1) r WHERE %s RETURNING t.*',relation,updates,relation,predicate);\n   ELSE query:=format('INSERT INTO public.%I(%s) SELECT %s FROM jsonb_populate_record(NULL::public.%I,$1) r RETURNING *',relation,cols,cols,relation); END IF;\n  ELSE query:=format('DELETE FROM public.%I t WHERE %s RETURNING t.*',relation,predicate); END IF;\n  EXECUTE 'WITH changed AS ('||query||') SELECT coalesce(jsonb_agg(to_jsonb(changed)),''[]'') FROM changed' INTO answer USING row_value;\n  after_value:=public.admin_safe_summary(answer->0);\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO after_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  IF p_command->>'projection' IS NULL THEN answer:='null'::jsonb;\n  ELSIF p_command->>'projection'<>'*' THEN\n   IF p_command->>'projection' !~ '^[a-z_][a-z0-9_,]*$' THEN RAISE EXCEPTION 'Invalid projection'; END IF;\n   SELECT coalesce(jsonb_agg((SELECT coalesce(jsonb_object_agg(e.key,e.value),'{}') FROM jsonb_each(row_data) e WHERE e.key=ANY(string_to_array(p_command->>'projection',',')))),'[]') INTO answer FROM jsonb_array_elements(answer) row_data;\n  END IF;\n END IF;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(p_request,p_actor,tenant,p_action,relation,target,'succeeded',coalesce(before_value,'{}'),coalesce(after_value,'{}')) ON CONFLICT(request_id) DO NOTHING;\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\n DELETE FROM public.admin_action_permit WHERE transaction_id=txid_current();\n RETURN answer;\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.execute_admin_action(p_actor text, p_org text, p_action text, p_request uuid, p_command jsonb, p_verified_admin boolean DEFAULT false)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; relation text:=p_command->>'name'; operation text:=p_command->>'operation';\n args text; query text; answer jsonb; before_value jsonb:='{}'; after_value jsonb:='{}'; cols text; updates text; predicate text; row_value jsonb; routine record; target text:='collection';\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n SELECT tenant_id INTO tenant FROM public.resolve_deployment_subject(p_actor,p_org) WHERE authority='admin' OR p_verified_admin;\n IF tenant IS NULL THEN RAISE EXCEPTION 'Protected admin required' USING ERRCODE='42501'; END IF;\n IF p_action NOT IN ('access_review','consumer_lifecycle','tenant_settings','contact_assignment','pipeline_settings','script_settings','vendor_pause','compliance_review','compliance_uploads','post_call_admin','retention_holds','trigger_knowledge_update','rts_ingest','recordings','enrollment_intakes','transcript_import','set_availability','test_ghl_webhook','stripe_checkout','stripe_portal','paragon_residence') THEN RAISE EXCEPTION 'Unknown administrator action'; END IF;\n INSERT INTO public.admin_action_permit VALUES(txid_current(),p_request);\n IF p_command->>'kind'='rpc' THEN\n  target:=coalesce(p_command->'args'->>'p_call_id',p_command->'args'->>'p_contact',p_command->'args'->>'p_hold',p_command->'args'->>'p_transcript',p_command->'args'->>'p_pipeline_id',p_command->'args'->>'p_stage_id',p_command->'args'->>'p_target',p_command->'args'->>'p_session_id',p_command->'args'->>'p_id','collection');\n  IF target !~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:='collection'; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO before_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n  IF relation NOT IN ('set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket') THEN RAISE EXCEPTION 'Unreviewed admin routine'; END IF;\n  SELECT p.oid,p.proargnames,p.proargtypes,p.proretset INTO STRICT routine FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname=relation;\n  SELECT string_agg(format('%I => %s',e.key,CASE WHEN e.value='null'::jsonb THEN format('NULL::%s',t.oid::regtype) WHEN t.typname IN ('json','jsonb') THEN format('%L::%s',e.value::text,t.oid::regtype) ELSE format('%L::%s',e.value#>>'{}',t.oid::regtype) END),',') INTO args\n  FROM jsonb_each(p_command->'args') e JOIN unnest(routine.proargnames,routine.proargtypes::oid[]) a(name,type) ON a.name=e.key JOIN pg_type t ON t.oid=a.type;\n  IF (SELECT count(*) FROM jsonb_each(p_command->'args'))<>(SELECT count(*) FROM unnest(routine.proargnames) n WHERE p_command->'args' ? n) THEN RAISE EXCEPTION 'Invalid argument'; END IF;\n  -- Original routine retains all ownership, feature, lease and budget fences.\n  EXECUTE format('SELECT %s FROM public.%I(%s) x',CASE WHEN routine.proretset THEN 'coalesce(jsonb_agg(to_jsonb(x)),''[]'')' ELSE 'to_jsonb(x)' END,relation,args) INTO answer;\n  IF NOT routine.proretset AND jsonb_typeof(answer)='object' AND answer ? relation THEN answer:=answer->relation; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO after_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n ELSE\n  IF relation NOT IN ('tenants','contacts','script_templates','manual_transcript_gap_fills','compliance_llm_passes','call_records','knowledge_entries','knowledge_update_drafts','knowledge_updates','knowledge_base','agent_availability','recording_compliance_tickets','transcript_ingestion_jobs','call_transcripts','transcript_chunks') OR operation NOT IN ('insert','update','delete','upsert') THEN RAISE EXCEPTION 'Unreviewed admin table mutation'; END IF;\n  IF relation='tenants' THEN predicate:=format('t.id=%L::uuid',tenant); ELSIF relation='knowledge_updates' THEN predicate:=format('t.knowledge_base_id IN (SELECT id FROM public.knowledge_base WHERE tenant_id IS NULL OR tenant_id=%L::uuid)',tenant); ELSIF relation='agent_availability' THEN predicate:=format('t.agent_id IN (SELECT agent_slug FROM public.tenant_agents WHERE tenant_id=%L::uuid)',tenant); ELSE predicate:=format('t.tenant_id=%L::uuid',tenant); END IF;\n  FOR row_value IN SELECT value FROM jsonb_array_elements(coalesce(p_command->'filters','[]')) LOOP\n   IF NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=format('public.%I',relation)::regclass AND attname=row_value->>'column' AND attnum>0 AND NOT attisdropped) THEN RAISE EXCEPTION 'Invalid filter'; END IF;\n   predicate:=predicate||format(' AND t.%I::text=%L',row_value->>'column',row_value->>'value');\n   IF row_value->>'column'='id' AND row_value->>'value' ~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:=row_value->>'value'; END IF;\n  END LOOP;\n  IF operation IN ('update','delete') THEN EXECUTE format('SELECT public.admin_safe_summary(to_jsonb(t)) FROM public.%I t WHERE %s LIMIT 1',relation,predicate) INTO before_value; END IF;\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO before_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  row_value:=p_command->'values';\n  IF jsonb_typeof(row_value)='array' THEN RAISE EXCEPTION 'Bulk administrator changes require a reviewed routine'; END IF;\n  IF operation IN ('insert','upsert','update') THEN\n   IF relation<>'tenants' AND row_value ? 'tenant_id' AND row_value->>'tenant_id'<>tenant::text THEN RAISE EXCEPTION 'Foreign tenant'; END IF;\n   IF operation IN ('insert','upsert') AND relation NOT IN ('tenants','agent_availability','knowledge_updates') THEN row_value:=row_value||jsonb_build_object('tenant_id',tenant); END IF;\n   SELECT string_agg(format('%I',key),','),string_agg(format('%I=r.%I',key,key),',') INTO cols,updates FROM jsonb_object_keys(row_value) key;\n   IF operation='update' THEN query:=format('UPDATE public.%I t SET %s FROM jsonb_populate_record(NULL::public.%I,$1) r WHERE %s RETURNING t.*',relation,updates,relation,predicate);\n   ELSE query:=format('INSERT INTO public.%I(%s) SELECT %s FROM jsonb_populate_record(NULL::public.%I,$1) r RETURNING *',relation,cols,cols,relation); END IF;\n  ELSE query:=format('DELETE FROM public.%I t WHERE %s RETURNING t.*',relation,predicate); END IF;\n  EXECUTE 'WITH changed AS ('||query||') SELECT coalesce(jsonb_agg(to_jsonb(changed)),''[]'') FROM changed' INTO answer USING row_value;\n  after_value:=public.admin_safe_summary(answer->0);\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO after_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  IF p_command->>'projection' IS NULL THEN answer:='null'::jsonb;\n  ELSIF p_command->>'projection'<>'*' THEN\n   IF p_command->>'projection' !~ '^[a-z_][a-z0-9_,]*$' THEN RAISE EXCEPTION 'Invalid projection'; END IF;\n   SELECT coalesce(jsonb_agg((SELECT coalesce(jsonb_object_agg(e.key,e.value),'{}') FROM jsonb_each(row_data) e WHERE e.key=ANY(string_to_array(p_command->>'projection',',')))),'[]') INTO answer FROM jsonb_array_elements(answer) row_data;\n  END IF;\n END IF;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(p_request,p_actor,tenant,p_action,relation,target,'succeeded',coalesce(before_value,'{}'),coalesce(after_value,'{}')) ON CONFLICT(request_id) DO NOTHING;\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\n DELETE FROM public.admin_action_permit WHERE transaction_id=txid_current();\n RETURN answer;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -54706,6 +54928,19 @@
     },
     {
       "schema": "public",
+      "name": "read_consumer_lifecycle",
+      "arguments": "p_actor text, p_org text, p_contact uuid, p_after_time timestamp with time zone, p_after_key text, p_type text, p_limit integer, p_as_of timestamp with time zone, p_export boolean, p_evidence_table text, p_evidence_id uuid, p_access_time timestamp with time zone, p_access_id uuid",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_consumer_lifecycle(p_actor text, p_org text, p_contact uuid, p_after_time timestamp with time zone DEFAULT NULL::timestamp with time zone, p_after_key text DEFAULT NULL::text, p_type text DEFAULT NULL::text, p_limit integer DEFAULT 50, p_as_of timestamp with time zone DEFAULT NULL::timestamp with time zone, p_export boolean DEFAULT false, p_evidence_table text DEFAULT NULL::text, p_evidence_id uuid DEFAULT NULL::uuid, p_access_time timestamp with time zone DEFAULT NULL::timestamp with time zone, p_access_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE i record; allowed boolean; answer jsonb; cutoff timestamptz:=coalesce(p_as_of,clock_timestamp());\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('CONSUMER_LIFECYCLE_ENABLED') THEN RAISE EXCEPTION 'Lifecycle unavailable' USING ERRCODE='42501'; END IF;\n SELECT * INTO i FROM public.resolve_deployment_subject(p_actor,p_org);\n IF i.tenant_id IS NULL OR (p_export AND i.authority<>'admin') THEN RAISE EXCEPTION 'Lifecycle unavailable' USING ERRCODE='42501'; END IF;\n SELECT EXISTS(SELECT 1 FROM public.contacts c WHERE c.id=p_contact AND c.tenant_id=i.tenant_id AND\n (c.assigned_agent_id=i.agent_slug OR i.authority='admin' OR (i.authority='manager' AND EXISTS(\n SELECT 1 FROM public.tenant_agents r JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id\n WHERE r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id AND e.id=ANY(i.team_agent_ids))))) INTO allowed;\n IF NOT allowed THEN RAISE EXCEPTION 'Lifecycle unavailable' USING ERRCODE='42501'; END IF;\n IF p_limit NOT BETWEEN 1 AND 200 OR (p_after_time IS NULL)<>(p_after_key IS NULL) OR (p_access_time IS NULL)<>(p_access_id IS NULL) OR cutoff>clock_timestamp()+interval '1 minute' THEN RAISE EXCEPTION 'Invalid lifecycle page' USING ERRCODE='22023'; END IF;\n WITH rows AS MATERIALIZED (SELECT * FROM public.consumer_lifecycle_rows(p_contact,i.tenant_id) WHERE \"time\" IS NOT NULL AND \"time\"<=cutoff),\n page AS (SELECT * FROM rows WHERE (p_type IS NULL OR type=p_type) AND (p_evidence_id IS NULL OR evidence @> jsonb_build_array(jsonb_build_object('table',p_evidence_table,'id',p_evidence_id))) AND (p_after_time IS NULL OR (\"time\",key)>(p_after_time,p_after_key COLLATE \"C\")) ORDER BY \"time\",key COLLATE \"C\" LIMIT p_limit+1)\n SELECT jsonb_build_object('consumerId',p_contact,'asOf',cutoff,'admin',i.authority='admin',\n 'events',coalesce((SELECT jsonb_agg(to_jsonb(p) ORDER BY \"time\",key COLLATE \"C\") FROM (SELECT * FROM page ORDER BY \"time\",key COLLATE \"C\" LIMIT p_limit) p),'[]'),\n 'hasMore',(SELECT count(*)>p_limit FROM page),\n 'checkInputs',coalesce((SELECT jsonb_agg(to_jsonb(r) ORDER BY \"time\",key COLLATE \"C\") FROM rows r WHERE type IN ('consent','soa','call','recording','transcript','disclosure','review','enrollment','retention')),'[]'),\n 'accesses',CASE WHEN i.authority='admin' THEN coalesce((SELECT jsonb_agg(to_jsonb(a)) FROM (SELECT id,actor_id,occurred_at,action,result FROM public.evidence_access_log WHERE tenant_id=i.tenant_id AND resource_type='consumer_lifecycle' AND resource_id=p_contact::text AND (p_access_time IS NULL OR (occurred_at,id)<(p_access_time,p_access_id)) ORDER BY occurred_at DESC,id DESC LIMIT 100) a),'[]') ELSE '[]'::jsonb END) INTO answer;\n RETURN answer;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "read_contact_details",
       "arguments": "p_contact_ids uuid[], p_requesting_agent_id uuid",
       "result": "TABLE(contact_id uuid, fields jsonb)",
@@ -55743,6 +55978,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.resolve_recording_attribution(p_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE r recording_ingestion%ROWTYPE; a telephony_call_attempts%ROWTYPE;\n  i inbound_calls%ROWTYPE; scope recording_call_scopes%ROWTYPE; matches integer; record_id uuid;\nBEGIN\n  SELECT * INTO r FROM recording_ingestion WHERE id=p_id;\n  IF NOT FOUND THEN RETURN; END IF;\n  IF r.attempt_id IS NOT NULL THEN\n    SELECT * INTO a FROM telephony_call_attempts WHERE id=r.attempt_id\n      AND (parent_call_sid=r.callback_call_sid OR child_call_sid=r.callback_call_sid);\n  ELSIF r.recording_source IS DISTINCT FROM 'RecordVerb' THEN\n    SELECT count(*) INTO matches FROM telephony_call_attempts\n      WHERE child_call_sid=r.callback_call_sid;\n    IF matches=1 THEN\n      SELECT * INTO a FROM telephony_call_attempts WHERE child_call_sid=r.callback_call_sid;\n    ELSE\n      SELECT count(*) INTO matches FROM telephony_call_attempts\n        WHERE parent_call_sid=r.callback_call_sid;\n      IF matches=1 THEN\n        SELECT * INTO a FROM telephony_call_attempts WHERE parent_call_sid=r.callback_call_sid;\n      ELSE\n        -- Old callbacks/API reconciliation lack our attempt hint. Failed ring\n        -- attempts must not hide a uniquely answered conversation on the parent.\n        SELECT count(*) INTO matches FROM telephony_call_attempts\n          WHERE parent_call_sid=r.callback_call_sid AND answered_at IS NOT NULL;\n        IF matches=1 THEN\n          SELECT * INTO a FROM telephony_call_attempts\n            WHERE parent_call_sid=r.callback_call_sid AND answered_at IS NOT NULL;\n        END IF;\n      END IF;\n    END IF;\n  END IF;\n  -- Attempts/events are service-written. inbound_calls is a mutable CRM row\n  -- and cannot supply the authorization tenant or shared-inbox classification.\n  INSERT INTO recording_call_scopes(call_sid,tenant_id,inbound_call_id,shared_voicemail)\n  SELECT e.twilio_call_sid,e.tenant_id,min(e.inbound_call_id::text)::uuid,\n    coalesce(bool_or(e.event IN ('routing_no_agents','voicemail_fallback') OR\n      (e.event='recording_completed' AND e.payload->>'RecordingSource'='RecordVerb')),false)\n  FROM telephony_events e WHERE e.twilio_call_sid=coalesce(a.parent_call_sid,r.callback_call_sid)\n  GROUP BY e.twilio_call_sid,e.tenant_id ON CONFLICT(call_sid) DO UPDATE\n    SET shared_voicemail=recording_call_scopes.shared_voicemail OR EXCLUDED.shared_voicemail;\n  IF a.id IS NOT NULL THEN\n    INSERT INTO recording_call_scopes(call_sid,tenant_id,inbound_call_id)\n    VALUES(a.parent_call_sid,a.tenant_id,a.inbound_call_id) ON CONFLICT(call_sid) DO NOTHING;\n  END IF;\n  SELECT * INTO scope FROM recording_call_scopes WHERE call_sid=coalesce(a.parent_call_sid,r.callback_call_sid);\n  IF scope.call_sid IS NOT NULL AND r.recording_source='RecordVerb' THEN\n    UPDATE recording_call_scopes SET shared_voicemail=true WHERE call_sid=scope.call_sid\n    RETURNING * INTO scope;\n  END IF;\n  SELECT * INTO i FROM inbound_calls WHERE id=coalesce(a.inbound_call_id,scope.inbound_call_id)\n    AND tenant_id=coalesce(a.tenant_id,scope.tenant_id);\n\n  IF a.id IS NULL AND scope.call_sid IS NULL THEN RETURN; END IF;\n  record_id:=a.call_record_id; -- A mutable inbound CRM pointer cannot grant recording access.\n  IF record_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM call_records\n    WHERE id=record_id AND tenant_id=coalesce(a.tenant_id,scope.tenant_id)) THEN\n    record_id:=NULL;\n  END IF;\n  UPDATE recording_ingestion SET tenant_id=coalesce(a.tenant_id,scope.tenant_id),\n    parent_call_sid=coalesce(a.parent_call_sid,scope.call_sid), attempt_id=a.id,\n    inbound_call_id=coalesce(a.inbound_call_id,i.id), call_record_id=record_id,\n    direction=CASE WHEN a.id IS NOT NULL THEN a.direction\n      WHEN r.recording_source='RecordVerb' OR scope.shared_voicemail THEN 'voicemail' ELSE 'inbound' END, updated_at=now()\n  WHERE id=p_id AND (tenant_id,parent_call_sid,attempt_id,inbound_call_id,call_record_id,direction)\n    IS DISTINCT FROM (coalesce(a.tenant_id,scope.tenant_id),coalesce(a.parent_call_sid,scope.call_sid),\n      a.id,coalesce(a.inbound_call_id,i.id),record_id,\n      CASE WHEN a.id IS NOT NULL THEN a.direction WHEN r.recording_source='RecordVerb' OR scope.shared_voicemail THEN 'voicemail' ELSE 'inbound' END);\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "retain_lifecycle_purge_marker",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.retain_lifecycle_purge_marker()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN PERFORM public.capture_lifecycle_purge_marker(TG_TABLE_NAME,OLD.id); RETURN OLD; END $function$\n"
     },
     {
       "schema": "public",
@@ -60253,6 +60501,18 @@
     },
     {
       "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "retention_purge_items_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "retention_purge_items_source_table_resource_id_key",
+      "definition": "UNIQUE (source_table, resource_id)"
+    },
+    {
+      "schema": "public",
       "relation": "retention_recording_purges",
       "name": "retention_recording_purges_pkey",
       "definition": "PRIMARY KEY (recording_id)"
@@ -61551,6 +61811,12 @@
     },
     {
       "schema": "public",
+      "relation": "call_records",
+      "name": "lifecycle_call_contact_time",
+      "definition": "CREATE INDEX lifecycle_call_contact_time ON public.call_records USING btree (tenant_id, contact_id, call_start, id)"
+    },
+    {
+      "schema": "public",
       "relation": "call_threads",
       "name": "call_threads_pkey",
       "definition": "CREATE UNIQUE INDEX call_threads_pkey ON public.call_threads USING btree (id)"
@@ -62292,6 +62558,12 @@
       "relation": "evidence_access_log",
       "name": "evidence_access_tenant_time",
       "definition": "CREATE INDEX evidence_access_tenant_time ON public.evidence_access_log USING btree (tenant_id, occurred_at, id)"
+    },
+    {
+      "schema": "public",
+      "relation": "evidence_access_log",
+      "name": "lifecycle_access_resource_time",
+      "definition": "CREATE INDEX lifecycle_access_resource_time ON public.evidence_access_log USING btree (tenant_id, resource_type, resource_id, occurred_at, id)"
     },
     {
       "schema": "public",
@@ -63249,6 +63521,24 @@
     },
     {
       "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "retention_purge_contact_time",
+      "definition": "CREATE INDEX retention_purge_contact_time ON public.retention_purge_items USING btree (tenant_id, contact_id, occurred_at, id)"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "retention_purge_items_pkey",
+      "definition": "CREATE UNIQUE INDEX retention_purge_items_pkey ON public.retention_purge_items USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "retention_purge_items",
+      "name": "retention_purge_items_source_table_resource_id_key",
+      "definition": "CREATE UNIQUE INDEX retention_purge_items_source_table_resource_id_key ON public.retention_purge_items USING btree (source_table, resource_id)"
+    },
+    {
+      "schema": "public",
       "relation": "retention_recording_purges",
       "name": "retention_recording_purges_pkey",
       "definition": "CREATE UNIQUE INDEX retention_recording_purges_pkey ON public.retention_recording_purges USING btree (recording_id)"
@@ -63552,6 +63842,12 @@
       "relation": "subscriptions",
       "name": "subscriptions_tenant_id_key",
       "definition": "CREATE UNIQUE INDEX subscriptions_tenant_id_key ON public.subscriptions USING btree (tenant_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "telephony_call_attempts",
+      "name": "lifecycle_attempt_contact_time",
+      "definition": "CREATE INDEX lifecycle_attempt_contact_time ON public.telephony_call_attempts USING btree (tenant_id, contact_id, created_at, id)"
     },
     {
       "schema": "public",
@@ -64161,6 +64457,13 @@
     {
       "schema": "public",
       "relation": "call_records",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.call_records FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "call_records",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.call_records FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -64255,6 +64558,13 @@
       "name": "apply_transcript_wrap_up",
       "enabled": "D",
       "definition": "CREATE TRIGGER apply_transcript_wrap_up BEFORE INSERT OR UPDATE ON public.call_transcripts FOR EACH ROW EXECUTE FUNCTION apply_transcript_wrap_up()"
+    },
+    {
+      "schema": "public",
+      "relation": "call_transcripts",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.call_transcripts FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",
@@ -64399,6 +64709,13 @@
     {
       "schema": "public",
       "relation": "compliance_flags",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.compliance_flags FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "compliance_flags",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.compliance_flags FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -64497,6 +64814,13 @@
     {
       "schema": "public",
       "relation": "compliance_scorecards",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.compliance_scorecards FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "compliance_scorecards",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.compliance_scorecards FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -64514,6 +64838,13 @@
       "name": "retention_anchor_insert",
       "enabled": "O",
       "definition": "CREATE TRIGGER retention_anchor_insert BEFORE INSERT ON public.compliance_scorecards FOR EACH ROW EXECUTE FUNCTION retention_anchor_insert('created_at')"
+    },
+    {
+      "schema": "public",
+      "relation": "compliance_scores",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.compliance_scores FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",
@@ -64770,6 +65101,13 @@
     {
       "schema": "public",
       "relation": "conversely_submissions",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.conversely_submissions FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "conversely_submissions",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.conversely_submissions FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -64966,6 +65304,13 @@
     {
       "schema": "public",
       "relation": "enrollment_intakes",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.enrollment_intakes FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "enrollment_intakes",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.enrollment_intakes FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -65071,6 +65416,13 @@
     {
       "schema": "public",
       "relation": "ghl_enrollment_deliveries",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.ghl_enrollment_deliveries FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "ghl_enrollment_deliveries",
       "name": "minimize_ghl_delivery_snapshot",
       "enabled": "O",
       "definition": "CREATE TRIGGER minimize_ghl_delivery_snapshot BEFORE INSERT OR UPDATE OF payload_encrypted ON public.ghl_enrollment_deliveries FOR EACH ROW EXECUTE FUNCTION minimize_ghl_delivery_snapshot()"
@@ -65123,6 +65475,13 @@
       "name": "inbound_recording_link_changed",
       "enabled": "O",
       "definition": "CREATE TRIGGER inbound_recording_link_changed AFTER UPDATE OF call_record_id ON public.inbound_calls FOR EACH ROW EXECUTE FUNCTION link_recording_reference()"
+    },
+    {
+      "schema": "public",
+      "relation": "inbound_calls",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.inbound_calls FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",
@@ -65253,6 +65612,13 @@
     {
       "schema": "public",
       "relation": "intent_detections",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.intent_detections FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "intent_detections",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.intent_detections FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -65298,6 +65664,13 @@
       "name": "deployment_feature_fence",
       "enabled": "O",
       "definition": "CREATE TRIGGER deployment_feature_fence BEFORE INSERT OR UPDATE ON public.ix_uploads FOR EACH ROW EXECUTE FUNCTION fence_deployment_queue('IX_UPLOAD_ENABLED')"
+    },
+    {
+      "schema": "public",
+      "relation": "ix_uploads",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.ix_uploads FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",
@@ -65393,6 +65766,13 @@
     {
       "schema": "public",
       "relation": "manual_transcript_gap_fills",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.manual_transcript_gap_fills FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "manual_transcript_gap_fills",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.manual_transcript_gap_fills FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -65456,6 +65836,13 @@
     {
       "schema": "public",
       "relation": "message_media",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.message_media FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "message_media",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.message_media FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -65473,6 +65860,13 @@
       "name": "retention_anchor_insert",
       "enabled": "O",
       "definition": "CREATE TRIGGER retention_anchor_insert BEFORE INSERT ON public.message_media FOR EACH ROW EXECUTE FUNCTION retention_anchor_insert('created_at')"
+    },
+    {
+      "schema": "public",
+      "relation": "messages",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.messages FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",
@@ -65939,6 +66333,13 @@
     {
       "schema": "public",
       "relation": "policies",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.policies FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "policies",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.policies FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -66184,6 +66585,13 @@
     {
       "schema": "public",
       "relation": "recording_ingestion",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.recording_ingestion FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "recording_ingestion",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.recording_ingestion FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -66292,6 +66700,13 @@
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.sbe_plans_va_2025 FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "scorecard_items",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.scorecard_items FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",
@@ -66415,6 +66830,13 @@
     {
       "schema": "public",
       "relation": "section_scores",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.section_scores FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
+    },
+    {
+      "schema": "public",
+      "relation": "section_scores",
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.section_scores FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
@@ -66432,6 +66854,13 @@
       "name": "retention_anchor_insert",
       "enabled": "O",
       "definition": "CREATE TRIGGER retention_anchor_insert BEFORE INSERT ON public.section_scores FOR EACH ROW EXECUTE FUNCTION retention_anchor_insert('created_at')"
+    },
+    {
+      "schema": "public",
+      "relation": "sessions",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.sessions FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",
@@ -66530,6 +66959,13 @@
       "name": "attempt_recording_link_changed",
       "enabled": "O",
       "definition": "CREATE TRIGGER attempt_recording_link_changed AFTER UPDATE OF call_record_id ON public.telephony_call_attempts FOR EACH ROW EXECUTE FUNCTION link_recording_reference()"
+    },
+    {
+      "schema": "public",
+      "relation": "telephony_call_attempts",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.telephony_call_attempts FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",
@@ -66677,6 +67113,13 @@
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.training_completions FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_chunks",
+      "name": "lifecycle_purge_marker",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER lifecycle_purge_marker BEFORE DELETE ON public.transcript_chunks FOR EACH ROW EXECUTE FUNCTION retain_lifecycle_purge_marker()"
     },
     {
       "schema": "public",

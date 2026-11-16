@@ -42,7 +42,7 @@ export function ComplianceChip({ score, status, grade, passFail, duration }) {
   </span>;
 }
 
-export function RecordingCell({ row, onPlay }) {
+export function RecordingCell({ row, onPlay, recordingId = null }) {
   const { getToken } = useAppAuth();
   const [error, setError] = useState('');
   const [audioUrl, setAudioUrl] = useState(null);
@@ -53,12 +53,12 @@ export function RecordingCell({ row, onPlay }) {
     setLoading(true);
     try {
       setError('');
-      const grant = await recordingMedia(getToken, recordingTarget(row), { download, provider });
+      const grant = await recordingMedia(getToken, recordingTarget(row), { ...(recordingId ? {id:recordingId} : {}), download, provider });
       if (download) downloadRecordingUrl(grant.url, grant.filename);
       else setAudioUrl({ url: grant.url, source: grant.source });
     } catch (error) { setError(error.message); }
     finally { setLoading(false); }
-  }, [audioUrl, row, getToken]);
+  }, [audioUrl, row, getToken, recordingId]);
   if (!hasRecording) return <span className="contacts-muted">--</span>;
   return <span className="call-log-recording" onClick={event => event.stopPropagation()}>
     <button data-key-role="icon" type="button" className="contacts-mini-btn call-recording-icon" aria-label={audioUrl ? 'Hide recording player' : 'Play recording'} title="Play recording" onClick={() => onPlay ? onPlay() : handlePlay()} disabled={loading}>{audioUrl ? <Pause size={16} /> : <Play size={16} />}</button>

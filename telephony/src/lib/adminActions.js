@@ -4,7 +4,7 @@ import {randomUUID} from 'node:crypto';
 import {withLogContext,securityEvent,securityEventOnce,inspectInput,createLogger} from './logger.js';
 const logger=createLogger();
 const scope=new AsyncLocalStorage();
-export const ADMIN_HANDLERS=Object.freeze(['access-review','tenant-settings','contact-assignment','pipeline-settings','script-settings','vendor-pause','compliance-review','compliance-uploads','post-call-admin','retention-holds','trigger-knowledge-update','rts-ingest','recordings','enrollment-intakes','transcript-import','set-availability','test-ghl-webhook','stripe-checkout','stripe-portal','paragon-residence']);
+export const ADMIN_HANDLERS=Object.freeze(['consumer-lifecycle','access-review','tenant-settings','contact-assignment','pipeline-settings','script-settings','vendor-pause','compliance-review','compliance-uploads','post-call-admin','retention-holds','trigger-knowledge-update','rts-ingest','recordings','enrollment-intakes','transcript-import','set-availability','test-ghl-webhook','stripe-checkout','stripe-portal','paragon-residence']);
 export const ADMIN_RPCS=Object.freeze(['set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket']);
 export function verifiedAdminIdentity(identity){if(scope.getStore())scope.getStore().identity=identity;}
 export function adminRequest(action,handler){
@@ -67,10 +67,10 @@ export function serverRequest(action,handler){return adminRequest(action,async r
 // External work cannot share a database transaction. Persist its authorized
 // dispatch before calling the provider; the operational result uses the same
 // correlation ID. A dispatch is not a claim of provider success.
-export async function logAdminDispatch(db,identity,target){
+export async function logAdminDispatch(db,identity,target,targetId=null){
  if(!identity?.admin||!identity.auth?.userId)throw new AdminLogError();
  const current=scope.getStore();
- const row={request_id:current?.requestId||randomUUID(),actor_id:identity.auth.userId,tenant_id:identity.tenant.id,action:(current?.action||target).replaceAll('-','_'),target_type:target,target_id:'collection',result:'authorized',before_summary:{},after_summary:{}};
+ const row={request_id:current?.requestId||randomUUID(),actor_id:identity.auth.userId,tenant_id:identity.tenant.id,action:(current?.action||target).replaceAll('-','_'),target_type:target,target_id:/^[a-f0-9-]{36}$/i.test(targetId||'')?targetId:'collection',result:'authorized',before_summary:{},after_summary:{}};
  try{const result=await db.from('admin_action_log').insert(row);if(result.error)throw new AdminLogError();}
  catch{securityEvent('admin_log_write_failed',{subject:identity.auth.userId});throw new AdminLogError();}
 }

@@ -30,6 +30,7 @@
     "claim_compliance_upload",
     "claim_ix_upload",
     "claim_paragon_residence_jobs",
+    "consumer_lifecycle_files",
     "conversely_run_results",
     "conversely_week_candidates",
     "decrypt_pii",
@@ -37,6 +38,7 @@
     "finalize_telephony_transcript",
     "next_post_call_request",
     "persist_manual_gap_result",
+    "read_consumer_lifecycle",
     "read_contact_details",
     "reconcile_telephony_transcripts",
     "search_transcript_chunks"

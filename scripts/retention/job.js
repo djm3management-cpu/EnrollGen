@@ -87,6 +87,8 @@ export async function runRetention({db,env=process.env,deleteRequested=false,bat
           await db.query('SAVEPOINT retention_item');
           try {
             await db.query('SET CONSTRAINTS ALL DEFERRED');
+            // Capture UUID provenance before any member of a deferred/cyclic group disappears.
+            for(const n of group)if(typeof n.row.id==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(n.row.id))await db.query('SELECT capture_lifecycle_purge_marker($1,$2)',[n.table,n.row.id]);
             for(const n of group)if(n.hasObject) {
               if(n.table==='recording_ingestion'&&storage?.exists&&storage?.remove)throw Error('storage_pending');
               if(storage?.transactionalDatabase!==db || typeof storage.deleteInTransaction!=='function')throw Error('atomic_storage_unavailable');

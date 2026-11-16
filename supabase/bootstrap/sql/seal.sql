@@ -57,3 +57,7 @@ REVOKE UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.admin_action_log FROM
 REVOKE ALL ON public.admin_action_permit,public.operational_configuration,public.operational_alert_state,public.operational_alert_history,public.operational_events,public.scheduled_job_status FROM service_role;
 GRANT SELECT ON public.operational_configuration,public.operational_alert_state,public.operational_alert_history,public.operational_events,public.scheduled_job_status TO service_role;
 GRANT DELETE ON public.operational_events TO service_role;
+
+-- Lifecycle purge provenance is inserted only by the retention delete trigger.
+REVOKE ALL ON public.retention_purge_items FROM service_role;
+GRANT SELECT ON public.retention_purge_items TO service_role;

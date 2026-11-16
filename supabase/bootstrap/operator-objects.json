@@ -102,6 +102,11 @@
     },
     {
       "schema": "public",
+      "name": "capture_lifecycle_purge_marker",
+      "arguments": "p_table text, p_id uuid"
+    },
+    {
+      "schema": "public",
       "name": "claim_automatic_transcript_recovery",
       "arguments": "p_call_id uuid, p_tenant_id uuid, p_recording_id uuid, p_ranges jsonb, p_mapping jsonb, p_cost numeric"
     },
@@ -269,6 +274,16 @@
       "schema": "public",
       "name": "consume_admission",
       "arguments": "p_rules jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "consumer_lifecycle_files",
+      "arguments": "p_actor text, p_org text, p_contact uuid"
+    },
+    {
+      "schema": "public",
+      "name": "consumer_lifecycle_rows",
+      "arguments": "p_contact uuid, p_tenant uuid"
     },
     {
       "schema": "public",
@@ -957,6 +972,11 @@
     },
     {
       "schema": "public",
+      "name": "read_consumer_lifecycle",
+      "arguments": "p_actor text, p_org text, p_contact uuid, p_after_time timestamp with time zone, p_after_key text, p_type text, p_limit integer, p_as_of timestamp with time zone, p_export boolean, p_evidence_table text, p_evidence_id uuid, p_access_time timestamp with time zone, p_access_id uuid"
+    },
+    {
+      "schema": "public",
       "name": "read_contact_details",
       "arguments": "p_contact_ids uuid[], p_requesting_agent_id uuid"
     },
@@ -1357,6 +1377,11 @@
     },
     {
       "schema": "public",
+      "name": "retain_lifecycle_purge_marker",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "retention_admin",
       "arguments": "p_actor text, p_org text"
     },
@@ -1736,6 +1761,7 @@
     "compliance-review.js",
     "compliance-uploads.js",
     "compliance.js",
+    "consumer-lifecycle.js",
     "contact-assignment.js",
     "copilot-skip-counter.js",
     "deepgram-token.js",

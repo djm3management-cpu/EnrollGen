@@ -23,6 +23,7 @@ export async function deleteRecordings({db,storage,profile,now,limit,afterPhase=
      await db.query('UPDATE recording_ingestion SET deletion_pending_at=clock_timestamp(),lease_token=NULL,lease_until=NULL WHERE id=$1',[n.row.id]);
      await db.query(`INSERT INTO retention_recording_purges(recording_id,tenant_id,data_class,storage_path,recording_sid) VALUES($1,$2,$3,$4,$5)
       ON CONFLICT(recording_id) DO UPDATE SET status='pending',object_deleted_at=NULL,finished_at=NULL`,[n.row.id,profile.tenantId,n.dataClass,n.row.storage_path,n.row.recording_sid]);
+     await db.query(`UPDATE retention_recording_purges p SET contact_id=coalesce(c.contact_id,i.contact_id,a.contact_id),call_id=coalesce(c.id,i.call_record_id,a.call_record_id),sha256=$2 FROM (SELECT 1) x LEFT JOIN inbound_calls i ON i.id=$6 LEFT JOIN telephony_call_attempts a ON a.id=$7 LEFT JOIN call_records c ON c.id=coalesce($3::uuid,i.call_record_id,a.call_record_id) OR c.twilio_call_sid IN ($4,$5) WHERE p.recording_id=$1 AND coalesce(c.tenant_id,i.tenant_id,a.tenant_id)=p.tenant_id`,[n.row.id,n.row.sha256,n.row.call_record_id,n.row.callback_call_sid,n.row.parent_call_sid,n.row.inbound_call_id,n.row.attempt_id]);
      for(const table of ['recording_download_tickets','recording_compliance_tickets'])await db.query(`UPDATE ${table} SET expires_at=least(expires_at,clock_timestamp()) WHERE recording_id=$1 OR storage_path=$2 OR recording_sid=$3`,[n.row.id,n.row.storage_path,n.row.recording_sid]);
      await audit('recording_purge_pending',n.row);
     }

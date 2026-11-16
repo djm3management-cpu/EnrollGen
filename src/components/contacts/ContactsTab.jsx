@@ -21,6 +21,7 @@ import { useAvailability } from "../../context/AvailabilityContext";
 import { useCurrentAgent } from "../../hooks/useCurrentAgent";
 import { normalizePhoneE164 } from "../../lib/phone";
 import ContactToast from "../ContactToast";
+import ConsumerLifecycle from "./ConsumerLifecycle";
 import MessagesThread from "./MessagesThread";
 import FollowUpsView from './FollowUpsView';
 import { useFollowUps } from '../../hooks/useFollowUps';
@@ -1242,7 +1243,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
         <main className="contacts-conv-center">
           <CenterTopBar contact={selectedContact} onStartCall={onStartCall} onEmail={handleEmail} />
           <div className="contacts-workspace-tabs contacts-conv-center-tabs">
-            {CENTER_TABS.map((tab) => (
+            {[...CENTER_TABS,...(features.CONSUMER_LIFECYCLE_ENABLED?['LIFECYCLE']:[])].map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -1259,7 +1260,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
 
           {piiError ? <div className="ops-error">{piiError}</div> : null}
           <div className="contacts-conv-center-body">
-            {!selectedContact ? <div className="contacts-muted">Select a conversation</div> : null}
+            {!selectedContact && !(features.CONSUMER_LIFECYCLE_ENABLED && selectedContactId && centerTab === "LIFECYCLE") ? <div className="contacts-muted">Select a conversation</div> : null}
             {selectedContact && detailLoading ? <div className="contacts-muted">Loading contact...</div> : null}
             {selectedContact && !detailLoading && centerTab === "CONVERSATIONS" ? (
               <MessagesThread
@@ -1270,6 +1271,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
                 callItems={bundle?.calls || []}
               />
             ) : null}
+            {features.CONSUMER_LIFECYCLE_ENABLED && selectedContactId && centerTab === "LIFECYCLE" ? <ConsumerLifecycle contactId={selectedContactId} /> : null}
             {selectedContact && !detailLoading && centerTab === "ACTIVITY" ? <ActivityPanel bundle={bundle} /> : null}
             {selectedContact && !detailLoading && centerTab === "NOTES" ? (
               <NotesPanel

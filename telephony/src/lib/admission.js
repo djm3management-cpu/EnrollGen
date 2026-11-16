@@ -2,6 +2,7 @@ import {securityEvent} from './logger.js';
 import { deploymentProfile } from './deploymentProfile.js';
 // Requests, not tokens/dollars. Existing scoring token and STT reconnect fences still apply.
 export const PILOT_LIMITS = Object.freeze({
+  lifecycleExport: { minute: 3, subjectDay: 30, deploymentDay: 300 },
   vendorLead: { minute: 120 }, vendorPing: { minute: 600 }, availability: { minute: 600 },
   voiceToken: { minute: 12 }, agentSocket: { minute: 30, concurrent: 3 },
   sms: { minute: 20, subjectDay: 300, deploymentDay: 3600 }, gifs: { minute: 60 },
