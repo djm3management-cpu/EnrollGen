@@ -1,3 +1,4 @@
+import {reshopFeatures} from '../src/lib/reshopList.js';
 import {practiceFeatures} from '../src/lib/practiceCaller.js';
 import {installOperationalTelemetry} from '../telephony/src/lib/operationalTelemetry.js';
 import {createLogger} from '../telephony/src/lib/logger.js';
@@ -41,7 +42,7 @@ export function supabaseApiKeyFetch(key, send = (...args) => fetch(...args)) {
   return (input, init = {}) => {
     const headers = new Headers(input instanceof Request ? input.headers : undefined);
     new Headers(init.headers).forEach((value, name) => headers.set(name, value));
-    Object.entries({'x-enrollgen-features':JSON.stringify({...JSON.parse(featureHeaders()['x-enrollgen-features']),...practiceFeatures(process.env)})}).forEach(([name, value]) => headers.set(name, value));
+    Object.entries({'x-enrollgen-features':JSON.stringify({...JSON.parse(featureHeaders()['x-enrollgen-features']),...practiceFeatures(process.env),...reshopFeatures(process.env)})}).forEach(([name, value]) => headers.set(name, value));
     // Opaque API keys authenticate the application through apikey, never as a JWT.
     // Keep real user JWTs and legacy-key compatibility headers intact.
     if (/^sb_(secret|publishable)_/.test(key) && headers.get('Authorization') === `Bearer ${key}`) {

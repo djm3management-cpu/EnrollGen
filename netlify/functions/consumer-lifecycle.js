@@ -1,3 +1,4 @@
+import {reshopFeatures} from '../../src/lib/reshopList.js';
 import {securityEvent} from '../../telephony/src/lib/logger.js';
 import {requireClerkAuth} from './_clerkAuth.js';
 import {getEvidenceServiceClient,resolveCallAccessIdentity,evidenceJson,evidenceFailure,EvidenceError} from './_evidenceAccess.js';
@@ -32,11 +33,11 @@ export function createConsumerLifecycleHandler({authenticate=r=>requireClerkAuth
     if(evidence&&(evidence.length!==2||!uuid(evidence[1])||!/^\w{1,64}$/.test(evidence[0])))throw new EvidenceError(400,'Invalid evidence reference.');
     const limit=Number(params.get('limit')||50),type=params.get('type')||null;
     let cursor=null;try{if(params.has('cursor'))cursor=JSON.parse(Buffer.from(params.get('cursor'),'base64url').toString());}catch{throw new EvidenceError(400,'Invalid lifecycle page.');}
-    if(!Number.isInteger(limit)||limit<1||limit>200||type&&(!EVENT_TYPES.includes(type)||type==='recap'&&!featureEnabled('CLIENT_RECAP_ENABLED',env))||cursor&&(!timestamp(cursor.time)||!timestamp(cursor.asOf)||typeof cursor.key!=='string'||cursor.key.length>180||cursor.contact!==contact||cursor.type!==type))throw new EvidenceError(400,'Invalid lifecycle page.');
+    if(!Number.isInteger(limit)||limit<1||limit>200||type&&(!EVENT_TYPES.includes(type)||type==='reshop_review'&&!reshopFeatures(env).RESHOP_LIST_ENABLED||type==='recap'&&!featureEnabled('CLIENT_RECAP_ENABLED',env))||cursor&&(!timestamp(cursor.time)||!timestamp(cursor.asOf)||typeof cursor.key!=='string'||cursor.key.length>180||cursor.contact!==contact||cursor.type!==type))throw new EvidenceError(400,'Invalid lifecycle page.');
     const read=async(after=null)=>{
      const r=await db.rpc('read_consumer_lifecycle',{p_actor:auth.userId,p_org:auth.orgId||auth.tokenPayload?.o?.id||null,p_contact:contact,p_after_time:after?.time||null,p_after_key:after?.key||null,p_as_of:after?.asOf||null,p_type:exporting?null:type,p_limit:exporting?200:limit,p_export:exporting,p_evidence_table:exporting?null:evidence?.[0]||null,p_evidence_id:exporting?null:evidence?.[1]||null,p_access_time:exporting?null:access?.time||null,p_access_id:exporting?null:access?.id||null});
      if(r.error)throw new EvidenceError(r.error.code==='42501'?403:503,'Lifecycle unavailable.');
-     return lifecyclePage(r.data,featureEnabled('CLIENT_RECAP_ENABLED',env));
+     return lifecyclePage(r.data,featureEnabled('CLIENT_RECAP_ENABLED',env),reshopFeatures(env).RESHOP_LIST_ENABLED);
     };
     const first=await read(exporting?null:cursor);
     if(!exporting){if(first.nextAccess)first.nextAccess=Buffer.from(JSON.stringify(first.nextAccess)).toString('base64url');if(first.next)first.next=Buffer.from(JSON.stringify({...first.next,contact,type})).toString('base64url');return evidenceJson(200,first);}

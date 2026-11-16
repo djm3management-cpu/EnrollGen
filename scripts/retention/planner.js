@@ -39,7 +39,7 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
     }
   }
   // A recap inherits the enrollment clock and purge/savepoint group.
-  for(const recap of nodes.filter(n=>n.table==='client_recaps')){
+  for(const recap of nodes.filter(n=>['client_recaps','reshop_reviews'].includes(n.table))){
     const source=nodes.find(n=>n.table==='enrollment_intakes'&&n.row.id===recap.row.enrollment_id);
     if(source){connect(recap,source);connect(source,recap);}
   }

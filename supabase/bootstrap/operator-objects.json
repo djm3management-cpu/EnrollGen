@@ -17,6 +17,11 @@
     },
     {
       "schema": "public",
+      "name": "act_on_reshop",
+      "arguments": "p_actor text, p_org text, p_id uuid, p_action text, p_outcome text"
+    },
+    {
+      "schema": "public",
       "name": "add_contact_tag",
       "arguments": "p_tenant_id uuid, p_contact_id uuid, p_requesting_agent_id uuid, p_name text"
     },
@@ -1302,6 +1307,11 @@
     },
     {
       "schema": "public",
+      "name": "read_reshop_list",
+      "arguments": "p_actor text, p_org text, p_filters jsonb, p_offset integer, p_limit integer"
+    },
+    {
+      "schema": "public",
       "name": "read_supervisor_floor",
       "arguments": "p_actor text, p_org text"
     },
@@ -1529,6 +1539,41 @@
       "schema": "public",
       "name": "reserve_stt_reconnect",
       "arguments": "p_tenant_id uuid, p_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "reshop_coverage",
+      "arguments": "p_type text, p_contract text"
+    },
+    {
+      "schema": "public",
+      "name": "reshop_evaluate",
+      "arguments": "c jsonb, transitions jsonb, successors jsonb, loaded boolean"
+    },
+    {
+      "schema": "public",
+      "name": "reshop_landscape_loaded",
+      "arguments": "p_year integer"
+    },
+    {
+      "schema": "public",
+      "name": "reshop_plan_rows",
+      "arguments": "p_year integer, p_contract text, p_plan text"
+    },
+    {
+      "schema": "public",
+      "name": "reshop_reason_label",
+      "arguments": "p_code text"
+    },
+    {
+      "schema": "public",
+      "name": "reshop_rows",
+      "arguments": "p_actor text, p_org text, p_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "reshop_year",
+      "arguments": "p_date text"
     },
     {
       "schema": "public",
@@ -2024,6 +2069,7 @@
     "practice-caller.js",
     "practice-sweep.js",
     "recordings.js",
+    "reshop-list.js",
     "retention-holds.js",
     "rts-ingest.js",
     "score-call-background.js",

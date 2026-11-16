@@ -1,5 +1,5 @@
 export const CRM_NAVIGATION_EVENT = 'crm-navigation';
-const VIEWS = new Set(['contacts', 'calls', 'opportunities', 'followups']);
+const VIEWS = new Set(['contacts', 'calls', 'opportunities', 'followups', 'reshop']);
 
 export function readCrmLocation(location) {
   const url = new URL(location.href || String(location), 'https://enrollgen.local');

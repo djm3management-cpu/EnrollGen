@@ -1319,7 +1319,9 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
 }
 
 // CRM routes share one workspace; the existing call log retains its controls.
+const ReshopList = lazyWithRetry(() => import('./ReshopList'));
 export default function ContactsTab({ variant = "home", onStartCall = null }) {
+  const {features={}}=useTenantConfig();
   const [location, setLocation] = useState(() => readCrmLocation(window.location));
   const followUps = useFollowUps();
   const dueToday = followUps.rows.filter(row => row.agent_id === followUps.agentSlug && followUpBucket(row, followUps.now) === 'today').length;
@@ -1337,13 +1339,15 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
       window.removeEventListener(CRM_NAVIGATION_EVENT, onLocation);
     };
   }, []);
-  return <div data-crm-view={location.view} className={`contacts-views${location.view === 'opportunities' ? ' contacts-views--opportunities' : location.view === 'calls' ? ' contacts-views--calls' : ''}`}>
+  return <div data-crm-view={location.view} className={`contacts-views${['opportunities','reshop'].includes(location.view) ? ' contacts-views--opportunities' : location.view === 'calls' ? ' contacts-views--calls' : ''}`}>
     <div className="contacts-workspace-tabs contacts-subviews" role="group" aria-label="CRM workspace">
       <button data-key-role="secondary" type="button" className={location.view === 'calls' ? 'is-active' : ''} aria-pressed={location.view === 'calls'} onClick={() => updateLocation('calls')}><Phone size={14} aria-hidden="true" />Calls</button>
       <button data-key-role="secondary" type="button" className={location.view === 'contacts' ? 'is-active' : ''} aria-pressed={location.view === 'contacts'} onClick={() => updateLocation('contacts', location.contactId)}><UsersRound size={14} aria-hidden="true" />Contacts</button>
       <button data-key-role="secondary" type="button" className={location.view === 'opportunities' ? 'is-active' : ''} aria-pressed={location.view === 'opportunities'} onClick={() => updateLocation('opportunities')}><BriefcaseBusiness size={14} aria-hidden="true" />Opportunities</button>
       <button data-key-role="secondary" type="button" className={location.view === 'followups' ? 'is-active' : ''} aria-pressed={location.view === 'followups'} onClick={() => updateLocation('followups')}><CalendarClock size={14} aria-hidden="true" />Follow-ups{dueToday > 0 && <span className="call-log-chip" aria-label={`${dueToday} follow-ups due today`}> {dueToday}</span>}</button>
+      {features.RESHOP_LIST_ENABLED&&<button type="button" data-key-role="secondary" className={location.view==='reshop'?'is-active':''} aria-pressed={location.view==='reshop'} onClick={()=>updateLocation('reshop')}>Re-shop</button>}
     </div>
+    {features.RESHOP_LIST_ENABLED&&location.view==='reshop'&&<CrmPanelBoundary label="Re-shop"><Suspense fallback={<div className="contacts-muted">Loading...</div>}><ReshopList onOpenContact={id=>updateLocation('contacts',id)}/></Suspense></CrmPanelBoundary>}
     <div hidden={location.view !== 'contacts'}>
       <CrmPanelBoundary label="Contacts" resetKey={location.contactId}>
         <ContactsWorkspace variant={variant} onStartCall={onStartCall} active={location.view === 'contacts'}

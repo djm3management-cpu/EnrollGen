@@ -27,3 +27,14 @@ export async function admitPractice(db,route,subject,profile){
  }});
  await admit(adapter,'summary',subject,{...source,admissionLimits:{...source.admissionLimits,summary:{minute:PRACTICE_ADMISSION[route],subjectDay:3000,deploymentDay:30000}}});
 }
+
+// Named CRM routes reuse the existing atomic counters and fail-closed engine.
+export const RESHOP_ADMISSION=Object.freeze({reshopRead:30,reshopTask:10,reshopReview:20});
+export async function admitReshop(db,route,subject,profile){
+ if(!Object.hasOwn(RESHOP_ADMISSION,route))throw new AdmissionError(503);
+ const adapter=new Proxy(db,{get(target,key){
+  if(key==='rpc')return(name,args)=>target.rpc(name,name==='consume_admission'?{p_rules:args.p_rules.map(rule=>({...rule,key:rule.key.replace(':summary:',':'+route+':')}))}:args);
+  const value=target[key];return typeof value==='function'?value.bind(target):value;
+ }});
+ await admit(adapter,'summary',subject,{...profile,admissionLimits:{...profile.admissionLimits,summary:{minute:RESHOP_ADMISSION[route],subjectDay:3000,deploymentDay:30000}}});
+}

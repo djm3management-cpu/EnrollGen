@@ -52,7 +52,7 @@ test('each CRM workspace has its own boundary while navigation remains outside',
     const Tab=vm.runInNewContext(transformSync(routeSource,{loader:'jsx',format:'cjs',jsxFactory:'h'}).code+';ContactsTab',{
       ...hooks.hooks,h,CrmPanelBoundary:Boundary,Suspense:'suspense',ContactsWorkspace:'contacts',CallLogTab:'calls',OpportunitiesView:'opportunities',FollowUpsView:'followups',
       Phone:'phone',UsersRound:'users',BriefcaseBusiness:'briefcase',CalendarClock:'calendar',
-      useFollowUps:()=>({rows:[],agentSlug:null}),readCrmLocation:()=>({view}),navigateCrm(){},CRM_NAVIGATION_EVENT:'navigate',window:new EventTarget(),
+      useTenantConfig:()=>({features:{}}),useFollowUps:()=>({rows:[],agentSlug:null}),readCrmLocation:()=>({view}),navigateCrm(){},CRM_NAVIGATION_EVENT:'navigate',window:new EventTarget(),
     });
     try{
       hooks.mount(()=>Tab({}));

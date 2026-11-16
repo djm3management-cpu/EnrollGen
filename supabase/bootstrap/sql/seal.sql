@@ -70,3 +70,6 @@ REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.supervisor_listen_gra
 
 -- Practice mutations are confined to scoped, leased service routines.
 REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.practice_sessions,public.practice_results FROM service_role;
+
+-- Re-shop task/review mutations stay in the scoped transactional routine.
+REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.reshop_reviews FROM service_role;
