@@ -1,3 +1,4 @@
+import RecapTemplates from './enrollment/RecapTemplates';
 import {COACHING_DEFAULTS} from '../lib/postCallCoaching';
 import AccessReview from './AccessReview';
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -456,6 +457,7 @@ export default function TenantSettings({ currentUser = null }) {
 
       {message ? <div className="billing-alert">{message}</div> : null}
       <AgentAudioSettings />
+      {canAdmin&&features.CLIENT_RECAP_ENABLED&&<RecapTemplates/>}
       {features.POST_CALL_COACHING_ENABLED&&<section style={{fontWeight:400,marginBlock:24}} aria-label="Coaching settings">
         <h3 style={{fontWeight:500}}>Coaching</h3>
         <SettingsField label="Minimum talk seconds"><input type="number" min="30" max="21600" value={coachingSettings.minimum_talk_seconds} onChange={e=>setCoachingSettings(s=>({...s,minimum_talk_seconds:Number(e.target.value)}))} /></SettingsField>

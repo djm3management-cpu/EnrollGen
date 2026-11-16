@@ -61,3 +61,6 @@ GRANT DELETE ON public.operational_events TO service_role;
 -- Lifecycle purge provenance is inserted only by the retention delete trigger.
 REVOKE ALL ON public.retention_purge_items FROM service_role;
 GRANT SELECT ON public.retention_purge_items TO service_role;
+
+-- Recap approvals are created only by the scoped transactional routine.
+REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.client_recaps FROM service_role;

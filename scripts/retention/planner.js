@@ -38,6 +38,11 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
       if (target && (target.group || target.table === 'contacts')) connect(node,target);
     }
   }
+  // A recap inherits the enrollment clock and purge/savepoint group.
+  for(const recap of nodes.filter(n=>n.table==='client_recaps')){
+    const source=nodes.find(n=>n.table==='enrollment_intakes'&&n.row.id===recap.row.enrollment_id);
+    if(source){connect(recap,source);connect(source,recap);}
+  }
   const agentAliases = new Map();
   // Derivative and exact transcript source share a purge/savepoint group.
   for(const note of nodes.filter(n=>n.table==='post_call_coaching')) {

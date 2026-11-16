@@ -67,6 +67,11 @@
     },
     {
       "schema": "public",
+      "name": "approve_client_recap",
+      "arguments": "p_actor text, p_org text, p_id uuid, p_channel text, p_approved boolean, p_checksum text, p_revision timestamp with time zone, p_resend boolean"
+    },
+    {
+      "schema": "public",
       "name": "audit_browser_evidence",
       "arguments": "p_type text, p_resource uuid, p_action text, p_allowed boolean"
     },
@@ -224,6 +229,16 @@
       "schema": "public",
       "name": "claim_recording_reconciliation",
       "arguments": "p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "client_recap_render",
+      "arguments": "fields jsonb, t jsonb, ch text"
+    },
+    {
+      "schema": "public",
+      "name": "client_recap_source",
+      "arguments": "p_actor text, p_org text, p_id uuid, p_status_only boolean"
     },
     {
       "schema": "public",
@@ -678,6 +693,11 @@
     {
       "schema": "public",
       "name": "guard_call_parent",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "guard_client_recap_templates",
       "arguments": ""
     },
     {
@@ -1732,6 +1752,11 @@
     },
     {
       "schema": "public",
+      "name": "update_client_recap_delivery",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "update_evidence_call_records",
       "arguments": "p_resource uuid, p_patch jsonb, p_expected jsonb"
     },
@@ -1759,6 +1784,11 @@
       "schema": "public",
       "name": "update_pii_field",
       "arguments": "p_contact_id uuid, p_requesting_agent_id uuid, p_field text, p_value text"
+    },
+    {
+      "schema": "public",
+      "name": "valid_client_recap_templates",
+      "arguments": "v jsonb"
     },
     {
       "schema": "public",
@@ -1799,6 +1829,7 @@
     "call-disposition.js",
     "call-log.js",
     "call-record-details.js",
+    "client-recap.js",
     "cms-plans.js",
     "coach.js",
     "combine-calls.js",

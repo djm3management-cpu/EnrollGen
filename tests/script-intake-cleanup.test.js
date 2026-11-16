@@ -81,7 +81,7 @@ test('both record views show the shared read-only enrollment summary with Edit t
  assert.ok(read('src/components/callLog/CallLogTab.jsx').includes('<EnrollmentSummary callId={row.call_record_id}/>'));
  assert.ok(read('src/components/contacts/ContactsTab.jsx').includes('contactId={contact.id}'));
  const h=hookHarness();const getToken=()=>'';
- const component=vm.runInNewContext(compile('src/components/enrollment/EnrollmentSummary.jsx')+';EnrollmentSummary',{...h.hooks,element,encodeURIComponent,INTAKE_FIELDS,useAppAuth:()=>({getToken}),EnrollmentIntake:'intake',fetchWithClerk:async()=>Response.json({intakes:[{id:'intake-2',call_id:'call-2',completed_at:'today',data:{planName:'Saved plan',planType:'C-SNP'}}]})});
+ const component=vm.runInNewContext(compile('src/components/enrollment/EnrollmentSummary.jsx')+';EnrollmentSummary',{...h.hooks,element,encodeURIComponent,INTAKE_FIELDS,useAppAuth:()=>({getToken}),EnrollmentIntake:'intake',ClientRecap:'client-recap',fetchWithClerk:async()=>Response.json({intakes:[{id:'intake-2',call_id:'call-2',completed_at:'today',data:{planName:'Saved plan',planType:'C-SNP'}}]})});
  h.mount(()=>component({contactId:'contact'}));await h.flush();assert.equal(walk(h.value).filter(n=>['input','select'].includes(n.type)).length,0);
  assert.ok(walk(h.value).some(n=>text(n)==='Saved plan'));
  walk(h.value).find(n=>text(n)==='Edit').props.onClick();await h.flush();const intake=walk(h.value).find(n=>n.type==='intake');assert.equal(intake.props.intakeId,'intake-2');assert.equal(intake.props.callId,'call-2');h.unmount();

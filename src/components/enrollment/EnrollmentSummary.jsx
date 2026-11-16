@@ -3,6 +3,7 @@ import {useAppAuth} from '../../context/AuthContext';
 import {fetchWithClerk} from '../../lib/clerkFetch.js';
 import {INTAKE_FIELDS} from '../../lib/enrollmentIntake.js';
 import EnrollmentIntake from './EnrollmentIntake';
+import ClientRecap from './ClientRecap';
 
 export default function EnrollmentSummary({callId,contactId}){
  const {getToken}=useAppAuth();
@@ -26,6 +27,7 @@ export default function EnrollmentSummary({callId,contactId}){
    <dl className="contacts-meta-list">{INTAKE_FIELDS.map(([key,label])=><div key={key}><dt>{label}</dt><dd>{row.data[key]||'—'}</dd></div>)}</dl>
    {row.data.legacyStep7&&<details><summary>Previously captured enrollment notes</summary><dl className="contacts-meta-list">{Object.entries(row.data.legacyStep7).map(([key,value])=><div key={key}><dt>{key}</dt><dd>{value||'—'}</dd></div>)}</dl></details>}
    <button type="button" className="contacts-mini-btn" onClick={()=>setEditing(row)}>Edit</button>
+   <ClientRecap enrollmentId={row.id} enrollmentRevision={row.updated_at}/>
   </article>)}
   {editing&&<EnrollmentIntake callId={editing.call_id||callId} intakeId={editing.id} onClose={()=>setEditing(null)} onSaved={()=>setRevision(value=>value+1)}/>}
  </section>;

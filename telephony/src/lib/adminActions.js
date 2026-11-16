@@ -4,8 +4,8 @@ import {randomUUID} from 'node:crypto';
 import {withLogContext,securityEvent,securityEventOnce,inspectInput,createLogger} from './logger.js';
 const logger=createLogger();
 const scope=new AsyncLocalStorage();
-export const ADMIN_HANDLERS=Object.freeze(['post-call-coaching','consumer-lifecycle','access-review','tenant-settings','contact-assignment','pipeline-settings','script-settings','vendor-pause','compliance-review','compliance-uploads','post-call-admin','retention-holds','trigger-knowledge-update','rts-ingest','recordings','enrollment-intakes','transcript-import','set-availability','test-ghl-webhook','stripe-checkout','stripe-portal','paragon-residence']);
-export const ADMIN_RPCS=Object.freeze(['regenerate_post_call_coaching','set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket']);
+export const ADMIN_HANDLERS=Object.freeze(['client-recap','post-call-coaching','consumer-lifecycle','access-review','tenant-settings','contact-assignment','pipeline-settings','script-settings','vendor-pause','compliance-review','compliance-uploads','post-call-admin','retention-holds','trigger-knowledge-update','rts-ingest','recordings','enrollment-intakes','transcript-import','set-availability','test-ghl-webhook','stripe-checkout','stripe-portal','paragon-residence']);
+export const ADMIN_RPCS=Object.freeze(['approve_client_recap','regenerate_post_call_coaching','set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket']);
 export function verifiedAdminIdentity(identity){if(scope.getStore())scope.getStore().identity=identity;}
 export function adminRequest(action,handler){
  return request=>withLogContext({service:'netlify'},()=>scope.run({action,requestId:randomUUID(),identity:null},async()=>{
@@ -24,6 +24,9 @@ export function adminActionClient(db){
   let result;
   try{result=await rpc('execute_admin_action',{p_actor:identity.auth.userId,p_org:identity.auth.orgId||identity.auth.tokenPayload?.o?.id||null,p_action:current.action.replaceAll('-','_'),p_request:current.requestId,p_command:command,p_verified_admin:true});}
   catch{securityEvent('admin_log_write_failed',{subject:identity.auth.userId});throw new AdminLogError();}
+  // Expected recap conflicts keep their reviewed HTTP status. The failed SQL
+  // transaction has already rolled back its reservation and administrator log.
+  if(result.error&&command.kind==='rpc'&&command.name==='approve_client_recap'&&['42501','22023','40001','23505','54000'].includes(result.error.code))return result;
   if(result.error){if(result.error.code==='P1611')securityEvent('admin_log_write_failed',{subject:identity.auth.userId});else if(result.error.code==='42501')securityEvent('authorization_denied',{subject:identity.auth.userId});else logger.error('admin_action_failed',{code:result.error.code});throw new AdminLogError();}
   return result;
  }

@@ -16,6 +16,8 @@ import { findOrCreateContactByPhone, logContactActivity } from "../contacts.js";
 import { sendToAgent } from "../media/agentSocket.js";
 import { validateOutboundSms } from "../piiValidation.js";
 
+import {normalizeTwilioStatus,sendOutboundSms,outboundSmsReason} from '../lib/outboundSms.js';
+
 export const smsRouter = Router();
 
 const twilioClient = twilio(config.twilioAccountSid, config.twilioAuthToken);
@@ -33,30 +35,6 @@ const EXTENSION_BY_TYPE = {
 
 function extensionFor(contentType) {
   return EXTENSION_BY_TYPE[contentType] || "bin";
-}
-
-// Twilio delivery statuses collapse into the messages.status CHECK set.
-function normalizeTwilioStatus(twilioStatus) {
-  switch (twilioStatus) {
-    case "queued":
-    case "accepted":
-    case "scheduled":
-      return "queued";
-    case "sending":
-    case "sent":
-      return "sent";
-    case "delivered":
-    case "read":
-      return "delivered";
-    case "failed":
-    case "undelivered":
-    case "canceled":
-      return "failed";
-    case "received":
-      return "received";
-    default:
-      return null;
-  }
 }
 
 async function storeInboundMedia({ tenantId, messageId, body }) {
@@ -198,8 +176,8 @@ smsRouter.post("/api/sms/send", async (req, res) => {
     if (contactError) throw contactError;
     if (!contact) return res.status(404).json({ error: "Contact not found" });
     if (!contact.phone) return res.status(422).json({ error: "Contact has no phone number" });
-    if (contact.do_not_call) {
-      return res.status(403).json({ error: "Contact is flagged do not call" });
+    if (outboundSmsReason(contact)) {
+      return res.status(403).json({ error: outboundSmsReason(contact) });
     }
 
     const phone = normalizePhoneE164(contact.phone);
@@ -217,7 +195,7 @@ smsRouter.post("/api/sms/send", async (req, res) => {
       if (signError) throw signError;
       outgoingMedia = [signed.signedUrl];
     }
-    const twilioMessage = await twilioClient.messages.create({
+    const twilioMessage = await sendOutboundSms(twilioClient,{
       from: config.twilioPhoneNumber,
       to: phone,
       body: body?.trim() || undefined,

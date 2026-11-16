@@ -11,5 +11,6 @@
   "161_operational_logging_alerts.sql": "f85336f3df34107d4b326e69537007be593cff8474b7c6b3196ae272527b5035",
   "162_recovery_access_recording_purge.sql": "9690bef920a462e3d23b161c07081135d79ac131abdd19ab52f060e910f1b8aa",
   "163_consumer_lifecycle.sql": "b56d9c387c8488968296b872832b8a002ece04788afdf4b92d00926b5feb1b89",
-  "164_post_call_coaching.sql": "cc8de0654c0cd38f520bed8ba33b269b0846aba00084a0fea75e76061701cfbc"
+  "164_post_call_coaching.sql": "cc8de0654c0cd38f520bed8ba33b269b0846aba00084a0fea75e76061701cfbc",
+  "165_client_recap.sql": "e45fff80243e0575009bcb096304d6fae09019241b2e80ed96de42d08ff14227"
 }

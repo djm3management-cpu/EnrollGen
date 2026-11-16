@@ -27,10 +27,12 @@
     "transcript_segments"
   ],
   "serverRpcs": [
+    "approve_client_recap",
     "begin_post_call_coaching",
     "claim_compliance_upload",
     "claim_ix_upload",
     "claim_paragon_residence_jobs",
+    "client_recap_source",
     "consumer_lifecycle_files",
     "conversely_run_results",
     "conversely_week_candidates",

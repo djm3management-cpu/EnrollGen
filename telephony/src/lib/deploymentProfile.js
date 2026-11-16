@@ -84,7 +84,7 @@ export function parseDeploymentProfile(raw, features = deploymentFeatures()) {
   p.tokenAudiences = p.tokenAudiences ? list(p.tokenAudiences,'tokenAudiences') : [p.organizationId];
   if(p.messageMediaHosts)p.messageMediaHosts=list(p.messageMediaHosts,'messageMediaHosts').map(h=>{validateDestination(`https://${h}/`,[h]);return h;});
   if(p.admissionLimits) {
-    const keys=['coachingRegenerate','lifecycleExport','vendorLead','vendorPing','availability','voiceToken','agentSocket','sms','gifs','coach','transcription','sttStream','scoring','summary','embeddings'];
+    const keys=['clientRecap','coachingRegenerate','lifecycleExport','vendorLead','vendorPing','availability','voiceToken','agentSocket','sms','gifs','coach','transcription','sttStream','scoring','summary','embeddings'];
     for(const [route,limits] of Object.entries(p.admissionLimits)) {
       if(!keys.includes(route)||!limits||typeof limits!=='object'||Array.isArray(limits))fail('admissionLimits');
       for(const [key,value] of Object.entries(limits))if(!['minute','subjectDay','deploymentDay','concurrent'].includes(key)||!Number.isInteger(value)||value<1||value>1000000)fail('admissionLimits value');
