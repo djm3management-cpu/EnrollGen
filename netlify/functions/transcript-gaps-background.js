@@ -1,4 +1,4 @@
-import {assertWhisperRecordingSafe} from '../../telephony/src/lib/whisperRecording.js';
+import {assertWhisperRecordingSafe,whisperCustomerRecordings,hasWhisperRecording} from '../../telephony/src/lib/whisperRecording.js';
 import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {admitCall} from './_admission.js';
 import {evidenceCheckpoint} from '../../telephony/src/lib/evidenceAudit.js';
@@ -32,8 +32,12 @@ export function createGapFillHandler({getDb=getEvidenceServiceClient,transport=f
    if(!featureEnabled(job.mode==='automatic'?'TRANSCRIPT_AUTO_RECOVERY_ENABLED':'TRANSCRIPT_GAP_FILL_ENABLED',env))throw Error('Gap job mode disabled');
    const recording=checked(await db.from('recording_ingestion').select('*').eq('id',job.recording_id).eq('tenant_id',job.tenant_id).single());
    if(recording.call_record_id!==job.call_id)throw Error('Recording call mismatch');
-   const admissionCall=checked(await db.from('call_records').select('agent_id,tenant_id,metadata').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
-   assertWhisperRecordingSafe(admissionCall);
+   const admissionCall=checked(await db.from('call_records').select('*').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
+   admissionCall.id=job.call_id;
+   const customers=await whisperCustomerRecordings(db,admissionCall);
+   assertWhisperRecordingSafe(admissionCall,recording,customers);
+   if(hasWhisperRecording(admissionCall) && JSON.stringify(job.channel_speakers)!==JSON.stringify(['customer','agent']))throw Error('Recording channel mapping mismatch');
+   if(hasWhisperRecording(admissionCall) && job.timeline_offset_ms!==Math.max(0,Math.round(Date.parse(recording.provider_created_at)-Date.parse(admissionCall.call_start))))throw Error('Recording timeline mapping mismatch');
    await admitCall(db,"transcription",admissionCall);
    if(recording.stored_bytes>MAX_GAP_RECORDING_BYTES)throw Error('Recording exceeds recovery download cap');
    await evidenceCheckpoint(db,{actor:'service:transcript_recovery',tenant:job.tenant_id,resource:'recording',resourceId:recording.id,action:'read',grantId:job.id});

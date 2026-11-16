@@ -1,3 +1,4 @@
+import {whisperCustomerRecordings} from '../../telephony/src/lib/whisperRecording.js';
 import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import {auditedEvidenceRequest} from './_evidenceAccess.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
@@ -44,6 +45,13 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
       }
       if(request.method==='POST'){
         let input;try{input=await request.json();}catch{throw new EvidenceError(400,'Invalid JSON.');}
+        if(input?.action==='release_whisper_upload'){
+          await authorizeRecordingTarget(db,identity,{call_record_id:input.call_id});
+          if(!/^[0-9a-f-]{36}$/i.test(input.recording_id||''))throw new EvidenceError(400,'Choose a customer recording.');
+          const result=await db.rpc('release_whisper_upload',{p_actor:auth.userId,p_org:auth.orgId||auth.tokenPayload?.o?.id||null,p_call:input.call_id,p_recording:input.recording_id});
+          if(result.error)throw new EvidenceError(result.error.code==='42501'?403:409,'Choose a usable customer recording.');
+          return evidenceJson(200,{released:true});
+        }
         if(input?.action==='retry_ix_upload'){
           if(!featureEnabled('IX_UPLOAD_ENABLED',env))return disabledResponse('IX_UPLOAD_ENABLED');
           if(!/^[0-9a-f-]{36}$/i.test(input.id||''))throw new EvidenceError(400,'Upload ID is required.');
@@ -97,7 +105,9 @@ export function createComplianceUploadsHandler({authenticate=requireClerkAuth,ge
         !featureEnabled('IX_UPLOAD_ENABLED',env)?Promise.resolve({data:[],error:null}):db.from('compliance_missing_codes').select('*').eq('tenant_id',identity.tenant.id).order('call_start').limit(200),
         !featureEnabled('IX_UPLOAD_ENABLED',env)?Promise.resolve({data:[],error:null}):db.from('compliance_reconciliation').select('*').eq('tenant_id',identity.tenant.id).order('day',{ascending:false}).limit(30),
       ]);
-      return evidenceJson(200,{admin:true,ix_environment:featureEnabled('IX_UPLOAD_ENABLED',env)?ixConfiguration(env).environment.toUpperCase():null,failures:[...checked(conversely).map(row=>({...row,provider:'Conversely'})),...checked(ix).map(row=>({...row,provider:'UHC IX'}))],
+      const heldCalls=checked(await db.from('call_records').select('id,tenant_id,metadata').eq('tenant_id',identity.tenant.id).eq('metadata->whisper_upload_hold->>held','true').limit(200))||[];
+      const held=await Promise.all(heldCalls.map(async call=>({call_id:call.id,status:'held',recordings:(await whisperCustomerRecordings(db,call)).map(r=>({id:r.id,recording_sid:r.recording_sid}))})));
+      return evidenceJson(200,{admin:true,held,ix_environment:featureEnabled('IX_UPLOAD_ENABLED',env)?ixConfiguration(env).environment.toUpperCase():null,failures:[...checked(conversely).map(row=>({...row,provider:'Conversely',...(row.last_error==='whisper_customer_recording_required'?{status:'held'}:{})})),...checked(ix).map(row=>({...row,provider:'UHC IX',...(row.last_error==='whisper_customer_recording_required'?{status:'held'}:{})}))],
         missing:checked(missing),reconciliation:checked(reconciliation),weekly});
     }); }catch(error){return evidenceFailure(error);}
   });

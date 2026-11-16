@@ -61,7 +61,10 @@ export function planRecordingMerge(segments, events = []) {
 
 // Render one stereo PCM WAV. Overlapping artifacts are alternatives, never
 // summed or concatenated; each instant is copied from exactly one source.
-export function mergeRecordingWavs(playback, buffers) {
+export function mergeRecordingWavs(playback, buffers, {download = false} = {}) {
+  if(download && playback.whisper){
+    playback={...playback,events:[],segments:playback.segments.filter(s=>s.role==='customer' && playback.downloadRecordingIds?.includes(s.id))};
+  }
   const entries = playback.segments.filter(s => buffers.has(s.id));
   if (entries.reduce((n, s) => n + buffers.get(s.id).byteLength, 0) > MAX_BYTES) throw Error('Recordings are too large to merge in this browser. Download the source recordings.');
   if (entries.some(s => !Number.isFinite(Date.parse(s.startedAt)))) throw Error('A source recording is missing its provider start time. Refresh after reconciliation.');

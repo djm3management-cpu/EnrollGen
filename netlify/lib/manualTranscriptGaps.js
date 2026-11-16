@@ -11,6 +11,7 @@ export async function fillApprovedGaps({db,job,audio,transcribe,env=process.env}
  if(info.channels!==job.channel_speakers.length)throw Error('Recording channel mapping mismatch');
  let transcript=job.source_transcript;
  for(const [index,range]of job.ranges.entries()){
+  if(range.start_ms<job.timeline_offset_ms)throw Error('Recording does not cover the approved gap');
   const end=range.end_ms-job.timeline_offset_ms;
   if(end>info.durationMs+1000)throw Error('Recording does not cover the approved gap');
   const crop=sliceWav(audio,range.start_ms-job.timeline_offset_ms,Math.min(end,info.durationMs));

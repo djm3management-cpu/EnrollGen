@@ -15,5 +15,6 @@
   "165_client_recap.sql": "e45fff80243e0575009bcb096304d6fae09019241b2e80ed96de42d08ff14227",
   "166_supervisor_floor.sql": "8d0997c09ca040eb04ef2292df4e19d48bd28af69ca882e5542faff71ff46f4b",
   "167_practice_caller.sql": "eca820646517d0e184ad2591e0c1f5b71add917d1f559619c9129a81283d80be",
-  "168_supervisor_whisper.sql": "15b1902f8f3b849963e433aeae35aee3a3354ae251cf3ae94be7a1a1cdfdaa8e"
+  "168_supervisor_whisper.sql": "15b1902f8f3b849963e433aeae35aee3a3354ae251cf3ae94be7a1a1cdfdaa8e",
+  "169_whisper_recording_safety.sql": "2f4517405329cdfd17f5eef9531cef1ea208248ffedc4f8a6c18eba137c90dd9"
 }

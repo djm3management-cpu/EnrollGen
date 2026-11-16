@@ -752,6 +752,11 @@
     },
     {
       "schema": "public",
+      "name": "hold_whisper_upload",
+      "arguments": "p_call uuid, p_tenant uuid"
+    },
+    {
+      "schema": "public",
       "name": "is_compliance_sale",
       "arguments": "p_outcome text"
     },
@@ -1049,6 +1054,11 @@
       "schema": "public",
       "name": "prepare_call_conference",
       "arguments": "p_attempt_id uuid, p_customer_phone text"
+    },
+    {
+      "schema": "public",
+      "name": "preserve_whisper_recording_marker",
+      "arguments": ""
     },
     {
       "schema": "public",
@@ -1429,6 +1439,11 @@
       "schema": "public",
       "name": "release_verified_stale_call_agent",
       "arguments": "p_agent_id text, p_call_sid text, p_twilio_status text, p_verified_account_sid text, p_verified_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "release_whisper_upload",
+      "arguments": "p_actor text, p_org text, p_call uuid, p_recording uuid"
     },
     {
       "schema": "public",
@@ -1939,6 +1954,11 @@
       "schema": "public",
       "name": "vendor_call_payload",
       "arguments": "p_call_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "whisper_customer_recordings",
+      "arguments": "p_call uuid, p_tenant uuid"
     }
   ],
   "netlify_function_source_modules": [

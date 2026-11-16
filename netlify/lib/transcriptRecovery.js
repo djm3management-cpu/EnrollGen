@@ -1,3 +1,4 @@
+import {hasWhisperRecording,whisperCustomerRecordings} from '../../telephony/src/lib/whisperRecording.js';
 import {createLogger} from '../../telephony/src/lib/logger.js';
 const logger=createLogger('netlify','transcriptrecovery');
 import { featureEnabled } from '../../telephony/src/lib/deploymentFeatures.js';
@@ -23,6 +24,14 @@ export function verifiedRecordingPlan(call, recordings, attempts, conferences = 
 }
 export async function loadRecordingPlan(db, call) {
  const recordings=checked(await db.from('recording_ingestion').select('*').eq('call_record_id',call.id).eq('tenant_id',call.tenant_id));
+ if(hasWhisperRecording(call)){
+  if(!call.call_end)return null;
+  const customers=await whisperCustomerRecordings(db,call);
+  if(customers.length!==1)return null;
+  const recording=customers[0],offset=Date.parse(recording.provider_created_at)-Date.parse(call.call_start);
+  if(!Number.isFinite(offset)||offset<0)return null;
+  return {recording,mapping:['customer','agent'],offset};
+ }
  const attempts=checked(await db.from('telephony_call_attempts').select('id,answered_at,ended_at').eq('call_record_id',call.id).eq('tenant_id',call.tenant_id));
  const conferences=checked(await db.from('call_conferences').select('call_id').eq('call_id',call.id).eq('tenant_id',call.tenant_id));
  return verifiedRecordingPlan(call,recordings,attempts,conferences);
@@ -50,7 +59,8 @@ export function recoveryEstimate(call, plan) {
  const ranges=recoveryRanges(call);
  const minutes=ranges.reduce((n,r)=>n+(r.end_ms-r.start_ms)/60000,0);
  const cost=minutes*(plan?.mapping.length||2)*DEEPGRAM_BATCH_PER_MINUTE_USD;
- const reason=coverage.complete?'already_complete':coverage.durationNeedsVerification?'duration_unverified':!plan?'recording_mapping_unverified':!ranges.length?'channel_coverage_unresolved':ranges.length>RECOVERY_LIMITS.ranges?'too_many_gaps':cost>RECOVERY_LIMITS.costUsd?'recovery_cost_cap':null;
+ const uncovered=plan?.recording && hasWhisperRecording(call) && ranges.some(r=>r.start_ms<plan.offset || r.end_ms>plan.offset+plan.recording.recording_duration_seconds*1000+1000);
+ const reason=uncovered?'recording_gap_uncovered':coverage.complete?'already_complete':coverage.durationNeedsVerification?'duration_unverified':!plan?'recording_mapping_unverified':!ranges.length?'channel_coverage_unresolved':ranges.length>RECOVERY_LIMITS.ranges?'too_many_gaps':cost>RECOVERY_LIMITS.costUsd?'recovery_cost_cap':null;
  return {coverage,ranges,minutes,cost,reason};
 }
 export async function recoveryBlocked(db,call,reason,sendAlert=sendProviderFailureAlert) {

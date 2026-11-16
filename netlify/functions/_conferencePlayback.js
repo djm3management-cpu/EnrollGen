@@ -1,3 +1,4 @@
+import {hasWhisperRecording,whisperCustomerRecordings} from '../../telephony/src/lib/whisperRecording.js';
 import { checked } from './_evidenceAccess.js';
 
 // Called only after authorizeRecordingTarget. Never grant media here; the
@@ -14,7 +15,9 @@ export async function conferencePlayback(db, identity, target, recordings) {
     .eq('call_id', callId)) || [];
   const record = checked(await db.from('call_records').select('metadata').eq('id', callId)
     .eq('tenant_id', identity.tenant.id).single());
-  return { callId, startedAt: room.started_at, endedAt: room.ended_at,
+  const whispered=hasWhisperRecording(record);
+  const customers=whispered?await whisperCustomerRecordings(db,{...record,id:callId,tenant_id:identity.tenant.id}):[];
+  return { callId, ...(whispered?{whisper:true,downloadRecordingIds:customers.map(r=>r.id)}:{}), startedAt: room.started_at, endedAt: room.ended_at,
     events: (record.metadata?.conference_events || []).filter(e =>
       ['customer_hold_changed', 'warm_dialed', 'warm_completed', 'warm_canceled'].includes(e.event)),
     segments: recordings.filter(r => r.provider_status !== 'absent' && (r.storage_path || r.recording_sid)).map(r => {

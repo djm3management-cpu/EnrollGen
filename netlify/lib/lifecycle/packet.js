@@ -1,3 +1,4 @@
+import {hasWhisperRecording,outsideRecordings} from '../../../telephony/src/lib/whisperRecording.js';
 import {createHash} from 'node:crypto';
 import {jsPDF} from 'jspdf';
 // Stored immutable-copy hashes come from recording_ingestion; audio bytes are
@@ -46,4 +47,32 @@ export async function packetFileIndex(db,manifest){
   files.push({table:file.source_table,id:file.id,time:file.occurred_at,sha256:hash});
  }
  return files;
+}
+
+// The packet contains references/checksums, never audio. Minimize even those
+// references before hashing stored files or rendering an exported document.
+export async function whisperPacketEvidence(db,events,manifest,checks){
+ const callIds=[...new Set(events.map(e=>e.details?.callId).filter(Boolean))];
+ const marked=new Map(),excluded=new Set();
+ for(const id of callIds){
+  const {data:call,error}=await db.from('call_records').select('id,tenant_id,metadata').eq('id',id).maybeSingle();
+  if(error)throw Error('Packet recording safety unavailable');
+  if(hasWhisperRecording(call))marked.set(id,new Set((await outsideRecordings(db,call,[])).map(r=>r.id)));
+ }
+ if(!marked.size)return {events,manifest,checks};
+ for(const event of events)if(event.type==='recording' && marked.has(event.details?.callId))
+  for(const ref of event.evidence)if(ref.table==='recording_ingestion'&&!marked.get(event.details.callId).has(ref.id))excluded.add(ref.id);
+ const files=[];
+ for(const file of manifest){
+  if(file.source_table==='recording_ingestion'&&excluded.has(file.id))continue;
+  if(file.source_table==='call_records'&&marked.has(file.id))continue;
+  if(file.source_table==='inbound_calls'){
+   const {data:row,error}=await db.from('inbound_calls').select('call_record_id').eq('id',file.id).maybeSingle();
+   if(error)throw Error('Packet recording safety unavailable');
+   if(marked.has(row?.call_record_id))continue;
+  }
+  files.push(file);
+ }
+ const strip=refs=>refs.filter(ref=>ref.table!=='recording_ingestion'||!excluded.has(ref.id));
+ return {manifest:files,events:events.filter(e=>e.type!=='recording'||!e.evidence.some(ref=>excluded.has(ref.id))).map(e=>({...e,evidence:strip(e.evidence)})),checks:checks.map(group=>({...group,checks:group.checks.map(check=>({...check,evidence:strip(check.evidence)}))}))};
 }

@@ -1,4 +1,5 @@
-import {assertWhisperRecordingSafe} from '../../telephony/src/lib/whisperRecording.js';
+import {recordingMediaGrant} from './_recordingAccess.js';
+import {assertWhisperRecordingSafe,whisperCustomerRecordings,hasWhisperRecording,whisperChannelUtterances,whisperRecordingOffset} from '../../telephony/src/lib/whisperRecording.js';
 import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {createLogger} from '../../telephony/src/lib/logger.js';
 const logger=createLogger('netlify','backfill_deepgram_intelligence');
@@ -228,9 +229,14 @@ function resolveAudioUrl(row) {
     || null;
 }
 
-async function transcribeAudio(audioUrl,db,call) {
-  assertWhisperRecordingSafe(call);
-  const dgKey = process.env.DEEPGRAM_API_KEY;
+export async function transcribeAudio(audioUrl,db,call,{env=process.env,transport=fetch}={}) {
+  const customers=await whisperCustomerRecordings(db,call);
+  const recording=customers[0];
+  assertWhisperRecordingSafe(call,recording,customers);
+  const whispered=hasWhisperRecording(call);
+  const offset=whisperRecordingOffset(call,recording);
+  if(whispered)audioUrl=(await recordingMediaGrant(db,{admin:true,tenant:{id:call.tenant_id},auth:{userId:'service:transcription_backfill'}},recording,{env,transcription:true})).url;
+  const dgKey = env.DEEPGRAM_API_KEY;
   if (!dgKey) throw new Error("DEEPGRAM_API_KEY not configured");
 
   const dgUrl = new URL("https://api.deepgram.com/v1/listen");
@@ -244,10 +250,11 @@ async function transcribeAudio(audioUrl,db,call) {
   dgUrl.searchParams.set("intents", "true");
   dgUrl.searchParams.set("topics", "true");
   dgUrl.searchParams.set("summarize", "v2");
+  if(whispered)dgUrl.searchParams.set("multichannel","true");
   applyDeepgramRedactionParams(dgUrl);
 
   await admitCall(db,'transcription',call);
-  const dgResp = await fetch(dgUrl.toString(), {
+  const dgResp = await transport(dgUrl.toString(), {
     method: "POST",
     headers: {
       Authorization: `Token ${dgKey}`,
@@ -264,22 +271,23 @@ async function transcribeAudio(audioUrl,db,call) {
   const dgData = await dgResp.json();
   const channel = dgData.results?.channels?.[0];
   const bestAlt = channel?.alternatives?.[0];
-  const utterances = dgData.results?.utterances || [];
+  const utterances = whisperChannelUtterances(call,dgData.results?.utterances || []);
   const diarized = redactDiarizedTranscript(utterances.map((utterance) => ({
     speaker: utterance.speaker === 0 ? "agent" : "customer",
     text: utterance.transcript || "",
-    start_ms: Math.round((utterance.start || 0) * 1000),
-    end_ms: Math.round((utterance.end || 0) * 1000),
+    start_ms: offset+Math.round((utterance.start || 0) * 1000),
+    end_ms: offset+Math.round((utterance.end || 0) * 1000),
     confidence: utterance.confidence || 0,
   })));
-  const durationSeconds = dgData.metadata?.duration
+  let durationSeconds = dgData.metadata?.duration
     ? Math.round(dgData.metadata.duration)
     : diarized.length > 0
       ? Math.round(diarized[diarized.length - 1].end_ms / 1000)
       : 0;
+  if(whispered)durationSeconds=Math.max(Number(call.call_duration_seconds)||0,Math.round(offset/1000+(Number(dgData.metadata?.duration)||0)),durationSeconds);
 
   return {
-    transcript_raw: redactSensitiveText(bestAlt?.transcript || ""),
+    transcript_raw: redactSensitiveText(whispered?utterances.map(u=>u.transcript||"").join(" "):bestAlt?.transcript || ""),
     transcript_diarized: diarized,
     call_duration_seconds: durationSeconds,
     dg_sentiment: parseSentimentData(dgData, bestAlt),
@@ -297,11 +305,11 @@ async function transcribeAudio(audioUrl,db,call) {
   };
 }
 
-async function fetchPage(supabase, from, to) {
+async function fetchPage(supabase, from, to, env) {
   const { data, error } = await supabase
     .from("call_records")
-    .select("id, tenant_id, agent_id, recording_url, transcript_raw, dg_sentiment, metadata")
-    .eq("tenant_id",deploymentProfile().tenantId).not("transcript_raw", "is", null)
+    .select("id, tenant_id, agent_id, recording_url, call_start, call_duration_seconds, transcript_raw, dg_sentiment, metadata")
+    .eq("tenant_id",deploymentProfile(env).tenantId).not("transcript_raw", "is", null)
     .order("created_at", { ascending: true })
     .range(from, to);
 
@@ -314,12 +322,13 @@ async function parseBody(request) {
   return request.json().catch(() => ({}));
 }
 
-export default serverRequest('backfill-deepgram-intelligence',async (request) => {
+export function createIntelligenceBackfillHandler({authorize=isAuthorized,getDb=getSupabase,env=process.env,transport=fetch}={}){
+return serverRequest('backfill-deepgram-intelligence',async (request) => {
   if (!["GET", "POST"].includes(request.method)) {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
-  if (!isAuthorized(request)) {
+  if (!authorize(request)) {
     return json(401, { ok: false, error: "Unauthorized" });
   }
 
@@ -327,7 +336,7 @@ export default serverRequest('backfill-deepgram-intelligence',async (request) =>
   const limit = Number(body.limit || 25);
 
   try {
-    const supabase = getSupabase();
+    const supabase = getDb();
     let scanned = 0;
     let eligible = 0;
     let updated = 0;
@@ -335,7 +344,7 @@ export default serverRequest('backfill-deepgram-intelligence',async (request) =>
     const errors = [];
 
     for (let from = 0; ; from += PAGE_SIZE) {
-      const rows = await fetchPage(supabase, from, from + PAGE_SIZE - 1);
+      const rows = await fetchPage(supabase, from, from + PAGE_SIZE - 1, env);
       scanned += rows.length;
 
       for (const row of rows) {
@@ -355,17 +364,17 @@ export default serverRequest('backfill-deepgram-intelligence',async (request) =>
         }
 
         const audioUrl = resolveAudioUrl(row);
-        if (!audioUrl) {
+        if (!audioUrl && !hasWhisperRecording(row)) {
           skippedMissingAudio += 1;
           continue;
         }
 
         try {
-          const updatePayload = await transcribeAudio(audioUrl,supabase,row);
+          const updatePayload = await transcribeAudio(audioUrl,supabase,row,{env,transport});
           const { error } = await supabase
             .from("call_records")
             .update(updatePayload)
-            .eq("id", row.id).eq("tenant_id",deploymentProfile().tenantId);
+            .eq("id", row.id).eq("tenant_id",deploymentProfile(env).tenantId);
 
           if (error) throw error;
           updated += 1;
@@ -398,3 +407,5 @@ export default serverRequest('backfill-deepgram-intelligence',async (request) =>
     });
   }
 });
+}
+export default createIntelligenceBackfillHandler();

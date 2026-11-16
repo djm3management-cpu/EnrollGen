@@ -6,6 +6,11 @@ import {prepareServerIdentity} from './serverIdentityFixture.js';
 // PostgreSQL under the caller's real role; no RLS outcomes are mocked.
 export function evidenceDb(pg, onError = () => {}) {
   const q = name => '"' + name.replaceAll('"', '""') + '"';
+  const columnSql = name => {
+    if(!name.includes('->'))return q(name);
+    if(!/^[a-z_]+(?:->>?[a-z_]+)+$/.test(name))throw Error('Invalid JSON fixture column');
+    return name.replace(/^([a-z_]+)/,(_,key)=>q(key)).replace(/(->>?)([a-z_]+)/g,(_,op,key)=>op+"'"+key+"'");
+  };
   return {
     async rpc(name, input = {}) {
       if(name==='execute_admin_action')await installAdminFixture(pg);
@@ -38,7 +43,7 @@ export function evidenceDb(pg, onError = () => {}) {
         gte(column, item) { filters.push(q(column) + ">=" + value(item)); return chain; },
         ilike(column, item) { filters.push(q(column) + " ILIKE " + value(item)); return chain; },
         lt(column, item) { filters.push(q(column) + "<" + value(item)); return chain; },
-        eq(column, item) { filters.push(q(column) + "=" + value(item)); return chain; },
+        eq(column, item) { filters.push(columnSql(column) + "=" + value(item)); return chain; },
         or(expression) {
           filters.push('(' + expression.split(',').map(clause => {
             const match = /^([a-z_]+)\.eq\.([a-zA-Z0-9_-]+)$/.exec(clause);

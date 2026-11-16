@@ -10,6 +10,7 @@ export const SECRET_REVIEW_BY='2026-12-15';
 const logger=createLogger('integrations');
 export function evaluateAlerts(metrics,thresholds,now=Date.now()){
  const conditions=[];
+ for(const key of metrics.whisper_upload_holds||[])conditions.push({rule:'whisper_upload_held',key,count:1,threshold:1});
  const add=(rule,key,value,threshold)=>{if(Number(value)>=threshold)conditions.push({rule,key,count:Math.ceil(Number(value)),threshold});};
  for(const q of metrics.queues||[]){add('queue_depth',q.queue,q.depth,thresholds.queueDepth);add('queue_age',q.queue,q.oldest_age_seconds,thresholds.queueAgeSeconds);}
  for(const [rule,field,threshold]of [

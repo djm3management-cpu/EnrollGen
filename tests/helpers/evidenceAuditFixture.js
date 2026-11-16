@@ -8,7 +8,7 @@ export async function installEvidenceAuditFixture(pg){
  for(const table of ['recording_download_tickets','recording_compliance_tickets']){
   if((await pg.query('SELECT to_regclass($1) name',['public.'+table])).rows[0].name){
    await pg.exec('ALTER TABLE '+table+' ADD COLUMN IF NOT EXISTS grant_id uuid');
-   if(table==='recording_download_tickets')await pg.exec('ALTER TABLE '+table+' ADD COLUMN IF NOT EXISTS actor_id text, ADD COLUMN IF NOT EXISTS recording_id text,ADD COLUMN IF NOT EXISTS storage_path text,ALTER COLUMN recording_sid DROP NOT NULL,ALTER COLUMN account_sid DROP NOT NULL,ALTER COLUMN expected_call_sid DROP NOT NULL');
+   if(table==='recording_download_tickets')await pg.exec('ALTER TABLE '+table+' ADD COLUMN IF NOT EXISTS purpose text NOT NULL DEFAULT \'internal\',ADD COLUMN IF NOT EXISTS actor_id text, ADD COLUMN IF NOT EXISTS recording_id text,ADD COLUMN IF NOT EXISTS storage_path text,ALTER COLUMN recording_sid DROP NOT NULL,ALTER COLUMN account_sid DROP NOT NULL,ALTER COLUMN expected_call_sid DROP NOT NULL');
   }
  }
 }

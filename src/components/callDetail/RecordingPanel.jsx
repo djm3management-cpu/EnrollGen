@@ -9,6 +9,7 @@ import MergedRecordingPlayer from './MergedRecordingPlayer';
 export default function RecordingPanel({ row, callRecordId, inboundCallId, attemptId }) {
   const { getToken } = useAppAuth();
   const [rows, setRows] = useState([]);
+  const [whisper,setWhisper]=useState(false);
   const [playback, setPlayback] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,7 +32,7 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
     }
     try {
       const data = await listRecordings(getToken, target);
-      if (current === version.current) { setRows(data.recordings || []); setPlayback(data.playback || null); setCanMintConversly(data.can_mint_conversly === true); }
+      if (current === version.current) { setWhisper(data.whisper===true); setRows(data.recordings || []); setPlayback(data.playback || null); setCanMintConversly(data.can_mint_conversly === true); }
     } catch (err) { if (current === version.current) setError(err.message); }
     finally { if (current === version.current) setLoading(false); }
   }, [getToken, target]);
@@ -68,7 +69,7 @@ export default function RecordingPanel({ row, callRecordId, inboundCallId, attem
     finally { if (current === version.current) setBusy(null); }
   };
   return <div className="contacts-section">
-    <div className="contacts-section-head">RECORDINGS <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={load} disabled={loading}>REFRESH</button></div>
+    <div className="contacts-section-head">RECORDINGS {whisper && <span className="ops-mini-label">Whisper</span>} <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={load} disabled={loading}>REFRESH</button></div>
     {error ? <div className="ops-error" role="alert">{error}</div> : null}
     {playback && <MergedRecordingPlayer target={target} playback={playback} />}
     {loading ? <div className="contacts-muted">Loading recordings...</div> : !error && !rows.length && !hasLinkedRecording ? <div className="contacts-muted">No recording received yet. Check missing recordings for copy or linkage issues.</div> : null}

@@ -12,7 +12,8 @@ export function prepareServerIdentity(pg) {
   try {
   if((await pg.query("SELECT to_regprocedure('public.resolve_deployment_subject(text,text)') r")).rows[0].r)return;
   for(const role of ['anon','authenticated','service_role'])if(!(await pg.query('SELECT 1 FROM pg_roles WHERE rolname=$1',[role])).rows.length)await pg.exec('CREATE ROLE '+role);
-  await pg.exec(`ALTER TABLE tenants ADD COLUMN IF NOT EXISTS clerk_org_id text;
+  await pg.exec(`ALTER TABLE IF EXISTS call_records ADD COLUMN IF NOT EXISTS metadata jsonb;
+   ALTER TABLE tenants ADD COLUMN IF NOT EXISTS clerk_org_id text;
    ALTER TABLE enrolled_agents ADD COLUMN IF NOT EXISTS role text DEFAULT 'agent';
    CREATE TABLE IF NOT EXISTS tenant_agents(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,name text,npn text,clerk_user_id text,agent_slug text,is_active boolean,role text DEFAULT 'agent');
    ALTER TABLE tenant_agents ADD COLUMN IF NOT EXISTS id uuid DEFAULT gen_random_uuid(),ADD COLUMN IF NOT EXISTS name text,ADD COLUMN IF NOT EXISTS npn text,ADD COLUMN IF NOT EXISTS role text DEFAULT 'agent',ADD COLUMN IF NOT EXISTS agent_slug text;

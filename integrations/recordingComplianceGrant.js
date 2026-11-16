@@ -1,3 +1,4 @@
+import {outsideRecording} from '../telephony/src/lib/whisperRecording.js';
 import {recordingBlocked} from '../telephony/src/lib/recordingAvailability.js';
 import { auditedEvidenceAccess } from '../telephony/src/lib/evidenceAudit.js';
 import { evidenceCheckpoint, evidenceGrantId } from '../telephony/src/lib/evidenceAudit.js';
@@ -14,6 +15,7 @@ async function rawrecordingComplianceGrant(db, identity, row, { format = 'wav', 
   if (!identity.admin) throw new EvidenceError(403, 'Only organization admins can create Conversly links.');
   if (!['wav', 'mp3'].includes(format)) throw new EvidenceError(400, 'Choose WAV or MP3.');
   if (row.tenant_id && row.tenant_id !== identity.tenant.id) throw new EvidenceError(403, 'Recording is unavailable.');
+  row=await outsideRecording(db,row);
   const storagePath = format === 'wav' ? row.storage_path || null : null;
   if (storagePath) {
     const parts = storagePath.split('/');

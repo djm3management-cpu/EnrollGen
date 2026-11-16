@@ -1,3 +1,4 @@
+import {whisperCallForRecording,hasWhisperRecording,whisperCustomerRecordings} from './lib/whisperRecording.js';
 import {recordingBlocked} from './lib/recordingAvailability.js';
 import {createLogger} from './lib/logger.js';
 const logger=createLogger('telephony','recordingcompliance');
@@ -82,6 +83,17 @@ export function createRecordingComplianceHandler({ db, config, fetchImpl = fetch
       if (!ticket || !Number.isFinite(expires) || expires <= Date.now() || !['wav', 'mp3'].includes(ticket.format) || (mp3Path && ticket.format!=='mp3')) {
         if(details)await appendEvidenceAudit(db,{...details,result:'denied'});
         return res.status(404).end();
+      }
+      // Processor tickets are revalidated on every redemption, including tickets
+      // minted before a coach joined. Ordinary internal playback stays unchanged.
+      if(ticketTable==='recording_compliance_tickets' || ticket.purpose==='transcription'){
+        const call=await whisperCallForRecording(db,ticket);
+        if(hasWhisperRecording(call)){
+          const safe=await whisperCustomerRecordings(db,call);
+          if((ticketTable==='recording_compliance_tickets' && call.metadata?.whisper_upload_hold?.held===true) || !safe.some(r=>r.id===ticket.recording_id && r.recording_sid===ticket.recording_sid && r.callback_call_sid===ticket.expected_call_sid && (!ticket.storage_path || r.storage_path===ticket.storage_path))){
+            await appendEvidenceAudit(db,{...details,result:'denied'});return res.status(404).end();
+          }
+        }
       }
       // HEAD returns full-object metadata. Each GET/HEAD/Range request has a
       // separate event, linked to the session that originally issued its grant.

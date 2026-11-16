@@ -118,6 +118,7 @@ export async function listTargetRecordings(db, identity, target) {
     if (!twilio && !safePath) continue;
     rows.push({ id: `legacy:${reference.id}`, ...twilio, expected_call_sid: target.trustedSid, recording_url: reference.recording_url,
       storage_path: safePath, copy_status: safePath ? 'stored' : 'legacy',
+      call_record_id: target.field==='call_record_id'?target.id:target.record.call_record_id, tenant_id:identity.tenant.id,
       direction: reference.status === 'voicemail' ? 'voicemail' : reference.call_direction,
       recording_channels: reference.status === 'voicemail' ? 1 : null,
       first_seen_at: reference.created_at || reference.call_start });
@@ -134,7 +135,7 @@ export function publicRecording(row) {
     provider_available: Boolean(row.recording_sid && row.account_sid && row.provider_status !== 'absent' && row.copy_status !== 'absent'),
     available: Boolean(row.storage_path || (row.recording_sid && row.account_sid && row.provider_status !== 'absent')) };
 }
-async function rawrecordingMediaGrant(db, identity, row, { download = false, forceProvider = false, env = process.env } = {}) {
+async function rawrecordingMediaGrant(db, identity, row, { download = false, forceProvider = false, transcription = false, env = process.env } = {}) {
   if(await recordingBlocked(db,row))throw new EvidenceError(404,'Recording unavailable.');
   const filename = `recording-${row.recording_sid || String(row.id).replace(/[^a-z0-9-]/gi, '')}.wav`;
   let storageAvailable=false;
@@ -164,6 +165,7 @@ async function rawrecordingMediaGrant(db, identity, row, { download = false, for
     tenant_id: identity.tenant.id, actor_id:identity.auth.userId,grant_id:evidenceGrantId(),recording_id:row.id,storage_path:storageAvailable?row.storage_path:null, account_sid: row.account_sid || null, recording_sid: row.recording_sid || null,
     channels: row.recording_channels || (row.direction === 'voicemail' ? 1 : 2),
     expected_call_sid: row.callback_call_sid || row.expected_call_sid || null, download,
+    ...(transcription?{purpose:'transcription'}:{}),
     expires_at: new Date(Date.now() + 300_000).toISOString() }));
   return { url: `${url.href.replace(/\/$/, '')}/api/recordings/media/${token}`, expires_in: 300, filename, source: storageAvailable?'storage':'twilio' };
 }

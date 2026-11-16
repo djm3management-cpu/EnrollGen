@@ -1,4 +1,4 @@
-import {assertWhisperRecordingSafe} from '../../telephony/src/lib/whisperRecording.js';
+import {assertWhisperRecordingSafe,whisperCustomerRecordings,hasWhisperRecording,whisperChannelUtterances,whisperRecordingOffset} from '../../telephony/src/lib/whisperRecording.js';
 import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {admitAgent} from './_admission.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
@@ -230,14 +230,17 @@ export function createTranscribeHandler({
     const sb = getDb();
     return await auditedEvidenceRequest(sb,auth,request,'recording',recordingIdentity,async identity=>{
     const target = await authorizeRecordingTarget(sb, identity, { call_record_id: callId });
-    assertWhisperRecordingSafe(target.record);
     const recordings = await listTargetRecordings(sb, identity, target);
     const recording = recordings.find(row => row.id === recordingId);
     if (!recording) throw new EvidenceError(403, "Recording is unavailable for this call.");
+    const customers=await whisperCustomerRecordings(sb,target.record);
+    try{assertWhisperRecordingSafe(target.record,recording,customers);}catch{throw new EvidenceError(409,"Whisper recording cannot be transcribed.");}
+    const whispered=hasWhisperRecording(target.record);
+    const offset=whisperRecordingOffset(target.record,recording);
     await admitAgent(sb,"transcription",auth);
     const dgKey = env.DEEPGRAM_API_KEY;
     if (!dgKey) throw new EvidenceError(503, "Transcription is not configured.");
-    const { url: audioUrl } = await recordingMediaGrant(sb, identity, recording, { env });
+    const { url: audioUrl } = await recordingMediaGrant(sb, identity, recording, { env, transcription:true });
     // Call Deepgram pre-recorded API
     const dgUrl = new URL("https://api.deepgram.com/v1/listen");
     dgUrl.searchParams.set("model", "nova-2");
@@ -250,6 +253,7 @@ export function createTranscribeHandler({
     dgUrl.searchParams.set("intents", "true");
     dgUrl.searchParams.set("topics", "true");
     dgUrl.searchParams.set("summarize", "v2");
+    if(whispered)dgUrl.searchParams.set("multichannel","true");
     applyDeepgramRedactionParams(dgUrl);
 
     const dgResp = await transport(dgUrl.toString(), {
@@ -273,24 +277,25 @@ export function createTranscribeHandler({
     const bestAlt = alternatives[0];
 
     // Build raw transcript
-    const transcriptRaw = redactSensitiveText(bestAlt?.transcript || "");
+    const transcriptRaw = redactSensitiveText(whispered?(dgData.results?.utterances||[]).map(u=>u.transcript||"").join(" "):bestAlt?.transcript || "");
 
     // Build diarized transcript from utterances
-    const utterances = dgData.results?.utterances || [];
+    const utterances = whisperChannelUtterances(target.record,dgData.results?.utterances || []);
     const diarized = redactDiarizedTranscript(utterances.map(u => ({
       speaker: u.speaker === 0 ? "agent" : "customer",
       text: u.transcript || "",
-      start_ms: Math.round((u.start || 0) * 1000),
-      end_ms: Math.round((u.end || 0) * 1000),
+      start_ms: offset+Math.round((u.start || 0) * 1000),
+      end_ms: offset+Math.round((u.end || 0) * 1000),
       confidence: u.confidence || 0,
     })));
 
     // Calculate duration
-    const durationSeconds = dgData.metadata?.duration
+    let durationSeconds = dgData.metadata?.duration
       ? Math.round(dgData.metadata.duration)
       : diarized.length > 0
         ? Math.round(diarized[diarized.length - 1].end_ms / 1000)
         : 0;
+    if(whispered)durationSeconds=Math.max(Number(target.record.call_duration_seconds)||0,Math.round(offset/1000+(Number(dgData.metadata?.duration)||0)),durationSeconds);
 
     const sentimentData = parseSentimentData(dgData, bestAlt);
     const intentsData = parseIntentsData(dgData);

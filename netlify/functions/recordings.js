@@ -1,3 +1,4 @@
+import {hasWhisperRecording,whisperCustomerRecordings} from '../../telephony/src/lib/whisperRecording.js';
 import {serverRequest,adminActionClient} from '../../telephony/src/lib/adminActions.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
 import { requireClerkAuth } from './_clerkAuth.js';
@@ -93,7 +94,8 @@ export function createRecordingsHandler({ authenticate = requireClerkAuth, getDb
       const rows = await listTargetRecordings(db, identity, target);
       if (request.method === 'GET') {
         const playback = await conferencePlayback(db, identity, target, rows);
-        return evidenceJson(200, { recordings: rows.map(publicRecording), can_mint_conversly: identity.admin,
+        const canonical=target.field==='call_record_id'?target.record:target.record.call_record_id?checked(await db.from('call_records').select('id,tenant_id,metadata').eq('id',target.record.call_record_id).eq('tenant_id',identity.tenant.id).maybeSingle()):null;
+        return evidenceJson(200, { ...(hasWhisperRecording(canonical)?{whisper:true,customer_recordings:(await whisperCustomerRecordings(db,canonical)).map(r=>r.id)}:{}), recordings: rows.map(publicRecording), can_mint_conversly: identity.admin,
           ...(playback ? { playback } : {}) });
       }
       const row = input.recording_id ? rows.find(r => r.id === input.recording_id)

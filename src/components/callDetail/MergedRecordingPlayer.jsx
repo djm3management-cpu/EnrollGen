@@ -8,12 +8,13 @@ import { mergeRecordingWavs } from '../../lib/mergedRecording';
 export default function MergedRecordingPlayer({ target, playback, playRequest = 0, seekRequest, onTime }) {
   const { getToken } = useAppAuth();
   const [media, setMedia] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const sourceBuffers = useRef(null);
   const audio = useRef(null), version = useRef(null), objectUrl = useRef(null), controller = useRef(null);
   const shouldPlay = useRef(false), pendingSeek = useRef(null), busyRef = useRef(false);
   const targetKey = JSON.stringify(target);
   const stableTarget = useMemo(() => JSON.parse(targetKey), [targetKey]);
   useEffect(() => {
-    version.current = Symbol(); setMedia(null); setError(''); setBusy(false); busyRef.current = false;
+    version.current = Symbol(); sourceBuffers.current=null; setMedia(null); setError(''); setBusy(false); busyRef.current = false;
     return () => { version.current = Symbol(); controller.current?.abort(); if (objectUrl.current) URL.revokeObjectURL(objectUrl.current); objectUrl.current = null; };
   }, [targetKey]);
   const build = useCallback(async (autoplay = true) => {
@@ -54,7 +55,8 @@ export default function MergedRecordingPlayer({ target, playback, playRequest = 
       const url = URL.createObjectURL(new Blob([merged.buffer], { type: 'audio/wav' }));
       if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
       objectUrl.current = url;
-      setMedia({ ...merged, buffer: undefined, url, callId: manifest.callId });
+      sourceBuffers.current=buffers;
+      setMedia({ ...merged, buffer: undefined, url, whisper:manifest.whisper===true, callId: manifest.callId });
     } catch (failure) { if (version.current === current) setError(failure.message || 'Unable to merge recordings.'); }
     finally { if (version.current === current) { setBusy(false); busyRef.current = false; } }
   }, [getToken, stableTarget, playback]);
@@ -66,21 +68,30 @@ export default function MergedRecordingPlayer({ target, playback, playRequest = 
     else if (!media) void build(false);
   }, [seekRequest, media, build]);
   return <section className="merged-recording-player ops-summary-box" aria-label="Merged conference playback">
-    <div className="contacts-section-head">MERGED CONFERENCE PLAYBACK</div>
+    <div className="contacts-section-head">MERGED CONFERENCE PLAYBACK {(playback?.whisper||media?.whisper) && <span className="ops-mini-label">Whisper</span>}</div>
     <p className="contacts-muted">One timeline with overlaps trimmed. Private consultation uses the agent recording.</p>
     <button data-key-role="secondary" type="button" className="contacts-mini-btn" disabled={busy} onClick={() => void build(true)}>{busy ? 'Preparing merged recording…' : media ? 'Rebuild merged playback' : 'Prepare merged playback'}</button>
     {busy && <p className="contacts-muted" role="status">Loading and aligning source recordings…</p>}
     {error && <p className="ops-error" role="alert">{error}</p>}
     {media && <>
-      <audio controls ref={audio} src={media.url} onLoadedMetadata={event => {
+      <audio controls controlsList={media.whisper?'nodownload':undefined} ref={audio} src={media.url} onLoadedMetadata={event => {
         if (pendingSeek.current != null) event.currentTarget.currentTime = Math.max(0, pendingSeek.current - media.startOffset);
         if (shouldPlay.current) void event.currentTarget.play().catch(() => setError('Press Play to start the merged recording.'));
       }} onTimeUpdate={event => onTime?.(event.currentTarget.currentTime + media.startOffset)} />
-      <a className="contacts-mini-btn" href={media.url} download={`conference-${media.callId}.wav`} onClick={async event=>{
+      <button type="button" className="contacts-mini-btn" onClick={async event=>{
         event.preventDefault();
-        try{await auditEvidenceExport(getToken,stableTarget);downloadRecordingUrl(media.url,`conference-${media.callId}.wav`);}
+        try{
+          const manifest=(await listRecordings(getToken,stableTarget)).playback;
+          if(media.whisper && !manifest?.whisper)throw Error('Recording safety manifest unavailable.');
+          await auditEvidenceExport(getToken,stableTarget);
+          if(manifest?.whisper){
+            const merged=mergeRecordingWavs(manifest,sourceBuffers.current,{download:true});
+            const url=URL.createObjectURL(new Blob([merged.buffer],{type:'audio/wav'}));
+            downloadRecordingUrl(url,`conference-${media.callId}.wav`);setTimeout(()=>URL.revokeObjectURL(url),1000);
+          }else downloadRecordingUrl(media.url,`conference-${media.callId}.wav`);
+        }
         catch{setError('Download unavailable. Please retry.');}
-      }}>Download merged WAV</a>
+      }}>Download merged WAV</button>
       <p className="contacts-muted">{media.duration.toFixed(1)} seconds of audio · starts {media.startOffset.toFixed(1)} seconds into the call.</p>
     </>}
   </section>;

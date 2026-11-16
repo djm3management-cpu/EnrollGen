@@ -1,3 +1,4 @@
+import {outsideRecordings,hasWhisperRecording,WhisperRecordingHold,holdWhisperUpload} from '../telephony/src/lib/whisperRecording.js';
 import {evidenceCheckpoint} from '../telephony/src/lib/evidenceAudit.js';
 import {previousReportDate} from '../telephony/src/lib/deploymentSchedule.js';
 import {deploymentProfile,validateDestination} from '../telephony/src/lib/deploymentProfile.js';
@@ -40,9 +41,11 @@ export async function ixCallAttribution(db,call,recordings) {
 // Retrying a successful PUT is safe; registering the same enrollment again is not.
 export async function uploadIx(job, recordings, client, {db,env=process.env,fetchImpl=fetch,now=()=>Date.now(),checkpoint,call={}}={}) {
   if(!featureEnabled('IX_UPLOAD_ENABLED',env))return {status:'disabled'};
+  recordings=await outsideRecordings(db,call,recordings);
   const config={twilioAccountSid:env.TWILIO_ACCOUNT_SID,twilioAuthToken:env.TWILIO_AUTH_TOKEN};
   if(!checkpoint)throw Error('ix_checkpoint_required');
   let state=job.ix_state || {};
+  if(hasWhisperRecording(call) && state.callRecordingId && (!Array.isArray(state.recordings) || !state.recordings.length || state.recordings.some(leg=>!recordings.some(r=>r.recording_sid===leg.recording_sid && r.callback_call_sid===leg.callback_call_sid && r.account_sid===leg.account_sid))))return holdWhisperUpload(db,call);
   if(state.environment && state.environment!==client.environment)throw attention('ix_environment_mismatch');
   const signal=AbortSignal.timeout(20*60_000);
   if(!state.callRecordingId){
@@ -52,6 +55,7 @@ export async function uploadIx(job, recordings, client, {db,env=process.env,fetc
       if(recording.account_sid!==config.twilioAccountSid)throw Error('recording_identity_mismatch');
       const response=await fetchImpl(`https://api.twilio.com/2010-04-01/Accounts/${recording.account_sid}/Recordings/${recording.recording_sid}.json`,
         {headers:twilioHeaders(config),signal,redirect:'error'});
+      if([404,410].includes(response.status) && hasWhisperRecording(call))return holdWhisperUpload(db,call);
       if(!response.ok)throw Error('twilio_metadata_failed');
       const info=await providerJson(response,16384);
       if(info.sid!==recording.recording_sid || info.account_sid!==recording.account_sid || info.call_sid!==recording.callback_call_sid)
@@ -81,6 +85,7 @@ export async function uploadIx(job, recordings, client, {db,env=process.env,fetc
     if(!config.twilioAuthToken || leg.account_sid!==config.twilioAccountSid)throw Error('twilio_not_configured');
     await evidenceCheckpoint(db,{actor:'service:ix_export',tenant:job.tenant_id || deploymentProfile(env).tenantId,resource:'recording',resourceId:leg.recording_sid,action:'export',grantId:job.id});
     const audio=await fetchRecordingMedia(mediaUrl(leg.account_sid,leg.recording_sid,2).replace('.wav?','.mp3?'),config,{signal},fetchImpl);
+    if([404,410].includes(audio.status) && hasWhisperRecording(call))return holdWhisperUpload(db,call);
     if(!audio.ok || !audio.body)throw Error('recording_download_failed');
     let response;
     try{
@@ -136,7 +141,7 @@ export function createIxIntegration(db,{env=process.env,send=postJson,now=()=>Da
       return uploadIx({...job,ix_state:saved.ix_state},recordings,ixClient,{db,env,fetchImpl,now,checkpoint,call:attributed});
     },finish:async(job,{success,receipt,error,failure})=>{
       checked(await db.rpc('finish_ix_upload',{p_id:job.id,p_token:job.lease_token,
-        p_outcome:success?'uploaded':failure instanceof IxError?failure.outcome:'retry',p_error:error,
+        p_outcome:success?'uploaded':failure instanceof WhisperRecordingHold?'needs_attention':failure instanceof IxError?failure.outcome:'retry',p_error:error,
         p_message:failure instanceof IxError?failure.providerMessage:'',p_receipt:receipt}));
     }}},
     scheduleExtras:async()=>{

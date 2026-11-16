@@ -1,3 +1,4 @@
+import {outsideRecordings,hasWhisperRecording,whisperCallForRecording,WhisperRecordingHold,holdWhisperUpload} from '../telephony/src/lib/whisperRecording.js';
 import {createLogger} from '../telephony/src/lib/logger.js';
 const logger=createLogger('integrations','complianceuploads');
 import {evidenceCheckpoint} from '../telephony/src/lib/evidenceAudit.js';
@@ -57,6 +58,10 @@ export function converselyPayload(call, recordingPath, agent = {},profile=deploy
 
 export async function playableMp3(candidate,{db,env=process.env,fetchImpl=fetch}={}) {
   if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env))return false;
+  const call=await whisperCallForRecording(db,{...candidate,call_record_id:candidate.call_id});
+  if(hasWhisperRecording(call)){
+    try{Object.assign(candidate,(await outsideRecordings(db,call,[candidate]))[0]);}catch(error){if(error instanceof WhisperRecordingHold)return false;throw error;}
+  }
   if(!candidate.recording_sid)return false;
   if(!env.TWILIO_AUTH_TOKEN || !env.TWILIO_ACCOUNT_SID)throw Error('twilio_not_configured');
   if(candidate.account_sid!==env.TWILIO_ACCOUNT_SID)return false;
@@ -66,10 +71,13 @@ export async function playableMp3(candidate,{db,env=process.env,fetchImpl=fetch}
     const url=mediaUrl(candidate.account_sid,candidate.recording_sid,candidate.recording_channels || 2).replace('.wav?','.mp3?');
     response=await fetchRecordingMedia(url,{twilioAccountSid:env.TWILIO_ACCOUNT_SID,twilioAuthToken:env.TWILIO_AUTH_TOKEN},
       {range:'bytes=0-0',signal:AbortSignal.timeout(15000)},fetchImpl);
-    if([404,410].includes(response.status))return false;
+    if([404,410].includes(response.status)){
+      if(hasWhisperRecording(call))await holdWhisperUpload(db,call);
+      return false;
+    }
     if(![200,206].includes(response.status))throw Error('recording_probe_failed');
     return [200,206].includes(response.status) && /audio\/(mpeg|mp3)/i.test(response.headers.get('content-type') || '') && !!response.body;
-  }finally{await response?.body?.cancel().catch(()=>{});}
+  }catch(error){if(error instanceof WhisperRecordingHold)return false;throw error;}finally{await response?.body?.cancel().catch(()=>{});}
 }
 export async function scheduleConverselyWeek(db,{env=process.env,log=logger.info,now=()=>Date.now(),isPlayable=playableMp3,fetchImpl=fetch}={}) {
   if(!featureEnabled('CONVERSELY_UPLOAD_ENABLED',env))return;
@@ -127,9 +135,10 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=log
           if(provider==='conversely' && intake.is_test_enrollment)throw Error('test_enrollment_excluded');
           if(provider==='ix' && intake.is_test_enrollment!==(deploymentProfile(env).ix.environment==='test'))throw Error('ix_enrollment_environment_mismatch');
           call=intakeCallFields(call,intake);
-          const recording=checked(await db.from('recording_ingestion').select('*').eq('tenant_id',job.tenant_id)
+          let recording=hasWhisperRecording(call)?(await outsideRecordings(db,call,[]))[0]:checked(await db.from('recording_ingestion').select('*').eq('tenant_id',job.tenant_id)
             .eq('call_record_id',job.call_id).eq('recording_sid',job.twilio_recording_sid).eq('provider_status','completed').single());
           if(provider==='conversely'){
+            recording=(await outsideRecordings(db,call,[recording]))[0];
             // Never send a raw queue insert that was not selected by the weekly run.
             const selection=checked(await db.from('conversely_week_slots').select('agent_id,agent_slug,week_start').eq('submission_id',job.id).eq('tenant_id',job.tenant_id).maybeSingle());
             if(!selection)throw Error('weekly_submission_not_reserved');
@@ -158,6 +167,9 @@ export function createComplianceWorker(db,{env=process.env,send=postJson,log=log
           success=true;
         }catch(e){failure=e;error=/^[a-z_]+(?:_\d{3})?$/.test(e.message)?e.message:'upload_failed';}
         if(providers[provider]?.finish)await providers[provider].finish(job,{success,receipt,error,failure});
+        else if(failure instanceof WhisperRecordingHold){
+          checked(await db.from('conversely_submissions').update({status:'failed',last_error:error,next_attempt_at:'9999-01-01T00:00:00Z',lease_token:null,lease_until:null}).eq('id',job.id).eq('lease_token',job.lease_token));
+        }
         else await rpc('finish_compliance_upload',{p_provider:provider,p_id:job.id,p_token:job.lease_token,p_success:success,p_error:error,p_receipt:receipt});
         if(runEvent){try{await db.from('conversely_run_events').insert({run_id:runEvent,tenant_id:job.tenant_id,kind:success?'submitted':'error',message:`Call ${job.call_id}: ${success?'submitted':error}`});}catch{/* Telemetry must not stop delivery. */}}
         log(JSON.stringify({event:'compliance_upload',provider,id:job.id,call_id:job.call_id,attempt:job.attempts,success,error}));

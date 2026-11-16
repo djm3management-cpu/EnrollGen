@@ -7,7 +7,7 @@ import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
 import {featureEnabled} from '../../telephony/src/lib/deploymentFeatures.js';
 import {admit} from './_admission.js';
 import {lifecyclePage,EVENT_TYPES} from '../lib/lifecycle/model.js';
-import {buildLifecyclePacket,packetFileIndex} from '../lib/lifecycle/packet.js';
+import {buildLifecyclePacket,packetFileIndex,whisperPacketEvidence} from '../lib/lifecycle/packet.js';
 const uuid=value=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value||'');
 const timestamp=value=>typeof value==='string'&&/^\d{4}-\d\d-\d\dT/.test(value)&&Number.isFinite(Date.parse(value));
 export function createConsumerLifecycleHandler({authenticate=r=>requireClerkAuth(r,{allowBypass:false}),getDb=getEvidenceServiceClient,env=process.env}={}){
@@ -44,8 +44,9 @@ export function createConsumerLifecycleHandler({authenticate=r=>requireClerkAuth
     while(next){if(events.length>=20000)throw new EvidenceError(413,'Audit packet exceeds the local export limit.');const page=await read(next);events.push(...page.events);next=page.next;}
     const manifest=await db.rpc('consumer_lifecycle_files',{p_actor:auth.userId,p_org:auth.orgId||auth.tokenPayload?.o?.id||null,p_contact:contact});
     if(manifest.error)throw new EvidenceError(503,'Packet evidence unavailable.');
-    const files=await packetFileIndex(db,manifest.data);
-    const bytes=buildLifecyclePacket({agency:deploymentProfile(env).agencyName,consumerId:contact,asOf:first.asOf,events,checks:first.checks,files});
+    const safe=await whisperPacketEvidence(db,events,manifest.data,first.checks);
+    const files=await packetFileIndex(db,safe.manifest);
+    const bytes=buildLifecyclePacket({agency:deploymentProfile(env).agencyName,consumerId:contact,asOf:first.asOf,events:safe.events,checks:safe.checks,files});
     await logAdminDispatch(db,identity,'consumer_lifecycle',contact);
     return new Response(bytes,{headers:{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="consumer-audit-packet.pdf"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
    });

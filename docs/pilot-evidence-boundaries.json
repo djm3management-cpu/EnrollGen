@@ -44,7 +44,8 @@
     "read_consumer_lifecycle",
     "read_contact_details",
     "reconcile_telephony_transcripts",
-    "search_transcript_chunks"
+    "search_transcript_chunks",
+    "whisper_customer_recordings"
   ],
   "browserComposites": [
     "agent_coaching",
