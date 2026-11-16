@@ -65,6 +65,7 @@ const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const loadAgentDashboard = () => import("./components/AgentDashboard");
 const AgentDashboard = lazyWithRetry(loadAgentDashboard);
+const PostCallCoaching = lazyWithRetry(() => import("./components/callDetail/PostCallCoaching"));
 const loadCallLogTab = () => import("./components/callLog/CallLogTab");
 const loadContactsTab = () => import("./components/contacts/ContactsTab");
 const loadTenantSettings = () => import("./components/TenantSettings");
@@ -529,6 +530,7 @@ function getTabsForMode(mode, features = {}) {
     tabs.push({ id: "acaIntel", label: "ACA INTELLIGENCE" });
   }
 
+  if (features.POST_CALL_COACHING_ENABLED) tabs.push({ id: "coaching", label: "COACHING" });
   tabs.push({ id: "rts", label: "RTS" });
   if (features.DAILY_VERSE_ENABLED) tabs.push({ id: "verse", label: "DAILY VERSE" });
 
@@ -858,6 +860,9 @@ function AppShell({ currentUser = null }) {
             <ACAIntelligence />
           </LazyPanel>
         );
+      case "coaching":
+        if (!features.POST_CALL_COACHING_ENABLED) return null;
+        return <LazyPanel><PostCallCoaching /></LazyPanel>;
       case "rts":
         return (
           <LazyPanel>

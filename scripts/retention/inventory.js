@@ -1,6 +1,6 @@
 // Explicit policy inventory; new tables are retained until classified here.
 export const GROUPS = Object.freeze({
-  call: ['inbound_calls','call_records','sessions','call_threads','call_transcripts','transcript_chunks','telephony_transcript_segments',
+  call: ['post_call_coaching','inbound_calls','call_records','sessions','call_threads','call_transcripts','transcript_chunks','telephony_transcript_segments',
     'compliance_scorecards','compliance_scores','scorecard_items','section_scores','intent_detections','compliance_flags',
     'phi_redactions','corrective_actions','compliance_review_decisions','calibration_overrides','cross_sell_attempts','followup_queue'],
   enrollment: ['enrollment_intakes','policies','sales_log','ghl_enrollment_deliveries','conversely_submissions','ix_uploads'],

@@ -27,6 +27,7 @@
     "transcript_segments"
   ],
   "serverRpcs": [
+    "begin_post_call_coaching",
     "claim_compliance_upload",
     "claim_ix_upload",
     "claim_paragon_residence_jobs",

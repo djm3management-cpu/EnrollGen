@@ -39,6 +39,11 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
     }
   }
   const agentAliases = new Map();
+  // Derivative and exact transcript source share a purge/savepoint group.
+  for(const note of nodes.filter(n=>n.table==='post_call_coaching')) {
+    const source=nodes.find(n=>note.row.transcript_id ? n.table==='call_transcripts'&&n.row.id===note.row.transcript_id : n.table==='call_records'&&n.row.id===note.row.call_id);
+    if(source){connect(note,source);connect(source,note);}
+  }
   for (const a of roster) {
     const values = ['id','enrolled_id','agent_slug','clerk_user_id'].map(k=>a[k]).filter(Boolean).map(String);
     for (const value of values) agentAliases.set(value,new Set([...(agentAliases.get(value)||[]),...values]));

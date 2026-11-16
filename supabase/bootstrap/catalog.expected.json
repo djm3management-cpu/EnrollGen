@@ -1321,6 +1321,15 @@
     },
     {
       "schema": "public",
+      "name": "post_call_coaching",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "post_call_jobs",
       "kind": "r",
       "owner": "postgres",
@@ -18996,6 +19005,182 @@
     },
     {
       "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "call_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "transcript_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "agent_id",
+      "position": 4,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "tenant_id",
+      "position": 5,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "status",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "objections",
+      "position": 7,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'[]'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "did_well",
+      "position": 8,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "reason",
+      "position": 9,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "model",
+      "position": 10,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "prompt_version",
+      "position": 11,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "generation",
+      "position": 12,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "1"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "generated_at",
+      "position": 13,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "reviewed_at",
+      "position": 14,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "reviewed_by",
+      "position": 15,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "retention_started_at",
+      "position": 16,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
       "relation": "post_call_jobs",
       "name": "session_id",
       "position": 1,
@@ -24309,6 +24494,17 @@
     },
     {
       "schema": "public",
+      "relation": "tenants",
+      "name": "coaching_settings",
+      "position": 14,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{\"daily_cap\": 100, \"minimum_talk_seconds\": 120}'::jsonb"
+    },
+    {
+      "schema": "public",
       "relation": "training_completions",
       "name": "id",
       "position": 1,
@@ -24691,6 +24887,105 @@
       "identity": "",
       "generated": "",
       "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_state",
+      "position": 11,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_generation",
+      "position": 12,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "1"
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_attempts",
+      "position": 13,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_available_at",
+      "position": 14,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_queued_at",
+      "position": 15,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_token",
+      "position": 16,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_lease_until",
+      "position": 17,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_reserved_day",
+      "position": 18,
+      "type": "date",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_revision",
+      "position": 19,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
     },
     {
       "schema": "public",
@@ -28427,6 +28722,18 @@
       "cmd": "UPDATE",
       "qual": "deployment_row_writable('policies'::text, to_jsonb(policies.*))",
       "with_check": "deployment_row_writable('policies'::text, to_jsonb(policies.*))"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "coaching_scoped_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "deployment_row_visible('post_call_coaching'::text, to_jsonb(post_call_coaching.*))",
+      "with_check": null
     },
     {
       "schema": "public",
@@ -43537,6 +43844,118 @@
     },
     {
       "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "post_call_jobs",
       "grantor": "postgres",
       "grantee": "postgres",
@@ -52627,6 +53046,19 @@
     },
     {
       "schema": "public",
+      "name": "begin_post_call_coaching",
+      "arguments": "p_call uuid, p_token uuid",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.begin_post_call_coaching(p_call uuid, p_token uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE c public.call_records; d public.transcript_score_dispatch; t public.call_transcripts; cap integer; allowance jsonb; day date:=(clock_timestamp() AT TIME ZONE 'UTC')::date;\nBEGIN\n IF NOT public.deployment_feature_enabled('POST_CALL_COACHING_ENABLED') THEN RETURN NULL; END IF;\n SELECT * INTO c FROM public.call_records WHERE id=p_call FOR UPDATE;\n SELECT * INTO d FROM public.transcript_score_dispatch WHERE call_id=p_call FOR UPDATE;\n IF c.id IS NULL OR p_token IS NULL OR d.coaching_lease_until IS NULL OR d.coaching_token IS DISTINCT FROM p_token OR d.coaching_state NOT IN ('queued','processing') OR d.coaching_lease_until<clock_timestamp() THEN RETURN NULL; END IF;\n IF d.coaching_state='processing' AND d.coaching_available_at>clock_timestamp() THEN RETURN NULL; END IF;\n IF NOT public.coaching_call_eligible(c) THEN\n  UPDATE public.transcript_score_dispatch SET coaching_state='skipped',coaching_lease_until=NULL WHERE call_id=p_call;\n  RETURN NULL;\n END IF;\n SELECT * INTO t FROM public.call_transcripts WHERE tenant_id=c.tenant_id AND (id=c.transcript_id OR call_record_id=c.id) ORDER BY (id=c.transcript_id) DESC NULLS LAST,created_at DESC,id DESC LIMIT 1;\n IF d.coaching_reserved_day IS DISTINCT FROM day THEN\n  SELECT (coaching_settings->>'daily_cap')::integer INTO cap FROM public.tenants WHERE id=c.tenant_id;\n  SELECT public.consume_admission(jsonb_build_array(jsonb_build_object('key',c.tenant_id::text||':post-call-coaching:agency-day','seconds',86400,'limit',cap))) INTO allowance;\n  IF allowance->>'allowed' IS DISTINCT FROM 'true' THEN\n   INSERT INTO public.post_call_coaching(call_id,transcript_id,agent_id,tenant_id,status,reason,generation,retention_started_at)\n   VALUES(c.id,t.id,c.agent_id,c.tenant_id,'skipped','daily_cap',d.coaching_generation,c.retention_started_at)\n   ON CONFLICT(call_id) DO UPDATE SET status='skipped',reason='daily_cap',objections='[]',did_well=NULL,model=NULL,prompt_version=NULL,generated_at=clock_timestamp(),reviewed_at=NULL,reviewed_by=NULL,generation=d.coaching_generation;\n   UPDATE public.transcript_score_dispatch SET coaching_state='skipped',coaching_lease_until=NULL WHERE call_id=c.id;\n   RETURN jsonb_build_object('status','skipped');\n  END IF;\n END IF;\n UPDATE public.transcript_score_dispatch SET coaching_state='processing',coaching_reserved_day=day,\n coaching_revision=md5(public.scoring_transcript_snapshot(c)::text||coalesce(t.transcript_text,'')),coaching_available_at=coaching_lease_until WHERE call_id=c.id;\n RETURN jsonb_build_object('status','claimed','generation',d.coaching_generation,'call',jsonb_build_object('id',c.id,'tenant_id',c.tenant_id,'agent_id',c.agent_id,'call_duration_seconds',c.call_duration_seconds,'product_type',c.product_type,'transcript_raw',coalesce(nullif(c.transcript_raw,''),t.transcript_text),'transcript_diarized',c.transcript_diarized));\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "begin_scoring_job",
       "arguments": "p_call_id uuid, p_template_id uuid, p_transcript jsonb",
       "result": "jsonb",
@@ -52978,6 +53410,19 @@
     },
     {
       "schema": "public",
+      "name": "coaching_call_eligible",
+      "arguments": "c call_records",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.coaching_call_eligible(c call_records)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\n SELECT c.call_end IS NOT NULL AND c.call_type IN ('sales','enrollment','marketing')\n AND c.call_outcome IS NOT NULL AND c.call_outcome NOT IN ('pending','incomplete','test_call','duplicate_lead','no_answer','voicemail_left','wrong_number','bad_lead_data')\n AND c.call_outcome NOT IN ('enrolled','enrolled_pending_verification','partial_enrollment','sale_ancillary')\n AND NOT coalesce(c.enrollment_completed,false) AND NOT coalesce(c.app_written,false)\n AND nullif(c.enrollment_confirmation_number,'') IS NULL AND nullif(c.enrollment_code,'') IS NULL AND nullif(c.sunfire_code,'') IS NULL\n AND c.call_duration_seconds >= (SELECT (coaching_settings->>'minimum_talk_seconds')::integer FROM public.tenants WHERE id=c.tenant_id)\n AND (nullif(btrim(c.transcript_raw),'') IS NOT NULL OR jsonb_array_length(coalesce(c.transcript_diarized,'[]'))>0 OR EXISTS(SELECT 1 FROM public.call_transcripts t WHERE t.tenant_id=c.tenant_id AND (t.id=c.transcript_id OR t.call_record_id=c.id) AND nullif(btrim(t.transcript_text),'') IS NOT NULL))\n AND NOT EXISTS(SELECT 1 FROM public.enrollment_intakes e WHERE e.call_id=c.id AND e.tenant_id=c.tenant_id AND NOT e.is_test_enrollment)\n AND NOT EXISTS(SELECT 1 FROM public.policies p WHERE p.contact_id=c.contact_id AND p.tenant_id=c.tenant_id AND p.created_at>=c.call_start AND p.status IN ('pending','active'))\n -- The existing non-sale path finishes by skipping scoring. Never overlap an\n -- older in-flight scoring claim, even if a disposition was subsequently edited.\n AND NOT EXISTS(SELECT 1 FROM public.scoring_jobs s WHERE s.call_id=c.id AND s.status='pending' AND s.lease_until>clock_timestamp())\n AND coalesce(c.compliance_status,'not_requested') NOT IN ('queued','scoring','transcript_pending')\n$function$\n"
+    },
+    {
+      "schema": "public",
       "name": "combine_call_records",
       "arguments": "p_tenant_id uuid, p_actor text, p_admin boolean, p_action text, p_first uuid, p_second uuid, p_confirm_different boolean, p_expected_primary uuid",
       "result": "jsonb",
@@ -53091,7 +53536,7 @@
         "search_path=pg_catalog, public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.configure_operational_profile(p_summary jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; previous jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Operator required' USING ERRCODE='42501'; END IF;\n IF jsonb_typeof(p_summary)<>'object' OR EXISTS(SELECT 1 FROM jsonb_each(p_summary) WHERE key NOT IN ('alert_audit_failures','alert_delivery_retry_seconds','alert_evaluation_seconds','alert_exhausted_jobs','alert_lease_conflicts','alert_paid_budget_percent','alert_provider_error_percent','alert_provider_minimum_requests','alert_purge_failures','alert_queue_age_seconds','alert_queue_depth','alert_rate_rejections','alert_routing_anomalies','alert_secret_review_days','alert_subject_denials','alert_window_seconds','approved_retention_overrides','feature_consumer_lifecycle_enabled','feature_conference_calling_enabled','feature_conversely_upload_enabled','feature_daily_verse_enabled','feature_ghl_enabled','feature_ix_report_enabled','feature_ix_upload_enabled','feature_operational_email_enabled','feature_paragon_enabled','feature_paragon_state_routing_enabled','feature_retention_purge_enabled','feature_scoring_enabled','feature_stripe_billing_enabled','feature_transcript_auto_recovery_enabled','feature_transcript_gap_fill_enabled','retention_contact_review_years','retention_enrollment_recording_years','retention_enrollment_transcript_years','retention_enrollment_years','retention_evidence_audit_years','retention_marketing_recording_years','retention_marketing_transcript_years','retention_operational_days','retention_reduced_marketing_rule','retention_scope_of_appointment_years','retention_service_call_years','retention_text_consent_years') OR jsonb_typeof(value) NOT IN ('number','boolean')) THEN RAISE EXCEPTION 'Invalid operational profile'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n SELECT summary INTO previous FROM public.operational_configuration WHERE tenant_id=tenant FOR UPDATE;\n IF previous IS NOT DISTINCT FROM p_summary THEN RETURN; END IF;\n INSERT INTO public.operational_configuration VALUES(tenant,p_summary) ON CONFLICT(tenant_id) DO UPDATE SET summary=excluded.summary;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(gen_random_uuid(),'service:deployment_operator',tenant,'operator_operational_profile','operational_configuration',tenant::text,'succeeded',coalesce(previous,'{}'),p_summary);\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.configure_operational_profile(p_summary jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; previous jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Operator required' USING ERRCODE='42501'; END IF;\n IF jsonb_typeof(p_summary)<>'object' OR EXISTS(SELECT 1 FROM jsonb_each(p_summary) WHERE key NOT IN ('alert_audit_failures','alert_delivery_retry_seconds','alert_evaluation_seconds','alert_exhausted_jobs','alert_lease_conflicts','alert_paid_budget_percent','alert_provider_error_percent','alert_provider_minimum_requests','alert_purge_failures','alert_queue_age_seconds','alert_queue_depth','alert_rate_rejections','alert_routing_anomalies','alert_secret_review_days','alert_subject_denials','alert_window_seconds','approved_retention_overrides','feature_consumer_lifecycle_enabled','feature_post_call_coaching_enabled','feature_conference_calling_enabled','feature_conversely_upload_enabled','feature_daily_verse_enabled','feature_ghl_enabled','feature_ix_report_enabled','feature_ix_upload_enabled','feature_operational_email_enabled','feature_paragon_enabled','feature_paragon_state_routing_enabled','feature_retention_purge_enabled','feature_scoring_enabled','feature_stripe_billing_enabled','feature_transcript_auto_recovery_enabled','feature_transcript_gap_fill_enabled','retention_contact_review_years','retention_enrollment_recording_years','retention_enrollment_transcript_years','retention_enrollment_years','retention_evidence_audit_years','retention_marketing_recording_years','retention_marketing_transcript_years','retention_operational_days','retention_reduced_marketing_rule','retention_scope_of_appointment_years','retention_service_call_years','retention_text_consent_years') OR jsonb_typeof(value) NOT IN ('number','boolean')) THEN RAISE EXCEPTION 'Invalid operational profile'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n SELECT summary INTO previous FROM public.operational_configuration WHERE tenant_id=tenant FOR UPDATE;\n IF previous IS NOT DISTINCT FROM p_summary THEN RETURN; END IF;\n INSERT INTO public.operational_configuration VALUES(tenant,p_summary) ON CONFLICT(tenant_id) DO UPDATE SET summary=excluded.summary;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(gen_random_uuid(),'service:deployment_operator',tenant,'operator_operational_profile','operational_configuration',tenant::text,'succeeded',coalesce(previous,'{}'),p_summary);\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -53390,7 +53835,7 @@
         "search_path=pg_catalog, public, extensions, pg_temp"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.deployment_row_visible(p_table text, r jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE i record; t uuid; parent jsonb; owner_id uuid;\nBEGIN\n SELECT * INTO i FROM public.current_deployment_identity();\n IF i.tenant_id IS NULL THEN RETURN false; END IF;\n t:=nullif(r->>'tenant_id','')::uuid;\n IF t IS NOT NULL AND t<>i.tenant_id THEN RETURN false; END IF;\n CASE\n WHEN p_table='tenants' THEN RETURN r->>'id'=i.tenant_id::text;\n WHEN p_table IN ('tenant_agents','enrolled_agents') THEN RETURN t=i.tenant_id;\n WHEN p_table='agents' THEN\n  RETURN EXISTS(SELECT 1 FROM public.call_transcripts ct WHERE ct.agent_id=(r->>'id')::uuid AND public.deployment_row_visible('call_transcripts',to_jsonb(ct)));\n WHEN p_table='contacts' THEN RETURN public.deployment_can_access_contact((r->>'id')::uuid);\n WHEN p_table IN ('contact_notes','contact_activities','contact_lead_intel','policies','messages','contact_tags','opportunities','follow_ups') THEN\n  IF NOT public.deployment_can_access_contact(nullif(r->>'contact_id','')::uuid) THEN RETURN false; END IF;\n  IF p_table='contact_notes' THEN RETURN r->>'agent_id'=i.agent_slug OR public.deployment_is_admin(i.tenant_id); END IF;\n  IF p_table='follow_ups' THEN RETURN public.follow_up_access(t,r->>'agent_id'); END IF;\n  IF p_table='opportunities' THEN RETURN r->>'assigned_agent_id'=i.roster_id::text OR public.deployment_is_admin(i.tenant_id); END IF;\n  RETURN t=i.tenant_id;\n WHEN p_table IN ('opportunity_events','opportunity_stage_history') THEN\n  SELECT to_jsonb(o) INTO parent FROM public.opportunities o WHERE o.id=(r->>'opportunity_id')::uuid;\n  RETURN public.deployment_row_visible('opportunities',parent);\n WHEN p_table='call_disposition_opportunity_log' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table IN ('pipelines','pipeline_stages') THEN RETURN t=i.tenant_id;\n WHEN p_table IN ('script_templates','knowledge_base') THEN RETURN t=i.tenant_id OR t IS NULL;\n WHEN p_table='message_media' THEN\n  SELECT to_jsonb(m) INTO parent FROM public.messages m WHERE m.id=(r->>'message_id')::uuid;\n  RETURN public.deployment_row_visible('messages',parent);\n WHEN p_table='knowledge_updates' THEN\n  SELECT to_jsonb(k) INTO parent FROM public.knowledge_base k WHERE k.id=(r->>'knowledge_base_id')::uuid;\n  RETURN public.deployment_row_visible('knowledge_base',parent);\n WHEN p_table IN ('sessions','call_records','call_logs','sales_log','call_threads','agent_compliance_profiles','corrective_actions','cross_sell_attempts') THEN\n  owner_id:=nullif(r->>'agent_id','')::uuid;\n  IF t IS NULL THEN SELECT e.tenant_id INTO t FROM public.enrolled_agents e WHERE e.id=owner_id; END IF;\n  RETURN public.deployment_can_read_agent(t,owner_id);\n WHEN p_table='call_transcripts' THEN\n  owner_id:=nullif(r->>'owner_agent_id','')::uuid;\n  IF owner_id IS NOT NULL THEN RETURN public.deployment_can_read_agent(t,owner_id); END IF;\n  SELECT to_jsonb(s) INTO parent FROM public.sessions s WHERE s.id=(r->>'session_id')::uuid AND s.tenant_id=t;\n  RETURN public.deployment_row_visible('sessions',parent);\n WHEN p_table='transcript_chunks' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_transcripts c WHERE c.id=(r->>'transcript_id')::uuid;\n  RETURN public.deployment_row_visible('call_transcripts',parent);\n WHEN p_table IN ('compliance_flags','section_scores') THEN\n  SELECT to_jsonb(s) INTO parent FROM public.sessions s WHERE s.id=(r->>'session_id')::uuid;\n  RETURN public.deployment_row_visible('sessions',parent);\n WHEN p_table IN ('compliance_scorecards','compliance_scores','intent_detections','phi_redactions','followup_queue','enrollment_intakes') THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='scorecard_items' THEN\n  SELECT to_jsonb(s) INTO parent FROM public.compliance_scorecards s WHERE s.id=(r->>'scorecard_id')::uuid;\n  RETURN public.deployment_row_visible('compliance_scorecards',parent);\n WHEN p_table='inbound_calls' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_record_id')::uuid AND c.tenant_id=t;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='telephony_events' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.twilio_call_sid=coalesce(r->>'twilio_call_sid',r->>'call_sid') AND c.tenant_id=t;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='carrier_rts' THEN RETURN t=i.tenant_id AND (r->>'agent_id'=i.roster_id::text OR public.deployment_is_admin(t));\n WHEN p_table='pii_access_log' THEN RETURN r->>'clerk_user_id'=auth.jwt()->>'sub' OR\n  (public.deployment_is_admin(i.tenant_id) AND EXISTS(SELECT 1 FROM public.tenant_agents a WHERE a.id=(r->>'agent_id')::uuid AND a.tenant_id=i.tenant_id));\n WHEN p_table IN ('subscriptions','usage_records','rts_ingestion_log','call_insights','agent_coaching') THEN RETURN t=i.tenant_id AND public.deployment_is_admin(t);\n WHEN p_table IN ('calibration_runs','calibration_overrides','autoresearch_iterations') THEN RETURN false; -- legacy rows have no reliable tenant binding\n WHEN p_table='training_completions' THEN RETURN t=i.tenant_id AND (r->>'agent_id'=i.agent_id::text OR r->>'agent_id'=auth.jwt()->>'sub' OR public.deployment_is_admin(t));\n WHEN p_table='user_preferences' THEN RETURN r->>'clerk_user_id'=auth.jwt()->>'sub';\n WHEN p_table IN ('compliance_intents','scoring_templates','scoring_template_items') THEN RETURN true; -- authenticated deployment reference data\n ELSE RETURN false; -- unrecognized, missing-baseline and service ledgers stay closed\n END CASE;\n RETURN false;\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.deployment_row_visible(p_table text, r jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE i record; t uuid; parent jsonb; owner_id uuid;\nBEGIN\n SELECT * INTO i FROM public.current_deployment_identity();\n IF i.tenant_id IS NULL THEN RETURN false; END IF;\n t:=nullif(r->>'tenant_id','')::uuid;\n IF t IS NOT NULL AND t<>i.tenant_id THEN RETURN false; END IF;\n CASE\n WHEN p_table='post_call_coaching' THEN\n   SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid AND c.tenant_id=t AND c.agent_id=(r->>'agent_id')::uuid;\n   RETURN public.deployment_row_visible('call_records',parent);\n  WHEN p_table='tenants' THEN RETURN r->>'id'=i.tenant_id::text;\n WHEN p_table IN ('tenant_agents','enrolled_agents') THEN RETURN t=i.tenant_id;\n WHEN p_table='agents' THEN\n  RETURN EXISTS(SELECT 1 FROM public.call_transcripts ct WHERE ct.agent_id=(r->>'id')::uuid AND public.deployment_row_visible('call_transcripts',to_jsonb(ct)));\n WHEN p_table='contacts' THEN RETURN public.deployment_can_access_contact((r->>'id')::uuid);\n WHEN p_table IN ('contact_notes','contact_activities','contact_lead_intel','policies','messages','contact_tags','opportunities','follow_ups') THEN\n  IF NOT public.deployment_can_access_contact(nullif(r->>'contact_id','')::uuid) THEN RETURN false; END IF;\n  IF p_table='contact_notes' THEN RETURN r->>'agent_id'=i.agent_slug OR public.deployment_is_admin(i.tenant_id); END IF;\n  IF p_table='follow_ups' THEN RETURN public.follow_up_access(t,r->>'agent_id'); END IF;\n  IF p_table='opportunities' THEN RETURN r->>'assigned_agent_id'=i.roster_id::text OR public.deployment_is_admin(i.tenant_id); END IF;\n  RETURN t=i.tenant_id;\n WHEN p_table IN ('opportunity_events','opportunity_stage_history') THEN\n  SELECT to_jsonb(o) INTO parent FROM public.opportunities o WHERE o.id=(r->>'opportunity_id')::uuid;\n  RETURN public.deployment_row_visible('opportunities',parent);\n WHEN p_table='call_disposition_opportunity_log' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table IN ('pipelines','pipeline_stages') THEN RETURN t=i.tenant_id;\n WHEN p_table IN ('script_templates','knowledge_base') THEN RETURN t=i.tenant_id OR t IS NULL;\n WHEN p_table='message_media' THEN\n  SELECT to_jsonb(m) INTO parent FROM public.messages m WHERE m.id=(r->>'message_id')::uuid;\n  RETURN public.deployment_row_visible('messages',parent);\n WHEN p_table='knowledge_updates' THEN\n  SELECT to_jsonb(k) INTO parent FROM public.knowledge_base k WHERE k.id=(r->>'knowledge_base_id')::uuid;\n  RETURN public.deployment_row_visible('knowledge_base',parent);\n WHEN p_table IN ('sessions','call_records','call_logs','sales_log','call_threads','agent_compliance_profiles','corrective_actions','cross_sell_attempts') THEN\n  owner_id:=nullif(r->>'agent_id','')::uuid;\n  IF t IS NULL THEN SELECT e.tenant_id INTO t FROM public.enrolled_agents e WHERE e.id=owner_id; END IF;\n  RETURN public.deployment_can_read_agent(t,owner_id);\n WHEN p_table='call_transcripts' THEN\n  owner_id:=nullif(r->>'owner_agent_id','')::uuid;\n  IF owner_id IS NOT NULL THEN RETURN public.deployment_can_read_agent(t,owner_id); END IF;\n  SELECT to_jsonb(s) INTO parent FROM public.sessions s WHERE s.id=(r->>'session_id')::uuid AND s.tenant_id=t;\n  RETURN public.deployment_row_visible('sessions',parent);\n WHEN p_table='transcript_chunks' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_transcripts c WHERE c.id=(r->>'transcript_id')::uuid;\n  RETURN public.deployment_row_visible('call_transcripts',parent);\n WHEN p_table IN ('compliance_flags','section_scores') THEN\n  SELECT to_jsonb(s) INTO parent FROM public.sessions s WHERE s.id=(r->>'session_id')::uuid;\n  RETURN public.deployment_row_visible('sessions',parent);\n WHEN p_table IN ('compliance_scorecards','compliance_scores','intent_detections','phi_redactions','followup_queue','enrollment_intakes') THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='scorecard_items' THEN\n  SELECT to_jsonb(s) INTO parent FROM public.compliance_scorecards s WHERE s.id=(r->>'scorecard_id')::uuid;\n  RETURN public.deployment_row_visible('compliance_scorecards',parent);\n WHEN p_table='inbound_calls' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_record_id')::uuid AND c.tenant_id=t;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='telephony_events' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.twilio_call_sid=coalesce(r->>'twilio_call_sid',r->>'call_sid') AND c.tenant_id=t;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='carrier_rts' THEN RETURN t=i.tenant_id AND (r->>'agent_id'=i.roster_id::text OR public.deployment_is_admin(t));\n WHEN p_table='pii_access_log' THEN RETURN r->>'clerk_user_id'=auth.jwt()->>'sub' OR\n  (public.deployment_is_admin(i.tenant_id) AND EXISTS(SELECT 1 FROM public.tenant_agents a WHERE a.id=(r->>'agent_id')::uuid AND a.tenant_id=i.tenant_id));\n WHEN p_table IN ('subscriptions','usage_records','rts_ingestion_log','call_insights','agent_coaching') THEN RETURN t=i.tenant_id AND public.deployment_is_admin(t);\n WHEN p_table IN ('calibration_runs','calibration_overrides','autoresearch_iterations') THEN RETURN false; -- legacy rows have no reliable tenant binding\n WHEN p_table='training_completions' THEN RETURN t=i.tenant_id AND (r->>'agent_id'=i.agent_id::text OR r->>'agent_id'=auth.jwt()->>'sub' OR public.deployment_is_admin(t));\n WHEN p_table='user_preferences' THEN RETURN r->>'clerk_user_id'=auth.jwt()->>'sub';\n WHEN p_table IN ('compliance_intents','scoring_templates','scoring_template_items') THEN RETURN true; -- authenticated deployment reference data\n ELSE RETURN false; -- unrecognized, missing-baseline and service ledgers stay closed\n END CASE;\n RETURN false;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -53576,6 +54021,19 @@
     },
     {
       "schema": "public",
+      "name": "enqueue_post_call_coaching",
+      "arguments": "",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.enqueue_post_call_coaching()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF NOT public.deployment_feature_enabled('POST_CALL_COACHING_ENABLED') THEN RETURN; END IF;\n INSERT INTO public.transcript_score_dispatch(call_id,tenant_id,available_at,delivered_revision,coaching_state,coaching_available_at,coaching_queued_at)\n SELECT c.id,c.tenant_id,'infinity',1,'queued',clock_timestamp(),clock_timestamp() FROM public.call_records c\n WHERE public.coaching_call_eligible(c) AND NOT EXISTS(SELECT 1 FROM public.post_call_coaching n WHERE n.call_id=c.id)\n AND NOT EXISTS(SELECT 1 FROM public.transcript_score_dispatch d WHERE d.call_id=c.id AND d.coaching_state IS NOT NULL)\n ORDER BY c.call_end,c.id LIMIT 200\n ON CONFLICT(call_id) DO UPDATE SET coaching_state='queued',coaching_available_at=clock_timestamp(),coaching_queued_at=clock_timestamp()\n WHERE transcript_score_dispatch.coaching_state IS NULL;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "enqueue_post_call_request",
       "arguments": "p_session_id uuid, p_tenant_id uuid, p_agent_id uuid, p_user_id text, p_org_id text, p_clerk_session_id text, p_request_key text, p_action text, p_payload jsonb",
       "result": "jsonb",
@@ -53689,7 +54147,7 @@
         "search_path=pg_catalog, public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.execute_admin_action(p_actor text, p_org text, p_action text, p_request uuid, p_command jsonb, p_verified_admin boolean DEFAULT false)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; relation text:=p_command->>'name'; operation text:=p_command->>'operation';\n args text; query text; answer jsonb; before_value jsonb:='{}'; after_value jsonb:='{}'; cols text; updates text; predicate text; row_value jsonb; routine record; target text:='collection';\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n SELECT tenant_id INTO tenant FROM public.resolve_deployment_subject(p_actor,p_org) WHERE authority='admin' OR p_verified_admin;\n IF tenant IS NULL THEN RAISE EXCEPTION 'Protected admin required' USING ERRCODE='42501'; END IF;\n IF p_action NOT IN ('access_review','consumer_lifecycle','tenant_settings','contact_assignment','pipeline_settings','script_settings','vendor_pause','compliance_review','compliance_uploads','post_call_admin','retention_holds','trigger_knowledge_update','rts_ingest','recordings','enrollment_intakes','transcript_import','set_availability','test_ghl_webhook','stripe_checkout','stripe_portal','paragon_residence') THEN RAISE EXCEPTION 'Unknown administrator action'; END IF;\n INSERT INTO public.admin_action_permit VALUES(txid_current(),p_request);\n IF p_command->>'kind'='rpc' THEN\n  target:=coalesce(p_command->'args'->>'p_call_id',p_command->'args'->>'p_contact',p_command->'args'->>'p_hold',p_command->'args'->>'p_transcript',p_command->'args'->>'p_pipeline_id',p_command->'args'->>'p_stage_id',p_command->'args'->>'p_target',p_command->'args'->>'p_session_id',p_command->'args'->>'p_id','collection');\n  IF target !~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:='collection'; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO before_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n  IF relation NOT IN ('set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket') THEN RAISE EXCEPTION 'Unreviewed admin routine'; END IF;\n  SELECT p.oid,p.proargnames,p.proargtypes,p.proretset INTO STRICT routine FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname=relation;\n  SELECT string_agg(format('%I => %s',e.key,CASE WHEN e.value='null'::jsonb THEN format('NULL::%s',t.oid::regtype) WHEN t.typname IN ('json','jsonb') THEN format('%L::%s',e.value::text,t.oid::regtype) ELSE format('%L::%s',e.value#>>'{}',t.oid::regtype) END),',') INTO args\n  FROM jsonb_each(p_command->'args') e JOIN unnest(routine.proargnames,routine.proargtypes::oid[]) a(name,type) ON a.name=e.key JOIN pg_type t ON t.oid=a.type;\n  IF (SELECT count(*) FROM jsonb_each(p_command->'args'))<>(SELECT count(*) FROM unnest(routine.proargnames) n WHERE p_command->'args' ? n) THEN RAISE EXCEPTION 'Invalid argument'; END IF;\n  -- Original routine retains all ownership, feature, lease and budget fences.\n  EXECUTE format('SELECT %s FROM public.%I(%s) x',CASE WHEN routine.proretset THEN 'coalesce(jsonb_agg(to_jsonb(x)),''[]'')' ELSE 'to_jsonb(x)' END,relation,args) INTO answer;\n  IF NOT routine.proretset AND jsonb_typeof(answer)='object' AND answer ? relation THEN answer:=answer->relation; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO after_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n ELSE\n  IF relation NOT IN ('tenants','contacts','script_templates','manual_transcript_gap_fills','compliance_llm_passes','call_records','knowledge_entries','knowledge_update_drafts','knowledge_updates','knowledge_base','agent_availability','recording_compliance_tickets','transcript_ingestion_jobs','call_transcripts','transcript_chunks') OR operation NOT IN ('insert','update','delete','upsert') THEN RAISE EXCEPTION 'Unreviewed admin table mutation'; END IF;\n  IF relation='tenants' THEN predicate:=format('t.id=%L::uuid',tenant); ELSIF relation='knowledge_updates' THEN predicate:=format('t.knowledge_base_id IN (SELECT id FROM public.knowledge_base WHERE tenant_id IS NULL OR tenant_id=%L::uuid)',tenant); ELSIF relation='agent_availability' THEN predicate:=format('t.agent_id IN (SELECT agent_slug FROM public.tenant_agents WHERE tenant_id=%L::uuid)',tenant); ELSE predicate:=format('t.tenant_id=%L::uuid',tenant); END IF;\n  FOR row_value IN SELECT value FROM jsonb_array_elements(coalesce(p_command->'filters','[]')) LOOP\n   IF NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=format('public.%I',relation)::regclass AND attname=row_value->>'column' AND attnum>0 AND NOT attisdropped) THEN RAISE EXCEPTION 'Invalid filter'; END IF;\n   predicate:=predicate||format(' AND t.%I::text=%L',row_value->>'column',row_value->>'value');\n   IF row_value->>'column'='id' AND row_value->>'value' ~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:=row_value->>'value'; END IF;\n  END LOOP;\n  IF operation IN ('update','delete') THEN EXECUTE format('SELECT public.admin_safe_summary(to_jsonb(t)) FROM public.%I t WHERE %s LIMIT 1',relation,predicate) INTO before_value; END IF;\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO before_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  row_value:=p_command->'values';\n  IF jsonb_typeof(row_value)='array' THEN RAISE EXCEPTION 'Bulk administrator changes require a reviewed routine'; END IF;\n  IF operation IN ('insert','upsert','update') THEN\n   IF relation<>'tenants' AND row_value ? 'tenant_id' AND row_value->>'tenant_id'<>tenant::text THEN RAISE EXCEPTION 'Foreign tenant'; END IF;\n   IF operation IN ('insert','upsert') AND relation NOT IN ('tenants','agent_availability','knowledge_updates') THEN row_value:=row_value||jsonb_build_object('tenant_id',tenant); END IF;\n   SELECT string_agg(format('%I',key),','),string_agg(format('%I=r.%I',key,key),',') INTO cols,updates FROM jsonb_object_keys(row_value) key;\n   IF operation='update' THEN query:=format('UPDATE public.%I t SET %s FROM jsonb_populate_record(NULL::public.%I,$1) r WHERE %s RETURNING t.*',relation,updates,relation,predicate);\n   ELSE query:=format('INSERT INTO public.%I(%s) SELECT %s FROM jsonb_populate_record(NULL::public.%I,$1) r RETURNING *',relation,cols,cols,relation); END IF;\n  ELSE query:=format('DELETE FROM public.%I t WHERE %s RETURNING t.*',relation,predicate); END IF;\n  EXECUTE 'WITH changed AS ('||query||') SELECT coalesce(jsonb_agg(to_jsonb(changed)),''[]'') FROM changed' INTO answer USING row_value;\n  after_value:=public.admin_safe_summary(answer->0);\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO after_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  IF p_command->>'projection' IS NULL THEN answer:='null'::jsonb;\n  ELSIF p_command->>'projection'<>'*' THEN\n   IF p_command->>'projection' !~ '^[a-z_][a-z0-9_,]*$' THEN RAISE EXCEPTION 'Invalid projection'; END IF;\n   SELECT coalesce(jsonb_agg((SELECT coalesce(jsonb_object_agg(e.key,e.value),'{}') FROM jsonb_each(row_data) e WHERE e.key=ANY(string_to_array(p_command->>'projection',',')))),'[]') INTO answer FROM jsonb_array_elements(answer) row_data;\n  END IF;\n END IF;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(p_request,p_actor,tenant,p_action,relation,target,'succeeded',coalesce(before_value,'{}'),coalesce(after_value,'{}')) ON CONFLICT(request_id) DO NOTHING;\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\n DELETE FROM public.admin_action_permit WHERE transaction_id=txid_current();\n RETURN answer;\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.execute_admin_action(p_actor text, p_org text, p_action text, p_request uuid, p_command jsonb, p_verified_admin boolean DEFAULT false)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; relation text:=p_command->>'name'; operation text:=p_command->>'operation';\n args text; query text; answer jsonb; before_value jsonb:='{}'; after_value jsonb:='{}'; cols text; updates text; predicate text; row_value jsonb; routine record; target text:='collection';\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n SELECT tenant_id INTO tenant FROM public.resolve_deployment_subject(p_actor,p_org) WHERE authority='admin' OR p_verified_admin;\n IF tenant IS NULL THEN RAISE EXCEPTION 'Protected admin required' USING ERRCODE='42501'; END IF;\n IF p_action NOT IN ('access_review','consumer_lifecycle','post_call_coaching','tenant_settings','contact_assignment','pipeline_settings','script_settings','vendor_pause','compliance_review','compliance_uploads','post_call_admin','retention_holds','trigger_knowledge_update','rts_ingest','recordings','enrollment_intakes','transcript_import','set_availability','test_ghl_webhook','stripe_checkout','stripe_portal','paragon_residence') THEN RAISE EXCEPTION 'Unknown administrator action'; END IF;\n INSERT INTO public.admin_action_permit VALUES(txid_current(),p_request);\n IF p_command->>'kind'='rpc' THEN\n  target:=coalesce(p_command->'args'->>'p_call',p_command->'args'->>'p_call_id',p_command->'args'->>'p_contact',p_command->'args'->>'p_hold',p_command->'args'->>'p_transcript',p_command->'args'->>'p_pipeline_id',p_command->'args'->>'p_stage_id',p_command->'args'->>'p_target',p_command->'args'->>'p_session_id',p_command->'args'->>'p_id','collection');\n  IF target !~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:='collection'; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO before_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n  IF relation NOT IN ('regenerate_post_call_coaching','set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket') THEN RAISE EXCEPTION 'Unreviewed admin routine'; END IF;\n  SELECT p.oid,p.proargnames,p.proargtypes,p.proretset INTO STRICT routine FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname=relation;\n  SELECT string_agg(format('%I => %s',e.key,CASE WHEN e.value='null'::jsonb THEN format('NULL::%s',t.oid::regtype) WHEN t.typname IN ('json','jsonb') THEN format('%L::%s',e.value::text,t.oid::regtype) ELSE format('%L::%s',e.value#>>'{}',t.oid::regtype) END),',') INTO args\n  FROM jsonb_each(p_command->'args') e JOIN unnest(routine.proargnames,routine.proargtypes::oid[]) a(name,type) ON a.name=e.key JOIN pg_type t ON t.oid=a.type;\n  IF (SELECT count(*) FROM jsonb_each(p_command->'args'))<>(SELECT count(*) FROM unnest(routine.proargnames) n WHERE p_command->'args' ? n) THEN RAISE EXCEPTION 'Invalid argument'; END IF;\n  -- Original routine retains all ownership, feature, lease and budget fences.\n  EXECUTE format('SELECT %s FROM public.%I(%s) x',CASE WHEN routine.proretset THEN 'coalesce(jsonb_agg(to_jsonb(x)),''[]'')' ELSE 'to_jsonb(x)' END,relation,args) INTO answer;\n  IF NOT routine.proretset AND jsonb_typeof(answer)='object' AND answer ? relation THEN answer:=answer->relation; END IF;\n  IF relation='set_vendor_pause' THEN SELECT jsonb_build_object('vendor_pause',vendor_pause) INTO after_value FROM public.vendor_controls WHERE tenant_id=tenant; END IF;\n ELSE\n  IF relation NOT IN ('tenants','contacts','script_templates','manual_transcript_gap_fills','compliance_llm_passes','call_records','knowledge_entries','knowledge_update_drafts','knowledge_updates','knowledge_base','agent_availability','recording_compliance_tickets','transcript_ingestion_jobs','call_transcripts','transcript_chunks') OR operation NOT IN ('insert','update','delete','upsert') THEN RAISE EXCEPTION 'Unreviewed admin table mutation'; END IF;\n  IF relation='tenants' THEN predicate:=format('t.id=%L::uuid',tenant); ELSIF relation='knowledge_updates' THEN predicate:=format('t.knowledge_base_id IN (SELECT id FROM public.knowledge_base WHERE tenant_id IS NULL OR tenant_id=%L::uuid)',tenant); ELSIF relation='agent_availability' THEN predicate:=format('t.agent_id IN (SELECT agent_slug FROM public.tenant_agents WHERE tenant_id=%L::uuid)',tenant); ELSE predicate:=format('t.tenant_id=%L::uuid',tenant); END IF;\n  FOR row_value IN SELECT value FROM jsonb_array_elements(coalesce(p_command->'filters','[]')) LOOP\n   IF NOT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=format('public.%I',relation)::regclass AND attname=row_value->>'column' AND attnum>0 AND NOT attisdropped) THEN RAISE EXCEPTION 'Invalid filter'; END IF;\n   predicate:=predicate||format(' AND t.%I::text=%L',row_value->>'column',row_value->>'value');\n   IF row_value->>'column'='id' AND row_value->>'value' ~ '^[a-f0-9]{8}-[a-f0-9-]{27}$' THEN target:=row_value->>'value'; END IF;\n  END LOOP;\n  IF operation IN ('update','delete') THEN EXECUTE format('SELECT public.admin_safe_summary(to_jsonb(t)) FROM public.%I t WHERE %s LIMIT 1',relation,predicate) INTO before_value; END IF;\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO before_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  row_value:=p_command->'values';\n  IF jsonb_typeof(row_value)='array' THEN RAISE EXCEPTION 'Bulk administrator changes require a reviewed routine'; END IF;\n  IF operation IN ('insert','upsert','update') THEN\n   IF relation<>'tenants' AND row_value ? 'tenant_id' AND row_value->>'tenant_id'<>tenant::text THEN RAISE EXCEPTION 'Foreign tenant'; END IF;\n   IF operation IN ('insert','upsert') AND relation NOT IN ('tenants','agent_availability','knowledge_updates') THEN row_value:=row_value||jsonb_build_object('tenant_id',tenant); END IF;\n   SELECT string_agg(format('%I',key),','),string_agg(format('%I=r.%I',key,key),',') INTO cols,updates FROM jsonb_object_keys(row_value) key;\n   IF operation='update' THEN query:=format('UPDATE public.%I t SET %s FROM jsonb_populate_record(NULL::public.%I,$1) r WHERE %s RETURNING t.*',relation,updates,relation,predicate);\n   ELSE query:=format('INSERT INTO public.%I(%s) SELECT %s FROM jsonb_populate_record(NULL::public.%I,$1) r RETURNING *',relation,cols,cols,relation); END IF;\n  ELSE query:=format('DELETE FROM public.%I t WHERE %s RETURNING t.*',relation,predicate); END IF;\n  EXECUTE 'WITH changed AS ('||query||') SELECT coalesce(jsonb_agg(to_jsonb(changed)),''[]'') FROM changed' INTO answer USING row_value;\n  after_value:=public.admin_safe_summary(answer->0);\n  IF relation='contacts' THEN SELECT jsonb_build_object('assigned_agent_id',e.id) INTO after_value FROM public.contacts c LEFT JOIN public.tenant_agents r ON r.tenant_id=c.tenant_id AND r.agent_slug=c.assigned_agent_id LEFT JOIN public.enrolled_agents e ON e.tenant_id=r.tenant_id AND e.clerk_user_id=r.clerk_user_id WHERE c.id::text=target AND c.tenant_id=tenant; END IF;\n  IF p_command->>'projection' IS NULL THEN answer:='null'::jsonb;\n  ELSIF p_command->>'projection'<>'*' THEN\n   IF p_command->>'projection' !~ '^[a-z_][a-z0-9_,]*$' THEN RAISE EXCEPTION 'Invalid projection'; END IF;\n   SELECT coalesce(jsonb_agg((SELECT coalesce(jsonb_object_agg(e.key,e.value),'{}') FROM jsonb_each(row_data) e WHERE e.key=ANY(string_to_array(p_command->>'projection',',')))),'[]') INTO answer FROM jsonb_array_elements(answer) row_data;\n  END IF;\n END IF;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(p_request,p_actor,tenant,p_action,relation,target,'succeeded',coalesce(before_value,'{}'),coalesce(after_value,'{}')) ON CONFLICT(request_id) DO NOTHING;\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\n DELETE FROM public.admin_action_permit WHERE transaction_id=txid_current();\n RETURN answer;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -53781,6 +54239,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.fail_scoring_job(p_job_id uuid, p_attempt_token uuid, p_error text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE j public.scoring_jobs;\nBEGIN\n  PERFORM cr.id FROM call_records cr JOIN scoring_jobs sj ON sj.call_id=cr.id WHERE sj.id=p_job_id FOR UPDATE OF cr;\n  UPDATE scoring_jobs SET status='failed',error=left(p_error,1000),updated_at=now()\n    WHERE id=p_job_id AND attempt_token=p_attempt_token AND status='pending' RETURNING * INTO j;\n  IF j.id IS NULL THEN RETURN false; END IF;\n  UPDATE call_records SET metadata=coalesce(metadata,'{}'::jsonb)||jsonb_build_object('scoring_status','failed',\n    'scoring_error',left(p_error,1000),'scoring_failed_at',now()),updated_at=now()\n    WHERE id=j.call_id AND metadata->>'scoring_job_id'=j.id::text;\n  RETURN true;\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "fence_coaching_dispatch",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.fence_coaching_dispatch()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE score_on boolean:=public.deployment_feature_enabled('SCORING_ENABLED'); coach_on boolean:=public.deployment_feature_enabled('POST_CALL_COACHING_ENABLED');\n score_keys text[]:=ARRAY['call_id','tenant_id','revision','delivered_revision','available_at','last_error','snapshot_revision','transcript_ready_at','dispatch_attempts','retention_started_at'];\nBEGIN\n IF NOT coach_on AND NEW.coaching_state IS NOT NULL AND (TG_OP='INSERT' OR\n (to_jsonb(NEW)-score_keys) IS DISTINCT FROM (to_jsonb(OLD)-score_keys)) THEN RETURN NULL; END IF;\n IF score_on THEN RETURN NEW; END IF;\n IF NOT coach_on THEN RETURN NULL; END IF;\n IF TG_OP='INSERT' THEN\n  -- Coaching-only rows cannot make scoring work eligible while scoring is off.\n  IF NEW.coaching_state<>'queued' OR NEW.available_at<>'infinity'::timestamptz OR NEW.delivered_revision<>NEW.revision OR NEW.snapshot_revision IS NOT NULL OR NEW.dispatch_attempts<>0 THEN RETURN NULL; END IF;\n ELSIF EXISTS(SELECT 1 FROM unnest(score_keys) k WHERE to_jsonb(NEW)->k IS DISTINCT FROM to_jsonb(OLD)->k) THEN RETURN NULL;\n END IF;\n RETURN NEW;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -53953,6 +54424,19 @@
     },
     {
       "schema": "public",
+      "name": "finish_post_call_coaching",
+      "arguments": "p_call uuid, p_token uuid, p_note jsonb, p_model text, p_prompt text, p_reason text",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.finish_post_call_coaching(p_call uuid, p_token uuid, p_note jsonb, p_model text, p_prompt text, p_reason text DEFAULT NULL::text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE c public.call_records; d public.transcript_score_dispatch; t public.call_transcripts; terminal boolean;\nBEGIN\n IF NOT public.deployment_feature_enabled('POST_CALL_COACHING_ENABLED') THEN RETURN false; END IF;\n SELECT * INTO c FROM public.call_records WHERE id=p_call FOR UPDATE;\n SELECT * INTO d FROM public.transcript_score_dispatch WHERE call_id=p_call FOR UPDATE;\n IF c.id IS NULL OR p_token IS NULL OR d.coaching_lease_until IS NULL OR d.coaching_token IS DISTINCT FROM p_token OR d.coaching_state NOT IN ('queued','processing') OR d.coaching_lease_until<clock_timestamp() THEN RETURN false; END IF;\n SELECT * INTO t FROM public.call_transcripts WHERE tenant_id=c.tenant_id AND (id=c.transcript_id OR call_record_id=c.id) ORDER BY (id=c.transcript_id) DESC NULLS LAST,created_at DESC,id DESC LIMIT 1;\n IF NOT public.coaching_call_eligible(c) THEN p_reason:='call_ineligible';p_note:=NULL; END IF;\n IF p_note IS NOT NULL AND d.coaching_revision IS DISTINCT FROM md5(public.scoring_transcript_snapshot(c)::text||coalesce(t.transcript_text,'')) THEN p_reason:='transcript_changed';p_note:=NULL; END IF;\n IF p_reason IS NOT NULL AND p_reason NOT IN ('redaction_failed','invalid_output','generation_failed','attempts_exhausted','call_ineligible','transcript_changed') THEN RAISE EXCEPTION 'Invalid coaching reason'; END IF;\n terminal:=p_reason IS NULL OR d.coaching_attempts>=3 OR p_reason IN ('redaction_failed','attempts_exhausted','call_ineligible','transcript_changed');\n IF terminal THEN\n  INSERT INTO public.post_call_coaching(call_id,transcript_id,agent_id,tenant_id,status,objections,did_well,reason,model,prompt_version,generation,retention_started_at)\n  VALUES(c.id,t.id,c.agent_id,c.tenant_id,CASE WHEN p_reason IS NULL THEN p_note->>'status' ELSE 'failed' END,\n   CASE WHEN p_reason IS NULL THEN p_note->'objections' ELSE '[]' END,CASE WHEN p_reason IS NULL THEN p_note->>'did_well' END,p_reason,left(p_model,120),left(p_prompt,80),d.coaching_generation,c.retention_started_at)\n  ON CONFLICT(call_id) DO UPDATE SET agent_id=c.agent_id,tenant_id=c.tenant_id,transcript_id=t.id,status=excluded.status,objections=excluded.objections,did_well=excluded.did_well,reason=excluded.reason,model=excluded.model,prompt_version=excluded.prompt_version,generation=excluded.generation,generated_at=clock_timestamp(),reviewed_at=NULL,reviewed_by=NULL;\n END IF;\n UPDATE public.transcript_score_dispatch SET coaching_state=CASE WHEN terminal THEN CASE WHEN p_reason IS NULL THEN 'done' ELSE 'failed' END ELSE 'queued' END,\n coaching_available_at=clock_timestamp()+make_interval(secs=>30*power(2,greatest(0,d.coaching_attempts-1))::integer),coaching_lease_until=NULL,coaching_token=NULL WHERE call_id=c.id;\n RETURN true;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "finish_post_call_request",
       "arguments": "p_session_id uuid, p_worker_id uuid, p_request_key text, p_result jsonb, p_error_code text",
       "result": "void",
@@ -54028,6 +54512,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.get_available_seps_before_fema_078(input_zip text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE\n  result JSONB;\n  county_info JSONB;\n  five_star JSONB;\n  disasters JSONB;\n  csnp JSONB;\n  dsnp JSONB;\n  dual_lis JSONB;\n  isnp JSONB;\n  terminations JSONB;\nBEGIN\n  SELECT jsonb_agg(jsonb_build_object(\n    'county_fips', county_fips,\n    'county_name', county_name,\n    'state_code', state_code,\n    'state_name', state_name,\n    'residential_ratio', residential_ratio\n  ) ORDER BY residential_ratio DESC NULLS LAST)\n  INTO county_info\n  FROM public.zip_county_crosswalk\n  WHERE zip = input_zip;\n\n  IF county_info IS NULL THEN\n    RETURN jsonb_build_object(\n      'zip', input_zip,\n      'error', 'ZIP code not found in crosswalk',\n      'seps', '[]'::jsonb\n    );\n  END IF;\n\n  SELECT jsonb_build_object(\n    'sep_type', '5-Star Special Enrollment Period',\n    'cfr_reference', '42 CFR Sec. 422.62(b)(15)',\n    'available', COUNT(DISTINCT sr.contract_id) > 0,\n    'period', 'Year-round (continuous)',\n    'evidence', CASE\n      WHEN COUNT(DISTINCT sr.contract_id) > 0 THEN COUNT(DISTINCT sr.contract_id)::TEXT || ' five-star rated plan(s) available'\n      ELSE 'No five-star plans in this area'\n    END,\n    'plans', COALESCE(jsonb_agg(DISTINCT jsonb_build_object(\n      'contract_id', sr.contract_id,\n      'plan_name', sr.plan_name,\n      'organization', sr.organization_name,\n      'stars', sr.overall_star_rating\n    )) FILTER (WHERE sr.id IS NOT NULL), '[]'::jsonb)\n  )\n  INTO five_star\n  FROM public.zip_county_crosswalk zc\n  LEFT JOIN public.star_ratings_by_county sr\n    ON sr.county_fips = zc.county_fips\n    AND sr.overall_star_rating = 5.0\n    AND sr.plan_year = 2027\n  WHERE zc.zip = input_zip;\n\n  SELECT jsonb_build_object(\n    'sep_type', 'Disaster / Emergency SEP',\n    'cfr_reference', '42 CFR Sec. 422.62(b)(18)(ii); CMS HPMS memo',\n    'available', COUNT(fd.id) > 0,\n    'period', 'Duration of disaster declaration + 2 months',\n    'evidence', CASE\n      WHEN COUNT(fd.id) > 0 THEN COUNT(fd.id)::TEXT || ' active disaster declaration(s) identified'\n      ELSE 'No active disaster declarations in this area'\n    END,\n    'disasters', COALESCE(jsonb_agg(DISTINCT jsonb_build_object(\n      'disaster_number', fd.disaster_number,\n      'title', fd.declaration_title,\n      'type', fd.incident_type,\n      'declared', fd.declaration_date,\n      'sep_ends', fd.sep_end_date\n    )) FILTER (WHERE fd.id IS NOT NULL), '[]'::jsonb)\n  )\n  INTO disasters\n  FROM public.zip_county_crosswalk zc\n  LEFT JOIN public.fema_disasters fd\n    ON fd.county_fips = zc.county_fips\n    AND fd.ia_designated = TRUE\n    AND fd.sep_end_date >= CURRENT_DATE\n  WHERE zc.zip = input_zip;\n\n  SELECT jsonb_build_object(\n    'sep_type', 'Chronic Condition SNP (C-SNP) SEP',\n    'cfr_reference', '42 CFR Sec. 422.62(b)(4)',\n    'available', COUNT(sp.id) > 0,\n    'period', 'Year-round for qualifying chronic conditions',\n    'evidence', CASE\n      WHEN COUNT(sp.id) > 0 THEN COUNT(sp.id)::TEXT || ' C-SNP plan(s) available'\n      ELSE 'No C-SNP plans in this area'\n    END,\n    'plan_count', COUNT(sp.id),\n    'plans', COALESCE(jsonb_agg(DISTINCT jsonb_build_object(\n      'contract_id', sp.contract_id,\n      'plan_id', sp.plan_id,\n      'plan_name', sp.plan_name,\n      'organization', sp.organization_name,\n      'chronic_conditions', sp.chronic_conditions\n    )) FILTER (WHERE sp.id IS NOT NULL), '[]'::jsonb)\n  )\n  INTO csnp\n  FROM public.zip_county_crosswalk zc\n  LEFT JOIN public.snp_plans_by_county sp\n    ON sp.county_fips = zc.county_fips\n    AND sp.snp_type = 'C-SNP'\n    AND sp.plan_year = 2027\n  WHERE zc.zip = input_zip;\n\n  -- A ZIP is not evidence of Medicaid/LIS, drug-management status or monthly use.\n  dual_lis := jsonb_build_object(\n    'sep_type', 'Dual / LIS monthly PDP SEP',\n    'cfr_reference', '42 CFR 423.38(c)(4)',\n    'available', NULL, 'area_based', false,\n    'eligibility_status', 'verification_required',\n    'eligible_products', jsonb_build_array('PDP'),\n    'period', 'Once per calendar month; effective first day of next month',\n    'evidence', 'Verify full/partial Medicaid or Extra Help, monthly election use, and absence of Part D at-risk/potential-at-risk designation. Standalone PDP only, including leaving MA-PD for Original Medicare plus PDP; no MA-to-MA switch.',\n    'plans', '[]'::jsonb\n  );\n\n  -- Integration is plan-specific, not inferred from being any D-SNP or from\n  -- another plan's status. This is area availability, never member eligibility.\n  SELECT jsonb_build_object(\n    'sep_type', 'Integrated-care monthly D-SNP SEP',\n    'cfr_reference', '42 CFR 423.38(c)(35); aligned enrollment as defined in 42 CFR 422.2',\n    'available', COUNT(DISTINCT sp.id)>0, 'area_based', true,\n    'eligibility_status', 'verification_required',\n    'eligible_products', jsonb_build_array('D-SNP'),\n    'period', 'Once per calendar month; effective first day of next month',\n    'evidence', CASE WHEN COUNT(DISTINCT sp.id)>0\n      THEN 'Eligible integrated plans found. Verify full-benefit Medicaid (QMB+, SLMB+, FBDE), plan/service-area eligibility, monthly use, and aligned Medicaid MCO enrollment. Remaining in Medicaid FFS or an unaligned MCO does not qualify; partial dual or LIS-only status does not qualify.'\n      ELSE 'No verified FIDE/HIDE/AIP D-SNP found in current county data. Missing integration evidence does not establish eligibility. Full-benefit status and aligned Medicaid MCO enrollment are required.' END,\n    'plan_count', COUNT(DISTINCT sp.id),\n    'plans', COALESCE(jsonb_agg(DISTINCT jsonb_build_object(\n      'contract_id', sp.contract_id, 'plan_id', sp.plan_id,\n      'plan_name', sp.plan_name, 'organization', sp.carrier,\n      'integration_status', sp.dsnp_integration_status,\n      'aip_identifier', sp.dsnp_aip_identifier\n    )) FILTER (WHERE sp.id IS NOT NULL), '[]'::jsonb)\n  ) INTO dsnp\n  FROM public.zip_county_crosswalk zc\n  LEFT JOIN public.cms_plans_py2027 sp ON sp.county_fips=zc.county_fips\n    AND sp.state_code=zc.state_code AND sp.plan_year=2027\n    AND sp.snp_type='Dual-Eligible'\n    AND (upper(trim(coalesce(sp.dsnp_integration_status,''))) IN ('FIDE','HIDE','FIDE SNP','HIDE SNP','FIDE-SNP','HIDE-SNP')\n      OR lower(trim(coalesce(sp.dsnp_aip_identifier,''))) IN ('yes','y','1','true','aip'))\n  WHERE zc.zip=input_zip;\n\n  SELECT jsonb_build_object(\n    'sep_type', 'Institutional SNP (I-SNP) SEP',\n    'cfr_reference', '42 CFR Sec. 422.62(b)(4)',\n    'available', COUNT(sp.id) > 0,\n    'period', 'Year-round for institutionalized individuals',\n    'evidence', CASE\n      WHEN COUNT(sp.id) > 0 THEN COUNT(sp.id)::TEXT || ' I-SNP plan(s) available'\n      ELSE 'No I-SNP plans in this area'\n    END,\n    'plan_count', COUNT(sp.id),\n    'plans', COALESCE(jsonb_agg(DISTINCT jsonb_build_object(\n      'contract_id', sp.contract_id,\n      'plan_id', sp.plan_id,\n      'plan_name', sp.plan_name,\n      'organization', sp.organization_name,\n      'enrollment_count', sp.enrollment_count\n    )) FILTER (WHERE sp.id IS NOT NULL), '[]'::jsonb)\n  )\n  INTO isnp\n  FROM public.zip_county_crosswalk zc\n  LEFT JOIN public.snp_plans_by_county sp\n    ON sp.county_fips = zc.county_fips\n    AND sp.snp_type = 'I-SNP'\n    AND sp.plan_year = 2027\n  WHERE zc.zip = input_zip;\n\n  SELECT jsonb_build_object(\n    'sep_type', 'Involuntary Disenrollment / Plan Termination SEP',\n    'cfr_reference', '42 CFR Sec. 422.62(b)(5)',\n    'available', COUNT(pt.id) > 0,\n    'period', '2 months from plan termination effective date',\n    'evidence', CASE\n      WHEN COUNT(pt.id) > 0 THEN 'Carrier exits detected in this market. Displaced members are SEP-eligible.'\n      ELSE 'No plan terminations detected in this area'\n    END,\n    'terminated_plans', COALESCE(jsonb_agg(DISTINCT jsonb_build_object(\n      'old_plan', pt.old_plan_name,\n      'old_org', pt.old_organization_name,\n      'type', pt.termination_type,\n      'effective', pt.effective_date,\n      'replacement_plan', pt.new_plan_name\n    )) FILTER (WHERE pt.id IS NOT NULL), '[]'::jsonb)\n  )\n  INTO terminations\n  FROM public.zip_county_crosswalk zc\n  LEFT JOIN public.plan_terminations pt\n    ON pt.county_fips = zc.county_fips\n    AND pt.plan_year = 2027\n    AND pt.termination_type IN ('terminated', 'service_area_reduction')\n    AND pt.county_mapping_status = 'affected_service_area'\n    AND (pt.effective_date IS NULL OR pt.effective_date + INTERVAL '2 months' >= CURRENT_DATE)\n  WHERE zc.zip = input_zip;\n\n  result := jsonb_build_object(\n    'zip', input_zip,\n    'counties', county_info,\n    'queried_at', NOW(),\n    'seps', jsonb_build_array(\n      five_star,\n      disasters,\n      csnp,\n      dual_lis,\n      dsnp,\n      isnp,\n      terminations\n    )\n  );\n\n  RETURN result;\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "get_post_call_coaching_dispatch",
+      "arguments": "",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.get_post_call_coaching_dispatch()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE result jsonb:='[]'; d public.transcript_score_dispatch; token uuid;\nBEGIN\n IF NOT public.deployment_feature_enabled('POST_CALL_COACHING_ENABLED') THEN RETURN '[]'; END IF;\n PERFORM public.enqueue_post_call_coaching();\n FOR d IN SELECT * FROM public.transcript_score_dispatch\n WHERE coaching_state IN ('queued','processing') AND coaching_available_at<=clock_timestamp()\n AND (coaching_lease_until IS NULL OR coaching_lease_until<clock_timestamp())\n ORDER BY coaching_available_at,call_id LIMIT 20 FOR UPDATE SKIP LOCKED LOOP\n  token:=gen_random_uuid();\n  UPDATE public.transcript_score_dispatch SET coaching_token=token,coaching_lease_until=clock_timestamp()+interval '3 minutes' WHERE call_id=d.call_id;\n  IF d.coaching_attempts>=3 THEN\n   PERFORM public.finish_post_call_coaching(d.call_id,token,NULL,NULL,NULL,'attempts_exhausted');\n  ELSE\n   UPDATE public.transcript_score_dispatch SET coaching_attempts=coaching_attempts+1 WHERE call_id=d.call_id;\n   result:=result||jsonb_build_array(jsonb_build_object('call_id',d.call_id,'tenant_id',d.tenant_id,'coaching_token',token));\n  END IF;\n END LOOP;\n RETURN result;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -54534,7 +55031,7 @@
         "search_path=pg_catalog, public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.operational_status(p_window integer DEFAULT 900)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE queues jsonb:='[]'; t text; depth bigint; age numeric; failed bigint; failures bigint:=0; tenant uuid; dry jsonb; result jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n IF p_window<1 OR p_window>86400 THEN RAISE EXCEPTION 'Invalid operational window'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n FOREACH t IN ARRAY ARRAY['integration_deliveries','post_call_jobs','post_call_requests','scoring_jobs','recording_ingestion','conversely_submissions','ix_uploads','ghl_enrollment_deliveries','manual_transcript_gap_fills','paragon_residence_jobs'] LOOP\n EXECUTE format('SELECT count(*) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'') IN (''pending'',''queued'',''processing'',''running'',''uploading'',''retry'')),coalesce(max(extract(epoch FROM clock_timestamp()-coalesce((j->>''created_at'')::timestamptz,(j->>''started_at'')::timestamptz,(j->>''first_seen_at'')::timestamptz,(j->>''updated_at'')::timestamptz))) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'') IN (''pending'',''queued'',''processing'',''running'',''uploading'',''retry'')),0),count(*) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'')=''failed'') FROM (SELECT to_jsonb(t) j FROM public.%I t) q WHERE NOT(j ? ''tenant_id'') OR j->>''tenant_id''=$1',t) INTO depth,age,failed USING tenant::text;\n queues:=queues||jsonb_build_array(jsonb_build_object('queue',t,'depth',depth,'oldest_age_seconds',greatest(0,floor(age))));failures:=failures+failed;\n END LOOP;\n SELECT jsonb_build_object('finished_at',finished_at,'counts',public.operational_count_summary(r.counts),'deleted',public.operational_count_summary(r.deleted),'skipped_by_hold',public.operational_count_summary(r.skipped_by_hold),'skipped_by_reference',public.operational_count_summary(r.skipped_by_reference),'failures',public.operational_count_summary(r.failures)) INTO dry FROM public.retention_runs r WHERE mode='dry-run' AND status='complete' ORDER BY started_at DESC LIMIT 1;\n SELECT jsonb_build_object('queues',queues,'failed_jobs',failures,'active_alerts',(SELECT count(*) FROM public.operational_alert_state WHERE active),\n 'last_success',(SELECT jsonb_object_agg(job_name,s.last_success_at) FROM unnest(ARRAY['alert_evaluator','repair_telephony_record_links','enqueue_availability_push','enqueue_disposition_postbacks','enqueue_daily_vendor_reports','compliance_schedule','ix_schedule','presence_sweep','recording_worker','transcript_worker','paragon_billing','paragon_residence','call_status_recovery','conference_recovery','admission_prune','nightly_analytics','weekly_coaching','sync_fema','sync_bulletins','paragon_daily_email','retention']) job_name LEFT JOIN public.scheduled_job_status s ON s.job=job_name), 'last_purge_dry_run',dry,\n 'lease_conflicts',count(*) FILTER(WHERE event LIKE '%lease%denied%' OR event LIKE '%lease%conflict%'),\n 'audit_failures',count(*) FILTER(WHERE event IN ('audit_write_failed','admin_log_write_failed')),\n 'rate_rejections',count(*) FILTER(WHERE event='admission_rejected'),\n 'provider_requests',count(*) FILTER(WHERE event='provider_result'),\n 'provider_errors',count(*) FILTER(WHERE event='provider_result' AND status>=400),\n 'routing_anomalies',count(*) FILTER(WHERE event IN ('presence_sweep_failed','false_overflow','routing_anomaly'))+coalesce(public.operational_routing_anomalies(p_window),0),\n 'purge_failures',(SELECT count(*) FROM public.retention_runs pr WHERE (pr.status='failed' OR pr.failures<>'{}'::jsonb) AND pr.started_at>clock_timestamp()-make_interval(secs=>p_window))+(SELECT count(*) FROM public.recording_ingestion WHERE deletion_pending_at<clock_timestamp()-interval '1 hour'),\n 'paid_usd',(SELECT coalesce(sum(estimated_cost_usd),0) FROM public.compliance_llm_requests WHERE created_at>=date_trunc('day',clock_timestamp())),\n 'subject_denials',(SELECT coalesce(jsonb_agg(to_jsonb(s)),'[]') FROM (SELECT subject,count(*) count FROM public.operational_events WHERE occurred_at>clock_timestamp()-make_interval(secs=>p_window) AND event IN ('authorization_denied','verification_failed') AND subject IS NOT NULL GROUP BY subject) s)) INTO result\n FROM public.operational_events WHERE occurred_at>clock_timestamp()-make_interval(secs=>p_window);\n RETURN result;\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.operational_status(p_window integer DEFAULT 900)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE queues jsonb:='[]'; t text; depth bigint; age numeric; failed bigint; failures bigint:=0; tenant uuid; dry jsonb; result jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Server required' USING ERRCODE='42501'; END IF;\n IF p_window<1 OR p_window>86400 THEN RAISE EXCEPTION 'Invalid operational window'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n FOREACH t IN ARRAY ARRAY['integration_deliveries','post_call_jobs','post_call_requests','scoring_jobs','recording_ingestion','conversely_submissions','ix_uploads','ghl_enrollment_deliveries','manual_transcript_gap_fills','paragon_residence_jobs'] LOOP\n EXECUTE format('SELECT count(*) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'') IN (''pending'',''queued'',''processing'',''running'',''uploading'',''retry'')),coalesce(max(extract(epoch FROM clock_timestamp()-coalesce((j->>''created_at'')::timestamptz,(j->>''started_at'')::timestamptz,(j->>''first_seen_at'')::timestamptz,(j->>''updated_at'')::timestamptz))) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'') IN (''pending'',''queued'',''processing'',''running'',''uploading'',''retry'')),0),count(*) FILTER(WHERE coalesce(j->>''status'',j->>''copy_status'')=''failed'') FROM (SELECT to_jsonb(t) j FROM public.%I t) q WHERE NOT(j ? ''tenant_id'') OR j->>''tenant_id''=$1',t) INTO depth,age,failed USING tenant::text;\n queues:=queues||jsonb_build_array(jsonb_build_object('queue',t,'depth',depth,'oldest_age_seconds',greatest(0,floor(age))));failures:=failures+failed;\n END LOOP;\n SELECT count(*) FILTER(WHERE coaching_state IN ('queued','processing')),coalesce(max(extract(epoch FROM clock_timestamp()-coaching_queued_at)) FILTER(WHERE coaching_state IN ('queued','processing')),0),count(*) FILTER(WHERE coaching_state='failed') INTO depth,age,failed FROM public.transcript_score_dispatch WHERE tenant_id=tenant;\n queues:=queues||jsonb_build_array(jsonb_build_object('queue','post_call_coaching','depth',depth,'oldest_age_seconds',greatest(0,floor(age))));failures:=failures+failed;\n SELECT jsonb_build_object('finished_at',finished_at,'counts',public.operational_count_summary(r.counts),'deleted',public.operational_count_summary(r.deleted),'skipped_by_hold',public.operational_count_summary(r.skipped_by_hold),'skipped_by_reference',public.operational_count_summary(r.skipped_by_reference),'failures',public.operational_count_summary(r.failures)) INTO dry FROM public.retention_runs r WHERE mode='dry-run' AND status='complete' ORDER BY started_at DESC LIMIT 1;\n SELECT jsonb_build_object('queues',queues,'failed_jobs',failures,'active_alerts',(SELECT count(*) FROM public.operational_alert_state WHERE active),\n 'last_success',(SELECT jsonb_object_agg(job_name,s.last_success_at) FROM unnest(ARRAY['alert_evaluator','repair_telephony_record_links','enqueue_availability_push','enqueue_disposition_postbacks','enqueue_daily_vendor_reports','compliance_schedule','ix_schedule','presence_sweep','recording_worker','transcript_worker','paragon_billing','paragon_residence','call_status_recovery','conference_recovery','admission_prune','nightly_analytics','weekly_coaching','sync_fema','sync_bulletins','paragon_daily_email','retention']) job_name LEFT JOIN public.scheduled_job_status s ON s.job=job_name), 'last_purge_dry_run',dry,\n 'lease_conflicts',count(*) FILTER(WHERE event LIKE '%lease%denied%' OR event LIKE '%lease%conflict%'),\n 'audit_failures',count(*) FILTER(WHERE event IN ('audit_write_failed','admin_log_write_failed')),\n 'rate_rejections',count(*) FILTER(WHERE event='admission_rejected'),\n 'provider_requests',count(*) FILTER(WHERE event='provider_result'),\n 'provider_errors',count(*) FILTER(WHERE event='provider_result' AND status>=400),\n 'routing_anomalies',count(*) FILTER(WHERE event IN ('presence_sweep_failed','false_overflow','routing_anomaly'))+coalesce(public.operational_routing_anomalies(p_window),0),\n 'purge_failures',(SELECT count(*) FROM public.retention_runs pr WHERE (pr.status='failed' OR pr.failures<>'{}'::jsonb) AND pr.started_at>clock_timestamp()-make_interval(secs=>p_window))+(SELECT count(*) FROM public.recording_ingestion WHERE deletion_pending_at<clock_timestamp()-interval '1 hour'),\n 'paid_usd',(SELECT coalesce(sum(estimated_cost_usd),0) FROM public.compliance_llm_requests WHERE created_at>=date_trunc('day',clock_timestamp())),\n 'subject_denials',(SELECT coalesce(jsonb_agg(to_jsonb(s)),'[]') FROM (SELECT subject,count(*) count FROM public.operational_events WHERE occurred_at>clock_timestamp()-make_interval(secs=>p_window) AND event IN ('authorization_denied','verification_failed') AND subject IS NOT NULL GROUP BY subject) s)) INTO result\n FROM public.operational_events WHERE occurred_at>clock_timestamp()-make_interval(secs=>p_window);\n RETURN result;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -55409,6 +55906,19 @@
     },
     {
       "schema": "public",
+      "name": "read_post_call_coaching",
+      "arguments": "p_actor text, p_org text, p_call uuid, p_category text, p_agent uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_before_time timestamp with time zone, p_before_id uuid, p_limit integer",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_post_call_coaching(p_actor text, p_org text, p_call uuid DEFAULT NULL::uuid, p_category text DEFAULT NULL::text, p_agent uuid DEFAULT NULL::uuid, p_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_before_time timestamp with time zone DEFAULT NULL::timestamp with time zone, p_before_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 30)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE identity record; result jsonb; counts jsonb; roster jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('POST_CALL_COACHING_ENABLED') THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n SELECT * INTO identity FROM public.resolve_deployment_subject(p_actor,p_org);\n IF identity.tenant_id IS NULL THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n IF p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 100 OR (p_before_time IS NULL)<>(p_before_id IS NULL) OR p_from>p_to OR p_category IS NOT NULL AND p_category<>ALL(ARRAY['price','network_or_doctor','drug_coverage','wants_to_think','spouse_or_family','trust','already_covered','other']) THEN RAISE EXCEPTION 'Invalid page'; END IF;\n IF p_call IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.call_records c WHERE c.id=p_call AND c.tenant_id=identity.tenant_id AND (identity.authority='admin' OR c.agent_id=identity.agent_id OR identity.authority='manager' AND c.agent_id=ANY(identity.team_agent_ids))) THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n WITH scoped AS (SELECT n.* FROM public.post_call_coaching n JOIN public.call_records parent ON parent.id=n.call_id AND parent.tenant_id=n.tenant_id AND parent.agent_id=n.agent_id WHERE n.tenant_id=identity.tenant_id\n AND (identity.authority='admin' OR n.agent_id=identity.agent_id OR identity.authority='manager' AND n.agent_id=ANY(identity.team_agent_ids))\n AND (p_call IS NULL OR n.call_id=p_call) AND (p_agent IS NULL OR n.agent_id=p_agent)\n AND n.generated_at>=coalesce(p_from,clock_timestamp()-interval '30 days') AND n.generated_at<=coalesce(p_to,clock_timestamp())\n AND (p_category IS NULL OR EXISTS(SELECT 1 FROM jsonb_array_elements(n.objections) o WHERE o->>'category'=p_category)))\n SELECT coalesce(jsonb_agg(to_jsonb(page)-'tenant_id'-'retention_started_at' ORDER BY page.generated_at DESC,page.id DESC),'[]') INTO result FROM\n (SELECT * FROM scoped WHERE p_before_time IS NULL OR (generated_at,id)<(p_before_time,p_before_id) ORDER BY generated_at DESC,id DESC LIMIT p_limit+1) page;\n SELECT coalesce(jsonb_object_agg(category,n),'{}') INTO counts FROM (\n SELECT o->>'category' category,count(*) n FROM public.post_call_coaching c JOIN public.call_records parent ON parent.id=c.call_id AND parent.tenant_id=c.tenant_id AND parent.agent_id=c.agent_id CROSS JOIN LATERAL jsonb_array_elements(c.objections) o\n WHERE c.tenant_id=identity.tenant_id AND (identity.authority='admin' OR c.agent_id=identity.agent_id OR identity.authority='manager' AND c.agent_id=ANY(identity.team_agent_ids))\n AND (p_agent IS NULL OR c.agent_id=p_agent) AND c.generated_at>=coalesce(p_from,clock_timestamp()-interval '30 days') AND c.generated_at<=coalesce(p_to,clock_timestamp()) GROUP BY o->>'category') x;\n SELECT coalesce(jsonb_agg(jsonb_build_object('id',e.id,'name',e.name) ORDER BY e.name),'[]') INTO roster FROM public.enrolled_agents e WHERE e.tenant_id=identity.tenant_id AND e.is_active AND (identity.authority='admin' OR e.id=identity.agent_id OR identity.authority='manager' AND e.id=ANY(identity.team_agent_ids));\n RETURN jsonb_build_object('notes',result,'counts',counts,'agents',roster,'authority',identity.authority,'own_agent_id',identity.agent_id);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "reconcile_paragon_serviceability",
       "arguments": "p_call uuid, p_tenant uuid",
       "result": "jsonb",
@@ -55614,6 +56124,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.refresh_sale_compliance_trigger()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nBEGIN\n PERFORM public.refresh_sale_compliance_request(NEW.id); RETURN NULL;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "regenerate_post_call_coaching",
+      "arguments": "p_actor text, p_org text, p_call uuid",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.regenerate_post_call_coaching(p_actor text, p_org text, p_call uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE identity record; c public.call_records; allowance jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('POST_CALL_COACHING_ENABLED') THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n SELECT * INTO identity FROM public.resolve_deployment_subject(p_actor,p_org) WHERE authority='admin';\n IF NOT EXISTS(SELECT 1 FROM public.admin_action_permit WHERE transaction_id=txid_current()) THEN RAISE EXCEPTION 'Administrator audit boundary required' USING ERRCODE='42501'; END IF;\n SELECT * INTO c FROM public.call_records WHERE id=p_call AND tenant_id=identity.tenant_id FOR UPDATE;\n IF c.id IS NULL OR NOT public.coaching_call_eligible(c) THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n IF EXISTS(SELECT 1 FROM public.transcript_score_dispatch WHERE call_id=c.id AND coaching_lease_until>clock_timestamp()) THEN RAISE EXCEPTION 'Coaching busy' USING ERRCODE='55000'; END IF;\n SELECT public.consume_admission(jsonb_build_array(jsonb_build_object('key',identity.tenant_id::text||':coaching-regenerate-db:'||p_actor,'seconds',60,'limit',3))) INTO allowance;\n IF allowance->>'allowed' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'Regenerate rate limited' USING ERRCODE='P1649'; END IF;\n UPDATE public.transcript_score_dispatch SET coaching_generation=coaching_generation+1,coaching_state='queued',coaching_attempts=0,coaching_reserved_day=NULL,coaching_token=NULL,coaching_lease_until=NULL,coaching_available_at=clock_timestamp(),coaching_queued_at=clock_timestamp() WHERE call_id=c.id;\n IF NOT FOUND THEN RAISE EXCEPTION 'Coaching unavailable'; END IF;\n RETURN true;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -56264,6 +56787,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.retry_post_call_transcript(p_session_id uuid, p_request_key text, p_payload jsonb)\n RETURNS text\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nBEGIN\n PERFORM 1 FROM post_call_jobs WHERE session_id=p_session_id AND worker_id IS NULL FOR UPDATE;\n IF NOT FOUND THEN RAISE EXCEPTION 'Processing is already running'; END IF;\n INSERT INTO post_call_requests(session_id,request_key,action,payload) VALUES(p_session_id,p_request_key,'finalize',p_payload)\n ON CONFLICT(session_id,request_key) DO UPDATE SET status=CASE WHEN post_call_requests.status='failed' THEN 'queued' ELSE post_call_requests.status END,error_code=NULL;\n UPDATE post_call_requests SET retry_request_key=p_request_key WHERE session_id=p_session_id AND action='finalize'\n AND status='failed' AND request_key<>p_request_key AND payload->>'call_record_id'=p_payload->>'call_record_id';\n UPDATE post_call_jobs SET status='queued',progress='queued',error_code=NULL WHERE session_id=p_session_id;\n RETURN p_request_key;\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "review_post_call_coaching",
+      "arguments": "p_actor text, p_org text, p_call uuid",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.review_post_call_coaching(p_actor text, p_org text, p_call uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE identity record;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('POST_CALL_COACHING_ENABLED') THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n SELECT * INTO identity FROM public.resolve_deployment_subject(p_actor,p_org);\n IF identity.tenant_id IS NULL THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n UPDATE public.post_call_coaching SET reviewed_at=clock_timestamp(),reviewed_by=p_actor WHERE call_id=p_call AND tenant_id=identity.tenant_id AND agent_id=identity.agent_id AND status IN ('generated','nothing_to_coach');\n IF NOT FOUND THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n RETURN true;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -60063,6 +60599,66 @@
     },
     {
       "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_agent_id_fkey",
+      "definition": "FOREIGN KEY (agent_id) REFERENCES enrolled_agents(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_call_id_fkey",
+      "definition": "FOREIGN KEY (call_id) REFERENCES call_records(id) DEFERRABLE"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_call_id_key",
+      "definition": "UNIQUE (call_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_check",
+      "definition": "CHECK ((((status = 'generated'::text) AND (jsonb_array_length(objections) > 0) AND (did_well IS NOT NULL)) OR ((status = 'nothing_to_coach'::text) AND (objections = '[]'::jsonb) AND (did_well IS NOT NULL)) OR ((status = ANY (ARRAY['failed'::text, 'skipped'::text])) AND (objections = '[]'::jsonb) AND (did_well IS NULL))))"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_objections_check",
+      "definition": "CHECK (((jsonb_typeof(objections) = 'array'::text) AND (jsonb_array_length(objections) <= 3)))"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_reason_check",
+      "definition": "CHECK ((reason = ANY (ARRAY['daily_cap'::text, 'redaction_failed'::text, 'invalid_output'::text, 'generation_failed'::text, 'attempts_exhausted'::text, 'call_ineligible'::text, 'transcript_changed'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['generated'::text, 'nothing_to_coach'::text, 'failed'::text, 'skipped'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_transcript_id_fkey",
+      "definition": "FOREIGN KEY (transcript_id) REFERENCES call_transcripts(id) DEFERRABLE"
+    },
+    {
+      "schema": "public",
       "relation": "post_call_jobs",
       "name": "post_call_jobs_agent_id_fkey",
       "definition": "FOREIGN KEY (agent_id) REFERENCES enrolled_agents(id)"
@@ -61114,6 +61710,12 @@
     {
       "schema": "public",
       "relation": "tenants",
+      "name": "tenants_coaching_settings_check",
+      "definition": "CHECK (((jsonb_typeof(coaching_settings) = 'object'::text) AND (jsonb_typeof((coaching_settings -> 'minimum_talk_seconds'::text)) = 'number'::text) AND (jsonb_typeof((coaching_settings -> 'daily_cap'::text)) = 'number'::text) AND (coaching_settings ?& ARRAY['minimum_talk_seconds'::text, 'daily_cap'::text]) AND ((coaching_settings - ARRAY['minimum_talk_seconds'::text, 'daily_cap'::text]) = '{}'::jsonb) AND ((((coaching_settings ->> 'minimum_talk_seconds'::text))::numeric >= (30)::numeric) AND (((coaching_settings ->> 'minimum_talk_seconds'::text))::numeric <= (21600)::numeric)) AND (((coaching_settings ->> 'minimum_talk_seconds'::text))::numeric = trunc(((coaching_settings ->> 'minimum_talk_seconds'::text))::numeric)) AND ((((coaching_settings ->> 'daily_cap'::text))::numeric >= (1)::numeric) AND (((coaching_settings ->> 'daily_cap'::text))::numeric <= (1000)::numeric)) AND (((coaching_settings ->> 'daily_cap'::text))::numeric = trunc(((coaching_settings ->> 'daily_cap'::text))::numeric))))"
+    },
+    {
+      "schema": "public",
+      "relation": "tenants",
       "name": "tenants_pkey",
       "definition": "PRIMARY KEY (id)"
     },
@@ -61164,6 +61766,12 @@
       "relation": "transcript_score_dispatch",
       "name": "transcript_score_dispatch_call_id_fkey",
       "definition": "FOREIGN KEY (call_id) REFERENCES call_records(id) DEFERRABLE"
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "transcript_score_dispatch_coaching_state_check",
+      "definition": "CHECK ((coaching_state = ANY (ARRAY['queued'::text, 'processing'::text, 'done'::text, 'failed'::text, 'skipped'::text])))"
     },
     {
       "schema": "public",
@@ -63347,6 +63955,30 @@
     },
     {
       "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "coaching_agent_recent",
+      "definition": "CREATE INDEX coaching_agent_recent ON public.post_call_coaching USING btree (tenant_id, agent_id, generated_at DESC, id DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "coaching_recent",
+      "definition": "CREATE INDEX coaching_recent ON public.post_call_coaching USING btree (tenant_id, generated_at DESC, id DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_call_id_key",
+      "definition": "CREATE UNIQUE INDEX post_call_coaching_call_id_key ON public.post_call_coaching USING btree (call_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "post_call_coaching_pkey",
+      "definition": "CREATE UNIQUE INDEX post_call_coaching_pkey ON public.post_call_coaching USING btree (id)"
+    },
+    {
+      "schema": "public",
       "relation": "post_call_jobs",
       "name": "post_call_jobs_pkey",
       "definition": "CREATE UNIQUE INDEX post_call_jobs_pkey ON public.post_call_jobs USING btree (session_id)"
@@ -64028,6 +64660,12 @@
       "relation": "transcript_recovery_alerts",
       "name": "transcript_recovery_alerts_pkey",
       "definition": "CREATE UNIQUE INDEX transcript_recovery_alerts_pkey ON public.transcript_recovery_alerts USING btree (call_id, reason)"
+    },
+    {
+      "schema": "public",
+      "relation": "transcript_score_dispatch",
+      "name": "coaching_dispatch_due",
+      "definition": "CREATE INDEX coaching_dispatch_due ON public.transcript_score_dispatch USING btree (coaching_available_at) WHERE (coaching_state = ANY (ARRAY['queued'::text, 'processing'::text]))"
     },
     {
       "schema": "public",
@@ -66367,6 +67005,20 @@
     },
     {
       "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "deployment_feature_fence",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER deployment_feature_fence BEFORE INSERT OR UPDATE ON public.post_call_coaching FOR EACH ROW EXECUTE FUNCTION fence_deployment_queue('POST_CALL_COACHING_ENABLED')"
+    },
+    {
+      "schema": "public",
+      "relation": "post_call_coaching",
+      "name": "retention_anchor_immutable",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER retention_anchor_immutable BEFORE UPDATE ON public.post_call_coaching FOR EACH ROW EXECUTE FUNCTION retention_anchor_immutable()"
+    },
+    {
+      "schema": "public",
       "relation": "post_call_jobs",
       "name": "pilot_require_member_write",
       "enabled": "O",
@@ -67175,7 +67827,7 @@
       "relation": "transcript_score_dispatch",
       "name": "deployment_feature_fence",
       "enabled": "O",
-      "definition": "CREATE TRIGGER deployment_feature_fence BEFORE INSERT OR UPDATE ON public.transcript_score_dispatch FOR EACH ROW EXECUTE FUNCTION fence_deployment_queue('SCORING_ENABLED')"
+      "definition": "CREATE TRIGGER deployment_feature_fence BEFORE INSERT OR UPDATE ON public.transcript_score_dispatch FOR EACH ROW EXECUTE FUNCTION fence_coaching_dispatch()"
     },
     {
       "schema": "public",

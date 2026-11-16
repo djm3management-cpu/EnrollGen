@@ -40,6 +40,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
     runtime = {...runtime, signal: runtime.signal ? AbortSignal.any([runtime.signal, deadline]) : deadline};
   }
   const env = runtime.env || process.env;
+  if(request.task==='post_call_coaching'&&!featureEnabled('POST_CALL_COACHING_ENABLED',env))throw new Error('Post-call coaching disabled');
   const engine = resolveEngine(request.engine);
   // Compliance scoring must stay on OpenAI, including legacy product engines.
   const provider: Provider = resolveProvider(engine, env);
@@ -61,7 +62,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
     await runtime.authorizeScoringRequest(request,model,requestId);
   }
   // Three primary attempts, followed by exactly one fallback attempt when eligible.
-  for (let attempt = 1; attempt <= (request.path === 'scoring' ? 1 : 4); attempt++) {
+  for (let attempt = 1; attempt <= (request.path === 'scoring' || request.task === 'post_call_coaching' ? 1 : 4); attempt++) {
     if (attempt === 4) {
       if (request.task || model !== PRIMARY_MODEL || !fallback || !transient(lastError) || runtime.signal?.aborted) break;
       originalError = errorCode(lastError);

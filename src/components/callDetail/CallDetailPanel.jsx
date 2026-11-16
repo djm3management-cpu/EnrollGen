@@ -1,3 +1,4 @@
+import PostCallCoaching from './PostCallCoaching';
 import PostCallProcessing from './PostCallProcessing';
 import RecordingPanel from "./RecordingPanel";
 import { useState } from "react";
@@ -350,6 +351,7 @@ export default function CallDetailPanel({ attemptId, recordingRow, detail, loadi
     <div className="ops-detail-panel">
       {showCombination && detail.id && <button data-key-role="secondary" type="button" className="contacts-mini-btn" onClick={() => setCombining(true)}>Combine with…</button>}
       {detail.id && <PostCallProcessing callId={detail.id} />}
+      <PostCallCoaching callId={detail.id} />
       <DetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
       {activeTab === "Recording" ? <RecordingPanel row={recordingRow} callRecordId={detail.id} attemptId={attemptId} /> : null}
       {activeTab === "Transcript" ? <TranscriptDetail detail={detail} /> : null}

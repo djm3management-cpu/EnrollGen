@@ -79,6 +79,13 @@ export async function runTranscriptDispatch({ db, scoringUrl, secret, transport 
 
 export function startTranscriptWorker(options) {
   let running = false;
+  let coachingRunning = false;
+  const coachingTick=loggedJob('telephony',async()=>{
+    if(coachingRunning||!featureEnabled('POST_CALL_COACHING_ENABLED'))return;
+    coachingRunning=true;
+    try{await runCoachingDispatch(options);}catch{logger.error('post_call_coaching_dispatch_failed');}
+    finally{coachingRunning=false;}
+  });
   const tick = loggedJob('telephony',async () => {
     if (running) return;
     running = true;
@@ -86,10 +93,26 @@ export function startTranscriptWorker(options) {
     catch (error) { logger.error(JSON.stringify({ event: 'transcript_dispatch_failed', code: error.code || null,
       message:'Reconciliation/dispatch failed' })); }
     finally { running = false; }
+    // Independent dispatch after the scoring pass, never awaited by scoring.
+    void coachingTick();
   });
   const timer = setInterval(tick, 15_000); timer.unref();
   void tick();
   return () => clearInterval(timer);
+}
+
+export async function runCoachingDispatch({db,secret,transport=fetch,coachingEnabled=featureEnabled('POST_CALL_COACHING_ENABLED')}) {
+  if(!coachingEnabled)return;
+  if(!secret)throw Error('Post-call job secret required');
+  const {data,error}=await db.rpc('get_post_call_coaching_dispatch');if(error)throw error;
+  for(const job of data||[]) {
+    try{
+      const response=await transport(validateDestination(new URL('/.netlify/functions/post-call-coaching-background',deploymentProfile().appOrigin),deploymentProfile().allowedHosts),{
+        method:'POST',redirect:'error',headers:{'Content-Type':'application/json','x-enrollgen-job-secret':secret},
+        body:JSON.stringify({callId:job.call_id,token:job.coaching_token}),signal:AbortSignal.timeout(10000)});
+      if(!response.ok)logger.warn('post_call_coaching_dispatch_failed',{call_id:job.call_id,status:response.status});
+    }catch{logger.warn('post_call_coaching_dispatch_failed',{call_id:job.call_id});}
+  }
 }
 
 // Notifications carry IDs and reason codes only, never recordings or transcript text.

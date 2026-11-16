@@ -54,11 +54,15 @@ export function redactSensitiveText(value) {
   );
 }
 
-export function redactTranscriptEntries(entries = []) {
+export function redactTranscriptEntries(entries = [], {omitSensitiveUtterances=false} = {}) {
   if (!Array.isArray(entries)) return [];
   return entries.map((entry) => ({
     ...entry,
-    text: redactSensitiveText(entry?.text || ""),
+    // Optional strict minimization for derivative coaching: omit the whole
+    // utterance around identifier labels, including spoken/unusual formats.
+    // Existing callers retain exactly the established redaction behavior.
+    text: omitSensitiveUtterances && /\b(?:social security|SSN|MBI|date of birth|DOB|born|birthday|address|street|avenue|boulevard|routing|bank|payment|credit card|debit card|CVV|CVC|security code|account number|medicare (?:number|id|card|is)|member (?:number|id)|january|february|march|april|june|july|august|september|october|november|december)\b/i.test(entry?.text||'')
+      ? '[SENSITIVE_UTTERANCE_REDACTED]' : redactSensitiveText(entry?.text || ""),
   }));
 }
 

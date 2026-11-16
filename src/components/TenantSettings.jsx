@@ -1,3 +1,4 @@
+import {COACHING_DEFAULTS} from '../lib/postCallCoaching';
 import AccessReview from './AccessReview';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Plus, RefreshCcw, Send, Trash2 } from "lucide-react";
@@ -279,6 +280,7 @@ export default function TenantSettings({ currentUser = null }) {
   const [complianceConfig, setComplianceConfig] = useState(() =>
     cloneComplianceConfig(DEFAULT_COMPLIANCE_CONFIG)
   );
+  const [coachingSettings,setCoachingSettings]=useState(COACHING_DEFAULTS);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [vendorPaused, setVendorPaused] = useState(false);
@@ -300,6 +302,7 @@ export default function TenantSettings({ currentUser = null }) {
       ghl_webhook_url: tenant.ghl_webhook_url || "",
       ghl_location_id: tenant.ghl_location_id || "",
     });
+    setCoachingSettings(tenant.coaching_settings||COACHING_DEFAULTS);
     setCarriers(tenant.carrier_options?.length ? tenant.carrier_options : DEFAULT_CARRIERS);
     setCoopRows(normalizeCoopRows(tenant.coop_rates));
     setComplianceConfig(normalizeComplianceConfig(tenant.compliance_config));
@@ -353,7 +356,7 @@ export default function TenantSettings({ currentUser = null }) {
       const response = await fetchWithClerk(getToken, '/api/tenant-settings', {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({agency_npn:profile.agency_npn,licensed_states:profile.licensed_states,
-          carrier_options:carriers.filter(Boolean),coop_rates:rowsToCoopRates(coopRows),compliance_config:complianceConfig}),
+          carrier_options:carriers.filter(Boolean),coop_rates:rowsToCoopRates(coopRows),compliance_config:complianceConfig,...(features.POST_CALL_COACHING_ENABLED?{coaching_settings:coachingSettings}:{})}),
       });
       if (!response.ok) throw Error((await response.json()).error || 'Settings save failed.');
       await refetchTenant();
@@ -453,6 +456,11 @@ export default function TenantSettings({ currentUser = null }) {
 
       {message ? <div className="billing-alert">{message}</div> : null}
       <AgentAudioSettings />
+      {features.POST_CALL_COACHING_ENABLED&&<section style={{fontWeight:400,marginBlock:24}} aria-label="Coaching settings">
+        <h3 style={{fontWeight:500}}>Coaching</h3>
+        <SettingsField label="Minimum talk seconds"><input type="number" min="30" max="21600" value={coachingSettings.minimum_talk_seconds} onChange={e=>setCoachingSettings(s=>({...s,minimum_talk_seconds:Number(e.target.value)}))} /></SettingsField>
+        <SettingsField label="Daily note cap"><input type="number" min="1" max="1000" value={coachingSettings.daily_cap} onChange={e=>setCoachingSettings(s=>({...s,daily_cap:Number(e.target.value)}))} /></SettingsField>
+      </section>}
 
       {features.PARAGON_ENABLED && <section className="tenant-settings-card tenant-settings-card-wide">
         <div className="tenant-settings-section-title">Vendor availability</div>

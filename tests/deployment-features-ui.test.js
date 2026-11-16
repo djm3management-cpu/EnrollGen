@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {transformSync} from 'esbuild';
 import {hookHarness} from './helpers/hookHarness.js';
+import {COACHING_DEFAULTS} from '../src/lib/postCallCoaching.js';
 const source=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8');
 const nodes=x=>!x||typeof x!=='object'?[]:[x,...(x.children||[]).flat(Infinity).flatMap(nodes)];
 const text=x=>nodes(x).flatMap(n=>n.children||[]).filter(v=>typeof v==='string').join(' ');
@@ -24,7 +25,7 @@ function settings(features){
  const h=hookHarness(),tenant={},getToken=async()=> 'credential';let outbound=0;
  const code=source('src/components/TenantSettings.jsx').replace(/^import .*;\n/gm,'').replace(/^export \{.*\};\n/gm,'').replace('export default function','function');
  const component=vm.runInNewContext(transformSync(code,{loader:'jsx',jsxFactory:'element',format:'cjs'}).code+';TenantSettings;',{
-  ...h.hooks,element,Check:'Check',Plus:'Plus',RefreshCcw:'RefreshCcw',Send:'Send',Trash2:'Trash2',
+  ...h.hooks,element,COACHING_DEFAULTS,Check:'Check',Plus:'Plus',RefreshCcw:'RefreshCcw',Send:'Send',Trash2:'Trash2',
   BillingSettings:'BillingSettings',VendorRoutingSettings:'VendorRoutingSettings',AgentAudioSettings:'AgentAudioSettings',AccessReview:'AccessReview',US_STATE_OPTIONS:[],
   useAppAuth:()=>({getToken}),useTenantConfig:()=>({tenant,tenantId:null,features,agents:[],loading:false}),
   useSubscription:()=>({subscription:{plan:'billing_disabled',billing_disabled:true,seat_count:1000000},isInternal:false}),

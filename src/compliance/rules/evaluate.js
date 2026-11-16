@@ -1,4 +1,24 @@
 import {RULE_CATALOG,RULES_VERSION,ruleMatchesProduct} from './catalog.js';
+import {analyzeTranscript} from '../../context/TranscriptAnalyzer.js';
+// Coaching is authored advice, with no verified plan documents or agreed product
+// scope supplied to the model. Apply the live detector and conservatively refuse
+// claims/pitches here. This does not grade speech or change any scoring rule.
+export function evaluateCoachingSuggestion(text) {
+ text=text.normalize('NFKC').replace(/[’‘]/g,"'");
+ const live=analyzeTranscript(`Agent: ${text}`);
+ const reject=rule=>({allowed:false,rule_id:rule});
+ if(live.violations.length)return reject('ENROLL_011_NO_PRESSURE_TACTICS');
+ if(/\b(?:best|lowest|greatest|highest|cheapest|unbeatable|superior|most affordable|number one|perfect|guarantee\w*)\b|#\s*1\b/i.test(text))return reject('PLAN_028_NO_UNSUBSTANTIATED_CLAIMS');
+ if(/\b(?:today|now|hurry|urgent|expires?|deadline|must|need to enroll|should enroll|sign up|don't wait|do not wait|limited)\b/i.test(text))return reject('ENROLL_011_NO_PRESSURE_TACTICS');
+ if(/\b(?:don't|do not|no need|need not|without|forget|ignore|skip|avoid|unnecessary|shouldn't)\b.{0,100}\b(?:wait|think|time|spouse|family|children|consult|discuss|advice)\b/i.test(text))return reject('ENROLL_011_NO_PRESSURE_TACTICS');
+ if(/\b(?:spouse|family|children|consultation|waiting|thinking)\b.{0,80}\b(?:doesn't|don't|isn't|aren't|needn't|not|unnecessary)\b/i.test(text))return reject('ENROLL_011_NO_PRESSURE_TACTICS');
+ if(/\b(?:will|always|definitely|certainly|free|zero|save|savings|covered|covers|affordable|cheaper|pays|pay nothing|no cost|approved)\b/i.test(text))return reject('CONDUCT_010_NO_GUARANTEES');
+ // A new product pitch cannot be established to be in scope from minimized text.
+ if(/\b(?:medicare advantage|medigap|supplement|annuit\w*|life insurance|cancer|critical illness|dental|vision|hospital indemnity|PDP|HMO|PPO|ACA)\b/i.test(text))return reject('SOA_006_SOA_SCOPE_VIOLATION');
+ if(/\b(?:buy|choose|recommend|purchase|switch|join|enroll)\b.{0,80}\b(?:plan|policy|product|coverage|insurance)\b/i.test(text))return reject('SOA_006_SOA_SCOPE_VIOLATION');
+ if(/\$\s*\d|\b(?:doctor[s]?|provider[s]?|networks?|drugs?|medications?|premiums?|co.?pays?|coverage|plans?|polic(?:y|ies)|benefits?)\b.{0,40}\b(?:is|are|has|have|includes?|provides?|costs?|accepts?|included)\b/i.test(text))return reject('CONDUCT_010_NO_GUARANTEES');
+ return {allowed:true,rule_id:null};
+}
 import {hasTpmoOrgCount,hasTpmoPlanCount,hasMedicareResource} from '../shared/tpmo2027.js';
 import {detectCallStages,scoringEligibility,isEnrolled} from './callStages.js';
 import {sortTranscript,evidence} from './transcript.js';

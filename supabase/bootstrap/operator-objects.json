@@ -87,6 +87,11 @@
     },
     {
       "schema": "public",
+      "name": "begin_post_call_coaching",
+      "arguments": "p_call uuid, p_token uuid"
+    },
+    {
+      "schema": "public",
       "name": "begin_scoring_job",
       "arguments": "p_call_id uuid, p_template_id uuid, p_transcript jsonb"
     },
@@ -219,6 +224,11 @@
       "schema": "public",
       "name": "claim_recording_reconciliation",
       "arguments": "p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "coaching_call_eligible",
+      "arguments": "c call_records"
     },
     {
       "schema": "public",
@@ -452,6 +462,11 @@
     },
     {
       "schema": "public",
+      "name": "enqueue_post_call_coaching",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "enqueue_post_call_request",
       "arguments": "p_session_id uuid, p_tenant_id uuid, p_agent_id uuid, p_user_id text, p_org_id text, p_clerk_session_id text, p_request_key text, p_action text, p_payload jsonb"
     },
@@ -532,6 +547,11 @@
     },
     {
       "schema": "public",
+      "name": "fence_coaching_dispatch",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "fence_deployment_queue",
       "arguments": ""
     },
@@ -597,6 +617,11 @@
     },
     {
       "schema": "public",
+      "name": "finish_post_call_coaching",
+      "arguments": "p_call uuid, p_token uuid, p_note jsonb, p_model text, p_prompt text, p_reason text"
+    },
+    {
+      "schema": "public",
       "name": "finish_post_call_request",
       "arguments": "p_session_id uuid, p_worker_id uuid, p_request_key text, p_result jsonb, p_error_code text"
     },
@@ -624,6 +649,11 @@
       "schema": "public",
       "name": "get_available_seps_before_fema_078",
       "arguments": "input_zip text"
+    },
+    {
+      "schema": "public",
+      "name": "get_post_call_coaching_dispatch",
+      "arguments": ""
     },
     {
       "schema": "public",
@@ -1157,6 +1187,11 @@
     },
     {
       "schema": "public",
+      "name": "read_post_call_coaching",
+      "arguments": "p_actor text, p_org text, p_call uuid, p_category text, p_agent uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_before_time timestamp with time zone, p_before_id uuid, p_limit integer"
+    },
+    {
+      "schema": "public",
       "name": "reconcile_paragon_serviceability",
       "arguments": "p_call uuid, p_tenant uuid"
     },
@@ -1234,6 +1269,11 @@
       "schema": "public",
       "name": "refresh_sale_compliance_trigger",
       "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "regenerate_post_call_coaching",
+      "arguments": "p_actor text, p_org text, p_call uuid"
     },
     {
       "schema": "public",
@@ -1484,6 +1524,11 @@
       "schema": "public",
       "name": "retry_post_call_transcript",
       "arguments": "p_session_id uuid, p_request_key text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "review_post_call_coaching",
+      "arguments": "p_actor text, p_org text, p_call uuid"
     },
     {
       "schema": "public",
@@ -1782,6 +1827,8 @@
     "pipeline-settings.js",
     "post-call-admin.js",
     "post-call-background.js",
+    "post-call-coaching-background.js",
+    "post-call-coaching.js",
     "post-call.js",
     "recordings.js",
     "retention-holds.js",
