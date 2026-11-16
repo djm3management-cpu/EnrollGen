@@ -297,6 +297,11 @@
     },
     {
       "schema": "public",
+      "name": "connect_supervisor_listen",
+      "arguments": "p_actor text, p_org text, p_session text, p_hash text, p_attempt uuid, p_seconds integer, p_call_limit integer, p_agency_limit integer"
+    },
+    {
+      "schema": "public",
       "name": "consume_admission",
       "arguments": "p_rules jsonb"
     },
@@ -642,6 +647,11 @@
     },
     {
       "schema": "public",
+      "name": "finish_supervisor_listen",
+      "arguments": "p_id uuid"
+    },
+    {
+      "schema": "public",
       "name": "follow_up_access",
       "arguments": "p_tenant_id uuid, p_agent_slug text"
     },
@@ -834,6 +844,11 @@
       "schema": "public",
       "name": "minimize_ghl_delivery_snapshot",
       "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "mint_supervisor_listen",
+      "arguments": "p_actor text, p_org text, p_session text, p_attempt uuid, p_hash text"
     },
     {
       "schema": "public",
@@ -1212,6 +1227,11 @@
     },
     {
       "schema": "public",
+      "name": "read_supervisor_floor",
+      "arguments": "p_actor text, p_org text"
+    },
+    {
+      "schema": "public",
       "name": "reconcile_paragon_serviceability",
       "arguments": "p_call uuid, p_tenant uuid"
     },
@@ -1359,6 +1379,11 @@
       "schema": "public",
       "name": "renew_media_stream",
       "arguments": "p_call_sid text, p_owner uuid"
+    },
+    {
+      "schema": "public",
+      "name": "renew_supervisor_listen",
+      "arguments": "p_id uuid, p_actor text, p_org text, p_session text"
     },
     {
       "schema": "public",
@@ -1682,6 +1707,26 @@
     },
     {
       "schema": "public",
+      "name": "supervisor_floor_rows",
+      "arguments": "p_tenant uuid, p_team uuid[]"
+    },
+    {
+      "schema": "public",
+      "name": "supervisor_listen_authorize",
+      "arguments": "p_actor text, p_org text, p_attempt uuid"
+    },
+    {
+      "schema": "public",
+      "name": "supervisor_listen_history",
+      "arguments": "p_actor text, p_org text, p_before timestamp with time zone, p_before_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "sweep_supervisor_listens",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "sync_ma_disposition_opportunity",
       "arguments": ""
     },
@@ -1875,6 +1920,7 @@
     "stt-alert.js",
     "stt-reconnect.js",
     "stt-usage.js",
+    "supervisor-floor.js",
     "sync-bulletins.js",
     "sync-fema.js",
     "tenant-settings.js",

@@ -653,3 +653,14 @@ test('unexpected media disconnect persists its reason and automatically starts a
  assert.equal(alerts.length,0);
  assert.equal(h.tracks.every(track=>track.closed),true);
 });
+
+test('supervisor tap failure never changes authenticated transcription delivery or recording controls',async t=>{
+ process.env.SUPERVISOR_FLOOR_ENABLED='true';process.env.SUPERVISOR_LISTEN_ENABLED='true';
+ t.after(()=>{delete process.env.SUPERVISOR_FLOOR_ENABLED;delete process.env.SUPERVISOR_LISTEN_ENABLED;});
+ let opened=0,tapped=0,closed=0;
+ const h=await harness(t,{tap:{open(){opened++;},audio(){tapped++;throw Error('supervisor failure');},close(){closed++;}}}),claims=await seedCall(),ws=await h.connect(claims),message=start(claims);
+ ws.send(JSON.stringify(message));await until(()=>h.tracks.length===2);
+ for(let i=0;i<20;i++)for(const track of ['inbound','outbound'])ws.send(JSON.stringify(frame(message.streamSid,track)));
+ await until(()=>h.tracks.every(track=>track.audio.length===20));assert.equal(opened,1);assert.equal(tapped,40);assert.equal(h.twilioStreams.length,0);
+ ws.send(JSON.stringify({event:'stop',streamSid:message.streamSid,stop:{accountSid,callSid:claims.callSid}}));await until(()=>closed===1);
+});

@@ -64,3 +64,6 @@ GRANT SELECT ON public.retention_purge_items TO service_role;
 
 -- Recap approvals are created only by the scoped transactional routine.
 REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.client_recaps FROM service_role;
+
+-- Listen capabilities and history are writable only through the scoped routines.
+REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.supervisor_listen_grants,public.supervisor_listen_sessions FROM service_role;

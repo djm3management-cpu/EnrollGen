@@ -1,3 +1,4 @@
+import {createSupervisorListenServer,listenEnabled} from './media/supervisorListen.js';
 import {withLogContext,inspectInput,securityEvent} from './lib/logger.js';
 import {installOperationalTelemetry,scheduledSuccess} from './lib/operationalTelemetry.js';
 import {createLogger} from './lib/logger.js';
@@ -116,8 +117,10 @@ try { if (featureEnabled('CONFERENCE_CALLING_ENABLED')) conferenceRuntime.draini
 catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) throw error; }
 void recoverConferences();
 
+const supervisorListen=listenEnabled()?createSupervisorListenServer():null;
 server.on("upgrade", (request, socket, head) => withLogContext({service:"telephony"},()=>{
   const { pathname } = new URL(request.url, "http://localhost");
+  if(supervisorListen&&pathname==='/supervisor-listen')return supervisorListen.handleUpgrade(request,socket,head);
   if (pathname.startsWith('/conference-media/')) return conferenceMedia.handleUpgrade(request, socket, head);
   if (pathname === "/media" || pathname.startsWith("/media/")) return handleMediaUpgrade(request, socket, head);
   if (pathname === "/agent") return handleAgentUpgrade(request, socket, head);

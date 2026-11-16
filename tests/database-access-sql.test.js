@@ -1,5 +1,5 @@
 import {AUDITED_TABLES} from '../src/lib/evidenceTransport.js';
-import {before,after,test} from 'node:test';
+import {beforeEach,afterEach,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {buildAccessDatabase,fixtureRoster,uuid,T,U,publicReferences} from './helpers/databaseAccessSchema.js';
 let pg,realTables,agents;
@@ -18,7 +18,10 @@ const denied=async work=>assert.rejects(work,e=>e.code==='42501');
 const zero=async(table,columns='*')=>{
  try{assert.equal((await q(`SELECT ${columns} FROM ${table}`)).length,0,table);}catch(e){if(e.code!=='42501')throw e;}
 };
-before(async()=>{
+// The larger catalog exceeds PGlite's long-lived fixture stack after thousands
+// of deliberate permission errors. Give each scenario an independent database;
+// every table, column, policy and routine assertion below remains in force.
+beforeEach(async()=>{
  ({pg,realTables}=await buildAccessDatabase());
  agents=await q('SELECT id,clerk_user_id FROM enrolled_agents');
  const eid=a=>agents.find(e=>e.clerk_user_id===a.clerk_user_id).id;
@@ -54,7 +57,7 @@ before(async()=>{
  await q('INSERT INTO vendor_controls(tenant_id) VALUES($1)',[T]);
  await q("INSERT INTO carrier_rts(tenant_id,agent_id,channel,carrier,product_line,agent_name) VALUES($1,$2,'Sunfire','Carrier','MA','Own'),($1,$3,'Sunfire','Carrier','MA','Other')",[T,A.id,B.id]);
 });
-after(async()=>{if(pg)await pg.close();});
+afterEach(async()=>{if(pg)await pg.close();});
 
 for(const [label,subject,claims] of [['unprovisioned','user_unknown',{}],['different org',A.clerk_user_id,{org_id:'org_foreign'}],['foreign tenant','user_foreign',{}],['anon',A.clerk_user_id,{role:'anon'}]]) {
  test(`${label}: direct REST projections, mutations and protected RPCs deny across the entire public catalog`,async()=>{

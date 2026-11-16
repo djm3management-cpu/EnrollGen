@@ -1,3 +1,5 @@
+import {supervisorTap} from './supervisorTap.js';
+import {featureEnabled} from '../lib/deploymentFeatures.js';
 import {createLogger} from '../lib/logger.js';
 const logger=createLogger('telephony','mediastream');
 import {reportSttLimit} from './sttAlert.js';
@@ -27,7 +29,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
   waitForAnswer = config.sttWaitForAnswer, answerPollMs = 1000,
   pathPrefix = '/media', speakersFor = () => SPEAKERS,
   limits = MEDIA_LIMITS, onUnexpectedStop = reportSttLimit, transcriptWriter = claims => createTranscriptWriter({ db: supabase, claims }),
-  client = null,
+  client = null, tap = supervisorTap,
   reserveRestart = reserveSttReconnect,
   isConference = async claims => {
     const { data, error } = await supabase.from('call_conferences').select('call_id')
@@ -88,6 +90,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
     const openTracks = () => {
       if (stopped || Object.keys(tracks).length) return;
       for (const [track, speaker] of Object.entries(speakers)) tracks[track] = openTrack({ speaker, notify: emit, timelineOrigin, claims, reconnectBudget });
+      if(featureEnabled('SUPERVISOR_FLOOR_ENABLED')&&featureEnabled('SUPERVISOR_LISTEN_ENABLED')){try{tap.open(claims);}catch{/* Passive observer only. */}}
       emit({ type: 'call_status', status: 'server_transcription_started', streamId: streamSid, callSid: claims.parentCallSid || claims.callSid });
     };
     const checkAnswer = async () => {
@@ -197,6 +200,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
         void Promise.resolve().then(()=>onUnexpectedStop({claims,reason:incidentReason})).catch(()=>logger.error(JSON.stringify({event:'stt_alert_delivery_failed',call_sid:claims.parentCallSid||claims.callSid})));
         } catch {logger.error(JSON.stringify({event:'stt_incident_notification_failed',call_sid:claims.parentCallSid||claims.callSid,reason:incidentReason}));}
       }
+      try{tap.close(claims);}catch{/* Passive observer only. */}
       stopped = true; state = 'stopped'; clearInterval(watchdog); clearTimeout(timer); clearInterval(renewal);
       clearInterval(answerTimer); unsubscribe();
       pending = []; pendingBytes = 0; customerChunks = []; customerBytes = 0;
@@ -231,6 +235,7 @@ export function createMediaServer({ leases = createMediaLeaseClient(), notify = 
       if (!tracks[track]) return; // Drop ringing audio; never queue it for later.
       lastAudioMs = Math.max(lastAudioMs, timelineOffsetMs + (Number(message.media.timestamp)||0));
       tracks[track].send(audio, message.media.timestamp == null ? undefined : timelineOffsetMs + Number(message.media.timestamp));
+      if(featureEnabled('SUPERVISOR_FLOOR_ENABLED')&&featureEnabled('SUPERVISOR_LISTEN_ENABLED')){try{tap.audio(claims,track,audio,Number(message.media.timestamp)||0);}catch{/* Never interrupt transcription. */}}
       if (track === 'inbound') {
         customerChunks.push(audio); customerBytes += audio.length;
         const timestamp = now();

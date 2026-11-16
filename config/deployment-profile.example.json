@@ -76,5 +76,10 @@
     "operationalDays": 90,
     "contactReviewYears": 10,
     "overrides": {}
+  },
+  "supervisorListen": {
+    "maxSeconds": 1800,
+    "perCall": 2,
+    "perAgency": 6
   }
 }

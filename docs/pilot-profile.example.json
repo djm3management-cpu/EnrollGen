@@ -53,5 +53,10 @@
     "phone.example"
   ],
   "appOrigin": "https://app.example",
-  "telephonyOrigin": "https://phone.example"
+  "telephonyOrigin": "https://phone.example",
+  "supervisorListen": {
+    "maxSeconds": 1800,
+    "perCall": 2,
+    "perAgency": 6
+  }
 }

@@ -63,6 +63,7 @@ const loadSessionSummary = () => import("./components/SessionSummary");
 const loadCarrierRef = () => import("./components/CarrierRef");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
+const SupervisorFloor=lazyWithRetry(()=>import("./components/SupervisorFloor"));
 const loadAgentDashboard = () => import("./components/AgentDashboard");
 const AgentDashboard = lazyWithRetry(loadAgentDashboard);
 const PostCallCoaching = lazyWithRetry(() => import("./components/callDetail/PostCallCoaching"));
@@ -515,7 +516,7 @@ function isAdminUser(user) {
   return role === "admin" || role === "org:admin" || user?.publicMetadata?.isAdmin === true;
 }
 
-function getTabsForMode(mode, features = {}) {
+function getTabsForMode(mode, features = {}, supervisorFloor = false) {
   const tabs = [
     { id: "dashboard", label: "DASHBOARD" },
     { id: "contacts", label: "CRM" },
@@ -530,6 +531,7 @@ function getTabsForMode(mode, features = {}) {
     tabs.push({ id: "acaIntel", label: "ACA INTELLIGENCE" });
   }
 
+  if(features.SUPERVISOR_FLOOR_ENABLED&&supervisorFloor)tabs.push({id:"floor",label:"FLOOR"});
   if (features.POST_CALL_COACHING_ENABLED) tabs.push({ id: "coaching", label: "COACHING" });
   tabs.push({ id: "rts", label: "RTS" });
   if (features.DAILY_VERSE_ENABLED) tabs.push({ id: "verse", label: "DAILY VERSE" });
@@ -538,7 +540,7 @@ function getTabsForMode(mode, features = {}) {
 }
 
 function AppShell({ currentUser = null }) {
-  const { features } = useTenantConfig();
+  const { features, supervisorFloor } = useTenantConfig();
   const [mode, setMode] = useState(getModeFromLocation);
   const [appMode, setAppMode] = useState(getAppModeFromLocation);
   const [openPanel, setOpenPanel] = useState(null);
@@ -578,7 +580,7 @@ function AppShell({ currentUser = null }) {
   }, [mode]);
 
   const canAdmin = isAdminUser(currentUser);
-  const navTabs = useMemo(() => getTabsForMode(mode, features), [mode, features]);
+  const navTabs = useMemo(() => getTabsForMode(mode, features, supervisorFloor), [mode, features, supervisorFloor]);
   const visibleLeftRailIds = LEFT_RAIL_IDS_BY_MODE[mode] || EMPTY_LEFT_RAIL_IDS;
   const visibleRailWidth = visibleLeftRailIds.includes(expandedItem?.id)
     ? railWidth
@@ -860,6 +862,9 @@ function AppShell({ currentUser = null }) {
             <ACAIntelligence />
           </LazyPanel>
         );
+      case "floor":
+        if(!features.SUPERVISOR_FLOOR_ENABLED||!supervisorFloor)return null;
+        return <LazyPanel><SupervisorFloor /></LazyPanel>;
       case "coaching":
         if (!features.POST_CALL_COACHING_ENABLED) return null;
         return <LazyPanel><PostCallCoaching /></LazyPanel>;

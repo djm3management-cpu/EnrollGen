@@ -64,8 +64,8 @@ async function getTenantBundle(getToken) {
 
     const response = await fetchWithClerk(getToken, '/api/deployment-features');
     if (!response.ok) throw new Error('Deployment features unavailable.');
-    const { features, entitlement } = await response.json();
-    return { client, tenant, agents, features, entitlement };
+    const { features, entitlement, supervisorFloor } = await response.json();
+    return { client, tenant, agents, features, entitlement, supervisorFloor };
   })();
 
   tenantRequests.set(cacheKey, request);
@@ -94,7 +94,7 @@ export function TenantConfigProvider({ children }) {
     try {
       const bundle = await getTenantBundle(getToken);
       setState({
-        features: bundle.features, entitlement: bundle.entitlement,
+        features: bundle.features, entitlement: bundle.entitlement, supervisorFloor:bundle.supervisorFloor,
         tenant: bundle.tenant,
         agents: bundle.agents,
         supabaseClient: bundle.client,
@@ -137,7 +137,7 @@ export function TenantConfigProvider({ children }) {
         const bundle = await getTenantBundle(getToken);
         if (!cancelled) {
           setState({
-            features: bundle.features, entitlement: bundle.entitlement,
+            features: bundle.features, entitlement: bundle.entitlement, supervisorFloor:bundle.supervisorFloor,
             tenant: bundle.tenant,
             agents: bundle.agents,
             supabaseClient: bundle.client,
@@ -165,6 +165,7 @@ export function TenantConfigProvider({ children }) {
 
   const value = useMemo(() => ({
     features: state.features || {},
+    supervisorFloor: state.supervisorFloor === true,
     billingEntitlement: state.entitlement || null,
     tenant: state.tenant,
     tenantId: state.tenant?.id || null,
