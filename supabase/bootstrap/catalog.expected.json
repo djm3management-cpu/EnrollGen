@@ -1384,6 +1384,24 @@
     },
     {
       "schema": "public",
+      "name": "practice_results",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "practice_sessions",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "provider_alert_throttle",
       "kind": "r",
       "owner": "postgres",
@@ -19780,6 +19798,336 @@
     },
     {
       "schema": "public",
+      "relation": "practice_results",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "agent_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "score",
+      "position": 4,
+      "type": "numeric",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "rules_version",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "scorecard",
+      "position": 6,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "coaching",
+      "position": 7,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "created_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "retention_started_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "agent_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "scenario_id",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "product_type",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "difficulty",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "status",
+      "position": 7,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'active'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "end_reason",
+      "position": 8,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "started_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "last_activity_at",
+      "position": 10,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "expires_at",
+      "position": 11,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "ended_at",
+      "position": 12,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "turn_limit",
+      "position": 13,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "turn_count",
+      "position": 14,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "transcript",
+      "position": 15,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'[]'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "collected",
+      "position": 16,
+      "type": "text[]",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::text[]"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "work_token",
+      "position": 17,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "work_kind",
+      "position": 18,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "lease_until",
+      "position": 19,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "reserved_tokens",
+      "position": 20,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "retention_started_at",
+      "position": 21,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
       "relation": "provider_alert_throttle",
       "name": "alert_key",
       "position": 1,
@@ -24972,6 +25320,17 @@
     },
     {
       "schema": "public",
+      "relation": "tenants",
+      "name": "practice_settings",
+      "position": 16,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{\"turns\": 60, \"minutes\": 30, \"agent_daily\": 5, \"agency_daily\": 50}'::jsonb"
+    },
+    {
+      "schema": "public",
       "relation": "training_completions",
       "name": "id",
       "position": 1,
@@ -29212,6 +29571,30 @@
       ],
       "cmd": "SELECT",
       "qual": "deployment_row_visible('post_call_coaching'::text, to_jsonb(post_call_coaching.*))",
+      "with_check": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "practice_scoped_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "deployment_row_visible('practice_results'::text, to_jsonb(practice_results.*))",
+      "with_check": null
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_scoped_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "deployment_row_visible('practice_sessions'::text, to_jsonb(practice_sessions.*))",
       "with_check": null
     },
     {
@@ -44955,6 +45338,150 @@
     },
     {
       "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "provider_alert_throttle",
       "grantor": "postgres",
       "grantee": "postgres",
@@ -53767,6 +54294,19 @@
     },
     {
       "schema": "public",
+      "name": "begin_practice_work",
+      "arguments": "p_actor text, p_org text, p_id uuid, p_kind text, p_text text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.begin_practice_work(p_actor text, p_org text, p_id uuid, p_kind text, p_text text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE s public.practice_sessions; token uuid:=gen_random_uuid(); at_ms integer;\nBEGIN\n s:=public.practice_target(p_actor,p_org,p_id,true);\n SELECT * INTO s FROM public.practice_sessions WHERE id=p_id FOR UPDATE;\n IF s.status IN ('completed','incomplete') THEN RETURN NULL; END IF;\n IF s.work_token IS NOT NULL AND s.lease_until>clock_timestamp() THEN RAISE EXCEPTION 'Practice busy' USING ERRCODE='55000'; END IF;\n IF p_kind IS NULL OR p_kind NOT IN ('turn','result') THEN RAISE EXCEPTION 'Invalid work' USING ERRCODE='22023'; END IF;\n IF s.expires_at<=clock_timestamp() THEN s.status:='ending';s.end_reason:='time_limit';\n ELSIF s.last_activity_at<clock_timestamp()-interval '5 minutes' THEN UPDATE public.practice_sessions SET status='incomplete',end_reason='abandoned',ended_at=clock_timestamp(),work_token=NULL,lease_until=NULL WHERE id=p_id; RETURN NULL;\n ELSIF s.status='ending' OR p_kind='result' THEN s.status:='ending';s.end_reason:=coalesce(s.end_reason,'agent'); END IF;\n IF s.status='ending' THEN p_kind:='result'; ELSE\n  IF p_text IS NULL OR length(btrim(p_text))=0 OR length(p_text)>1000 THEN RAISE EXCEPTION 'Invalid turn' USING ERRCODE='22023'; END IF;\n  at_ms:=greatest(coalesce((s.transcript->-1->>'end_ms')::integer,0)+1,(extract(epoch FROM clock_timestamp()-s.started_at)*1000)::integer);\n  s.transcript:=s.transcript||jsonb_build_array(jsonb_build_object('speaker','agent','text',p_text,'start_ms',at_ms,'end_ms',at_ms+1));\n END IF;\n UPDATE public.practice_sessions SET status=s.status,end_reason=s.end_reason,transcript=s.transcript,work_token=token,work_kind=p_kind,lease_until=clock_timestamp()+interval '3 minutes',last_activity_at=clock_timestamp() WHERE id=p_id RETURNING * INTO s;\n RETURN to_jsonb(s);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "begin_scoring_job",
       "arguments": "p_call_id uuid, p_template_id uuid, p_transcript jsonb",
       "result": "jsonb",
@@ -54582,7 +55122,7 @@
         "search_path=pg_catalog, public, extensions, pg_temp"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.deployment_row_visible(p_table text, r jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE i record; t uuid; parent jsonb; owner_id uuid;\nBEGIN\n SELECT * INTO i FROM public.current_deployment_identity();\n IF i.tenant_id IS NULL THEN RETURN false; END IF;\n t:=nullif(r->>'tenant_id','')::uuid;\n IF t IS NOT NULL AND t<>i.tenant_id THEN RETURN false; END IF;\n CASE\n WHEN p_table='post_call_coaching' THEN\n   SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid AND c.tenant_id=t AND c.agent_id=(r->>'agent_id')::uuid;\n   RETURN public.deployment_row_visible('call_records',parent);\n  WHEN p_table='client_recaps' THEN\n   SELECT to_jsonb(c) INTO parent FROM public.enrollment_intakes e JOIN public.call_records c ON c.id=e.call_id AND c.tenant_id=e.tenant_id WHERE e.id=(r->>'enrollment_id')::uuid AND e.tenant_id=t AND c.agent_id=(r->>'agent_id')::uuid;\n   RETURN public.deployment_row_visible('call_records',parent);\n  WHEN p_table='tenants' THEN RETURN r->>'id'=i.tenant_id::text;\n WHEN p_table IN ('tenant_agents','enrolled_agents') THEN RETURN t=i.tenant_id;\n WHEN p_table='agents' THEN\n  RETURN EXISTS(SELECT 1 FROM public.call_transcripts ct WHERE ct.agent_id=(r->>'id')::uuid AND public.deployment_row_visible('call_transcripts',to_jsonb(ct)));\n WHEN p_table='contacts' THEN RETURN public.deployment_can_access_contact((r->>'id')::uuid);\n WHEN p_table IN ('contact_notes','contact_activities','contact_lead_intel','policies','messages','contact_tags','opportunities','follow_ups') THEN\n  IF NOT public.deployment_can_access_contact(nullif(r->>'contact_id','')::uuid) THEN RETURN false; END IF;\n  IF p_table='contact_notes' THEN RETURN r->>'agent_id'=i.agent_slug OR public.deployment_is_admin(i.tenant_id); END IF;\n  IF p_table='follow_ups' THEN RETURN public.follow_up_access(t,r->>'agent_id'); END IF;\n  IF p_table='opportunities' THEN RETURN r->>'assigned_agent_id'=i.roster_id::text OR public.deployment_is_admin(i.tenant_id); END IF;\n  RETURN t=i.tenant_id;\n WHEN p_table IN ('opportunity_events','opportunity_stage_history') THEN\n  SELECT to_jsonb(o) INTO parent FROM public.opportunities o WHERE o.id=(r->>'opportunity_id')::uuid;\n  RETURN public.deployment_row_visible('opportunities',parent);\n WHEN p_table='call_disposition_opportunity_log' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table IN ('pipelines','pipeline_stages') THEN RETURN t=i.tenant_id;\n WHEN p_table IN ('script_templates','knowledge_base') THEN RETURN t=i.tenant_id OR t IS NULL;\n WHEN p_table='message_media' THEN\n  SELECT to_jsonb(m) INTO parent FROM public.messages m WHERE m.id=(r->>'message_id')::uuid;\n  RETURN public.deployment_row_visible('messages',parent);\n WHEN p_table='knowledge_updates' THEN\n  SELECT to_jsonb(k) INTO parent FROM public.knowledge_base k WHERE k.id=(r->>'knowledge_base_id')::uuid;\n  RETURN public.deployment_row_visible('knowledge_base',parent);\n WHEN p_table IN ('sessions','call_records','call_logs','sales_log','call_threads','agent_compliance_profiles','corrective_actions','cross_sell_attempts') THEN\n  owner_id:=nullif(r->>'agent_id','')::uuid;\n  IF t IS NULL THEN SELECT e.tenant_id INTO t FROM public.enrolled_agents e WHERE e.id=owner_id; END IF;\n  RETURN public.deployment_can_read_agent(t,owner_id);\n WHEN p_table='call_transcripts' THEN\n  owner_id:=nullif(r->>'owner_agent_id','')::uuid;\n  IF owner_id IS NOT NULL THEN RETURN public.deployment_can_read_agent(t,owner_id); END IF;\n  SELECT to_jsonb(s) INTO parent FROM public.sessions s WHERE s.id=(r->>'session_id')::uuid AND s.tenant_id=t;\n  RETURN public.deployment_row_visible('sessions',parent);\n WHEN p_table='transcript_chunks' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_transcripts c WHERE c.id=(r->>'transcript_id')::uuid;\n  RETURN public.deployment_row_visible('call_transcripts',parent);\n WHEN p_table IN ('compliance_flags','section_scores') THEN\n  SELECT to_jsonb(s) INTO parent FROM public.sessions s WHERE s.id=(r->>'session_id')::uuid;\n  RETURN public.deployment_row_visible('sessions',parent);\n WHEN p_table IN ('compliance_scorecards','compliance_scores','intent_detections','phi_redactions','followup_queue','enrollment_intakes') THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='scorecard_items' THEN\n  SELECT to_jsonb(s) INTO parent FROM public.compliance_scorecards s WHERE s.id=(r->>'scorecard_id')::uuid;\n  RETURN public.deployment_row_visible('compliance_scorecards',parent);\n WHEN p_table='inbound_calls' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_record_id')::uuid AND c.tenant_id=t;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='telephony_events' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.twilio_call_sid=coalesce(r->>'twilio_call_sid',r->>'call_sid') AND c.tenant_id=t;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='carrier_rts' THEN RETURN t=i.tenant_id AND (r->>'agent_id'=i.roster_id::text OR public.deployment_is_admin(t));\n WHEN p_table='pii_access_log' THEN RETURN r->>'clerk_user_id'=auth.jwt()->>'sub' OR\n  (public.deployment_is_admin(i.tenant_id) AND EXISTS(SELECT 1 FROM public.tenant_agents a WHERE a.id=(r->>'agent_id')::uuid AND a.tenant_id=i.tenant_id));\n WHEN p_table IN ('subscriptions','usage_records','rts_ingestion_log','call_insights','agent_coaching') THEN RETURN t=i.tenant_id AND public.deployment_is_admin(t);\n WHEN p_table IN ('calibration_runs','calibration_overrides','autoresearch_iterations') THEN RETURN false; -- legacy rows have no reliable tenant binding\n WHEN p_table='training_completions' THEN RETURN t=i.tenant_id AND (r->>'agent_id'=i.agent_id::text OR r->>'agent_id'=auth.jwt()->>'sub' OR public.deployment_is_admin(t));\n WHEN p_table='user_preferences' THEN RETURN r->>'clerk_user_id'=auth.jwt()->>'sub';\n WHEN p_table IN ('compliance_intents','scoring_templates','scoring_template_items') THEN RETURN true; -- authenticated deployment reference data\n ELSE RETURN false; -- unrecognized, missing-baseline and service ledgers stay closed\n END CASE;\n RETURN false;\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.deployment_row_visible(p_table text, r jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE i record; t uuid; parent jsonb; owner_id uuid;\nBEGIN\n SELECT * INTO i FROM public.current_deployment_identity();\n IF i.tenant_id IS NULL THEN RETURN false; END IF;\n t:=nullif(r->>'tenant_id','')::uuid;\n IF t IS NOT NULL AND t<>i.tenant_id THEN RETURN false; END IF;\n CASE\n WHEN p_table='post_call_coaching' THEN\n   SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid AND c.tenant_id=t AND c.agent_id=(r->>'agent_id')::uuid;\n   RETURN public.deployment_row_visible('call_records',parent);\n  WHEN p_table='client_recaps' THEN\n   SELECT to_jsonb(c) INTO parent FROM public.enrollment_intakes e JOIN public.call_records c ON c.id=e.call_id AND c.tenant_id=e.tenant_id WHERE e.id=(r->>'enrollment_id')::uuid AND e.tenant_id=t AND c.agent_id=(r->>'agent_id')::uuid;\n   RETURN public.deployment_row_visible('call_records',parent);\n  WHEN p_table IN ('practice_sessions','practice_results') THEN RETURN EXISTS(SELECT 1 FROM public.current_deployment_identity() i WHERE i.tenant_id=t AND (i.agent_id=(r->>'agent_id')::uuid OR i.authority='admin' OR i.authority='manager' AND (r->>'agent_id')::uuid=ANY(i.team_agent_ids))); WHEN p_table='tenants' THEN RETURN r->>'id'=i.tenant_id::text;\n WHEN p_table IN ('tenant_agents','enrolled_agents') THEN RETURN t=i.tenant_id;\n WHEN p_table='agents' THEN\n  RETURN EXISTS(SELECT 1 FROM public.call_transcripts ct WHERE ct.agent_id=(r->>'id')::uuid AND public.deployment_row_visible('call_transcripts',to_jsonb(ct)));\n WHEN p_table='contacts' THEN RETURN public.deployment_can_access_contact((r->>'id')::uuid);\n WHEN p_table IN ('contact_notes','contact_activities','contact_lead_intel','policies','messages','contact_tags','opportunities','follow_ups') THEN\n  IF NOT public.deployment_can_access_contact(nullif(r->>'contact_id','')::uuid) THEN RETURN false; END IF;\n  IF p_table='contact_notes' THEN RETURN r->>'agent_id'=i.agent_slug OR public.deployment_is_admin(i.tenant_id); END IF;\n  IF p_table='follow_ups' THEN RETURN public.follow_up_access(t,r->>'agent_id'); END IF;\n  IF p_table='opportunities' THEN RETURN r->>'assigned_agent_id'=i.roster_id::text OR public.deployment_is_admin(i.tenant_id); END IF;\n  RETURN t=i.tenant_id;\n WHEN p_table IN ('opportunity_events','opportunity_stage_history') THEN\n  SELECT to_jsonb(o) INTO parent FROM public.opportunities o WHERE o.id=(r->>'opportunity_id')::uuid;\n  RETURN public.deployment_row_visible('opportunities',parent);\n WHEN p_table='call_disposition_opportunity_log' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table IN ('pipelines','pipeline_stages') THEN RETURN t=i.tenant_id;\n WHEN p_table IN ('script_templates','knowledge_base') THEN RETURN t=i.tenant_id OR t IS NULL;\n WHEN p_table='message_media' THEN\n  SELECT to_jsonb(m) INTO parent FROM public.messages m WHERE m.id=(r->>'message_id')::uuid;\n  RETURN public.deployment_row_visible('messages',parent);\n WHEN p_table='knowledge_updates' THEN\n  SELECT to_jsonb(k) INTO parent FROM public.knowledge_base k WHERE k.id=(r->>'knowledge_base_id')::uuid;\n  RETURN public.deployment_row_visible('knowledge_base',parent);\n WHEN p_table IN ('sessions','call_records','call_logs','sales_log','call_threads','agent_compliance_profiles','corrective_actions','cross_sell_attempts') THEN\n  owner_id:=nullif(r->>'agent_id','')::uuid;\n  IF t IS NULL THEN SELECT e.tenant_id INTO t FROM public.enrolled_agents e WHERE e.id=owner_id; END IF;\n  RETURN public.deployment_can_read_agent(t,owner_id);\n WHEN p_table='call_transcripts' THEN\n  owner_id:=nullif(r->>'owner_agent_id','')::uuid;\n  IF owner_id IS NOT NULL THEN RETURN public.deployment_can_read_agent(t,owner_id); END IF;\n  SELECT to_jsonb(s) INTO parent FROM public.sessions s WHERE s.id=(r->>'session_id')::uuid AND s.tenant_id=t;\n  RETURN public.deployment_row_visible('sessions',parent);\n WHEN p_table='transcript_chunks' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_transcripts c WHERE c.id=(r->>'transcript_id')::uuid;\n  RETURN public.deployment_row_visible('call_transcripts',parent);\n WHEN p_table IN ('compliance_flags','section_scores') THEN\n  SELECT to_jsonb(s) INTO parent FROM public.sessions s WHERE s.id=(r->>'session_id')::uuid;\n  RETURN public.deployment_row_visible('sessions',parent);\n WHEN p_table IN ('compliance_scorecards','compliance_scores','intent_detections','phi_redactions','followup_queue','enrollment_intakes') THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_id')::uuid;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='scorecard_items' THEN\n  SELECT to_jsonb(s) INTO parent FROM public.compliance_scorecards s WHERE s.id=(r->>'scorecard_id')::uuid;\n  RETURN public.deployment_row_visible('compliance_scorecards',parent);\n WHEN p_table='inbound_calls' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.id=(r->>'call_record_id')::uuid AND c.tenant_id=t;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='telephony_events' THEN\n  SELECT to_jsonb(c) INTO parent FROM public.call_records c WHERE c.twilio_call_sid=coalesce(r->>'twilio_call_sid',r->>'call_sid') AND c.tenant_id=t;\n  RETURN public.deployment_row_visible('call_records',parent);\n WHEN p_table='carrier_rts' THEN RETURN t=i.tenant_id AND (r->>'agent_id'=i.roster_id::text OR public.deployment_is_admin(t));\n WHEN p_table='pii_access_log' THEN RETURN r->>'clerk_user_id'=auth.jwt()->>'sub' OR\n  (public.deployment_is_admin(i.tenant_id) AND EXISTS(SELECT 1 FROM public.tenant_agents a WHERE a.id=(r->>'agent_id')::uuid AND a.tenant_id=i.tenant_id));\n WHEN p_table IN ('subscriptions','usage_records','rts_ingestion_log','call_insights','agent_coaching') THEN RETURN t=i.tenant_id AND public.deployment_is_admin(t);\n WHEN p_table IN ('calibration_runs','calibration_overrides','autoresearch_iterations') THEN RETURN false; -- legacy rows have no reliable tenant binding\n WHEN p_table='training_completions' THEN RETURN t=i.tenant_id AND (r->>'agent_id'=i.agent_id::text OR r->>'agent_id'=auth.jwt()->>'sub' OR public.deployment_is_admin(t));\n WHEN p_table='user_preferences' THEN RETURN r->>'clerk_user_id'=auth.jwt()->>'sub';\n WHEN p_table IN ('compliance_intents','scoring_templates','scoring_template_items') THEN RETURN true; -- authenticated deployment reference data\n ELSE RETURN false; -- unrecognized, missing-baseline and service ledgers stay closed\n END CASE;\n RETURN false;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -55197,6 +55737,32 @@
     },
     {
       "schema": "public",
+      "name": "finish_practice_result",
+      "arguments": "p_id uuid, p_token uuid, p_result jsonb",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.finish_practice_result(p_id uuid, p_token uuid, p_result jsonb DEFAULT NULL::jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE s public.practice_sessions;\nBEGIN\n PERFORM public.practice_server();SELECT * INTO s FROM public.practice_sessions WHERE id=p_id FOR UPDATE;\n IF p_token IS NULL OR s.work_token IS DISTINCT FROM p_token OR s.lease_until<=clock_timestamp() OR s.status NOT IN ('active','ending') THEN RETURN false; END IF;\n IF p_result='null'::jsonb THEN p_result:=NULL; END IF;\n IF p_result IS NOT NULL THEN\n  IF s.work_kind<>'result' OR s.status<>'ending' THEN RETURN false; END IF;\n  INSERT INTO public.practice_results(id,tenant_id,agent_id,score,rules_version,scorecard,coaching,retention_started_at) VALUES(s.id,s.tenant_id,s.agent_id,(p_result->>'score')::numeric,p_result->>'rules_version',p_result->'scorecard',p_result->'coaching',s.retention_started_at);\n END IF;\n UPDATE public.practice_sessions SET status=CASE WHEN p_result IS NULL THEN 'incomplete' ELSE 'completed' END,end_reason=CASE WHEN p_result IS NULL THEN 'generation_failed' ELSE end_reason END,ended_at=clock_timestamp(),work_token=NULL,work_kind=NULL,lease_until=NULL WHERE id=p_id; RETURN true;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "finish_practice_turn",
+      "arguments": "p_id uuid, p_token uuid, p_reply text, p_ended boolean, p_collected text[]",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.finish_practice_turn(p_id uuid, p_token uuid, p_reply text, p_ended boolean, p_collected text[])\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE s public.practice_sessions; at_ms integer;\nBEGIN\n PERFORM public.practice_server();SELECT * INTO s FROM public.practice_sessions WHERE id=p_id FOR UPDATE;\n IF p_token IS NULL OR s.work_token IS DISTINCT FROM p_token OR s.work_kind<>'turn' OR s.lease_until<=clock_timestamp() OR s.status<>'active' THEN RETURN NULL; END IF;\n IF p_reply IS NULL OR length(btrim(p_reply))=0 OR length(p_reply)>600 OR p_ended IS NULL OR p_collected IS NULL THEN RAISE EXCEPTION 'Invalid reply' USING ERRCODE='22023'; END IF;\n at_ms:=greatest((s.transcript->-1->>'end_ms')::integer+1,(extract(epoch FROM clock_timestamp()-s.started_at)*1000)::integer);\n s.transcript:=s.transcript||jsonb_build_array(jsonb_build_object('speaker','customer','text',p_reply,'start_ms',at_ms,'end_ms',at_ms+1));\n s.end_reason:=CASE WHEN s.expires_at<=clock_timestamp() THEN 'time_limit' WHEN p_ended THEN 'consumer' WHEN s.turn_count+1>=s.turn_limit THEN 'turn_limit' END;\n UPDATE public.practice_sessions SET transcript=s.transcript,turn_count=turn_count+1,collected=ARRAY(SELECT DISTINCT unnest(collected||p_collected)),status=CASE WHEN s.end_reason IS NULL THEN 'active' ELSE 'ending' END,end_reason=s.end_reason,work_token=NULL,work_kind=NULL,lease_until=NULL,last_activity_at=clock_timestamp() WHERE id=p_id RETURNING * INTO s;\n RETURN to_jsonb(s)-ARRAY['work_token','work_kind','lease_until'];\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "finish_supervisor_listen",
       "arguments": "p_id uuid",
       "result": "boolean",
@@ -55366,6 +55932,19 @@
     },
     {
       "schema": "public",
+      "name": "guard_practice_settings",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.guard_practice_settings()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF NEW.practice_settings IS DISTINCT FROM OLD.practice_settings AND (NOT public.deployment_feature_enabled('PRACTICE_CALLER_ENABLED') OR NOT EXISTS(SELECT 1 FROM public.admin_action_permit WHERE transaction_id=txid_current())) THEN RAISE EXCEPTION 'Audited settings required' USING ERRCODE='42501'; END IF;\n RETURN NEW;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "heartbeat_conversely_worker",
       "arguments": "p_enabled boolean",
       "result": "void",
@@ -55467,6 +56046,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.link_telephony_call_record(p_record_id uuid, p_tenant_id uuid, p_sid text, p_user_id text)\n RETURNS text\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE attempt telephony_call_attempts; why text;\nBEGIN\n  PERFORM 1 FROM call_records WHERE id=p_record_id AND tenant_id=p_tenant_id FOR UPDATE;\n  IF NOT FOUND THEN RETURN 'record_not_found'; END IF;\n  SELECT a.* INTO attempt FROM telephony_call_attempts a\n    JOIN tenant_agents t ON t.agent_slug=a.agent_id AND t.tenant_id=a.tenant_id\n    WHERE a.tenant_id=p_tenant_id AND t.clerk_user_id=p_user_id\n      AND (a.parent_call_sid=p_sid OR a.child_call_sid=p_sid)\n    ORDER BY a.created_at DESC LIMIT 1 FOR UPDATE OF a;\n  IF attempt.inbound_call_id IS NOT NULL THEN\n    PERFORM 1 FROM inbound_calls WHERE id=attempt.inbound_call_id FOR UPDATE;\n  END IF;\n  IF attempt.id IS NULL THEN why:='sid_or_agent_not_found';\n  ELSIF EXISTS(SELECT 1 FROM call_records WHERE id=p_record_id AND twilio_call_sid IS NOT NULL AND twilio_call_sid<>attempt.parent_call_sid) THEN why:='record_linked_to_other_call';\n  ELSIF attempt.call_record_id IS NOT NULL AND attempt.call_record_id<>p_record_id THEN why:='already_linked';\n  ELSIF attempt.inbound_call_id IS NOT NULL AND EXISTS (\n    SELECT 1 FROM inbound_calls WHERE id=attempt.inbound_call_id AND call_record_id IS NOT NULL AND call_record_id<>p_record_id\n  ) THEN why:='already_linked';\n  ELSE\n    UPDATE telephony_call_attempts SET call_record_id=p_record_id WHERE id=attempt.id;\n    UPDATE inbound_calls SET call_record_id=p_record_id WHERE id=attempt.inbound_call_id AND tenant_id=p_tenant_id;\n    UPDATE call_records SET twilio_call_sid=attempt.parent_call_sid WHERE id=p_record_id;\n    DELETE FROM integration_link_issues WHERE call_record_id=p_record_id;\n    RETURN 'linked';\n  END IF;\n  INSERT INTO integration_link_issues(call_record_id,twilio_call_sid,reason)\n    VALUES(p_record_id,p_sid,why) ON CONFLICT(call_record_id) DO UPDATE SET reason=EXCLUDED.reason,updated_at=now();\n  RETURN why;\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "list_practice_sessions",
+      "arguments": "p_actor text, p_org text, p_before timestamp with time zone, p_before_id uuid",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.list_practice_sessions(p_actor text, p_org text, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone, p_before_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE i jsonb; rows jsonb; summaries jsonb;\nBEGIN\n i:=public.practice_identity(p_actor,p_org);\n WITH scoped AS (SELECT s.*,r.score FROM public.practice_sessions s LEFT JOIN public.practice_results r USING(id) WHERE s.tenant_id=(i->>'tenant_id')::uuid AND (s.agent_id=(i->>'agent_id')::uuid OR i->>'authority'='admin' OR i->>'authority'='manager' AND i->'team_agent_ids' ? s.agent_id::text))\n SELECT coalesce(jsonb_agg(to_jsonb(x)),'[]') INTO rows FROM (SELECT id,agent_id,scenario_id,difficulty,status,end_reason,started_at,score FROM scoped WHERE p_before IS NULL OR (started_at,id)<(p_before,p_before_id) ORDER BY started_at DESC,id DESC LIMIT 31) x;\n WITH scoped AS (SELECT s.*,r.score,r.scorecard FROM public.practice_sessions s JOIN public.practice_results r USING(id) WHERE s.status='completed' AND s.tenant_id=(i->>'tenant_id')::uuid AND (s.agent_id=(i->>'agent_id')::uuid OR i->>'authority'='admin' OR i->>'authority'='manager' AND i->'team_agent_ids' ? s.agent_id::text)), ranked AS (SELECT *,row_number() OVER(PARTITION BY agent_id ORDER BY started_at DESC,id DESC) n FROM scoped), stats AS (SELECT agent_id,count(*) sessions_completed,round(avg(score),1) average_score,round(avg(score) FILTER(WHERE n<=5)-avg(score) FILTER(WHERE n>5 AND n<=10),1) trend FROM ranked GROUP BY agent_id)\n SELECT coalesce(jsonb_agg(to_jsonb(x)),'[]') INTO summaries FROM (SELECT stats.*,e.name,coalesce((SELECT jsonb_agg(m) FROM (SELECT item->>'intent_code' rule,count(*) missed FROM scoped s CROSS JOIN LATERAL jsonb_array_elements(s.scorecard->'scorecard_items') item WHERE s.agent_id=stats.agent_id AND item->>'result'='fail' GROUP BY item->>'intent_code' ORDER BY count(*) DESC,item->>'intent_code' LIMIT 5)m),'[]') most_missed_rules FROM stats JOIN public.enrolled_agents e ON e.id=stats.agent_id) x;\n RETURN jsonb_build_object('authority',i->>'authority','own_agent_id',i->>'agent_id','sessions',rows,'summaries',summaries);\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -56078,6 +56670,45 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.pii_blind_index(p_value text)\n RETURNS text\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\n  SELECT CASE\n    WHEN p_value IS NULL OR btrim(p_value) = '' THEN NULL\n    ELSE encode(extensions.hmac(convert_to(lower(btrim(p_value)), 'UTF8'), pii_vault.blind_index_key(), 'sha256'), 'hex')\n  END;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "practice_identity",
+      "arguments": "p_actor text, p_org text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.practice_identity(p_actor text, p_org text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE i record;\nBEGIN\n PERFORM public.practice_server(); SELECT * INTO i FROM public.resolve_deployment_subject(p_actor,p_org);\n IF i.agent_id IS NULL THEN RAISE EXCEPTION 'Membership required' USING ERRCODE='42501'; END IF; RETURN to_jsonb(i);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "practice_server",
+      "arguments": "",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.practice_server()\n RETURNS void\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('PRACTICE_CALLER_ENABLED') THEN RAISE EXCEPTION 'Practice unavailable' USING ERRCODE='42501'; END IF;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "practice_target",
+      "arguments": "p_actor text, p_org text, p_id uuid, p_write boolean",
+      "result": "practice_sessions",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.practice_target(p_actor text, p_org text, p_id uuid, p_write boolean DEFAULT false)\n RETURNS practice_sessions\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE i jsonb; s public.practice_sessions;\nBEGIN\n i:=public.practice_identity(p_actor,p_org); SELECT * INTO s FROM public.practice_sessions WHERE id=p_id AND tenant_id=(i->>'tenant_id')::uuid;\n IF s.id IS NULL OR (s.agent_id<>(i->>'agent_id')::uuid AND (p_write OR NOT (i->>'authority'='admin' OR i->>'authority'='manager' AND i->'team_agent_ids' ? s.agent_id::text))) THEN RAISE EXCEPTION 'Practice scope denied' USING ERRCODE='42501'; END IF;\n RETURN s;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -56705,6 +57336,19 @@
     },
     {
       "schema": "public",
+      "name": "read_practice_session",
+      "arguments": "p_actor text, p_org text, p_id uuid",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.read_practice_session(p_actor text, p_org text, p_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE s public.practice_sessions; i jsonb; answer jsonb;\nBEGIN\n s:=public.practice_target(p_actor,p_org,p_id);i:=public.practice_identity(p_actor,p_org);\n IF s.agent_id<>(i->>'agent_id')::uuid THEN\n  INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result) VALUES(gen_random_uuid(),p_actor,s.tenant_id,'practice_transcript','practice_sessions',s.id::text,'succeeded');\n END IF;\n SELECT to_jsonb(s)-ARRAY['work_token','work_kind','lease_until']||jsonb_build_object('result',(SELECT to_jsonb(r)-ARRAY['tenant_id','agent_id','retention_started_at'] FROM public.practice_results r WHERE id=s.id)) INTO answer;\n RETURN answer;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "read_supervisor_floor",
       "arguments": "p_actor text, p_org text",
       "result": "jsonb",
@@ -57235,6 +57879,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.reserve_conversely_week(p_week date, p_samples integer, p_decisions jsonb)\n RETURNS SETOF conversely_weekly_audit\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE t record;r uuid;token uuid;d jsonb;\nBEGIN\n IF NOT public.deployment_feature_enabled('CONVERSELY_UPLOAD_ENABLED') THEN RETURN; END IF;\n IF p_samples<>1 OR extract(isodow FROM p_week)<>1 OR p_week+7>(now() AT TIME ZONE public.deployment_timezone())::date THEN RAISE EXCEPTION 'Invalid weekly run'; END IF;\n PERFORM pg_advisory_xact_lock(hashtextextended('conversely-week:'||p_week::text,0));\n IF EXISTS(SELECT 1 FROM conversely_weekly_runs WHERE week_start=p_week AND scheduled_at IS NOT NULL) THEN RETURN; END IF;\n INSERT INTO conversely_weekly_runs(week_start,samples_per_agent,scheduled_at) VALUES(p_week,1,now())\n ON CONFLICT(week_start) DO UPDATE SET scheduled_at=excluded.scheduled_at;\n FOR t IN SELECT DISTINCT (value->>'tenant_id')::uuid tenant FROM jsonb_array_elements(p_decisions) LOOP\n  token:=gen_random_uuid();\n  INSERT INTO conversely_runs(tenant_id,week_start,trigger,status,started_at,lease_token)\n   VALUES(t.tenant,p_week,'scheduled','selecting',now(),token) RETURNING id INTO r;\n  PERFORM reserve_conversely_run(r,token,p_decisions);\n END LOOP;\n FOR d IN SELECT value FROM jsonb_array_elements(p_decisions) WHERE NOT (value->>'selected')::boolean LOOP\n  INSERT INTO conversely_weekly_audit(week_start,tenant_id,agent_id,agent_slug,call_id,recording_sid,enrollment_key,score,eligible,selected,reason)\n   VALUES(p_week,(d->>'tenant_id')::uuid,(d->>'agent_id')::uuid,d->>'agent_slug',(d->>'call_id')::uuid,d->>'recording_sid',d->>'enrollment_key',(d->>'score')::numeric,(d->>'eligible')::boolean,false,d->>'reason');\n END LOOP;\n RETURN QUERY SELECT * FROM conversely_weekly_audit WHERE week_start=p_week ORDER BY agent_id,call_id;\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "reserve_practice_tokens",
+      "arguments": "p_id uuid, p_token uuid, p_tokens integer, p_task text",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.reserve_practice_tokens(p_id uuid, p_token uuid, p_tokens integer, p_task text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE s public.practice_sessions; maximum integer;\nBEGIN\n PERFORM public.practice_server(); SELECT * INTO s FROM public.practice_sessions WHERE id=p_id FOR UPDATE;\n maximum:=CASE p_task WHEN 'practice_consumer' THEN 24000 WHEN 'practice_scoring' THEN 180000 WHEN 'practice_coaching' THEN 180000 ELSE 0 END;\n IF p_token IS NULL OR s.work_token IS DISTINCT FROM p_token OR s.lease_until<=clock_timestamp() OR s.status NOT IN ('active','ending') OR p_tokens IS NULL OR p_tokens<1 OR p_tokens>maximum OR s.reserved_tokens+p_tokens>1200000 THEN RETURN false; END IF;\n UPDATE public.practice_sessions SET reserved_tokens=reserved_tokens+p_tokens WHERE id=p_id; RETURN true;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -57927,6 +58584,19 @@
     },
     {
       "schema": "public",
+      "name": "start_practice_session",
+      "arguments": "p_actor text, p_org text, p_scenario text, p_product text, p_difficulty text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.start_practice_session(p_actor text, p_org text, p_scenario text, p_product text, p_difficulty text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE i jsonb; cfg jsonb; allowance jsonb; s public.practice_sessions;\nBEGIN\n i:=public.practice_identity(p_actor,p_org);\n SELECT practice_settings INTO cfg FROM public.tenants WHERE id=(i->>'tenant_id')::uuid;\n -- The existing atomic counter routine locks/checks/increments both caps together.\n allowance:=public.consume_admission(jsonb_build_array(jsonb_build_object('key',i->>'tenant_id'||':practice:agent:'||(i->>'agent_id'),'seconds',86400,'limit',(cfg->>'agent_daily')::integer),jsonb_build_object('key',i->>'tenant_id'||':practice:agency','seconds',86400,'limit',(cfg->>'agency_daily')::integer)));\n IF allowance->>'allowed' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'Practice daily cap' USING ERRCODE='54000'; END IF;\n INSERT INTO public.practice_sessions(tenant_id,agent_id,scenario_id,product_type,difficulty,turn_limit,expires_at) VALUES((i->>'tenant_id')::uuid,(i->>'agent_id')::uuid,p_scenario,p_product,p_difficulty,(cfg->>'turns')::integer,clock_timestamp()+make_interval(mins=>(cfg->>'minutes')::integer)) RETURNING * INTO s;\n RETURN to_jsonb(s)-ARRAY['work_token','lease_until','work_kind'];\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "start_telephony_session",
       "arguments": "p_tenant_id uuid, p_agent_id uuid, p_call_sid text, p_flow text",
       "result": "jsonb",
@@ -57989,6 +58659,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.supervisor_listen_history(p_actor text, p_org text, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone, p_before_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE i record; answer jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('SUPERVISOR_FLOOR_ENABLED') OR NOT public.deployment_feature_enabled('SUPERVISOR_LISTEN_ENABLED') THEN RAISE EXCEPTION 'Unavailable' USING ERRCODE='42501'; END IF;\n SELECT * INTO i FROM public.resolve_deployment_subject(p_actor,p_org);\n IF i.tenant_id IS NULL OR i.authority<>'admin' THEN RAISE EXCEPTION 'Admin required' USING ERRCODE='42501'; END IF;\n IF (p_before IS NULL)<>(p_before_id IS NULL) THEN RAISE EXCEPTION 'Invalid page' USING ERRCODE='22023'; END IF;\n SELECT coalesce(jsonb_agg(to_jsonb(x)),'[]') INTO answer FROM (SELECT s.id,s.actor_id supervisor,e.name agent,coalesce(s.call_id,a.call_record_id) call_id,s.started_at,s.ended_at,s.duration_seconds FROM public.supervisor_listen_sessions s LEFT JOIN public.telephony_call_attempts a ON a.id=s.attempt_id AND a.tenant_id=s.tenant_id LEFT JOIN public.enrolled_agents e ON e.id=s.agent_id AND e.tenant_id=s.tenant_id WHERE s.tenant_id=i.tenant_id AND (p_before IS NULL OR (s.started_at,s.id)<(p_before,p_before_id)) ORDER BY s.started_at DESC,s.id DESC LIMIT 100) x;\n RETURN answer;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "sweep_practice_sessions",
+      "arguments": "",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.sweep_practice_sessions()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE s public.practice_sessions; result jsonb:='[]';\nBEGIN\n PERFORM public.practice_server();\n FOR s IN SELECT * FROM public.practice_sessions WHERE status IN ('active','ending') AND (expires_at<=clock_timestamp() OR last_activity_at<clock_timestamp()-interval '5 minutes' OR lease_until<clock_timestamp() OR status='ending' AND work_token IS NULL) ORDER BY started_at LIMIT 20 FOR UPDATE SKIP LOCKED LOOP\n  IF s.work_token IS NOT NULL AND s.lease_until>clock_timestamp() THEN CONTINUE; END IF;\n  IF s.work_token IS NOT NULL OR s.last_activity_at<clock_timestamp()-interval '5 minutes' AND s.expires_at>clock_timestamp() THEN\n   UPDATE public.practice_sessions SET status='incomplete',end_reason='abandoned',ended_at=clock_timestamp(),work_token=NULL,work_kind=NULL,lease_until=NULL WHERE id=s.id;\n  ELSE\n   UPDATE public.practice_sessions SET status='ending',end_reason=coalesce(end_reason,'time_limit'),work_token=gen_random_uuid(),work_kind='result',lease_until=clock_timestamp()+interval '3 minutes' WHERE id=s.id RETURNING * INTO s;\n   result:=result||jsonb_build_array(to_jsonb(s));\n  END IF;\n END LOOP;RETURN result;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -58288,6 +58971,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.valid_client_recap_templates(v jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE ch text; t jsonb; token text[]; remainder text;\nBEGIN\n IF v IS NULL OR jsonb_typeof(v)<>'object' OR NOT v ?& ARRAY['sms','pdf'] OR v-ARRAY['sms','pdf']<>'{}'::jsonb THEN RETURN false; END IF;\n FOREACH ch IN ARRAY ARRAY['sms','pdf'] LOOP\n  t:=v->ch;\n  IF jsonb_typeof(t)<>'object' OR NOT t ?& ARRAY['body','next','disclaimer','version'] OR t-ARRAY['body','next','disclaimer','version']<>'{}'::jsonb\n   OR jsonb_typeof(t->'body')<>'string' OR length(btrim(t->>'body'))=0 OR length(t->>'body')>1800\n   OR t->>'next' IS DISTINCT FROM 'The carrier will send plan materials and a member card.'\n   OR t->>'disclaimer' IS DISTINCT FROM 'Submission is not confirmation of coverage. The carrier determines enrollment status.'\n   OR jsonb_typeof(t->'version')<>'number' OR (t->>'version') !~ '^[1-9][0-9]{0,8}$' THEN RETURN false; END IF;\n  FOR token IN SELECT regexp_matches(t->>'body','\\{\\{([A-Za-z]+)\\}\\}','g') LOOP\n   IF token[1]<>ALL(ARRAY['firstName','planName','carrier','planType','effectiveDate','confirmationNumber','agentName','agencyName','callbackNumber']) OR ch='sms' AND token[1]='confirmationNumber' THEN RETURN false; END IF;\n  END LOOP;\n  IF (t->>'body') ~ '\\m[0-9]{3}[- ]?[0-9]{2}[- ]?[0-9]{4}\\M' OR (t->>'body') ~* '\\m[1-9][A-HJ-NP-Z][A-HJ-NP-Z0-9][0-9][- ]?[A-HJ-NP-Z][A-HJ-NP-Z0-9][0-9][- ]?[A-HJ-NP-Z]{2}[0-9]{2}\\M' THEN RETURN false; END IF;\n  remainder:=regexp_replace(t->>'body','\\{\\{([A-Za-z]+)\\}\\}','','g');\n  IF remainder ~ '[{}]' OR (t->>'body') ~ '[\\x00-\\x08\\x0B-\\x1F\\x7F]' THEN RETURN false; END IF;\n END LOOP;\n RETURN true;\nEXCEPTION WHEN others THEN RETURN false;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "valid_practice_settings",
+      "arguments": "v jsonb",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.valid_practice_settings(v jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE k text; hi integer;\nBEGIN\n IF jsonb_typeof(v) IS DISTINCT FROM 'object' OR NOT v ?& ARRAY['agent_daily','agency_daily','turns','minutes'] OR v-ARRAY['agent_daily','agency_daily','turns','minutes']<>'{}' THEN RETURN false; END IF;\n FOREACH k IN ARRAY ARRAY['agent_daily','agency_daily','turns','minutes'] LOOP\n  hi:=CASE k WHEN 'agent_daily' THEN 50 WHEN 'agency_daily' THEN 500 WHEN 'turns' THEN 120 ELSE 60 END;\n  IF jsonb_typeof(v->k) IS DISTINCT FROM 'number' OR (v->>k)::numeric<1 OR (v->>k)::numeric>hi OR (v->>k)::numeric<>trunc((v->>k)::numeric) THEN RETURN false; END IF;\n END LOOP; RETURN true;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -61705,6 +62401,126 @@
     },
     {
       "schema": "public",
+      "relation": "practice_results",
+      "name": "practice_results_agent_id_fkey",
+      "definition": "FOREIGN KEY (agent_id) REFERENCES enrolled_agents(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "practice_results_id_fkey",
+      "definition": "FOREIGN KEY (id) REFERENCES practice_sessions(id) DEFERRABLE"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "practice_results_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "practice_results_score_check",
+      "definition": "CHECK (((score >= (0)::numeric) AND (score <= (100)::numeric)))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "practice_results_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_agent_id_fkey",
+      "definition": "FOREIGN KEY (agent_id) REFERENCES enrolled_agents(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_check",
+      "definition": "CHECK (((product_type = 'ANNUITY'::text) = (scenario_id = ANY (ARRAY['income'::text, 'annuity-price'::text, 'annuity-family'::text]))))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_collected_check",
+      "definition": "CHECK ((collected <@ ARRAY['medicare'::text, 'ssn'::text, 'dob'::text, 'address'::text, 'card'::text]))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_difficulty_check",
+      "definition": "CHECK ((difficulty = ANY (ARRAY['easy'::text, 'standard'::text, 'hard'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_end_reason_check",
+      "definition": "CHECK ((end_reason = ANY (ARRAY['agent'::text, 'consumer'::text, 'turn_limit'::text, 'time_limit'::text, 'abandoned'::text, 'generation_failed'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_product_type_check",
+      "definition": "CHECK ((product_type = ANY (ARRAY['MA'::text, 'ANNUITY'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_reserved_tokens_check",
+      "definition": "CHECK (((reserved_tokens >= 0) AND (reserved_tokens <= 1200000)))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_scenario_id_check",
+      "definition": "CHECK ((scenario_id = ANY (ARRAY['current-plan'::text, 'doctor'::text, 'price'::text, 'guarantee'::text, 'best'::text, 'medicaid'::text, 'caregiver'::text, 'mail'::text, 'trust'::text, 'already-enrolled'::text, 'topic'::text, 'ready'::text, 'income'::text, 'annuity-price'::text, 'annuity-family'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'ending'::text, 'completed'::text, 'incomplete'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_transcript_check",
+      "definition": "CHECK (((jsonb_typeof(transcript) = 'array'::text) AND (jsonb_array_length(transcript) <= 240) AND (octet_length((transcript)::text) <= 200000)))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_turn_count_check",
+      "definition": "CHECK (((turn_count >= 0) AND (turn_count <= 120)))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_turn_limit_check",
+      "definition": "CHECK (((turn_limit >= 1) AND (turn_limit <= 120)))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_work_kind_check",
+      "definition": "CHECK ((work_kind = ANY (ARRAY['turn'::text, 'result'::text])))"
+    },
+    {
+      "schema": "public",
       "relation": "provider_alert_throttle",
       "name": "provider_alert_throttle_pkey",
       "definition": "PRIMARY KEY (alert_key)"
@@ -62704,6 +63520,12 @@
       "relation": "tenants",
       "name": "tenants_pkey",
       "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "tenants",
+      "name": "tenants_practice_settings_check",
+      "definition": "CHECK (valid_practice_settings(practice_settings))"
     },
     {
       "schema": "public",
@@ -65004,6 +65826,30 @@
       "relation": "post_call_webhook_claims",
       "name": "post_call_webhook_claims_pkey",
       "definition": "CREATE UNIQUE INDEX post_call_webhook_claims_pkey ON public.post_call_webhook_claims USING btree (call_record_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_results",
+      "name": "practice_results_pkey",
+      "definition": "CREATE UNIQUE INDEX practice_results_pkey ON public.practice_results USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_agent_recent",
+      "definition": "CREATE INDEX practice_agent_recent ON public.practice_sessions USING btree (tenant_id, agent_id, started_at DESC, id DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_due",
+      "definition": "CREATE INDEX practice_due ON public.practice_sessions USING btree (expires_at) WHERE (status = ANY (ARRAY['active'::text, 'ending'::text]))"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "practice_sessions_pkey",
+      "definition": "CREATE UNIQUE INDEX practice_sessions_pkey ON public.practice_sessions USING btree (id)"
     },
     {
       "schema": "public",
@@ -68173,6 +69019,20 @@
     },
     {
       "schema": "public",
+      "relation": "practice_results",
+      "name": "retention_anchor_immutable",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER retention_anchor_immutable BEFORE UPDATE ON public.practice_results FOR EACH ROW EXECUTE FUNCTION retention_anchor_immutable()"
+    },
+    {
+      "schema": "public",
+      "relation": "practice_sessions",
+      "name": "retention_anchor_immutable",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER retention_anchor_immutable BEFORE UPDATE ON public.practice_sessions FOR EACH ROW EXECUTE FUNCTION retention_anchor_immutable()"
+    },
+    {
+      "schema": "public",
       "relation": "provider_alert_throttle",
       "name": "deployment_feature_fence",
       "enabled": "O",
@@ -68821,6 +69681,13 @@
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.tenants FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "tenants",
+      "name": "practice_settings_guard",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER practice_settings_guard BEFORE UPDATE ON public.tenants FOR EACH ROW EXECUTE FUNCTION guard_practice_settings()"
     },
     {
       "schema": "public",

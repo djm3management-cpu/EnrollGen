@@ -63,6 +63,7 @@ const loadSessionSummary = () => import("./components/SessionSummary");
 const loadCarrierRef = () => import("./components/CarrierRef");
 const loadDailyVerse = () => import("./components/DailyVerse");
 const loadACAIntelligence = () => import("./components/ACAIntelligence");
+const PracticeCaller=lazyWithRetry(()=>import("./components/PracticeCaller"));
 const SupervisorFloor=lazyWithRetry(()=>import("./components/SupervisorFloor"));
 const loadAgentDashboard = () => import("./components/AgentDashboard");
 const AgentDashboard = lazyWithRetry(loadAgentDashboard);
@@ -531,6 +532,7 @@ function getTabsForMode(mode, features = {}, supervisorFloor = false) {
     tabs.push({ id: "acaIntel", label: "ACA INTELLIGENCE" });
   }
 
+  if(features.PRACTICE_CALLER_ENABLED)tabs.push({id:"practice",label:"PRACTICE"});
   if(features.SUPERVISOR_FLOOR_ENABLED&&supervisorFloor)tabs.push({id:"floor",label:"FLOOR"});
   if (features.POST_CALL_COACHING_ENABLED) tabs.push({ id: "coaching", label: "COACHING" });
   tabs.push({ id: "rts", label: "RTS" });
@@ -865,6 +867,9 @@ function AppShell({ currentUser = null }) {
       case "floor":
         if(!features.SUPERVISOR_FLOOR_ENABLED||!supervisorFloor)return null;
         return <LazyPanel><SupervisorFloor /></LazyPanel>;
+      case "practice":
+        if(!features.PRACTICE_CALLER_ENABLED)return null;
+        return <LazyPanel><PracticeCaller /></LazyPanel>;
       case "coaching":
         if (!features.POST_CALL_COACHING_ENABLED) return null;
         return <LazyPanel><PostCallCoaching /></LazyPanel>;

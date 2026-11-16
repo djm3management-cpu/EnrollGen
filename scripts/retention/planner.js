@@ -31,7 +31,7 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
   // References include real FKs and soft/JSON references (including audit UUIDs,
   // provider SIDs and object paths). No free text is returned or persisted.
   for (const node of nodes) {
-    for (const value of scalars(['call_records','inbound_calls'].includes(node.table) ? Object.fromEntries(Object.entries(node.row).filter(([k])=>!['recording_storage_path','recording_url'].includes(k))) : node.table==='admin_action_log' && /^recording_purge_/.test(node.row.action) ? {...node.row,target_id:null} : node.row)) for (const target of aliases.get(value) || []) connect(node,target);
+    for (const value of scalars(['call_records','inbound_calls'].includes(node.table) ? Object.fromEntries(Object.entries(node.row).filter(([k])=>!['recording_storage_path','recording_url'].includes(k))) : node.table==='admin_action_log' && (/^recording_purge_/.test(node.row.action)||node.row.action==='practice_transcript') ? {...node.row,target_id:null} : node.row)) for (const target of aliases.get(value) || []) connect(node,target);
     for (const fk of foreignKeys.filter(f=>f.source === node.table)) {
       const target = nodes.find(n=>n.table === fk.target && fk.columns.every((c,i)=>
         node.row[c] !== null && node.row[c] !== undefined && String(node.row[c]) === String(n.row[fk.targetColumns[i]])));
@@ -42,6 +42,10 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
   for(const recap of nodes.filter(n=>n.table==='client_recaps')){
     const source=nodes.find(n=>n.table==='enrollment_intakes'&&n.row.id===recap.row.enrollment_id);
     if(source){connect(recap,source);connect(source,recap);}
+  }
+  for(const result of nodes.filter(n=>n.table==='practice_results')){
+    const source=nodes.find(n=>n.table==='practice_sessions'&&n.row.id===result.row.id);
+    if(source){connect(result,source);connect(source,result);}
   }
   const agentAliases = new Map();
   // Derivative and exact transcript source share a purge/savepoint group.
@@ -99,6 +103,7 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
     if (n.group === 'audit' || n.table === 'telephony_events' && ['session_lock','session_unlock','session_unlock_failed'].includes(n.row.event)) {
       field='evidenceAuditYears'; n.dataClass='evidenceAudit';
     } else if (n.group === 'operational') { field='operationalDays'; unit='days'; n.dataClass='operational'; }
+    else if (n.group === 'practice') { field='operationalDays'; unit='days'; n.dataClass='practice'; }
     else if (n.group === 'textConsent') { field='textConsentYears'; n.dataClass='textConsent'; }
     else if (n.group === 'enrollment') { field='enrollmentYears'; n.dataClass='enrollment'; }
     else if (n.group === 'contact') { field='contactReviewYears'; n.dataClass='contactReview'; }

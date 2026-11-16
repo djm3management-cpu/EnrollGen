@@ -1,4 +1,5 @@
 import RecapTemplates from './enrollment/RecapTemplates';
+import {PRACTICE_DEFAULTS,PRACTICE_BOUNDS} from '../lib/practiceCaller';
 import {COACHING_DEFAULTS} from '../lib/postCallCoaching';
 import AccessReview from './AccessReview';
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -281,6 +282,8 @@ export default function TenantSettings({ currentUser = null }) {
   const [complianceConfig, setComplianceConfig] = useState(() =>
     cloneComplianceConfig(DEFAULT_COMPLIANCE_CONFIG)
   );
+  const [practiceSettings,setPracticeSettings]=useState(PRACTICE_DEFAULTS);
+  useEffect(()=>{if(!canAdmin||!features.PRACTICE_CALLER_ENABLED)return;let active=true;fetchWithClerk(getToken,'/api/tenant-settings?section=practice').then(r=>{if(!r.ok)throw Error();return r.json();}).then(r=>{if(active)setPracticeSettings(r.settings);}).catch(()=>{});return()=>{active=false;};},[canAdmin,features.PRACTICE_CALLER_ENABLED,getToken]);
   const [coachingSettings,setCoachingSettings]=useState(COACHING_DEFAULTS);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -303,6 +306,7 @@ export default function TenantSettings({ currentUser = null }) {
       ghl_webhook_url: tenant.ghl_webhook_url || "",
       ghl_location_id: tenant.ghl_location_id || "",
     });
+    setPracticeSettings(tenant.practice_settings||PRACTICE_DEFAULTS);
     setCoachingSettings(tenant.coaching_settings||COACHING_DEFAULTS);
     setCarriers(tenant.carrier_options?.length ? tenant.carrier_options : DEFAULT_CARRIERS);
     setCoopRows(normalizeCoopRows(tenant.coop_rates));
@@ -357,7 +361,7 @@ export default function TenantSettings({ currentUser = null }) {
       const response = await fetchWithClerk(getToken, '/api/tenant-settings', {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({agency_npn:profile.agency_npn,licensed_states:profile.licensed_states,
-          carrier_options:carriers.filter(Boolean),coop_rates:rowsToCoopRates(coopRows),compliance_config:complianceConfig,...(features.POST_CALL_COACHING_ENABLED?{coaching_settings:coachingSettings}:{})}),
+          carrier_options:carriers.filter(Boolean),coop_rates:rowsToCoopRates(coopRows),compliance_config:complianceConfig,...(features.PRACTICE_CALLER_ENABLED?{practice_settings:practiceSettings}:{}),...(features.POST_CALL_COACHING_ENABLED?{coaching_settings:coachingSettings}:{})}),
       });
       if (!response.ok) throw Error((await response.json()).error || 'Settings save failed.');
       await refetchTenant();
@@ -457,6 +461,7 @@ export default function TenantSettings({ currentUser = null }) {
 
       {message ? <div className="billing-alert">{message}</div> : null}
       <AgentAudioSettings />
+      {canAdmin&&features.PRACTICE_CALLER_ENABLED&&<section style={{fontWeight:400,marginBlock:24}} aria-label="Practice settings"><h3 style={{fontWeight:500}}>Practice</h3>{Object.entries({agent_daily:'Daily sessions per agent',agency_daily:'Daily sessions per agency',turns:'Turns per session',minutes:'Minutes per session'}).map(([key,label])=><SettingsField key={key} label={label}><input type="number" min={PRACTICE_BOUNDS[key][0]} max={PRACTICE_BOUNDS[key][1]} value={practiceSettings[key]} onChange={e=>setPracticeSettings(s=>({...s,[key]:Number(e.target.value)}))}/></SettingsField>)}</section>}
       {canAdmin&&features.CLIENT_RECAP_ENABLED&&<RecapTemplates/>}
       {features.POST_CALL_COACHING_ENABLED&&<section style={{fontWeight:400,marginBlock:24}} aria-label="Coaching settings">
         <h3 style={{fontWeight:500}}>Coaching</h3>

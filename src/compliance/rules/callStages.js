@@ -1,6 +1,8 @@
 import {sortTranscript,transcriptCoverage} from './transcript.js';
 import {evaluateTpmo2027} from '../shared/tpmo2027.js';
 import {normalizeProduct} from './cmsBasis.js';
+// Only an in-memory caller can opt into practice; stored live metadata cannot.
+export const PRACTICE_SCORING=Symbol('practice scoring');
 export const MINIMUM_SCORING_SECONDS=15*60;
 export const normalizeOutcome=value=>String(value||'').trim().toLowerCase().replace(/[\s-]+/g,'_');
 export function excludedOutcome(value){return /^(?:no_answer|not_connected|(?:customer_)?hung_up|hang_?up|short_call(?:_hangup)?|wrong_number|voicemail(?:_left)?|hostile(?:_caller)?|test(?:_call)?)$/.test(normalizeOutcome(value));}
@@ -26,6 +28,7 @@ export function detectCallStages(call){
 }
 export function scoringEligibility(call,stages=detectCallStages(call)){
  const duration=Number(call.call_duration_seconds),coverage=transcriptCoverage(call);
+ if(call[PRACTICE_SCORING])return {status:stages.conversation?'eligible':'na',reason:stages.conversation?null:'No connected product conversation reached',coverage};
  if(excludedOutcome(call.call_outcome))return {status:'na',reason:'Excluded call outcome',coverage};
  if(call.call_duration_seconds!=null&&call.call_duration_seconds!==''&&Number.isFinite(duration)&&duration>=0&&duration<MINIMUM_SCORING_SECONDS)return {status:'na',reason:'Talk time below 15 minutes',coverage};
  if(!Number.isFinite(duration)||duration<=0||!coverage.complete)return {status:'incomplete',reason:'Transcript coverage or talk duration is incomplete',coverage};

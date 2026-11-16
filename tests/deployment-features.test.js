@@ -1,3 +1,4 @@
+import {practiceFeatures} from '../src/lib/practiceCaller.js';
 import {auditSink} from './helpers/auditSink.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -110,7 +111,7 @@ test('billing-disabled entitlement provides full plan access and seats without t
   assert.equal(requirePlan(entitlement,'pro'),true);assert.equal(await checkSeatLimit(db,'unrelated-pilot-tenant',entitlement),true);
   const response=await createDeploymentFeaturesHandler({authenticate:async()=>({userId:'fixture'}),env:credentials})(new Request('https://app.example.test/api/deployment-features'));
   assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
-  const body=await response.json();assert.deepEqual(body.features,deploymentFeatures({}));assert.equal(body.entitlement.plan,'billing_disabled');
+  const body=await response.json();assert.deepEqual(body.features,{...deploymentFeatures({}),...practiceFeatures({})});assert.equal(body.entitlement.plan,'billing_disabled');
   assert.doesNotMatch(JSON.stringify(body),/fixture|secret|password|example.test/);
   const enabled=await createDeploymentFeaturesHandler({authenticate:async()=>({userId:'fixture'}),env:{DEPLOYMENT_PROFILE_JSON:process.env.DEPLOYMENT_PROFILE_JSON,...credentials,STRIPE_BILLING_ENABLED:'true'}})(new Request('https://app.example.test/api/deployment-features'));
   assert.equal((await enabled.json()).entitlement,null);

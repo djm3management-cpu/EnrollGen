@@ -1,3 +1,4 @@
+import {practiceFeatures,PRACTICE_TOKEN_LIMITS} from '../practiceCaller.js';
 import { redactPromptPayload, safeDiagnosticCode } from '../../../telephony/src/lib/redaction.js';
 import { featureEnabled } from '../../../telephony/src/lib/featureFlags.js';
 import { createOpenAIAdapter } from './openai.ts';
@@ -41,6 +42,14 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
   }
   const env = runtime.env || process.env;
   if(request.task==='post_call_coaching'&&!featureEnabled('POST_CALL_COACHING_ENABLED',env))throw new Error('Post-call coaching disabled');
+  const practice=!!request.task?.startsWith('practice_');
+  if(practice){
+    if(!practiceFeatures(env).PRACTICE_CALLER_ENABLED||!runtime.authorizePracticeRequest)throw Error('Practice disabled or budget authorization missing');
+    const tokens=new TextEncoder().encode(JSON.stringify(request)).length+512+(request.max_completion_tokens||4096);
+    const kind=request.task!.slice(9) as 'consumer'|'scoring'|'coaching';
+    if(tokens>PRACTICE_TOKEN_LIMITS[kind])throw Error('Practice request token limit');
+    await runtime.authorizePracticeRequest(request,tokens);
+  }
   const engine = resolveEngine(request.engine);
   // Compliance scoring must stay on OpenAI, including legacy product engines.
   const provider: Provider = resolveProvider(engine, env);
@@ -62,7 +71,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
     await runtime.authorizeScoringRequest(request,model,requestId);
   }
   // Three primary attempts, followed by exactly one fallback attempt when eligible.
-  for (let attempt = 1; attempt <= (request.path === 'scoring' || request.task === 'post_call_coaching' ? 1 : 4); attempt++) {
+  for (let attempt = 1; attempt <= (request.path === 'scoring' || request.task === 'post_call_coaching' || practice ? 1 : 4); attempt++) {
     if (attempt === 4) {
       if (request.task || model !== PRIMARY_MODEL || !fallback || !transient(lastError) || runtime.signal?.aborted) break;
       originalError = errorCode(lastError);
@@ -98,7 +107,7 @@ async function run(request: CompletionRequest, runtime: Runtime, stream: boolean
         prompt_tokens: usage.input_tokens, cached_tokens: usage.cached_tokens, completion_tokens: usage.output_tokens, reasoning_tokens: usage.reasoning_tokens,
         latency_ms: Date.now() - attemptStarted, fallback_used: fallbackUsed, original_error_code: originalError,
         metadata: { attempt, provider, path: request.path || 'live', task: request.task, error_code: errorCode(lastError) } });
-      if (request.path==='scoring' || !transient(lastError) || runtime.signal?.aborted || attempt === 4) break;
+      if (practice || request.path==='scoring' || !transient(lastError) || runtime.signal?.aborted || attempt === 4) break;
       if (attempt < 3) await sleep(250 * 2 ** (attempt - 1) * (0.5 + random()));
     }
   }

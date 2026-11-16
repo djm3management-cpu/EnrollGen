@@ -13,3 +13,17 @@ export async function admitCall(db,route,call) {
  if(error||!data?.clerk_user_id)throw new AdmissionError(503);
  await admitAgent(db,route,{userId:data.clerk_user_id});
 }
+
+// Application-only route entries adapt the existing admission engine's summary
+// profile, counters and error contract. No phone-server registry is expanded.
+export const PRACTICE_ADMISSION=Object.freeze({practiceRead:40,practiceStart:5,practiceTurn:20,practiceEnd:5});
+export async function admitPractice(db,route,subject,profile){
+ const {deploymentProfile}=await import('../../telephony/src/lib/deploymentProfile.js');
+ const source=profile||deploymentProfile();
+ if(!Object.hasOwn(PRACTICE_ADMISSION,route))throw new AdmissionError(503);
+ const adapter=new Proxy(db,{get(target,key){
+  if(key==='rpc')return(name,args)=>target.rpc(name,name==='consume_admission'?{p_rules:args.p_rules.map(rule=>({...rule,key:rule.key.replace(':summary:',':'+route+':')}))}:args);
+  const value=target[key];return typeof value==='function'?value.bind(target):value;
+ }});
+ await admit(adapter,'summary',subject,{...source,admissionLimits:{...source.admissionLimits,summary:{minute:PRACTICE_ADMISSION[route],subjectDay:3000,deploymentDay:30000}}});
+}

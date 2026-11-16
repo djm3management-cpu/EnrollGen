@@ -4,7 +4,7 @@ export type Engine = 'MA' | 'MEDSUP' | 'ACA' | 'U65' | 'ANCILLARY' | 'ANNUITY';
 export type Json = Record<string, any>;
 export interface CompletionRequest {
   engine: Engine;
-  task?: 'rts_ingestion' | 'knowledge_update' | 'post_call_coaching';
+  task?: 'rts_ingestion' | 'knowledge_update' | 'post_call_coaching' | 'practice_consumer' | 'practice_scoring' | 'practice_coaching';
   path?: 'live' | 'summary' | 'scoring';
   system: string | Json[];
   static_messages?: Json[];
@@ -36,6 +36,7 @@ export interface Adapter {
   stream(request: CompletionRequest, model: string, signal: AbortSignal): AsyncIterable<Json>;
 }
 export interface Runtime {
+  authorizePracticeRequest?: (request: CompletionRequest, tokens: number) => Promise<void>;
   authorizeScoringRequest?: (request: CompletionRequest, model: string, requestId: string) => Promise<void>;
   env?: Record<string, string | undefined>;
   adapters?: Record<Provider, Adapter>;

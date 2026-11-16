@@ -67,3 +67,6 @@ REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.client_recaps FROM se
 
 -- Listen capabilities and history are writable only through the scoped routines.
 REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.supervisor_listen_grants,public.supervisor_listen_sessions FROM service_role;
+
+-- Practice mutations are confined to scoped, leased service routines.
+REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.practice_sessions,public.practice_results FROM service_role;

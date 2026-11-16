@@ -97,6 +97,11 @@
     },
     {
       "schema": "public",
+      "name": "begin_practice_work",
+      "arguments": "p_actor text, p_org text, p_id uuid, p_kind text, p_text text"
+    },
+    {
+      "schema": "public",
       "name": "begin_scoring_job",
       "arguments": "p_call_id uuid, p_template_id uuid, p_transcript jsonb"
     },
@@ -647,6 +652,16 @@
     },
     {
       "schema": "public",
+      "name": "finish_practice_result",
+      "arguments": "p_id uuid, p_token uuid, p_result jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "finish_practice_turn",
+      "arguments": "p_id uuid, p_token uuid, p_reply text, p_ended boolean, p_collected text[]"
+    },
+    {
+      "schema": "public",
       "name": "finish_supervisor_listen",
       "arguments": "p_id uuid"
     },
@@ -712,6 +727,11 @@
     },
     {
       "schema": "public",
+      "name": "guard_practice_settings",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "heartbeat_conversely_worker",
       "arguments": "p_enabled boolean"
     },
@@ -749,6 +769,11 @@
       "schema": "public",
       "name": "link_telephony_call_record",
       "arguments": "p_record_id uuid, p_tenant_id uuid, p_sid text, p_user_id text"
+    },
+    {
+      "schema": "public",
+      "name": "list_practice_sessions",
+      "arguments": "p_actor text, p_org text, p_before timestamp with time zone, p_before_id uuid"
     },
     {
       "schema": "public",
@@ -984,6 +1009,21 @@
       "schema": "public",
       "name": "pii_blind_index",
       "arguments": "p_value text"
+    },
+    {
+      "schema": "public",
+      "name": "practice_identity",
+      "arguments": "p_actor text, p_org text"
+    },
+    {
+      "schema": "public",
+      "name": "practice_server",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "practice_target",
+      "arguments": "p_actor text, p_org text, p_id uuid, p_write boolean"
     },
     {
       "schema": "public",
@@ -1227,6 +1267,11 @@
     },
     {
       "schema": "public",
+      "name": "read_practice_session",
+      "arguments": "p_actor text, p_org text, p_id uuid"
+    },
+    {
+      "schema": "public",
       "name": "read_supervisor_floor",
       "arguments": "p_actor text, p_org text"
     },
@@ -1429,6 +1474,11 @@
       "schema": "public",
       "name": "reserve_conversely_week",
       "arguments": "p_week date, p_samples integer, p_decisions jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "reserve_practice_tokens",
+      "arguments": "p_id uuid, p_token uuid, p_tokens integer, p_task text"
     },
     {
       "schema": "public",
@@ -1697,6 +1747,11 @@
     },
     {
       "schema": "public",
+      "name": "start_practice_session",
+      "arguments": "p_actor text, p_org text, p_scenario text, p_product text, p_difficulty text"
+    },
+    {
+      "schema": "public",
       "name": "start_telephony_session",
       "arguments": "p_tenant_id uuid, p_agent_id uuid, p_call_sid text, p_flow text"
     },
@@ -1719,6 +1774,11 @@
       "schema": "public",
       "name": "supervisor_listen_history",
       "arguments": "p_actor text, p_org text, p_before timestamp with time zone, p_before_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "sweep_practice_sessions",
+      "arguments": ""
     },
     {
       "schema": "public",
@@ -1837,6 +1897,11 @@
     },
     {
       "schema": "public",
+      "name": "valid_practice_settings",
+      "arguments": "v jsonb"
+    },
+    {
+      "schema": "public",
       "name": "validate_new_compliance_item",
       "arguments": ""
     },
@@ -1906,6 +1971,8 @@
     "post-call-coaching-background.js",
     "post-call-coaching.js",
     "post-call.js",
+    "practice-caller.js",
+    "practice-sweep.js",
     "recordings.js",
     "retention-holds.js",
     "rts-ingest.js",
