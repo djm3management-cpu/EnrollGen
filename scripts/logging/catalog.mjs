@@ -2,7 +2,7 @@
 import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
 const walk=d=>readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(d+'/'+e.name):e.name.endsWith('.js')&&!e.name.endsWith('logEvents.js')?[d+'/'+e.name]:[]);
 const events=new Set(),modules=new Set(['server']);
-for(const file of ['netlify','integrations','telephony/src','supabase/functions'].flatMap(walk)){
+for(const file of ['netlify','integrations','telephony/src','supabase/functions','scripts/recovery','scripts/retention'].flatMap(walk)){
  const source=readFileSync(file,'utf8');
  for(const match of source.matchAll(/(?:event\s*:\s*|logger\.(?:info|warn|error|debug)\(|securityEvent\(|\blog\()["']([a-z][a-z0-9_]{1,95})["']/g))events.add(match[1]);
  for(const match of source.matchAll(/createLogger\(['"][^'"]+['"],['"]([^'"]+)/g))modules.add(match[1]);

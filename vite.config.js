@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import {securityHeadersPlugin} from './scripts/security/browser-headers.mjs';
 import { deploymentProfile, publicDeploymentProfile, agencyPhone, staffedHoursLabel } from './telephony/src/lib/deploymentProfile.js';
 import { deploymentFeatures } from './telephony/src/lib/deploymentFeatures.js';
@@ -17,7 +18,7 @@ export default defineConfig(({ mode }) => {
   assertSafeAuthEnvironment(env, { build: true });
   assertNoPublicApiKeys(env);
   return {
-  plugins: [securityHeadersPlugin(serverProfile, env), {name:'deployment-public', enforce:'pre', resolveId(id) { if (id.endsWith('/deploymentPublic.js') || id.endsWith('/deploymentPublic')) return '\0deployment-public'; }, load(id) { if(id==='\0deployment-public') return `export const deploymentPublic=${JSON.stringify(profile)}; export const agencyName=deploymentPublic.agencyName; export const agencyLine=${JSON.stringify(agencyPhone(profile))}; export const agencyHours=${JSON.stringify(staffedHoursLabel(profile))};`; }}, react(), noiseSuppressionAudioWorkletVitePlugin()],
+  plugins: [{name:'print-shared-styles',generateBundle(){this.emitFile({type:'asset',fileName:'styles.css',source:readFileSync(new URL('./src/styles.css',import.meta.url),'utf8')});}},securityHeadersPlugin(serverProfile, env), {name:'deployment-public', enforce:'pre', resolveId(id) { if (id.endsWith('/deploymentPublic.js') || id.endsWith('/deploymentPublic')) return '\0deployment-public'; }, load(id) { if(id==='\0deployment-public') return `export const deploymentPublic=${JSON.stringify(profile)}; export const agencyName=deploymentPublic.agencyName; export const agencyLine=${JSON.stringify(agencyPhone(profile))}; export const agencyHours=${JSON.stringify(staffedHoursLabel(profile))};`; }}, react(), noiseSuppressionAudioWorkletVitePlugin()],
   build: {
     // Fetch a requested panel's dependent chunks together instead of waiting
     // for successive import round trips before the panel can render.

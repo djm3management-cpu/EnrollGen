@@ -12,10 +12,10 @@ import { fetchRecordingMedia, providerJson } from '../src/recordings.js';
 const AC='AC'+'a'.repeat(32),RE='RE'+'b'.repeat(32),CA='CA'+'c'.repeat(32),token='a'.repeat(43);
 const wav=recordingWav();
 const config={twilioAccountSid:AC,twilioAuthToken:'fixture-secret'};
-async function app(t,{expiry=Date.now()+300_000,providerCall=CA,account=AC}={}){
+async function app(t,{expiry=Date.now()+300_000,providerCall=CA,account=AC,pending=false}={}){
   const requests=[];
   const ticket={tenant_id:'00000000-0000-4000-8000-000000000001',actor_id:'user_fixture',account_sid:account,recording_sid:RE,expected_call_sid:CA,channels:2,download:true,expires_at:new Date(expiry).toISOString()};
-  const db={from(table){assert.equal(table,'recording_download_tickets');return {select(){return this;},eq(key,value){assert.equal(key,'token_hash');this.valid=value===createHash('sha256').update(token).digest('hex');return this;},async maybeSingle(){return {data:this.valid?ticket:null,error:null};}};}};
+  const db={from(table){if(table==='recording_ingestion')return {select(){return this;},eq(){return this;},limit:async()=>({data:pending?[{deletion_pending_at:new Date().toISOString()}]:[]})};assert.equal(table,'recording_download_tickets');return {select(){return this;},eq(key,value){assert.equal(key,'token_hash');this.valid=value===createHash('sha256').update(token).digest('hex');return this;},async maybeSingle(){return {data:this.valid?ticket:null,error:null};}};}};
   const media=createRecordingMediaHandler({db:auditSink(db),config,log:()=>{},fetchImpl:async(url,options)=>{
     requests.push({url,options});assert.equal(options.method,undefined);assert.match(options.headers.Authorization,/^Basic /);
     if(url.endsWith('.json'))return Response.json({account_sid:AC,sid:RE,call_sid:providerCall,channels:2});
@@ -54,4 +54,8 @@ test('HTTPS redirects strip Twilio authorization on object storage and reject un
 });
 test('provider JSON is bounded while streaming',async()=>{
   await assert.rejects(providerJson(new Response('x'.repeat(200)),100),/metadata_too_large/);
+});
+
+test('pending deletion blocks an already-issued recording capability before signing or provider fetch',async t=>{
+ const {url,requests}=await app(t,{pending:true});const response=await fetch(url);assert.equal(response.status,404);assert.equal(requests.length,0);
 });

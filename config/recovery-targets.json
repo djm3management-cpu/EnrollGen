@@ -1,0 +1,7 @@
+{
+  "owner": "Deployment owner — replace with accountable operator",
+  "rpo_hours": 24,
+  "rto_minutes": 240,
+  "status": "Proposed owner-editable targets; hosting plan backup features and full-size recovery must be accepted before commitment",
+  "access_review_interval_days": 90
+}

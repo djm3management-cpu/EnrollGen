@@ -1,3 +1,4 @@
+import {recordingBlocked} from '../../telephony/src/lib/recordingAvailability.js';
 import { auditedEvidenceAccess } from '../../telephony/src/lib/evidenceAudit.js';
 import { evidenceCheckpoint, evidenceGrantId } from '../../telephony/src/lib/evidenceAudit.js';
 import {deploymentProfile} from '../../telephony/src/lib/deploymentProfile.js';
@@ -121,9 +122,10 @@ export async function listTargetRecordings(db, identity, target) {
       recording_channels: reference.status === 'voicemail' ? 1 : null,
       first_seen_at: reference.created_at || reference.call_start });
   }
-  return rows;
+  return rows.filter(row=>!row.deletion_pending_at);
 }
 export function publicRecording(row) {
+  if(row.deletion_pending_at)return {id:row.id,available:false,provider_available:false};
   return { id: row.id, recording_sid: row.recording_sid || null, status: row.copy_status,
     channels: row.recording_channels || (row.direction === 'voicemail' ? 1 : 2),
     duration_seconds: row.recording_duration_seconds ?? null,
@@ -133,6 +135,7 @@ export function publicRecording(row) {
     available: Boolean(row.storage_path || (row.recording_sid && row.account_sid && row.provider_status !== 'absent')) };
 }
 async function rawrecordingMediaGrant(db, identity, row, { download = false, forceProvider = false, env = process.env } = {}) {
+  if(await recordingBlocked(db,row))throw new EvidenceError(404,'Recording unavailable.');
   const filename = `recording-${row.recording_sid || String(row.id).replace(/[^a-z0-9-]/gi, '')}.wav`;
   let storageAvailable=false;
   if (row.storage_path && !forceProvider) {

@@ -1,3 +1,4 @@
+import {recordingBlocked} from '../telephony/src/lib/recordingAvailability.js';
 import { auditedEvidenceAccess } from '../telephony/src/lib/evidenceAudit.js';
 import { evidenceCheckpoint, evidenceGrantId } from '../telephony/src/lib/evidenceAudit.js';
 import {deploymentProfile} from '../telephony/src/lib/deploymentProfile.js';
@@ -9,6 +10,7 @@ const EvidenceError=RecordingLinkError;
 const checked=({data,error})=>{if(error)throw error;return data;};
 
 async function rawrecordingComplianceGrant(db, identity, row, { format = 'wav', env = process.env } = {}) {
+  if(await recordingBlocked(db,row))throw new EvidenceError(404,'Recording unavailable.');
   if (!identity.admin) throw new EvidenceError(403, 'Only organization admins can create Conversly links.');
   if (!['wav', 'mp3'].includes(format)) throw new EvidenceError(400, 'Choose WAV or MP3.');
   if (row.tenant_id && row.tenant_id !== identity.tenant.id) throw new EvidenceError(403, 'Recording is unavailable.');

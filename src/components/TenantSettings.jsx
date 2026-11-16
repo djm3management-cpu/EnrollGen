@@ -1,3 +1,4 @@
+import AccessReview from './AccessReview';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Plus, RefreshCcw, Send, Trash2 } from "lucide-react";
 import BillingSettings from "./BillingSettings";
@@ -463,6 +464,8 @@ export default function TenantSettings({ currentUser = null }) {
       </section>}
 
       {canAdmin && features.PARAGON_ENABLED ? <VendorRoutingSettings getToken={getToken} /> : null}
+
+      {canAdmin && <AccessReview getToken={getToken} />}
 
       <div className="tenant-settings-grid">
         <section className="tenant-settings-card">

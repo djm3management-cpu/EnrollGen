@@ -867,6 +867,11 @@
     },
     {
       "schema": "public",
+      "name": "persist_access_review",
+      "arguments": "p_actor text, p_org text, p_report jsonb, p_id uuid"
+    },
+    {
+      "schema": "public",
       "name": "persist_conference_transcript",
       "arguments": "p_participant_id uuid, p_segment_id uuid, p_speaker text, p_text text, p_captured_at timestamp with time zone, p_start_ms integer, p_end_ms integer"
     },
@@ -944,6 +949,11 @@
       "schema": "public",
       "name": "prune_admission_counters",
       "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "read_access_review",
+      "arguments": "p_actor text, p_org text, p_id uuid"
     },
     {
       "schema": "public",
@@ -1162,6 +1172,11 @@
     },
     {
       "schema": "public",
+      "name": "record_recovery_action",
+      "arguments": "p_action text, p_actor text, p_org text, p_target uuid, p_count integer, p_success boolean"
+    },
+    {
+      "schema": "public",
       "name": "record_scheduled_success",
       "arguments": "p_job text"
     },
@@ -1218,6 +1233,16 @@
     {
       "schema": "public",
       "name": "reject_evidence_audit_mutation",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "reject_pending_recording_ticket",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "reject_purged_recording_ingestion",
       "arguments": ""
     },
     {
@@ -1547,6 +1572,11 @@
     },
     {
       "schema": "public",
+      "name": "staff_access_review",
+      "arguments": "p_actor text, p_org text"
+    },
+    {
+      "schema": "public",
       "name": "start_attempt_session",
       "arguments": ""
     },
@@ -1689,6 +1719,7 @@
     "_subscriptionGate.js",
     "_telephonyLink.js",
     "_tenantSettings.js",
+    "access-review.js",
     "agent-status-log.js",
     "backfill-analytics.js",
     "backfill-deepgram-intelligence.js",

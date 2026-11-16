@@ -4,7 +4,7 @@ import {randomUUID} from 'node:crypto';
 import {withLogContext,securityEvent,securityEventOnce,inspectInput,createLogger} from './logger.js';
 const logger=createLogger();
 const scope=new AsyncLocalStorage();
-export const ADMIN_HANDLERS=Object.freeze(['tenant-settings','contact-assignment','pipeline-settings','script-settings','vendor-pause','compliance-review','compliance-uploads','post-call-admin','retention-holds','trigger-knowledge-update','rts-ingest','recordings','enrollment-intakes','transcript-import','set-availability','test-ghl-webhook','stripe-checkout','stripe-portal','paragon-residence']);
+export const ADMIN_HANDLERS=Object.freeze(['access-review','tenant-settings','contact-assignment','pipeline-settings','script-settings','vendor-pause','compliance-review','compliance-uploads','post-call-admin','retention-holds','trigger-knowledge-update','rts-ingest','recordings','enrollment-intakes','transcript-import','set-availability','test-ghl-webhook','stripe-checkout','stripe-portal','paragon-residence']);
 export const ADMIN_RPCS=Object.freeze(['set_vendor_pause','save_opportunity_pipeline','delete_opportunity_stage','retry_failed_scoring','retry_post_call_transcript','retention_place_hold','retention_release_hold','retention_flag_complaint','retention_resolve_complaint','retention_certify_transcript','claim_compliance_pass','retry_ix_upload','request_conversely_run','save_compliance_version','save_enrollment_intake','commit_rts_ingestion','request_manual_transcript_gap','mint_recording_compliance_ticket']);
 export function verifiedAdminIdentity(identity){if(scope.getStore())scope.getStore().identity=identity;}
 export function adminRequest(action,handler){
@@ -79,4 +79,18 @@ export async function operatorAdminAction(db,name,args){
  // Reviewed operator batches preserve UUID-only before/after summaries in the
  // same transaction as all of their roster/profile/vendor changes.
  const result=name==='configure_operational_profile'?await db.rpc(name,args):await db.rpc('execute_operator_action',{p_routine:name,p_args:args});if(result.error?.code==='P1611')securityEvent('admin_log_write_failed');return result;
+}
+
+// Shared fail-closed recovery/report audit helper. SQL rechecks protected authority.
+export async function recoveryAdminAction(db,{action,actor='service:recovery',org=null,target=null,count=0,success=true}){
+ const result=await db.rpc('record_recovery_action',{p_action:action,p_actor:actor,p_org:org,p_target:target,p_count:count,p_success:success});
+ if(result.error){securityEvent('admin_log_write_failed');throw new AdminLogError();}
+ return result.data;
+}
+
+export async function accessReviewAction(db,{actor,org=null,report=null,id=null,read=false}){
+ if(read){const r=await db.rpc('read_access_review',{p_actor:actor,p_org:org,p_id:id});if(r.error)throw new AdminLogError();return r.data;}
+ const result=await db.rpc('persist_access_review',{p_actor:actor,p_org:org,p_report:report,p_id:id});
+ if(result.error){securityEvent('admin_log_write_failed');throw new AdminLogError();}
+ return result.data;
 }

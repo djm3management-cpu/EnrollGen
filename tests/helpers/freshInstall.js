@@ -4,7 +4,7 @@ import {pgcrypto} from '@electric-sql/pglite/contrib/pgcrypto';
 import {bootstrapEntries} from '../../scripts/bootstrap-database.mjs';
 import {statements} from '../../scripts/lib/bootstrap-sql.js';
 export const bootstrapRoot=new URL('../../supabase/bootstrap/',import.meta.url);
-export async function freshDatabase({hostile=false}={}){
+export async function emptyLocalDatabase(){
  const pg=new PGlite({extensions:{pgcrypto,vector}});
  await pg.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE ROLE authenticator NOINHERIT; GRANT anon,authenticated,service_role TO authenticator;
  CREATE SCHEMA auth; CREATE SCHEMA storage; CREATE SCHEMA vault;
@@ -21,6 +21,10 @@ export async function freshDatabase({hostile=false}={}){
  CREATE PUBLICATION supabase_realtime;
  ALTER DEFAULT PRIVILEGES GRANT ALL ON TABLES TO anon,authenticated,service_role;
  ALTER DEFAULT PRIVILEGES GRANT ALL ON SEQUENCES TO anon,authenticated,service_role;`);
+ return pg;
+}
+export async function freshDatabase({hostile=false}={}){
+ const pg=await emptyLocalDatabase();
  const entries=bootstrapEntries();
  try{
  for(const entry of entries){

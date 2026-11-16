@@ -25,7 +25,7 @@ function settings(features){
  const code=source('src/components/TenantSettings.jsx').replace(/^import .*;\n/gm,'').replace(/^export \{.*\};\n/gm,'').replace('export default function','function');
  const component=vm.runInNewContext(transformSync(code,{loader:'jsx',jsxFactory:'element',format:'cjs'}).code+';TenantSettings;',{
   ...h.hooks,element,Check:'Check',Plus:'Plus',RefreshCcw:'RefreshCcw',Send:'Send',Trash2:'Trash2',
-  BillingSettings:'BillingSettings',VendorRoutingSettings:'VendorRoutingSettings',AgentAudioSettings:'AgentAudioSettings',US_STATE_OPTIONS:[],
+  BillingSettings:'BillingSettings',VendorRoutingSettings:'VendorRoutingSettings',AgentAudioSettings:'AgentAudioSettings',AccessReview:'AccessReview',US_STATE_OPTIONS:[],
   useAppAuth:()=>({getToken}),useTenantConfig:()=>({tenant,tenantId:null,features,agents:[],loading:false}),
   useSubscription:()=>({subscription:{plan:'billing_disabled',billing_disabled:true,seat_count:1000000},isInternal:false}),
   fetchWithClerk:async()=>{outbound++;return Response.json({});},

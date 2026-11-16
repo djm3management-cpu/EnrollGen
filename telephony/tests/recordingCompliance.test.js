@@ -11,11 +11,11 @@ import { createRecordingComplianceHandler } from '../src/recordingCompliance.js'
 const AC='AC'+'a'.repeat(32), RE='RE'+'b'.repeat(32), CA='CA'+'c'.repeat(32);
 const tenant='00000000-0000-4000-8000-000000000001', token='a'.repeat(43), wav=recordingWav();
 const config={twilioAccountSid:AC,twilioAuthToken:'secret'};
-async function app(t, {ticket:overrides={},providerCall=CA,unknownLength=false,ignoreRange=false,stored=false,missingStorage=false,body=wav}={}) {
+async function app(t, {ticket:overrides={},providerCall=CA,unknownLength=false,ignoreRange=false,stored=false,missingStorage=false,body=wav,pending=false}={}) {
   const requests=[],logs=[];
   const ticket={tenant_id:tenant,recording_id:'one-recording',account_sid:AC,recording_sid:RE,expected_call_sid:CA,
     channels:2,format:'wav',expires_at:new Date(Date.now()+86_400_000).toISOString(),...(stored?{storage_path:`${tenant}/one.wav`}:{}),...overrides};
-  const db={from(table){assert.equal(table,'recording_compliance_tickets');return {
+  const db={from(table){if(table==='recording_ingestion')return {select(){return this;},eq(){return this;},limit:async()=>({data:pending?[{deletion_pending_at:new Date().toISOString()}]:[]})};assert.equal(table,'recording_compliance_tickets');return {
     select(){return this;},eq(key,value){assert.equal(key,'token_hash');this.valid=value===createHash('sha256').update(token).digest('hex');return this;},
     async maybeSingle(){return {data:this.valid?ticket:null,error:null};},
   };},storage:{from(bucket){assert.equal(bucket,'call-recordings');return {async createSignedUrl(path,ttl){
@@ -115,4 +115,8 @@ test('MP3 extension route preserves HEAD and byte ranges with audio/mpeg',async 
  const response=await fetch(`${url}.mp3`,{headers:{Range:'bytes=2-5'}});
  assert.equal(response.status,206);assert.equal(response.headers.get('content-type'),'audio/mpeg');assert.deepEqual(Buffer.from(await response.arrayBuffer()),wav.subarray(2,6));
  assert.ok(requests.some(row=>row.url.includes('.mp3?')));
+});
+
+test('pending deletion blocks an already-issued recording capability before signing or provider fetch',async t=>{
+ const {url,requests}=await app(t,{pending:true});const response=await fetch(url);assert.equal(response.status,404);assert.equal(requests.length,0);
 });

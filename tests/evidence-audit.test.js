@@ -37,13 +37,13 @@ for(const source of ['storage','provider','compliance'])test(`${source} grant ha
  const identity={tenant:{id:T},auth:{userId:actor},admin:true};
  const row={id:uuid(501),tenant_id:T,storage_path:T+'/call.wav',account_sid:'AC'+'a'.repeat(32),recording_sid:'RE'+'b'.repeat(32),expected_call_sid:'CA'+'c'.repeat(32)};
  const db=sink();const audit=db.from.bind(db);const tickets=[];let signs=0;
- db.from=table=>table==='evidence_access_log'?audit(table):{insert:async ticket=>{tickets.push(ticket);return {error:null};}};
+ db.from=table=>table==='evidence_access_log'?audit(table):table==='recording_ingestion'?{select(){return this;},eq(){return this;},limit:async()=>({data:[]})}:{insert:async ticket=>{tickets.push(ticket);return {error:null};}};
  db.storage={from:()=>({createSignedUrl:async()=>{signs++;return {data:{signedUrl:'https://storage.test/SECRET-CAPABILITY'}};}})};
  const grant=()=>source==='compliance'?recordingComplianceGrant(db,identity,row):recordingMediaGrant(db,identity,row,{forceProvider:source==='provider'});
  const value=await grant();assert.ok(value.url);assert.equal(db.records.length,1);assert.equal(db.records[0].actor_id,actor);
  if(source!=='storage')assert.equal(tickets[0].grant_id,db.records[0].grant_id);
  assert.doesNotMatch(JSON.stringify(db.records),/SECRET-CAPABILITY|token_hash|storage_path/);
- const bad=sink({fail:true});db.from=table=>table==='evidence_access_log'?bad.from(table):{insert:()=>assert.fail('ticket issued without audit')};
+ const bad=sink({fail:true});db.from=table=>table==='evidence_access_log'?bad.from(table):table==='recording_ingestion'?{select(){return this;},eq(){return this;},limit:async()=>({data:[]})}:{insert:()=>assert.fail('ticket issued without audit')};
  signs=0;await assert.rejects(grant(),EvidenceAuditError);assert.equal(signs,0);
 });
 for(const table of PROTECTED_TABLES)test(`service evidence query ${table} cannot release data on audit failure`,async()=>{

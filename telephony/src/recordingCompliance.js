@@ -1,3 +1,4 @@
+import {recordingBlocked} from './lib/recordingAvailability.js';
 import {createLogger} from './lib/logger.js';
 const logger=createLogger('telephony','recordingcompliance');
 import {deploymentProfile} from './lib/deploymentProfile.js';
@@ -22,6 +23,7 @@ function byteRange(value, size) {
 }
 
 async function openAudio(db, ticket, config, signal, range, fetchImpl,authorize) {
+  if(await recordingBlocked(db,ticket))return null;
   if (ticket.storage_path && ticket.format === 'wav') {
     const parts = ticket.storage_path.split('/');
     if (parts[0] !== ticket.tenant_id || parts.some(part => !part || part === '.' || part === '..')) return null;

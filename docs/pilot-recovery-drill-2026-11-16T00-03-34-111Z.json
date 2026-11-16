@@ -1,0 +1,1542 @@
+{
+  "id": "08f2433c-9579-4bb6-8139-2f0ee2da7271",
+  "started_at": "2026-11-16T00:03:34.111Z",
+  "finished_at": "2026-11-16T00:04:02.455Z",
+  "duration_ms": 28345,
+  "backup_bytes": 3206417,
+  "pass": true,
+  "tables": 185,
+  "rows": 1255,
+  "checks": [
+    {
+      "name": "catalog_source",
+      "pass": true
+    },
+    {
+      "name": "catalog_restored",
+      "pass": true
+    },
+    {
+      "name": "row_level_security",
+      "pass": true
+    },
+    {
+      "name": "grants",
+      "pass": true
+    },
+    {
+      "name": "count:oct_slim_086_rollback.backfills",
+      "pass": true
+    },
+    {
+      "name": "checksum:oct_slim_086_rollback.backfills",
+      "pass": true
+    },
+    {
+      "name": "count:oct_slim_086_rollback.policies",
+      "pass": true
+    },
+    {
+      "name": "checksum:oct_slim_086_rollback.policies",
+      "pass": true
+    },
+    {
+      "name": "count:oct_slim_086_rollback.state",
+      "pass": true
+    },
+    {
+      "name": "checksum:oct_slim_086_rollback.state",
+      "pass": true
+    },
+    {
+      "name": "count:oct_slim_088_rollback.state",
+      "pass": true
+    },
+    {
+      "name": "checksum:oct_slim_088_rollback.state",
+      "pass": true
+    },
+    {
+      "name": "count:pii_vault.encryption_keys",
+      "pass": true
+    },
+    {
+      "name": "checksum:pii_vault.encryption_keys",
+      "pass": true
+    },
+    {
+      "name": "count:public.access_review_reports",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.access_review_reports",
+      "pass": true
+    },
+    {
+      "name": "count:public.admin_action_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.admin_action_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.admin_action_permit",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.admin_action_permit",
+      "pass": true
+    },
+    {
+      "name": "count:public.admission_counters",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.admission_counters",
+      "pass": true
+    },
+    {
+      "name": "count:public.agent_availability",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.agent_availability",
+      "pass": true
+    },
+    {
+      "name": "count:public.agent_availability_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.agent_availability_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.agent_coaching",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.agent_coaching",
+      "pass": true
+    },
+    {
+      "name": "count:public.agent_compliance_profiles",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.agent_compliance_profiles",
+      "pass": true
+    },
+    {
+      "name": "count:public.agent_phone_sessions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.agent_phone_sessions",
+      "pass": true
+    },
+    {
+      "name": "count:public.agents",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.agents",
+      "pass": true
+    },
+    {
+      "name": "count:public.autoresearch_iterations",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.autoresearch_iterations",
+      "pass": true
+    },
+    {
+      "name": "count:public.availability_agent_subjects",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.availability_agent_subjects",
+      "pass": true
+    },
+    {
+      "name": "count:public.availability_consumers",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.availability_consumers",
+      "pass": true
+    },
+    {
+      "name": "count:public.birthday_rule_states",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.birthday_rule_states",
+      "pass": true
+    },
+    {
+      "name": "count:public.bulletin_feed_status",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.bulletin_feed_status",
+      "pass": true
+    },
+    {
+      "name": "count:public.bulletins",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.bulletins",
+      "pass": true
+    },
+    {
+      "name": "count:public.bulletins_duplicate_archive",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.bulletins_duplicate_archive",
+      "pass": true
+    },
+    {
+      "name": "count:public.calibration_overrides",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.calibration_overrides",
+      "pass": true
+    },
+    {
+      "name": "count:public.calibration_runs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.calibration_runs",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_conferences",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_conferences",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_disposition_opportunity_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_disposition_opportunity_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_insights",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_insights",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_logs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_logs",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_participants",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_participants",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_records",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_records",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_threads",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_threads",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_transcripts",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_transcripts",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_wrap_up_policy",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_wrap_up_policy",
+      "pass": true
+    },
+    {
+      "name": "count:public.call_wrap_ups",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.call_wrap_ups",
+      "pass": true
+    },
+    {
+      "name": "count:public.carrier_profiles",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.carrier_profiles",
+      "pass": true
+    },
+    {
+      "name": "count:public.carrier_rts",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.carrier_rts",
+      "pass": true
+    },
+    {
+      "name": "count:public.cms_county_penetration",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.cms_county_penetration",
+      "pass": true
+    },
+    {
+      "name": "count:public.cms_plan_embeddings_py2027",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.cms_plan_embeddings_py2027",
+      "pass": true
+    },
+    {
+      "name": "count:public.cms_plans_py2027",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.cms_plans_py2027",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_daily_budget",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_daily_budget",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_daily_summaries",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_daily_summaries",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_flags",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_flags",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_intents",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_intents",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_llm_passes",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_llm_passes",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_llm_requests",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_llm_requests",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_review_decisions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_review_decisions",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_runtime_control",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_runtime_control",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_scorecards",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_scorecards",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_scores",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_scores",
+      "pass": true
+    },
+    {
+      "name": "count:public.compliance_version_requests",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.compliance_version_requests",
+      "pass": true
+    },
+    {
+      "name": "count:public.conference_media_leases",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conference_media_leases",
+      "pass": true
+    },
+    {
+      "name": "count:public.contact_activities",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.contact_activities",
+      "pass": true
+    },
+    {
+      "name": "count:public.contact_lead_intel",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.contact_lead_intel",
+      "pass": true
+    },
+    {
+      "name": "count:public.contact_merge_archive",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.contact_merge_archive",
+      "pass": true
+    },
+    {
+      "name": "count:public.contact_notes",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.contact_notes",
+      "pass": true
+    },
+    {
+      "name": "count:public.contact_tags",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.contact_tags",
+      "pass": true
+    },
+    {
+      "name": "count:public.contacts",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.contacts",
+      "pass": true
+    },
+    {
+      "name": "decrypt:public.contacts",
+      "pass": true
+    },
+    {
+      "name": "count:public.conversely_run_agents",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conversely_run_agents",
+      "pass": true
+    },
+    {
+      "name": "count:public.conversely_run_events",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conversely_run_events",
+      "pass": true
+    },
+    {
+      "name": "count:public.conversely_runs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conversely_runs",
+      "pass": true
+    },
+    {
+      "name": "count:public.conversely_submissions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conversely_submissions",
+      "pass": true
+    },
+    {
+      "name": "count:public.conversely_week_slots",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conversely_week_slots",
+      "pass": true
+    },
+    {
+      "name": "count:public.conversely_weekly_audit",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conversely_weekly_audit",
+      "pass": true
+    },
+    {
+      "name": "count:public.conversely_weekly_runs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conversely_weekly_runs",
+      "pass": true
+    },
+    {
+      "name": "count:public.conversely_worker_status",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.conversely_worker_status",
+      "pass": true
+    },
+    {
+      "name": "count:public.corrective_actions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.corrective_actions",
+      "pass": true
+    },
+    {
+      "name": "count:public.cross_sell_attempts",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.cross_sell_attempts",
+      "pass": true
+    },
+    {
+      "name": "count:public.csnp_carrier_verification",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.csnp_carrier_verification",
+      "pass": true
+    },
+    {
+      "name": "count:public.deployment_authorities",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.deployment_authorities",
+      "pass": true
+    },
+    {
+      "name": "count:public.deployment_settings",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.deployment_settings",
+      "pass": true
+    },
+    {
+      "name": "count:public.deployment_vendor_settings",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.deployment_vendor_settings",
+      "pass": true
+    },
+    {
+      "name": "count:public.dsnp_eae_lookup",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.dsnp_eae_lookup",
+      "pass": true
+    },
+    {
+      "name": "count:public.enrolled_agents",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.enrolled_agents",
+      "pass": true
+    },
+    {
+      "name": "count:public.enrollment_intakes",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.enrollment_intakes",
+      "pass": true
+    },
+    {
+      "name": "decrypt:public.enrollment_intakes",
+      "pass": true
+    },
+    {
+      "name": "count:public.evidence_access_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.evidence_access_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.fema_disasters",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.fema_disasters",
+      "pass": true
+    },
+    {
+      "name": "count:public.fema_feed_snapshot",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.fema_feed_snapshot",
+      "pass": true
+    },
+    {
+      "name": "count:public.follow_ups",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.follow_ups",
+      "pass": true
+    },
+    {
+      "name": "count:public.followup_queue",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.followup_queue",
+      "pass": true
+    },
+    {
+      "name": "count:public.ghl_enrollment_deliveries",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.ghl_enrollment_deliveries",
+      "pass": true
+    },
+    {
+      "name": "count:public.inbound_calls",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.inbound_calls",
+      "pass": true
+    },
+    {
+      "name": "count:public.integration_deliveries",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.integration_deliveries",
+      "pass": true
+    },
+    {
+      "name": "count:public.integration_delivery_attempts",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.integration_delivery_attempts",
+      "pass": true
+    },
+    {
+      "name": "count:public.integration_link_issues",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.integration_link_issues",
+      "pass": true
+    },
+    {
+      "name": "count:public.integration_push_state",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.integration_push_state",
+      "pass": true
+    },
+    {
+      "name": "count:public.integration_report_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.integration_report_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.intent_detections",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.intent_detections",
+      "pass": true
+    },
+    {
+      "name": "count:public.ix_upload_retries",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.ix_upload_retries",
+      "pass": true
+    },
+    {
+      "name": "count:public.ix_uploads",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.ix_uploads",
+      "pass": true
+    },
+    {
+      "name": "count:public.knowledge_base",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.knowledge_base",
+      "pass": true
+    },
+    {
+      "name": "count:public.knowledge_updates",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.knowledge_updates",
+      "pass": true
+    },
+    {
+      "name": "count:public.lead_source_pings",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.lead_source_pings",
+      "pass": true
+    },
+    {
+      "name": "count:public.lead_sources",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.lead_sources",
+      "pass": true
+    },
+    {
+      "name": "count:public.manual_transcript_gap_fills",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.manual_transcript_gap_fills",
+      "pass": true
+    },
+    {
+      "name": "count:public.manual_transcript_gap_requests",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.manual_transcript_gap_requests",
+      "pass": true
+    },
+    {
+      "name": "count:public.media_stream_leases",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.media_stream_leases",
+      "pass": true
+    },
+    {
+      "name": "count:public.message_media",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.message_media",
+      "pass": true
+    },
+    {
+      "name": "count:public.messages",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.messages",
+      "pass": true
+    },
+    {
+      "name": "count:public.operational_alert_history",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.operational_alert_history",
+      "pass": true
+    },
+    {
+      "name": "count:public.operational_alert_state",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.operational_alert_state",
+      "pass": true
+    },
+    {
+      "name": "count:public.operational_configuration",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.operational_configuration",
+      "pass": true
+    },
+    {
+      "name": "count:public.operational_events",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.operational_events",
+      "pass": true
+    },
+    {
+      "name": "count:public.opportunities",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.opportunities",
+      "pass": true
+    },
+    {
+      "name": "count:public.opportunity_events",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.opportunity_events",
+      "pass": true
+    },
+    {
+      "name": "count:public.opportunity_stage_history",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.opportunity_stage_history",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_agent_reservations",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_agent_reservations",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_billing_events",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_billing_events",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_call_billing",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_call_billing",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_callback_tasks",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_callback_tasks",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_contact_zip_origin",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_contact_zip_origin",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_control_changes",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_control_changes",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_ping_decisions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_ping_decisions",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_report_access",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_report_access",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_report_email_days",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_report_email_days",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_report_email_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_report_email_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_report_tokens",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_report_tokens",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_residence_jobs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_residence_jobs",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_residence_sep_inputs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_residence_sep_inputs",
+      "pass": true
+    },
+    {
+      "name": "count:public.paragon_residence_settings",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.paragon_residence_settings",
+      "pass": true
+    },
+    {
+      "name": "count:public.phi_redactions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.phi_redactions",
+      "pass": true
+    },
+    {
+      "name": "count:public.pii_access_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.pii_access_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.pipeline_stages",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.pipeline_stages",
+      "pass": true
+    },
+    {
+      "name": "count:public.pipelines",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.pipelines",
+      "pass": true
+    },
+    {
+      "name": "count:public.plan_terminations",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.plan_terminations",
+      "pass": true
+    },
+    {
+      "name": "count:public.policies",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.policies",
+      "pass": true
+    },
+    {
+      "name": "count:public.post_call_jobs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.post_call_jobs",
+      "pass": true
+    },
+    {
+      "name": "count:public.post_call_requests",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.post_call_requests",
+      "pass": true
+    },
+    {
+      "name": "count:public.post_call_status_tickets",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.post_call_status_tickets",
+      "pass": true
+    },
+    {
+      "name": "count:public.post_call_webhook_claims",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.post_call_webhook_claims",
+      "pass": true
+    },
+    {
+      "name": "count:public.provider_alert_throttle",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.provider_alert_throttle",
+      "pass": true
+    },
+    {
+      "name": "count:public.qhp_landscape_2026",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.qhp_landscape_2026",
+      "pass": true
+    },
+    {
+      "name": "count:public.recording_agent_subjects",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.recording_agent_subjects",
+      "pass": true
+    },
+    {
+      "name": "count:public.recording_call_scopes",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.recording_call_scopes",
+      "pass": true
+    },
+    {
+      "name": "count:public.recording_compliance_tickets",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.recording_compliance_tickets",
+      "pass": true
+    },
+    {
+      "name": "count:public.recording_download_tickets",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.recording_download_tickets",
+      "pass": true
+    },
+    {
+      "name": "count:public.recording_ingestion",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.recording_ingestion",
+      "pass": true
+    },
+    {
+      "name": "count:public.recording_reconciliation",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.recording_reconciliation",
+      "pass": true
+    },
+    {
+      "name": "count:public.retention_audit_permit",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.retention_audit_permit",
+      "pass": true
+    },
+    {
+      "name": "count:public.retention_complaint_resolution",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.retention_complaint_resolution",
+      "pass": true
+    },
+    {
+      "name": "count:public.retention_holds",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.retention_holds",
+      "pass": true
+    },
+    {
+      "name": "count:public.retention_recording_purges",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.retention_recording_purges",
+      "pass": true
+    },
+    {
+      "name": "count:public.retention_runs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.retention_runs",
+      "pass": true
+    },
+    {
+      "name": "count:public.rts_ingestion_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.rts_ingestion_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.sales_log",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.sales_log",
+      "pass": true
+    },
+    {
+      "name": "count:public.sbe_plans_nj_2025",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.sbe_plans_nj_2025",
+      "pass": true
+    },
+    {
+      "name": "count:public.sbe_plans_pa_2025",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.sbe_plans_pa_2025",
+      "pass": true
+    },
+    {
+      "name": "count:public.sbe_plans_va_2025",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.sbe_plans_va_2025",
+      "pass": true
+    },
+    {
+      "name": "count:public.scheduled_job_status",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.scheduled_job_status",
+      "pass": true
+    },
+    {
+      "name": "count:public.scorecard_items",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.scorecard_items",
+      "pass": true
+    },
+    {
+      "name": "count:public.scoring_jobs",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.scoring_jobs",
+      "pass": true
+    },
+    {
+      "name": "count:public.scoring_manual_retries",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.scoring_manual_retries",
+      "pass": true
+    },
+    {
+      "name": "count:public.scoring_segment_progress",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.scoring_segment_progress",
+      "pass": true
+    },
+    {
+      "name": "count:public.scoring_template_items",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.scoring_template_items",
+      "pass": true
+    },
+    {
+      "name": "count:public.scoring_templates",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.scoring_templates",
+      "pass": true
+    },
+    {
+      "name": "count:public.script_templates",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.script_templates",
+      "pass": true
+    },
+    {
+      "name": "count:public.section_scores",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.section_scores",
+      "pass": true
+    },
+    {
+      "name": "count:public.sessions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.sessions",
+      "pass": true
+    },
+    {
+      "name": "count:public.snp_plans_by_county",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.snp_plans_by_county",
+      "pass": true
+    },
+    {
+      "name": "count:public.snp_routing_rules",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.snp_routing_rules",
+      "pass": true
+    },
+    {
+      "name": "count:public.star_ratings_by_county",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.star_ratings_by_county",
+      "pass": true
+    },
+    {
+      "name": "count:public.state_excess_charge_rules",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.state_excess_charge_rules",
+      "pass": true
+    },
+    {
+      "name": "count:public.stt_call_reconnects",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.stt_call_reconnects",
+      "pass": true
+    },
+    {
+      "name": "count:public.subscriptions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.subscriptions",
+      "pass": true
+    },
+    {
+      "name": "count:public.telephony_call_attempts",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.telephony_call_attempts",
+      "pass": true
+    },
+    {
+      "name": "count:public.telephony_events",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.telephony_events",
+      "pass": true
+    },
+    {
+      "name": "count:public.telephony_presence_policy",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.telephony_presence_policy",
+      "pass": true
+    },
+    {
+      "name": "count:public.telephony_routing_responses",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.telephony_routing_responses",
+      "pass": true
+    },
+    {
+      "name": "count:public.telephony_transcript_segments",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.telephony_transcript_segments",
+      "pass": true
+    },
+    {
+      "name": "count:public.tenant_agents",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.tenant_agents",
+      "pass": true
+    },
+    {
+      "name": "count:public.tenants",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.tenants",
+      "pass": true
+    },
+    {
+      "name": "count:public.training_completions",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.training_completions",
+      "pass": true
+    },
+    {
+      "name": "count:public.transcript_chunks",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.transcript_chunks",
+      "pass": true
+    },
+    {
+      "name": "count:public.transcript_recovery_alerts",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.transcript_recovery_alerts",
+      "pass": true
+    },
+    {
+      "name": "count:public.transcript_score_dispatch",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.transcript_score_dispatch",
+      "pass": true
+    },
+    {
+      "name": "count:public.transcription_incidents",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.transcription_incidents",
+      "pass": true
+    },
+    {
+      "name": "count:public.usage_records",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.usage_records",
+      "pass": true
+    },
+    {
+      "name": "count:public.user_preferences",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.user_preferences",
+      "pass": true
+    },
+    {
+      "name": "count:public.vendor_agent_state_eligibility",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.vendor_agent_state_eligibility",
+      "pass": true
+    },
+    {
+      "name": "count:public.vendor_control_audit",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.vendor_control_audit",
+      "pass": true
+    },
+    {
+      "name": "count:public.vendor_controls",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.vendor_controls",
+      "pass": true
+    },
+    {
+      "name": "count:public.vendor_routing_config",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.vendor_routing_config",
+      "pass": true
+    },
+    {
+      "name": "count:public.zip_county_crosswalk",
+      "pass": true
+    },
+    {
+      "name": "checksum:public.zip_county_crosswalk",
+      "pass": true
+    },
+    {
+      "name": "count:storage.buckets",
+      "pass": true
+    },
+    {
+      "name": "checksum:storage.buckets",
+      "pass": true
+    },
+    {
+      "name": "count:storage.objects",
+      "pass": true
+    },
+    {
+      "name": "checksum:storage.objects",
+      "pass": true
+    },
+    {
+      "name": "count:vault.decrypted_secrets",
+      "pass": true
+    },
+    {
+      "name": "checksum:vault.decrypted_secrets",
+      "pass": true
+    },
+    {
+      "name": "encrypted_fields_present",
+      "pass": true
+    },
+    {
+      "name": "sequences",
+      "pass": true
+    },
+    {
+      "name": "append_only:evidence_access_log:UPDATE",
+      "pass": true
+    },
+    {
+      "name": "append_only:evidence_access_log:DELETE",
+      "pass": true
+    },
+    {
+      "name": "append_only:admin_action_log:UPDATE",
+      "pass": true
+    },
+    {
+      "name": "append_only:admin_action_log:DELETE",
+      "pass": true
+    }
+  ],
+  "admin_action_id": "ff45cac1-9bad-439d-83f0-c392ed75d666",
+  "admin_action_recorded": true
+}

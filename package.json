@@ -15,7 +15,11 @@
     "typecheck:llm": "tsc -p tsconfig.llm.json",
     "pilot:load:short": "node scripts/pilot/run-local.mjs",
     "pilot:load:long": "node scripts/pilot/run-local.mjs --long",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "recovery:backup": "node scripts/recovery/backup.mjs",
+    "recovery:restore": "node scripts/recovery/restore.mjs",
+    "recovery:drill": "node scripts/recovery/drill.mjs",
+    "recovery:storage-check": "node scripts/recovery/storage-consistency.mjs"
   },
   "dependencies": {
     "@clerk/backend": "^2.33.0",

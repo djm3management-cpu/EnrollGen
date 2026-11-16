@@ -31,7 +31,7 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
   // References include real FKs and soft/JSON references (including audit UUIDs,
   // provider SIDs and object paths). No free text is returned or persisted.
   for (const node of nodes) {
-    for (const value of scalars(['call_records','inbound_calls'].includes(node.table) ? Object.fromEntries(Object.entries(node.row).filter(([k])=>!['recording_storage_path','recording_url'].includes(k))) : node.row)) for (const target of aliases.get(value) || []) connect(node,target);
+    for (const value of scalars(['call_records','inbound_calls'].includes(node.table) ? Object.fromEntries(Object.entries(node.row).filter(([k])=>!['recording_storage_path','recording_url'].includes(k))) : node.table==='admin_action_log' && /^recording_purge_/.test(node.row.action) ? {...node.row,target_id:null} : node.row)) for (const target of aliases.get(value) || []) connect(node,target);
     for (const fk of foreignKeys.filter(f=>f.source === node.table)) {
       const target = nodes.find(n=>n.table === fk.target && fk.columns.every((c,i)=>
         node.row[c] !== null && node.row[c] !== undefined && String(node.row[c]) === String(n.row[fk.targetColumns[i]])));
@@ -151,5 +151,5 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
     if (protectedRefs.has(n.key)) { increment(skippedByReference,n.dataClass); continue; }
     increment(counts,n.dataClass); selected.push(n);
   }
-  return {nodes,selected,reviews,counts,skippedByHold,skippedByReference};
+  return {nodes,selected,reviews,counts,skippedByHold,skippedByReference,held};
 }

@@ -1,0 +1,32 @@
+import {freshInstallClient} from '../../tests/helpers/freshInstallClient.js';
+import {provisionDeployment} from '../provision-deployment.js';
+import profile from '../../tests/fixtures/deployment-profile.json' with {type:'json'};
+import roster from '../../tests/fixtures/deployment-roster.json' with {type:'json'};
+import {featureHeaders} from '../../telephony/src/lib/deploymentFeatures.js';
+import {createEnrollmentIntakesHandler} from '../../netlify/functions/enrollment-intakes.js';
+import {emptyIntake,normalizeIntake} from '../../src/lib/enrollmentIntake.js';
+export {profile,roster};
+export const syntheticId=n=>`e1620000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+export async function loadRecoveryDataset(pg){
+ const env={DEPLOYMENT_PROFILE_JSON:JSON.stringify(profile)},db=freshInstallClient(pg),q=(s,a=[])=>pg.query(s,a);
+ await q('SET ROLE service_role');
+ await q("SELECT set_config('request.jwt.claims','{\"role\":\"service_role\"}',false),set_config('request.headers',$1,false)",[JSON.stringify(featureHeaders(env))]);
+ await provisionDeployment(db,roster,env);
+ const agents=(await q('SELECT id,clerk_user_id FROM enrolled_agents ORDER BY clerk_user_id')).rows;
+ await q("INSERT INTO deployment_authorities VALUES($1,$2,'admin','{}'),($1,$3,'manager',$4)",[profile.tenantId,roster[0].clerk_user_id,roster[2].clerk_user_id,[agents[1].id]]);
+ await q("INSERT INTO contacts(id,tenant_id,assigned_agent_id,first_name,last_name,phone) VALUES($1,$2,$3,'Synthetic','Recovery','+12125550101')",[syntheticId(1),profile.tenantId,roster[0].agent_slug]);
+ await q("INSERT INTO call_records(id,tenant_id,agent_id,agent_name,call_direction,call_type,product_type,call_start,contact_id) VALUES($1,$2,$3,'Synthetic','inbound','sales','MA','2026-11-01Z',$4)",[syntheticId(2),profile.tenantId,agents[0].id,syntheticId(1)]);
+ await q("INSERT INTO call_transcripts(id,tenant_id,call_record_id,call_date,transcript_text,product_line) VALUES($1,$2,$3,'2026-11-01Z','Synthetic recovery transcript','MA')",[syntheticId(3),profile.tenantId,syntheticId(2)]);
+ await q("INSERT INTO messages(id,tenant_id,contact_id,direction,channel) VALUES($1,$2,$3,'inbound','sms')",[syntheticId(4),profile.tenantId,syntheticId(1)]);
+ await q("INSERT INTO telephony_events(tenant_id,event) VALUES($1,'synthetic_recovery')",[profile.tenantId]);
+ await q("SELECT retention_place_hold($1,$2,'contact',$3,'Synthetic recovery hold')",[roster[0].clerk_user_id,profile.organizationId,syntheticId(1)]);
+ await q("INSERT INTO evidence_access_log(actor_id,tenant_id,resource_type,resource_id,action,result,grant_id) VALUES($1,$2,'synthetic','collection','read','allowed',gen_random_uuid())",[roster[0].clerk_user_id,profile.tenantId]);
+ await q("SELECT transition_operational_alerts('[{\"rule\":\"purge_failures\",\"key\":\"deployment\",\"count\":1,\"threshold\":1}]'::jsonb)");
+ await q("INSERT INTO recording_ingestion(id,account_sid,recording_sid,recording_key,callback_call_sid,parent_call_sid,tenant_id,first_seen_at,provider_created_at,storage_path,copy_status,provider_status,stored_at) VALUES($1,'AC00000000000000000000000000000001','RE00000000000000000000000000000001','RE00000000000000000000000000000001','CA00000000000000000000000000000001','CA00000000000000000000000000000001',$2,'2000-01-01Z','2000-01-01Z',$3,'stored','completed','2000-01-01Z')",[syntheticId(5),profile.tenantId,profile.tenantId+'/synthetic.wav']);
+ const data=normalizeIntake({...emptyIntake(roster[0].name,roster),writingAgentId:roster[0].id,firstName:'Synthetic',lastName:'Recovery',dob:'1955-02-28',phone:'2125550101',state:'NY',zip:'10001',mbi:'1ab2cd3ef45',prevCarrier:'Original Medicare',newCarrier:'Aetna',planName:'Synthetic Plan',enrollCode:'AEP',premium:'0',contractId:'H1234',planId:'001',sunfireCode:'SYNTHETIC-001',effectiveDate:'2027-01-01',sixtyDayDate:'2027-03-02'});
+ const handler=createEnrollmentIntakesHandler({authenticate:async()=>({userId:roster[0].clerk_user_id,orgId:profile.organizationId}),getDb:()=>db,env});
+ const response=await handler(new Request('https://app.example.test/api/enrollment-intakes?call_id='+syntheticId(2),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})}));
+ if(response.status!==200)throw Error('Synthetic intake setup failed');
+ await q('RESET ROLE');
+ return {env,db,agents};
+}

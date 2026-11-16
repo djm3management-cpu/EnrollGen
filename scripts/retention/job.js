@@ -1,3 +1,4 @@
+import {deleteRecordings} from './recordingDeletion.js';
 import {referenceComponents} from './components.js';
 import {planRetention,quote,keyOf} from './planner.js';
 import {TABLE_CLASS} from './inventory.js';
@@ -34,9 +35,9 @@ export async function loadSnapshot(db) {
   const holds=(await db.query('SELECT * FROM retention_holds WHERE released_at IS NULL')).rows;
   return {tables,primaryKeys,foreignKeys,roster,holds};
 }
-// Adapter MUST participate in this SAME PostgreSQL transaction, including bytes.
-// An HTTP remove callback cannot meet this contract and is never accepted.
-export async function runRetention({db,env=process.env,deleteRequested=false,batchSize=100,maxBatches=10,now=()=>new Date(),storage}={}) {
+// Recording objects use the durable three-phase protocol. Other external
+// artifacts still require an adapter participating in the database transaction.
+export async function runRetention({db,env=process.env,deleteRequested=false,batchSize=100,maxBatches=10,now=()=>new Date(),storage,afterPhase,pendingThresholdSeconds=3600}={}) {
   const profile=deploymentProfile(env), enabled=featureEnabled('RETENTION_PURGE_ENABLED',env);
   if(!Number.isInteger(batchSize)||batchSize<1||batchSize>500||!Number.isInteger(maxBatches)||maxBatches<1||maxBatches>100)throw Error('Invalid retention batch bounds');
   const [{tenant_id:provisionedTenant}={}]=(await db.query('SELECT tenant_id FROM deployment_settings WHERE singleton')).rows;
@@ -53,6 +54,10 @@ export async function runRetention({db,env=process.env,deleteRequested=false,bat
     // One job at a time. Session advisory lock is released even on disconnect.
     await db.query('SELECT pg_advisory_lock(160,1)');
     const blocked=new Set();
+    if(mode==='delete'&&storage?.exists&&storage?.remove){
+      const receipts=await deleteRecordings({db,storage,profile,now,limit:batchSize*maxBatches,afterPhase,pendingThresholdSeconds});
+      Object.assign(summary.deleted,receipts.deleted);Object.assign(summary.failures,receipts.failures);
+    }
     for(let batch=0;batch<(mode==='delete'?maxBatches:1);batch++) {
       await db.query('BEGIN');
       try {
@@ -63,10 +68,10 @@ export async function runRetention({db,env=process.env,deleteRequested=false,bat
         await db.query('SELECT retention_lock_batch()');
         await db.query("INSERT INTO evidence_access_log(actor_id,tenant_id,resource_type,resource_id,action,result,grant_id) VALUES('service:retention',$1,'retention_inventory','collection','list','allowed',$2)",[profile.tenantId,id]);
         const snapshot={...await loadSnapshot(db),tenantId:profile.tenantId},plan=planRetention(snapshot,profile.retention,now());
-        if(batch===0)Object.assign(summary,{counts:plan.counts,skippedByHold:plan.skippedByHold,skippedByReference:plan.skippedByReference,reviewCount:plan.reviews.length});
+        if(batch===0)Object.assign(summary,{counts:Object.fromEntries([...new Set([...Object.keys(plan.counts),...Object.keys(summary.deleted)])].map(k=>[k,(plan.counts[k]||0)+(summary.deleted[k]||0)])),skippedByHold:plan.skippedByHold,skippedByReference:plan.skippedByReference,reviewCount:plan.reviews.length});
         if(mode==='dry-run'){await db.query('COMMIT');break;}
         for(const n of plan.reviews)await db.query('UPDATE contacts SET retention_review_due=true WHERE id=$1',[n.row.id]);
-        const candidates=plan.selected.filter(n=>!blocked.has(n.key));
+        const candidates=plan.selected.filter(n=>!blocked.has(n.key)&&!n.row.deletion_pending_at);
         if(!candidates.length){await db.query('COMMIT');break;}
         const present=new Set(plan.nodes.map(n=>n.key));
         let attempted=0,progress=false;
@@ -83,6 +88,7 @@ export async function runRetention({db,env=process.env,deleteRequested=false,bat
           try {
             await db.query('SET CONSTRAINTS ALL DEFERRED');
             for(const n of group)if(n.hasObject) {
+              if(n.table==='recording_ingestion'&&storage?.exists&&storage?.remove)throw Error('storage_pending');
               if(storage?.transactionalDatabase!==db || typeof storage.deleteInTransaction!=='function')throw Error('atomic_storage_unavailable');
               if(await storage.deleteInTransaction({db,table:n.table,row:n.row})!==true)throw Error('storage_unconfirmed');
             }
