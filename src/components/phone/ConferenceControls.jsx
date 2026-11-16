@@ -10,6 +10,7 @@ export default function ConferenceControls({ controls, mode, onClose, agentId, t
   const connectedTarget = conference?.participants.find(p => p.id === conference.transferParticipantId && p.status === 'connected');
   const self = conference?.participants.find(p => p.agentId === agentId && p.status !== 'left');
   const canLeave = self && conference?.phase !== 'warm' && conference?.participants.some(p => p.id !== self.id && p.role !== 'customer' && p.status === 'connected');
+  if(!mode&&conference?.whisperOnly&&!error)return null;
   if (!mode && !conference && !error) return null;
   return <div className="phone-conference" aria-busy={busy}>
     {mode && <form className="phone-conference__form" onSubmit={event => {

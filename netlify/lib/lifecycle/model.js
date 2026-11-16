@@ -1,7 +1,7 @@
 import {CALL_OUTCOME_OPTIONS} from '../../../src/lib/postCallPipeline.js';
 import {ACTIVE_RULE_CATALOG,ruleMatchesProduct} from '../../../src/compliance/rules/catalog.js';
 import {redactSensitiveText} from '../../../telephony/src/lib/redaction.js';
-export const EVENT_TYPES=Object.freeze(['listen','recap','arrival','attribution','consent','soa','call','message','recording','transcript','disclosure','review','enrollment','revision','delivery','task','callback','activity','opportunity','reassignment','hold','complaint','complaint_resolution','retention']);
+export const EVENT_TYPES=Object.freeze(['whisper','listen','recap','arrival','attribution','consent','soa','call','message','recording','transcript','disclosure','review','enrollment','revision','delivery','task','callback','activity','opportunity','reassignment','hold','complaint','complaint_resolution','retention']);
 const states=new Set([...CALL_OUTCOME_OPTIONS.flatMap(group=>group.options.map(o=>o.value)),'downloaded','recorded','unknown','open','resolved','removed','pending','cancelled','held_missing','complete','stored','processing','retry','failed','completed','sent','delivered','received','undelivered','queued','sending','read','inbound','outbound','answered','connected','no_answer','no-answer','busy','missed','scheduled','done','closed','pass','fail','PASS','FAIL','met','not_met','not_applicable','incomplete','review','approved','rejected','succeeded','authorized','enrolled','enrolled_pending_verification','not_interested','callback','voicemail','new','active','won','lost','uploading','uploaded','missing_code','needs_attention','duplicate_on_sunfire','waiting_for_production','skipped_test_enrollment','opportunity.stage_changed','confirm','dismiss','stage_changed','created','updated','superseded']);
 export const requiredDisclosureRules=product=>ACTIVE_RULE_CATALOG.filter(r=>ruleMatchesProduct(r,product||'MA')&&/^(?:tpmo|consent$|recordingConsent$|impact$|topic$)/.test(r.cmsBasis?.method||'')).map(r=>r.id);
 const clean=value=>typeof value==='string'&&/^(?:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|[a-f0-9]{64})$/i.test(value)?value:typeof value==='string'?redactSensitiveText(value).split('').map(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127?' ':c).join('').slice(0,240):value;
@@ -38,7 +38,7 @@ export function lifecycleCompleteness(inputs){
 }
 export function lifecyclePage(data,recapEnabled=false){
  const events=data.events.map(projectEvent),last=events.at(-1),accessLast=data.accesses.at(-1);
- return {consumerId:data.consumerId,asOf:data.asOf,admin:data.admin,events,types:EVENT_TYPES.filter(type=>(type!=='recap'||recapEnabled)&&(type!=='listen'||events.some(e=>e.type==='listen'))),checks:lifecycleCompleteness(data.checkInputs),accesses:data.accesses,
+ return {consumerId:data.consumerId,asOf:data.asOf,admin:data.admin,events,types:EVENT_TYPES.filter(type=>(type!=='recap'||recapEnabled)&&(!['listen','whisper'].includes(type)||events.some(e=>e.type===type))),checks:lifecycleCompleteness(data.checkInputs),accesses:data.accesses,
   nextAccess:data.accesses.length===100?{time:accessLast.occurred_at,id:accessLast.id}:null,
   next:data.hasMore&&last?{time:last.time,key:last.key,asOf:data.asOf}:null};
 }

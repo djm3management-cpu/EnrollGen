@@ -47,6 +47,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     await store.event(c.call_id, 'customer_hold_changed', { held: enabled });
   }
   function twiml(c, p) {
+    if(p.role==='supervisor')fail(403,'Whisper requires its coaching join.');
     const response = new twilio.twiml.VoiceResponse();
     // A redirect cannot be used as a promise that old streams survive. Give
     // every leg an independently authenticated, speaker-specific REST stream.
@@ -59,6 +60,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     return response.toString();
   }
   async function media(c, p, { recover = false } = {}) {
+    if(p.role==='supervisor')return;
     if(!settings.conferenceCallingEnabled)fail(503,'Conference calling disabled','CONFERENCE_DISABLED');
     p = await store.participant(p.id);
     if (!p.twilio_call_sid || !live(p)) return;
@@ -117,7 +119,8 @@ export function createConferenceService({ store = createConferenceStore(supabase
     if (!c) return null;
     return { callId: id, phase: c.phase, customerHeld: c.customer_held,
       transferParticipantId: c.transfer_participant_id, ownerAgentId: c.owner_agent_id,
-      participants: (await store.participants(id)).map(p => ({ id: p.id, role: p.role, phone: p.phone,
+      ...(conferenceRuntime.whisper?.enabled()?{whisper:await conferenceRuntime.whisper.indicator(id),whisperOnly:c.whisper_conversion===true}:{}),
+      participants: (await store.participants(id)).filter(p=>p.role!=='supervisor').map(p => ({ id: p.id, role: p.role, phone: p.phone,
         agentId: p.agent_id, status: p.status, joinedAt: p.joined_at, leftAt: p.left_at })) };
   }
   async function upgrade(attempt, phone) {
@@ -172,7 +175,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     if (!validUsPhone(settings.twilioPhoneNumber)) fail(503, 'A US Twilio caller ID must be configured.', 'CONFERENCE_CALLER_ID_MISSING');
     if (targetAgentId && mode !== 'warm') fail(400, 'Agent destinations require Warm Transfer.');
     if ((await store.participants(c.call_id)).some(p => p.role === 'third_party' && live(p))) fail(409, 'Remove the existing third party first.');
-    if ((await store.participants(c.call_id)).filter(live).length >= 3) fail(409, 'One agent must leave before adding another person.');
+    if ((await store.participants(c.call_id)).filter(p=>p.role!=='supervisor'&&live(p)).length >= 3) fail(409, 'One agent must leave before adding another person.');
     if (targetAgentId) {
       const target = checked(await store.db.from('availability_agent_subjects').select('agent_slug')
         .eq('tenant_id', c.tenant_id).eq('agent_slug', targetAgentId).eq('is_active', true).maybeSingle());
@@ -244,7 +247,11 @@ export function createConferenceService({ store = createConferenceStore(supabase
   }
   async function finish(c) {
     if (c.ended_at) return;
-    for (const p of (await store.participants(c.call_id)).filter(live)) await stop(p, { release: false });
+    const participants=await store.participants(c.call_id);
+    if(participants.some(p=>p.role==='supervisor'))await conferenceRuntime.whisper?.endCall(c);
+    // The coach removal hook is best effort here; the existing room completion
+    // below also ends it. Coach audit failure cannot block End Call.
+    for (const p of participants.filter(p=>p.role!=='supervisor'&&live(p))) await stop(p, { release: false });
     if (c.twilio_conference_sid) {
       try { await provider('conference_end', () => client.conferences(c.twilio_conference_sid).update({ status: 'completed' })); }
       catch (error) {
@@ -256,6 +263,8 @@ export function createConferenceService({ store = createConferenceStore(supabase
     if (await store.finish(c.call_id)) await store.event(c.call_id, 'ended');
   }
   async function departed(c, p) {
+    if(p.role==='supervisor'||conferenceRuntime.whisper?.enabled())await conferenceRuntime.whisper?.departed(c,p);
+    if(p.role==='supervisor')return;
     if (p.role === 'customer') return finish(c);
     if (p.agent_id) await store.release(p.agent_id, c.parent_call_sid);
     if (p.role === 'third_party') {
@@ -263,7 +272,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
       if (c.customer_held) await hold(c, false);
       await patch(c, { phase: 'active', transfer_deadline: null });
     }
-    const others = (await store.participants(c.call_id)).filter(live);
+    const others = (await store.participants(c.call_id)).filter(p=>p.role!=='supervisor'&&live(p));
     if (others.some(item => item.role !== 'customer' && item.status === 'connected')) {
       if (c.customer_held) await hold(c, false);
     } else if (!['blind', 'recovering'].includes(c.phase)) await voicemail(c);
@@ -275,7 +284,9 @@ export function createConferenceService({ store = createConferenceStore(supabase
       if (!c || c.ended_at) fail(409, 'This call has ended.');
       if (c.phase === 'upgrading') await connectOriginal(c);
       c = await store.get(callId);
-      const people = await store.participants(callId);
+      const participants=await store.participants(callId);
+      if(conferenceRuntime.whisper?.enabled()||participants.some(p=>p.role==='supervisor'))await conferenceRuntime.whisper?.beforeAction(c,input);
+      const people = participants.filter(p=>p.role!=='supervisor');
       if (input.action === 'dial') await dial(c, input);
       else if (input.action === 'remove') {
         const p = people.find(item => item.id === input.participantId && item.role === 'third_party' && live(item));
@@ -329,6 +340,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     });
   }
   async function joined(c, p) {
+    if(p.role==='supervisor'){if(p.status!=='left'&&!c.ended_at)await store.patchParticipant(p.id,{status:'connected',joined_at:p.joined_at||now()});return;}
     if (p.status === 'left' || c.ended_at) return;
     await store.patchParticipant(p.id, { status: 'connected', joined_at: p.joined_at || now() });
     if (p.id === c.transfer_participant_id || (c.phase === 'recovering' && p.role === 'agent')) {
@@ -359,6 +371,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
         await store.locked(room.call_id, async c => {
           if (c.phase === 'upgrading') { await connectOriginal(c); c = await store.get(c.call_id); }
           const people = await store.participants(c.call_id);
+          if(people.some(p=>p.role==='supervisor'))await conferenceRuntime.whisper?.recover(c);
           if (!people.some(p => p.role === 'customer' && live(p))) { await finish(c); return; }
           for (const p of people.filter(item => item.status === 'left' && item.agent_id)) await store.release(p.agent_id, c.parent_call_sid);
           let members = [];
@@ -366,7 +379,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
             const sid = await roomSid(c);
             members = await provider('participant_lookup', () => client.conferences(sid).participants.list({ limit: 20 }));
           }
-          for (const p of (await store.participants(c.call_id)).filter(live)) {
+          for (const p of (await store.participants(c.call_id)).filter(p=>p.role!=='supervisor'&&live(p))) {
             if (!p.twilio_call_sid) {
               if (Date.parse(now()) - Date.parse(p.dial_started_at) > 45000) { await store.patchParticipant(p.id, { status: 'left', left_at: now() }); await departed(c, p); }
               continue;
@@ -399,7 +412,7 @@ export function createConferenceService({ store = createConferenceStore(supabase
     }
     await reconcileRecordings();
   }
-  return { store, upgrade, action, snapshot, status, tick, twiml, media, hold, departed, finish, roomSid, joined };
+  return { store, upgrade, connectOriginal, action, snapshot, status, tick, twiml, media, hold, departed, finish, roomSid, joined };
 }
 
 let singleton;

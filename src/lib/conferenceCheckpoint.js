@@ -8,3 +8,5 @@ export function registerConferenceCheckpoint(callSid, checkpoint) {
 export async function flushConferenceCheckpoint(callSid) {
   await checkpoints.get(callSid)?.();
 }
+
+export const hasConferenceCheckpoint=callSid=>checkpoints.has(callSid);

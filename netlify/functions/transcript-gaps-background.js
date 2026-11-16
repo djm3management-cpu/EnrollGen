@@ -1,3 +1,4 @@
+import {assertWhisperRecordingSafe} from '../../telephony/src/lib/whisperRecording.js';
 import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {admitCall} from './_admission.js';
 import {evidenceCheckpoint} from '../../telephony/src/lib/evidenceAudit.js';
@@ -31,7 +32,8 @@ export function createGapFillHandler({getDb=getEvidenceServiceClient,transport=f
    if(!featureEnabled(job.mode==='automatic'?'TRANSCRIPT_AUTO_RECOVERY_ENABLED':'TRANSCRIPT_GAP_FILL_ENABLED',env))throw Error('Gap job mode disabled');
    const recording=checked(await db.from('recording_ingestion').select('*').eq('id',job.recording_id).eq('tenant_id',job.tenant_id).single());
    if(recording.call_record_id!==job.call_id)throw Error('Recording call mismatch');
-   const admissionCall=checked(await db.from('call_records').select('agent_id,tenant_id').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
+   const admissionCall=checked(await db.from('call_records').select('agent_id,tenant_id,metadata').eq('id',job.call_id).eq('tenant_id',job.tenant_id).single());
+   assertWhisperRecordingSafe(admissionCall);
    await admitCall(db,"transcription",admissionCall);
    if(recording.stored_bytes>MAX_GAP_RECORDING_BYTES)throw Error('Recording exceeds recovery download cap');
    await evidenceCheckpoint(db,{actor:'service:transcript_recovery',tenant:job.tenant_id,resource:'recording',resourceId:recording.id,action:'read',grantId:job.id});

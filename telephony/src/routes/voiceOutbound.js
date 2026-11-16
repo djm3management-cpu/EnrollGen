@@ -64,6 +64,7 @@ function sendTwiml(res, response) {
 // fields, all covered by the same X-Twilio-Signature the inbound
 // webhooks use.
 async function outboundGate(req, res, next) {
+  if(String(req.body.From||'').startsWith('client:coach_'))return res.type('text/xml').send('<Response><Hangup/></Response>');
   const to = normalizePhoneE164(req.body.PhoneNumber);
   if (!to) return next(); // Existing invalid-number TwiML below.
   const agentId = String(req.body.From || "").replace(/^client:/, "");

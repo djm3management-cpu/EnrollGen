@@ -11,8 +11,10 @@ const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9
 export function createSupervisorFloorHandler({authenticate=r=>requireClerkAuth(r,{allowBypass:false}),getDb=getEvidenceServiceClient,env=process.env}={}) {
  return serverRequest('supervisor-floor',async request=>{
   if(!featureEnabled('SUPERVISOR_FLOOR_ENABLED',env))return evidenceJson(404,{error:'Not found.'});
-  const listen=featureEnabled('SUPERVISOR_LISTEN_ENABLED',env),url=new URL(request.url);
-  if((request.method==='POST'||url.searchParams.has('history'))&&!listen)return evidenceJson(404,{error:'Not found.'});
+  const listen=featureEnabled('SUPERVISOR_LISTEN_ENABLED',env),whisper=featureEnabled('SUPERVISOR_WHISPER_ENABLED',env)&&featureEnabled('CONFERENCE_CALLING_ENABLED',env),url=new URL(request.url);
+  if((request.method==='POST'||url.searchParams.has('history'))&&!listen&&!whisper)return evidenceJson(404,{error:'Not found.'});
+  let input;
+  if(request.method==='POST'){const text=await request.text();if(text.length>2048)return evidenceJson(400,{error:'Request too large.'});try{input=JSON.parse(text);}catch{return evidenceJson(400,{error:'Invalid request.'});}if(!input||typeof input!=='object'||Array.isArray(input))return evidenceJson(400,{error:'Invalid request.'});if(input.action==='whisper'&&!whisper)return evidenceJson(404,{error:'Not found.'});}
   if(!['GET','POST'].includes(request.method))return evidenceJson(405,{error:'Method not allowed.'});
   try {
    const auth=await authenticate(request);if(auth.response)return auth.response;
@@ -22,10 +24,10 @@ export function createSupervisorFloorHandler({authenticate=r=>requireClerkAuth(r
    await admit(db,request.method==='POST'?'supervisorListen':'supervisorFloor',auth.userId,profile);
    const rpc=async(name,args)=>{const r=await db.rpc(name,{p_actor:auth.userId,p_org:org,...args});if(r.error){if(r.error.code==='P1611')securityEvent('admin_log_write_failed',{subject:auth.userId});throw new EvidenceError(r.error.code==='42501'?403:503,'Supervisor floor unavailable.');}return r.data;};
    if(request.method==='POST') {
-    const text=await request.text();if(text.length>2048)throw new EvidenceError(400,'Request too large.');
-    let input;try{input=JSON.parse(text);}catch{throw new EvidenceError(400,'Invalid request.');}if(input.action!=='listen'||!uuid(input.attempt_id)||!auth.sessionId)throw new EvidenceError(400,'Choose a connected call.');
+    if(!['listen',...(whisper?['whisper']:[])].includes(input.action)||input.action==='listen'&&!listen||!uuid(input.attempt_id)||!auth.sessionId)throw new EvidenceError(400,'Choose a connected call.');
     const token=randomBytes(32).toString('base64url');
-    await rpc('mint_supervisor_listen',{p_session:auth.sessionId,p_attempt:input.attempt_id,p_hash:createHash('sha256').update(token).digest('hex')});
+    await rpc(input.action==='whisper'?'mint_supervisor_whisper':'mint_supervisor_listen',{p_session:auth.sessionId,p_attempt:input.attempt_id,p_hash:createHash('sha256').update(token).digest('hex')});
+    if(input.action==='whisper')return evidenceJson(200,{grant:token,attempt:input.attempt_id});
     return evidenceJson(200,{grant:token,attempt:input.attempt_id,url:new URL('/supervisor-listen',profile.telephonyOrigin).toString().replace(/^https:/,'wss:')});
    }
    if(url.searchParams.has('history')) {
@@ -37,13 +39,14 @@ export function createSupervisorFloorHandler({authenticate=r=>requireClerkAuth(r
    const data=await rpc('read_supervisor_floor',{});
    for(const row of data.rows) {
     row.listen_available=listen&&row.listen_available;
+    if(whisper&&row.attempt_id){try{await rpc('supervisor_whisper_authorize',{p_attempt:row.attempt_id});row.whisper_available=true;}catch{row.whisper_available=false;}}
     delete row.call_id;
-    if(!listen)delete row.attempt_id;
+    if(!listen&&!whisper)delete row.attempt_id;
    }
-   const etag='"'+createHash('sha256').update(JSON.stringify({rows:data.rows,admin:data.admin,listen})).digest('hex')+'"';
+   const etag='"'+createHash('sha256').update(JSON.stringify({rows:data.rows,admin:data.admin,listen,...(whisper?{whisper:true}:{})})).digest('hex')+'"';
    const headers={'Cache-Control':'private, no-store',ETag:etag,'X-Server-Time':data.serverTime,'Content-Type':'application/json'};
    if(request.headers.get('if-none-match')===etag)return new Response(null,{status:304,headers});
-   return new Response(JSON.stringify({...data,listen}),{headers});
+   return new Response(JSON.stringify({...data,listen,...(whisper?{whisper:true}:{})}),{headers});
   }catch(error){return evidenceFailure(error);}
  });
 }

@@ -115,6 +115,7 @@ export default function ActiveCallExpanded({ onOpenMessages }) {
       <div className="phone-expanded__header">
         <div className="phone-expanded__who">
           <span className="phone-expanded__name">{displayName.toUpperCase()}</span>
+          {inbound?.conferencing?.conference?.whisper&&<span style={{fontSize:11,fontWeight:400,color:'var(--eg-text-mid)'}}>Whisper · {inbound.conferencing.conference.whisper}</span>}
           <span className="phone-expanded__phone">{fmtPhone(params.callerPhone)}</span>
         </div>
         <span className="phone-expanded__timer">

@@ -1,3 +1,5 @@
+import {createSupervisorWhisperRouter} from './routes/supervisorWhisper.js';
+import {createSupervisorWhisper,whisperEnabled} from './supervisorWhisper.js';
 import {createSupervisorListenServer,listenEnabled} from './media/supervisorListen.js';
 import {withLogContext,inspectInput,securityEvent} from './lib/logger.js';
 import {installOperationalTelemetry,scheduledSuccess} from './lib/operationalTelemetry.js';
@@ -88,6 +90,10 @@ app.use(leadsRouter);
 app.use(vendorPingRouter);
 app.use(voiceTokenRouter);
 app.use(voiceEventsRouter);
+// Keep removal/recovery for durable coach legs after disabling new admission.
+const whisper=createSupervisorWhisper({conference:conferenceService(),settings:config});
+conferenceRuntime.whisper=whisper;
+if(whisperEnabled())app.use(createSupervisorWhisperRouter({service:whisper}));
 app.use(voiceOutboundRouter);
 app.use(createConferenceRouter());
 app.use(smsRouter);
@@ -104,9 +110,13 @@ const server = http.createServer(app);
 const conferenceMedia = createConferenceMedia();
 let conferenceRecoveryRunning = false;
 const recoverConferences = async () => {
-  if (!featureEnabled('CONFERENCE_CALLING_ENABLED') || conferenceRecoveryRunning) return;
+  if (conferenceRecoveryRunning) return;
   conferenceRecoveryRunning = true;
-  try { await conferenceService().tick();await scheduledSuccess(supabase,'conference_recovery'); }
+  try {
+    // A coach reconciliation error must not suppress ordinary call recovery.
+    try{await whisper.sweep();}catch{logger.error('supervisor_whisper_cleanup_failed');}
+    if(featureEnabled('CONFERENCE_CALLING_ENABLED')){await conferenceService().tick();await scheduledSuccess(supabase,'conference_recovery');}
+  }
   catch (error) { if (!['42P01', 'PGRST205'].includes(error.code)) logger.error("server_conference_recovery_pending"); }
   finally { conferenceRecoveryRunning = false; }
 };

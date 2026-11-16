@@ -1,8 +1,8 @@
 import {admitHttp} from '../lib/admission.js';
 import {supabase} from '../supabase.js';
 import { Router } from "express";
-import twilio from "twilio";
-import { config } from "../config.js";
+import {config} from '../config.js';
+import {voiceAccessToken} from "../voiceAccessToken.js";
 import { agentExists } from "../availability.js";
 import { mintAgentWsToken } from "../wsToken.js";
 import { requireClerkUser } from "../clerkAuth.js";
@@ -41,22 +41,9 @@ voiceTokenRouter.post("/api/voice/token", async (req, res) => {
     return res.status(404).json({ error: `Unknown agent_id: ${agentId}` });
   }
 
-  const AccessToken = twilio.jwt.AccessToken;
-  const token = new AccessToken(
-    config.twilioAccountSid,
-    config.twilioApiKeySid,
-    config.twilioApiKeySecret,
-    { identity: agentId, ttl: TOKEN_TTL_SECONDS }
-  );
-  token.addGrant(
-    new AccessToken.VoiceGrant({
-      incomingAllow: true,
-      outgoingApplicationSid: config.twilioTwimlAppSid,
-    })
-  );
 
   return res.json({
-    token: token.toJwt(),
+    token: voiceAccessToken(agentId,{ttl:TOKEN_TTL_SECONDS}),
     identity: agentId,
     expires_in: TOKEN_TTL_SECONDS,
     ws_token: mintAgentWsToken(agentId, clerkSubject, clerkSessionId),

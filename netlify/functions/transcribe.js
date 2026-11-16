@@ -1,3 +1,4 @@
+import {assertWhisperRecordingSafe} from '../../telephony/src/lib/whisperRecording.js';
 import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {admitAgent} from './_admission.js';
 import { auditedEvidenceRequest } from './_evidenceAccess.js';
@@ -229,6 +230,7 @@ export function createTranscribeHandler({
     const sb = getDb();
     return await auditedEvidenceRequest(sb,auth,request,'recording',recordingIdentity,async identity=>{
     const target = await authorizeRecordingTarget(sb, identity, { call_record_id: callId });
+    assertWhisperRecordingSafe(target.record);
     const recordings = await listTargetRecordings(sb, identity, target);
     const recording = recordings.find(row => row.id === recordingId);
     if (!recording) throw new EvidenceError(403, "Recording is unavailable for this call.");

@@ -40,6 +40,7 @@ const ActiveCallBar = memo(function ActiveCallBar({ onExpand }) {
     >
       <div className="phone-active-bar__copy">
         <span className="phone-active-bar__name">{displayName.toUpperCase()}</span>
+        {inbound?.conferencing?.conference?.whisper&&<span style={{fontSize:11,fontWeight:400,color:'var(--eg-text-mid)'}}>Whisper · {inbound.conferencing.conference.whisper}</span>}
         <span className="phone-active-bar__timer">
           {ringing ? (
             "RINGING..."

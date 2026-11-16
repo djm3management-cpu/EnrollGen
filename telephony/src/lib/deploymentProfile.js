@@ -83,13 +83,15 @@ export function parseDeploymentProfile(raw, features = deploymentFeatures()) {
   }
   p.tokenAudiences = p.tokenAudiences ? list(p.tokenAudiences,'tokenAudiences') : [p.organizationId];
   if(p.messageMediaHosts)p.messageMediaHosts=list(p.messageMediaHosts,'messageMediaHosts').map(h=>{validateDestination(`https://${h}/`,[h]);return h;});
+  p.supervisorWhisper = {maxSeconds:1800,...p.supervisorWhisper};
+  if(Object.keys(p.supervisorWhisper).some(key=>key!=='maxSeconds')||!Number.isInteger(p.supervisorWhisper.maxSeconds)||p.supervisorWhisper.maxSeconds<1||p.supervisorWhisper.maxSeconds>7200)fail('supervisorWhisper');
   p.supervisorListen = {maxSeconds:1800,perCall:2,perAgency:6,...p.supervisorListen};
   for(const [key,max] of Object.entries({maxSeconds:7200,perCall:10,perAgency:100})) {
     if(!Number.isInteger(p.supervisorListen[key])||p.supervisorListen[key]<1||p.supervisorListen[key]>max)fail('supervisorListen.'+key);
   }
   if(Object.keys(p.supervisorListen).some(key=>!['maxSeconds','perCall','perAgency'].includes(key)))fail('supervisorListen');
   if(p.admissionLimits) {
-    const keys=['supervisorFloor','supervisorListen','clientRecap','coachingRegenerate','lifecycleExport','vendorLead','vendorPing','availability','voiceToken','agentSocket','sms','gifs','coach','transcription','sttStream','scoring','summary','embeddings'];
+    const keys=['supervisorWhisper','supervisorFloor','supervisorListen','clientRecap','coachingRegenerate','lifecycleExport','vendorLead','vendorPing','availability','voiceToken','agentSocket','sms','gifs','coach','transcription','sttStream','scoring','summary','embeddings'];
     for(const [route,limits] of Object.entries(p.admissionLimits)) {
       if(!keys.includes(route)||!limits||typeof limits!=='object'||Array.isArray(limits))fail('admissionLimits');
       for(const [key,value] of Object.entries(limits))if(!['minute','subjectDay','deploymentDay','concurrent'].includes(key)||!Number.isInteger(value)||value<1||value>1000000)fail('admissionLimits value');

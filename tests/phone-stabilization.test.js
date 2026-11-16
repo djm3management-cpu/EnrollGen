@@ -1,3 +1,4 @@
+import {createBrowserPhone} from '../src/lib/browserPhone.js';
 import {createLogger} from '../telephony/src/lib/logger.js';
 import {deploymentPublic} from '../src/lib/deploymentPublic.js';
 import { egressMetrics } from '../telephony/src/egressMetrics.js';
@@ -46,7 +47,7 @@ function phoneFixture(){
  let source=readFileSync(new URL('../src/context/InboundCallContext.jsx',import.meta.url),'utf8');
  source=source.slice(source.indexOf('function paramsFromCall'),source.indexOf('function AuthedInboundCallProvider'));
  source=source.replace('import("@twilio/voice-sdk")','Promise.resolve({Device:globalThis.Device})').replace('return <InboundCallContext.Provider value={value}>{children}</InboundCallContext.Provider>;','return value;');
- const context=vm.createContext({deploymentPublic,...harness.hooks,installAgentAudio,requestAgentMicrophone:()=>{},readAudioPreferences:()=>({enabled:true}),updateLiveTranscript,computeRmsLevel,computeWaveformPeaks,callContinuity:createCallContinuity(),Device,console:{info:(...args)=>waveform.logs.push(args.join(' ')),warn:console.warn,error:console.error},Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
+ const context=vm.createContext({createBrowserPhone,deploymentPublic,...harness.hooks,installAgentAudio,requestAgentMicrophone:()=>{},readAudioPreferences:()=>({enabled:true}),updateLiveTranscript,computeRmsLevel,computeWaveformPeaks,callContinuity:createCallContinuity(),Device,console:{info:(...args)=>waveform.logs.push(args.join(' ')),warn:console.warn,error:console.error},Date,Map,Set,TELEPHONY_BASE_URL:'https://phone.test',WS_TOKEN_REFRESH_MS:600000,WS_TOKEN_REFRESH_RETRY_MS:30000,
   useAppAuth:()=>({getToken:token}),useTenantConfig:()=>({agents:[],supabaseClient:null}),useAvailability:()=>availability,
   // Conference-enabled lifecycle paths have their own SQL/WebSocket suite.
   useConferenceCall:()=>({enabled:false,agents:[],conference:null,busy:false,error:'',run:async()=>{}}),

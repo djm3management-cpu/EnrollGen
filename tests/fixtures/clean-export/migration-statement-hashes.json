@@ -14,5 +14,6 @@
   "164_post_call_coaching.sql": "cc8de0654c0cd38f520bed8ba33b269b0846aba00084a0fea75e76061701cfbc",
   "165_client_recap.sql": "e45fff80243e0575009bcb096304d6fae09019241b2e80ed96de42d08ff14227",
   "166_supervisor_floor.sql": "8d0997c09ca040eb04ef2292df4e19d48bd28af69ca882e5542faff71ff46f4b",
-  "167_practice_caller.sql": "eca820646517d0e184ad2591e0c1f5b71add917d1f559619c9129a81283d80be"
+  "167_practice_caller.sql": "eca820646517d0e184ad2591e0c1f5b71add917d1f559619c9129a81283d80be",
+  "168_supervisor_whisper.sql": "15b1902f8f3b849963e433aeae35aee3a3354ae251cf3ae94be7a1a1cdfdaa8e"
 }

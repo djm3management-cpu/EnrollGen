@@ -1,3 +1,4 @@
+import {assertWhisperRecordingSafe} from '../../telephony/src/lib/whisperRecording.js';
 import {serverRequest} from '../../telephony/src/lib/adminActions.js';
 import {createLogger} from '../../telephony/src/lib/logger.js';
 const logger=createLogger('netlify','backfill_deepgram_intelligence');
@@ -228,6 +229,7 @@ function resolveAudioUrl(row) {
 }
 
 async function transcribeAudio(audioUrl,db,call) {
+  assertWhisperRecordingSafe(call);
   const dgKey = process.env.DEEPGRAM_API_KEY;
   if (!dgKey) throw new Error("DEEPGRAM_API_KEY not configured");
 

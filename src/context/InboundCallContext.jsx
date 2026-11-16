@@ -1,3 +1,6 @@
+import {fetchWithClerk} from '../lib/clerkFetch.js';
+import {createBrowserPhone} from '../lib/browserPhone.js';
+import {flushConferenceCheckpoint,hasConferenceCheckpoint} from '../lib/conferenceCheckpoint.js';
 import {deploymentPublic} from '../lib/deploymentPublic.js';
 import { callContinuity } from "../lib/callContinuity.js";
 import { debugLog, logAudioProcessingError } from "../lib/debugLog.js";
@@ -396,6 +399,11 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
   }, [agentId]);
 
   const handleTranscriptMessage = useCallback((message) => {
+    if (message.type==='whisper_checkpoint') {
+      const owned=ownedCallRef.current,sid=paramsFromCall(owned).twilioCallSid||owned?.parameters?.CallSid;
+      if(sid===message.callSid&&hasConferenceCheckpoint(sid))void flushConferenceCheckpoint(sid).then(()=>fetchWithClerk(getTokenRef.current,`${TELEPHONY_BASE_URL}/api/voice/whisper/checkpoint`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:message.requestId})})).catch(()=>{});
+      return;
+    }
     if (message.type === "sms") {
       publishSms(message);
       return;
@@ -526,8 +534,7 @@ function InboundCallProviderCore({ agentId, identityReady, children }) {
         ]);
         if (cancelled) return;
 
-        const device = new Device(bundle.token, {
-          codecPreferences: ["opus", "pcmu"],
+        const device = createBrowserPhone(Device,bundle.token, {
           getUserMedia: requestAgentMicrophone,
         });
         const processor = await installAgentAudio(device, {
