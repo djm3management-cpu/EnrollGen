@@ -1,5 +1,5 @@
 // docs/api/ping-platform.openapi.yaml covers every route mounted under
-// /api/ping, /api/exchange and /api/buyer, and documents nothing that is not
+// /api/ping, /api/exchange, /api/buyer and /api/post (S9 lead post), and documents nothing that is not
 // mounted. Routes come from the routers' own Express stacks; the server must
 // mount every one of those routers, and no other telephony source may declare
 // a route under those prefixes.
@@ -11,8 +11,9 @@ import { fileURLToPath } from 'node:url';
 import { createPingV1Router } from '../src/routes/pingV1.js';
 import { createExchangeV1Router } from '../src/routes/exchangeV1.js';
 import { createBuyerV1Router, BUYER_ROUTES } from '../src/routes/buyerV1.js';
+import { createLeadV1Router } from '../src/routes/leadV1.js';
 
-const PREFIX = /^\/api\/(ping|exchange|buyer)(\/|$)/;
+const PREFIX = /^\/api\/(ping|exchange|buyer|post)(\/|$)/;
 const spec = readFileSync(new URL('../../docs/api/ping-platform.openapi.yaml', import.meta.url), 'utf8');
 const src = fileURLToPath(new URL('../src/', import.meta.url));
 
@@ -32,10 +33,11 @@ function documented() {
   return found.sort();
 }
 
-/** "METHOD /path" for every route on the three routers, with :id as {id}. */
+/** "METHOD /path" for every route on the four routers, with :id as {id}. */
 function mounted() {
   const db = () => assert.fail('no database in a coverage test');
-  const routers = [createPingV1Router({ db }), createExchangeV1Router({ db }), createBuyerV1Router({ db })];
+  const routers = [createPingV1Router({ db }), createExchangeV1Router({ db }), createBuyerV1Router({ db }),
+    createLeadV1Router({ db })];
   const found = [];
   for (const router of routers) {
     for (const layer of router.stack) {
@@ -47,7 +49,7 @@ function mounted() {
   return found.sort();
 }
 
-test('every mounted ping, exchange and buyer route is documented, and vice versa', () => {
+test('every mounted ping, exchange, buyer and lead post route is documented, and vice versa', () => {
   const routes = mounted();
   assert.ok(routes.length >= 12, routes.join('\n'));
   assert.ok(routes.every(route => PREFIX.test(route.split(' ')[1])), routes.join('\n'));
@@ -68,17 +70,17 @@ test('the buyer route table matches the router and names a scope for every endpo
   }
 });
 
-test('server.js mounts all three routers and no other source declares a route under these prefixes', () => {
+test('server.js mounts all four routers and no other source declares a route under these prefixes', () => {
   const server = readFileSync(join(src, 'server.js'), 'utf8');
-  for (const name of ['pingV1Router', 'exchangeV1Router', 'buyerV1Router']) {
+  for (const name of ['pingV1Router', 'exchangeV1Router', 'buyerV1Router', 'leadV1Router']) {
     assert.match(server, new RegExp(`app\\.use\\(await ${name}\\(\\)\\)`), name);
   }
-  const owners = new Set(['pingV1.js', 'exchangeV1.js', 'buyerV1.js']);
+  const owners = new Set(['pingV1.js', 'exchangeV1.js', 'buyerV1.js', 'leadV1.js']);
   const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(entry =>
     entry.isDirectory() ? walk(join(dir, entry.name)) : entry.name.endsWith('.js') ? [join(dir, entry.name)] : []);
   for (const file of walk(src)) {
     const text = readFileSync(file, 'utf8');
-    const declares = /\.(get|post|put|patch|delete|all|use)\(\s*[`'"]\/api\/(ping|exchange|buyer)\//.test(text);
+    const declares = /\.(get|post|put|patch|delete|all|use)\(\s*[`'"]\/api\/(ping|exchange|buyer|post)\//.test(text);
     if (declares) assert.ok(owners.has(file.split('/').pop()), `${file} declares a ping platform route`);
   }
 });
