@@ -1077,6 +1077,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_agent_conversion",
+      "arguments": "p_campaign uuid, p_agent text, p_average numeric"
+    },
+    {
+      "schema": "public",
       "name": "ping_agent_tier",
       "arguments": "p_agent_id text, p_state text, p_campaign_id uuid"
     },
@@ -1089,6 +1094,11 @@
       "schema": "public",
       "name": "ping_campaign_accepted_today",
       "arguments": "p_campaign uuid, p_hours jsonb, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ping_campaign_conversion",
+      "arguments": "p_campaign uuid"
     },
     {
       "schema": "public",
@@ -1529,6 +1539,11 @@
       "schema": "public",
       "name": "record_transcription_incident",
       "arguments": "p_attempt_id uuid, p_participant_id uuid, p_reason text, p_at_ms integer"
+    },
+    {
+      "schema": "public",
+      "name": "refresh_agent_performance",
+      "arguments": "p_campaign uuid"
     },
     {
       "schema": "public",
