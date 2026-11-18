@@ -19,6 +19,7 @@ import { vendorMetadata } from "../vendorMetadata.js";
 import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.js";
 import { classifyCaller, decideMatchedParagon } from "../paragonRouting.js";
 import { endedParentCall } from "../terminalRouting.js";
+import { genericArrival, isGenericMatchedCall } from "../ping/arrival.js";
 
 import { signalMediaLifecycle } from '../media/mediaLifecycle.js';
 
@@ -151,6 +152,15 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req,res,next)=>
     const priorLookup = (!contact || created) ? await supabase.from("inbound_calls").select("created_at,source_kind").eq("from_number", from).limit(20) : { data: [] };
     const priorCalls = priorLookup.data || [];
     const classification = classifyCaller({ contact: created ? null : contact, priorCalls });
+    // Ping platform S2: only a decision for an engine_mode='generic' campaign leaves this path.
+    const generic = await genericArrival(supabase, config, { body: req.body, metadata, contact, lookupError, classification, arrivedAt });
+    if (generic) {
+      claimedAgent = generic.agent;
+      if (generic.ended) { const response = new VoiceResponse(); response.hangup(); return sendTwiml(res, response); }
+      if (!generic.agent) return sendTwiml(res, busyRejectTwiml());
+      const intel = contact?.id ? await latestLeadIntel(contact.id) : null;
+      return sendTwiml(res, await dialAgentTwiml({ agent: generic.agent, inboundCall: generic.inboundCall, contact, intel, triedAgentIds: [] }));
+    }
     const sharedMaNumber = Boolean(config.twilioPhoneNumber && to === config.twilioPhoneNumber);
     // Paragon metadata alone is not proof that this call followed a Paragon
     // availability ping. Only a recent, matching ping selects Paragon rules.
@@ -319,7 +329,8 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, conference
       .eq("id", inboundCallId)
       .maybeSingle();
     if (!inboundCall || inboundCall.twilio_call_sid !== callSid) return sendTwiml(res, voicemailTwiml());
-    paragonCall = config.paragonStateRoutingEnabled && isMatchedParagonCall(inboundCall);
+    const genericCall = isGenericMatchedCall(inboundCall);
+    paragonCall = (config.paragonStateRoutingEnabled && isMatchedParagonCall(inboundCall)) || genericCall;
     if (inboundCall.ended_at) {
       await releaseAgent(null, callSid);
       const response = new VoiceResponse();
@@ -333,7 +344,7 @@ twilioVoiceRouter.post("/twilio/dial-result", requireTwilioSignature, conference
 
     if (paragonCall) {
       await supabase.from('inbound_calls').update({ status:'rejected' }).eq('id',inboundCallId);
-      await logEvent({ inboundCallId,callSid,event:'paragon_fast_reject',payload:{ reason:'dial_failed',tried } });
+      await logEvent({ inboundCallId,callSid,event:genericCall ? 'ping_fast_reject' : 'paragon_fast_reject',payload:{ reason:'dial_failed',tried } });
       return sendTwiml(res,busyRejectTwiml());
     }
     const nextAgent = await claimNextAvailableAgent({ callSid, exclude: tried });
