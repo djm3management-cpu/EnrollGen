@@ -177,6 +177,11 @@ export async function scenario(h, t, { screener = true, model = 'gpt-test-small'
   screenerDeps.twilio = () => stubTwilio(h.twilioLog, { failRecording, callStatus });
   screenerDeps.now = () => FIXED_NOW;
   const { pg } = h;
+  // PGlite reads the JS clock, so the fixed clock must be on before BEGIN:
+  // otherwise now() (the real transaction start) and clock_timestamp()
+  // (FIXED_NOW) disagree, and any row stamped with now() lands up to a day
+  // ahead of FIXED_NOW depending on the wall clock when the suite runs.
+  if (mockDate) t.mock.timers.enable({ apis: ['Date'], now: FIXED_NOW });
   await pg.exec('BEGIN');
   t.after(async () => {
     await pg.exec('ROLLBACK');
@@ -200,7 +205,6 @@ export async function scenario(h, t, { screener = true, model = 'gpt-test-small'
   [B.tenant, B.source, campaign, at, CALLER]);
   await pg.query(`INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)
     VALUES($1,$2,$3,'KS','agent_x',$4::timestamptz+interval '30 seconds')`, [B.tenant, campaign, `phone:${CALLER}`, at]);
-  if (mockDate) t.mock.timers.enable({ apis: ['Date'], now: FIXED_NOW });
   return { campaign, scriptId, decisionId: decision.id };
 }
 
