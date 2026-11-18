@@ -1087,6 +1087,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_decide_campaign",
+      "arguments": "p_campaign_id uuid, p_source_id uuid, p_payload jsonb, p_mode text"
+    },
+    {
+      "schema": "public",
       "name": "ping_flag_returns",
       "arguments": "p_sid text"
     },
@@ -1099,6 +1104,16 @@
       "schema": "public",
       "name": "ping_resolve_arrival",
       "arguments": "p_phone text, p_call_id text, p_call_sid text, p_to_number text, p_arrived_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "platform_record_usage",
+      "arguments": "p_tenant uuid, p_kind text, p_source uuid, p_campaign uuid, p_ref text"
+    },
+    {
+      "schema": "public",
+      "name": "platform_usage_append_only",
+      "arguments": ""
     },
     {
       "schema": "public",

@@ -802,6 +802,33 @@
     },
     {
       "schema": "public",
+      "name": "exchange_auctions",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "exchange_routes",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "exchange_sources",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "fema_disasters",
       "kind": "r",
       "owner": "postgres",
@@ -1397,6 +1424,24 @@
       "kind": "S",
       "owner": "postgres",
       "rls": false,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "platform_price_plans",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "platform_usage_events",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
       "force_rls": false,
       "options": null
     },
@@ -12837,6 +12882,259 @@
     },
     {
       "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "source_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "received_at",
+      "position": 3,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "latency_ms",
+      "position": 4,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "strategy",
+      "position": 5,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "candidate_count",
+      "position": 6,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "winner_campaign_id",
+      "position": 7,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "winner_decision_id",
+      "position": 8,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "reason",
+      "position": 9,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "candidates",
+      "position": 10,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'[]'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "source_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "campaign_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "priority",
+      "position": 4,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "100"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "weight",
+      "position": 5,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "1"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "price_override",
+      "position": 6,
+      "type": "numeric(10,2)",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "active",
+      "position": 7,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "true"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "created_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "source_id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "strategy",
+      "position": 2,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'priority_waterfall'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "active",
+      "position": 3,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "true"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "rotation_state",
+      "position": 4,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "updated_at",
+      "position": 5,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "now()"
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "name": "id",
       "position": 1,
@@ -19514,6 +19812,39 @@
     },
     {
       "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "transfer_number",
+      "position": 26,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "exchange_daily_cap",
+      "position": 27,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "exchange_hourly_cap",
+      "position": 28,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
       "relation": "ping_decisions",
       "name": "id",
       "position": 1,
@@ -20457,6 +20788,171 @@
       "identity": "",
       "generated": "",
       "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "tenant_id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "included_pings",
+      "position": 2,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "overage_per_ping",
+      "position": 3,
+      "type": "numeric(12,4)",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "per_routed_call",
+      "position": 4,
+      "type": "numeric(12,4)",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "per_screener_minute",
+      "position": 5,
+      "type": "numeric(12,4)",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "effective_at",
+      "position": 6,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "kind",
+      "position": 3,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "quantity",
+      "position": 4,
+      "type": "numeric(12,4)",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "unit_price",
+      "position": 5,
+      "type": "numeric(12,4)",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "source_id",
+      "position": 6,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "campaign_id",
+      "position": 7,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "ref_id",
+      "position": 8,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "occurred_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
     },
     {
       "schema": "public",
@@ -40650,6 +41146,342 @@
     },
     {
       "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "grantor": "postgres",
       "grantee": "anon",
@@ -47267,6 +48099,230 @@
     {
       "schema": "public",
       "relation": "plan_terminations",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
@@ -59552,7 +60608,20 @@
         "search_path=public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide(p_key_hash text, p_campaign text, p_payload jsonb, p_engine text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; camp ping_campaigns; ctl vendor_controls;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); shadow boolean:=p_engine='shadow';\n  phone text; state_code text:=''; call_id text; zip text; sub_id text; consent text; t65 boolean;\n  routing boolean; valid boolean:=true; key text; campaign_ref text:=nullif(trim(p_campaign),'');\n  existing ping_reservations; selected record; eligible_count integer:=0; committed ping_decisions;\n  decision text; accepted boolean:=false; trace jsonb:='[]'::jsonb; gate_at timestamptz;\n  price numeric; decision_id uuid; rule text;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_engine IS NULL OR p_engine NOT IN ('generic','shadow') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n\n  BEGIN\n    IF jsonb_typeof(payload)='object' THEN\n      phone:=nullif(trim(payload->>'phone'),'');\n      state_code:=upper(trim(coalesce(payload->>'state','')));\n      call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n      zip:=nullif(trim(payload->>'zip'),'');\n      sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n      consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n      valid:=(phone IS NULL OR phone ~ '^\\+[1-9][0-9]{7,14}$')\n        AND (zip IS NULL OR zip ~ '^[0-9]{5}$')\n        AND (payload->'t65' IS NULL OR jsonb_typeof(payload->'t65') IN ('boolean','null'));\n      IF jsonb_typeof(payload->'t65')='boolean' THEN t65:=(payload->>'t65')::boolean; END IF;\n    ELSE valid:=false; END IF;\n    routing:=coalesce(payload->'routing_enabled'='true'::jsonb,false);\n    key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id\n      WHEN phone IS NOT NULL THEN 'phone:'||left(phone,32) ELSE NULL END;\n\n    -- Campaign: explicit id or name, else the source's single active campaign.\n    IF campaign_ref IS NOT NULL THEN\n      SELECT * INTO camp FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id\n        AND (id::text=campaign_ref OR name=campaign_ref) ORDER BY (id::text=campaign_ref) DESC LIMIT 1;\n    ELSIF (SELECT count(*) FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active)=1 THEN\n      SELECT * INTO camp FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active;\n    END IF;\n    routing:=routing AND (camp.id IS NULL OR camp.engine_mode=p_engine);\n    SELECT * INTO ctl FROM vendor_controls WHERE tenant_id=src.tenant_id;\n\n    -- Serialize a source's decisions, as paragon_ping does.\n    PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||src.id::text,0));\n    gate_at:=clock_timestamp();\n    IF NOT shadow THEN DELETE FROM ping_reservations WHERE expires_at<clock_timestamp()-interval '1 day'; END IF;\n\n    IF NOT routing THEN decision:='routing_disabled';\n    ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','routing_disabled','result','pass'));\n      IF NOT valid THEN decision:='invalid_payload';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','invalid_payload','result','pass'));\n        -- Tenant-wide pause, or a source-level or campaign-level row (173).\n        IF ctl.tenant_id IS NULL OR ctl.vendor_pause OR EXISTS(SELECT 1 FROM ping_source_controls p\n          WHERE p.tenant_id=src.tenant_id AND p.source_id=src.id AND p.paused\n            AND (p.campaign_id IS NULL OR p.campaign_id=camp.id)) THEN decision:='source_paused';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','source_paused','result','pass')); END IF;\n      END IF;\n    END IF;\n\n    -- The 30 second accepted commitment: a re-ping for the same identity and\n    -- state replays the committed decision without re-checking hours.\n    IF decision IS NULL AND camp.id IS NOT NULL THEN\n      SELECT * INTO committed FROM ping_decisions d WHERE d.source_id=src.id AND d.campaign_id=camp.id\n        AND d.engine=p_engine AND d.available AND d.matched_call_sid IS NULL\n        AND d.received_at+interval '30 seconds'>=gate_at AND d.caller_state=state_code\n        AND ((call_id IS NOT NULL AND d.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND d.caller_phone=phone))\n        AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n        ORDER BY d.received_at DESC LIMIT 1;\n      IF committed.id IS NOT NULL THEN\n        decision:=committed.reason; accepted:=true;\n        SELECT committed.agent_id AS agent_id,NULL::text AS tier INTO selected;\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','commitment_replay','result','hit','decision_id',committed.id));\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF NOT ping_hours_open(coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at) THEN decision:='outside_staffed_hours';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','outside_staffed_hours','result','pass'));\n        IF camp.id IS NULL OR NOT camp.active THEN decision:='campaign_inactive';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','campaign_inactive','result','pass'));\n          IF state_code='' OR NOT state_code=ANY(camp.allowed_states) THEN decision:='state_not_allowed';\n          ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','state_not_allowed','result','pass'));\n            IF key IS NULL THEN decision:='missing_call_identity';\n            ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','missing_call_identity','result','pass')); END IF;\n          END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      -- Rules 8 to 12 are S3 filter rules; evaluated in order as no-ops.\n      FOREACH rule IN ARRAY ARRAY['existing_client_retention','cooldown_same_source','cooldown_any_source','repeat_shopper','daily_budget_reached'] LOOP\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule',rule,'result','skipped'));\n      END LOOP;\n\n      PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||camp.id::text||key,0));\n      IF shadow THEN SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key;\n      ELSE SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key FOR UPDATE; END IF;\n      IF existing.id IS NOT NULL AND existing.expires_at>clock_timestamp()\n        AND existing.consumed_call_sid IS NULL AND existing.caller_state=state_code\n        AND EXISTS(SELECT 1 FROM agent_availability a WHERE a.agent_id=existing.agent_id\n          AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)) THEN\n        SELECT existing.agent_id AS agent_id,public.ping_agent_tier(existing.agent_id,state_code,camp.id) AS tier INTO selected;\n        IF selected.tier NOT IN ('full','partial') THEN SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','reservation_reuse','result','hit')); END IF;\n      END IF;\n      IF selected.agent_id IS NULL THEN\n        IF NOT shadow THEN DELETE FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key; END IF;\n        SELECT count(*) INTO eligible_count FROM agent_availability a\n          WHERE public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial');\n        -- Agents are shared across engines: a live legacy reservation also holds the agent.\n        IF shadow THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            LIMIT 1;\n        ELSE\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            FOR UPDATE OF a SKIP LOCKED LIMIT 1;\n          IF selected.agent_id IS NOT NULL THEN\n            INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)\n              VALUES(src.tenant_id,camp.id,key,state_code,selected.agent_id,\n                clock_timestamp()+make_interval(secs=>camp.reservation_ttl_seconds));\n          END IF;\n        END IF;\n      END IF;\n      IF selected.agent_id IS NOT NULL THEN\n        accepted:=true;\n        decision:=CASE selected.tier WHEN 'full' THEN 'accepted_full' ELSE 'accepted_partial' END;\n      ELSE\n        decision:=CASE WHEN eligible_count>0 THEN 'all_eligible_busy' ELSE 'no_eligible_agent' END;\n      END IF;\n    END IF;\n    IF accepted THEN price:=CASE camp.pricing_model WHEN 'free' THEN 0 ELSE camp.rate END; END IF;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule',decision,'result',CASE WHEN accepted THEN 'accept' ELSE 'reject' END));\n  EXCEPTION WHEN OTHERS THEN\n    -- Publisher pings fail closed. The subtransaction rolled back any reservation.\n    decision:='error_rejected'; accepted:=false; price:=NULL;\n    SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule','error_rejected','result','reject','sqlstate',SQLSTATE));\n  END;\n\n  INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n    vendor_call_id,publisher_sub_id,consent_cert_id,t65_flag,available,reason,agent_id,price,rule_trace,engine)\n  VALUES(src.tenant_id,src.id,camp.id,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,\n    left(phone,32),nullif(left(state_code,8),''),CASE WHEN zip ~ '^[0-9]{5}$' THEN zip END,\n    call_id,sub_id,consent,t65,accepted,decision,selected.agent_id,price,trace,p_engine)\n  RETURNING id INTO decision_id;\n  RETURN jsonb_build_object('authorized',true,'decision_id',decision_id,'available',accepted,'reason',decision,\n    'agent_id',selected.agent_id,'price',price,\n    'ttl_seconds',CASE WHEN accepted THEN camp.reservation_ttl_seconds END);\nEND;\n$function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide(p_key_hash text, p_campaign text, p_payload jsonb, p_engine text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE src lead_sources; camp_id uuid; campaign_ref text:=nullif(trim(p_campaign),'');\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_engine IS NULL OR p_engine NOT IN ('generic','shadow') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  -- Campaign: explicit id or name, else the source's single active campaign.\n  IF campaign_ref IS NOT NULL THEN\n    SELECT id INTO camp_id FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id\n      AND (id::text=campaign_ref OR name=campaign_ref) ORDER BY (id::text=campaign_ref) DESC LIMIT 1;\n  ELSIF (SELECT count(*) FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active)=1 THEN\n    SELECT id INTO camp_id FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active;\n  END IF;\n  RETURN public.ping_decide_campaign(camp_id,src.id,p_payload,p_engine);\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_decide_campaign",
+      "arguments": "p_campaign_id uuid, p_source_id uuid, p_payload jsonb, p_mode text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide_campaign(p_campaign_id uuid, p_source_id uuid, p_payload jsonb, p_mode text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; camp ping_campaigns; ctl vendor_controls;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); shadow boolean:=p_mode IN ('shadow','exchange_eval');\n  exchange boolean:=p_mode IN ('exchange_eval','exchange');\n  match_mode text:=CASE WHEN p_mode IN ('exchange_eval','exchange') THEN 'generic' ELSE p_mode END;\n  owner_tenant uuid; pause_source uuid;\n  phone text; state_code text:=''; call_id text; zip text; sub_id text; consent text; t65 boolean;\n  routing boolean; valid boolean:=true; key text;\n  existing ping_reservations; selected record; eligible_count integer:=0; committed ping_decisions;\n  decision text; accepted boolean:=false; trace jsonb:='[]'::jsonb; gate_at timestamptz;\n  price numeric; decision_id uuid; rule text; phone_hash text;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_mode IS NULL OR p_mode NOT IN ('generic','shadow','exchange_eval','exchange') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.id=p_source_id AND s.active AND s.type IN ('publisher','aggregator');\n  IF src.id IS NULL THEN RAISE EXCEPTION 'Unknown ping source'; END IF;\n  SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n\n  BEGIN\n    IF jsonb_typeof(payload)='object' THEN\n      phone:=nullif(trim(payload->>'phone'),'');\n      state_code:=upper(trim(coalesce(payload->>'state','')));\n      call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n      zip:=nullif(trim(payload->>'zip'),'');\n      sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n      consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n      valid:=(phone IS NULL OR phone ~ '^\\+[1-9][0-9]{7,14}$')\n        AND (zip IS NULL OR zip ~ '^[0-9]{5}$')\n        AND (payload->'t65' IS NULL OR jsonb_typeof(payload->'t65') IN ('boolean','null'));\n      IF jsonb_typeof(payload->'t65')='boolean' THEN t65:=(payload->>'t65')::boolean; END IF;\n    ELSE valid:=false; END IF;\n    routing:=coalesce(payload->'routing_enabled'='true'::jsonb,false);\n    key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id\n      WHEN phone IS NOT NULL THEN 'phone:'||left(phone,32) ELSE NULL END;\n\n    -- Direct pings reach only the source's own campaigns in its own tenant.\n    -- The exchange reaches a buyer campaign only through an active route.\n    IF p_campaign_id IS NOT NULL THEN\n      IF exchange THEN\n        SELECT c.* INTO camp FROM ping_campaigns c WHERE c.id=p_campaign_id\n          AND EXISTS(SELECT 1 FROM exchange_routes r WHERE r.source_id=src.id AND r.campaign_id=c.id AND r.active);\n      ELSE\n        SELECT c.* INTO camp FROM ping_campaigns c WHERE c.id=p_campaign_id AND c.source_id=src.id AND c.tenant_id=src.tenant_id;\n      END IF;\n    END IF;\n    owner_tenant:=coalesce(camp.tenant_id,src.tenant_id);\n    pause_source:=coalesce(camp.source_id,src.id);\n    routing:=routing AND (camp.id IS NULL OR camp.engine_mode=match_mode);\n    SELECT * INTO ctl FROM vendor_controls WHERE tenant_id=owner_tenant;\n\n    -- Serialize a source's decisions, as paragon_ping does.\n    PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||src.id::text,0));\n    gate_at:=clock_timestamp();\n    IF NOT shadow THEN DELETE FROM ping_reservations WHERE expires_at<clock_timestamp()-interval '1 day'; END IF;\n\n    IF NOT routing THEN decision:='routing_disabled';\n    ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','routing_disabled','result','pass'));\n      IF NOT valid THEN decision:='invalid_payload';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','invalid_payload','result','pass'));\n        -- Tenant-wide pause, or a source-level or campaign-level row (173), of\n        -- the campaign's own tenant and source.\n        IF ctl.tenant_id IS NULL OR ctl.vendor_pause OR EXISTS(SELECT 1 FROM ping_source_controls p\n          WHERE p.tenant_id=owner_tenant AND p.source_id=pause_source AND p.paused\n            AND (p.campaign_id IS NULL OR p.campaign_id=camp.id)) THEN decision:='source_paused';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','source_paused','result','pass')); END IF;\n      END IF;\n    END IF;\n\n    -- The 30 second accepted commitment: a re-ping for the same identity and\n    -- state replays the committed decision without re-checking hours. An\n    -- exchange evaluation never replays; it reports the current state.\n    IF decision IS NULL AND camp.id IS NOT NULL AND p_mode<>'exchange_eval' THEN\n      SELECT * INTO committed FROM ping_decisions d WHERE d.source_id=src.id AND d.campaign_id=camp.id\n        AND d.engine=p_mode AND d.available AND d.matched_call_sid IS NULL\n        AND d.received_at+interval '30 seconds'>=gate_at AND d.caller_state=state_code\n        AND ((call_id IS NOT NULL AND d.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND d.caller_phone=phone))\n        AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n        ORDER BY d.received_at DESC LIMIT 1;\n      IF committed.id IS NOT NULL THEN\n        decision:=committed.reason; accepted:=true;\n        SELECT committed.agent_id AS agent_id,NULL::text AS tier INTO selected;\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','commitment_replay','result','hit','decision_id',committed.id));\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF NOT ping_hours_open(coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at) THEN decision:='outside_staffed_hours';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','outside_staffed_hours','result','pass'));\n        IF camp.id IS NULL OR NOT camp.active THEN decision:='campaign_inactive';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','campaign_inactive','result','pass'));\n          IF state_code='' OR NOT state_code=ANY(camp.allowed_states) THEN decision:='state_not_allowed';\n          ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','state_not_allowed','result','pass'));\n            IF key IS NULL THEN decision:='missing_call_identity';\n            ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','missing_call_identity','result','pass')); END IF;\n          END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      -- Rules 8 to 12 are S4 filter rules; evaluated in order as no-ops.\n      FOREACH rule IN ARRAY ARRAY['existing_client_retention','cooldown_same_source','cooldown_any_source','repeat_shopper','daily_budget_reached'] LOOP\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule',rule,'result','skipped'));\n      END LOOP;\n\n      PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||camp.id::text||key,0));\n      IF shadow THEN SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key;\n      ELSE SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key FOR UPDATE; END IF;\n      IF existing.id IS NOT NULL AND existing.expires_at>clock_timestamp()\n        AND existing.consumed_call_sid IS NULL AND existing.caller_state=state_code\n        AND EXISTS(SELECT 1 FROM agent_availability a WHERE a.agent_id=existing.agent_id\n          AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)) THEN\n        SELECT existing.agent_id AS agent_id,public.ping_agent_tier(existing.agent_id,state_code,camp.id) AS tier INTO selected;\n        IF selected.tier NOT IN ('full','partial') THEN SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','reservation_reuse','result','hit')); END IF;\n      END IF;\n      IF selected.agent_id IS NULL THEN\n        IF NOT shadow THEN DELETE FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key; END IF;\n        SELECT count(*) INTO eligible_count FROM agent_availability a\n          WHERE public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial');\n        -- Agents are shared across engines: a live legacy reservation also holds the agent.\n        IF shadow THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            LIMIT 1;\n        ELSE\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            FOR UPDATE OF a SKIP LOCKED LIMIT 1;\n          IF selected.agent_id IS NOT NULL THEN\n            INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)\n              VALUES(owner_tenant,camp.id,key,state_code,selected.agent_id,\n                clock_timestamp()+make_interval(secs=>camp.reservation_ttl_seconds));\n          END IF;\n        END IF;\n      END IF;\n      IF selected.agent_id IS NOT NULL THEN\n        accepted:=true;\n        decision:=CASE selected.tier WHEN 'full' THEN 'accepted_full' ELSE 'accepted_partial' END;\n      ELSE\n        decision:=CASE WHEN eligible_count>0 THEN 'all_eligible_busy' ELSE 'no_eligible_agent' END;\n      END IF;\n    END IF;\n    IF accepted THEN price:=CASE camp.pricing_model WHEN 'free' THEN 0 ELSE camp.rate END; END IF;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule',decision,'result',CASE WHEN accepted THEN 'accept' ELSE 'reject' END));\n  EXCEPTION WHEN OTHERS THEN\n    -- Publisher pings fail closed. The subtransaction rolled back any reservation.\n    decision:='error_rejected'; accepted:=false; price:=NULL;\n    SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule','error_rejected','result','reject','sqlstate',SQLSTATE));\n  END;\n\n  -- An exchange evaluation never stores the caller's phone or ZIP; only the\n  -- winning tenant's 'exchange' decision does. ping_phone_hash is defined in\n  -- 176 with the exchange entry point, the only caller of this mode.\n  IF p_mode='exchange_eval' THEN\n    phone_hash:=public.ping_phone_hash(left(phone,32));\n    IF phone_hash IS NOT NULL THEN\n      trace:=trace||jsonb_build_array(jsonb_build_object('rule','phone_hash','result','recorded','sha256',phone_hash));\n    END IF;\n  END IF;\n  INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n    vendor_call_id,publisher_sub_id,consent_cert_id,t65_flag,available,reason,agent_id,price,rule_trace,engine)\n  VALUES(owner_tenant,src.id,camp.id,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,\n    CASE WHEN p_mode<>'exchange_eval' THEN left(phone,32) END,nullif(left(state_code,8),''),\n    CASE WHEN p_mode<>'exchange_eval' AND zip ~ '^[0-9]{5}$' THEN zip END,\n    call_id,sub_id,consent,t65,accepted,decision,selected.agent_id,price,trace,p_mode)\n  RETURNING id INTO decision_id;\n  RETURN jsonb_build_object('authorized',true,'decision_id',decision_id,'available',accepted,'reason',decision,\n    'agent_id',selected.agent_id,'price',price,\n    'ttl_seconds',CASE WHEN accepted THEN camp.reservation_ttl_seconds END);\nEND;\n$function$\n"
     },
     {
       "schema": "public",
@@ -59592,6 +60661,32 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.ping_resolve_arrival(p_phone text, p_call_id text, p_call_sid text, p_to_number text, p_arrived_at timestamp with time zone)\n RETURNS TABLE(matched boolean, available boolean, caller_state text, vendor_call_id text, reason text, decision_id uuid, campaign_id uuid, tenant_id uuid, source_id uuid)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n#variable_conflict use_column\nDECLARE d ping_decisions;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') OR nullif(p_to_number,'') IS NULL\n OR p_arrived_at IS NULL OR (nullif(p_phone,'') IS NULL AND nullif(p_call_id,'') IS NULL) THEN\n  RETURN QUERY SELECT false,NULL::boolean,NULL::text,NULL::text,NULL::text,NULL::uuid,NULL::uuid,NULL::uuid,NULL::uuid;\n  RETURN;\n END IF;\n SELECT x.* INTO d FROM ping_decisions x\n  JOIN ping_campaigns c ON c.id=x.campaign_id AND c.tenant_id=x.tenant_id AND c.source_id=x.source_id\n  JOIN lead_sources s ON s.id=x.source_id AND s.tenant_id=x.tenant_id\n  WHERE x.engine='generic' AND c.engine_mode='generic' AND s.active AND s.twilio_number=p_to_number\n    AND x.received_at>=p_arrived_at-interval '5 minutes' AND x.received_at<=p_arrived_at\n    AND (x.matched_call_sid IS NULL OR x.matched_call_sid=p_call_sid)\n    AND ((nullif(p_call_id,'') IS NOT NULL AND x.vendor_call_id=p_call_id)\n      OR (nullif(p_phone,'') IS NOT NULL AND x.caller_phone=p_phone\n        AND (nullif(p_call_id,'') IS NULL OR x.vendor_call_id IS NULL)))\n  ORDER BY x.available DESC,CASE WHEN nullif(p_call_id,'') IS NOT NULL AND x.vendor_call_id=p_call_id THEN 0 ELSE 1 END,\n    x.received_at DESC,x.id\n  LIMIT 1;\n IF d.id IS NULL THEN\n  RETURN QUERY SELECT false,NULL::boolean,NULL::text,NULL::text,NULL::text,NULL::uuid,NULL::uuid,NULL::uuid,NULL::uuid;\n ELSE\n  RETURN QUERY SELECT true,d.available,d.caller_state,d.vendor_call_id,d.reason,d.id,d.campaign_id,d.tenant_id,d.source_id;\n END IF;\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "platform_record_usage",
+      "arguments": "p_tenant uuid, p_kind text, p_source uuid, p_campaign uuid, p_ref text",
+      "result": "uuid",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.platform_record_usage(p_tenant uuid, p_kind text, p_source uuid, p_campaign uuid, p_ref text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE plan platform_price_plans; used numeric; unit numeric:=0; event_id uuid;\nBEGIN\n -- Serialize one tenant's allowance count; other tenants are not blocked.\n PERFORM pg_advisory_xact_lock(hashtextextended('platform-usage:'||p_tenant::text,0));\n SELECT * INTO plan FROM platform_price_plans WHERE tenant_id=p_tenant AND effective_at<=clock_timestamp();\n IF plan.tenant_id IS NOT NULL THEN\n  IF p_kind='ping' THEN\n   SELECT coalesce(sum(quantity),0) INTO used FROM platform_usage_events\n    WHERE tenant_id=p_tenant AND kind='ping'\n      AND occurred_at>=date_trunc('month',clock_timestamp() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';\n   unit:=CASE WHEN used+1<=plan.included_pings THEN 0 ELSE plan.overage_per_ping END;\n  ELSIF p_kind='routed_call' THEN unit:=plan.per_routed_call;\n  ELSIF p_kind='screener_minute' THEN unit:=plan.per_screener_minute;\n  END IF;\n END IF;\n INSERT INTO platform_usage_events(tenant_id,kind,quantity,unit_price,source_id,campaign_id,ref_id)\n VALUES(p_tenant,p_kind,1,unit,p_source,p_campaign,p_ref)\n ON CONFLICT DO NOTHING RETURNING id INTO event_id;\n RETURN event_id;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "platform_usage_append_only",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.platform_usage_append_only()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\nBEGIN RAISE EXCEPTION 'Platform usage events are append only'; END $function$\n"
     },
     {
       "schema": "public",
@@ -64177,6 +65272,132 @@
     },
     {
       "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_candidate_count_check",
+      "definition": "CHECK ((candidate_count >= 0))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_candidates_check",
+      "definition": "CHECK ((jsonb_typeof(candidates) = 'array'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_check",
+      "definition": "CHECK (((winner_campaign_id IS NULL) = (reason = 'exchange_no_buyer'::text)))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_check1",
+      "definition": "CHECK (((winner_decision_id IS NULL) = (winner_campaign_id IS NULL)))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_latency_ms_check",
+      "definition": "CHECK (((latency_ms IS NULL) OR (latency_ms >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_reason_check",
+      "definition": "CHECK ((reason = ANY (ARRAY['accepted_full'::text, 'accepted_partial'::text, 'exchange_no_buyer'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_strategy_check",
+      "definition": "CHECK (((strategy IS NULL) OR (strategy = ANY (ARRAY['priority_waterfall'::text, 'weighted_rotation'::text, 'highest_price'::text]))))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_winner_campaign_id_fkey",
+      "definition": "FOREIGN KEY (winner_campaign_id) REFERENCES ping_campaigns(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_winner_decision_id_fkey",
+      "definition": "FOREIGN KEY (winner_decision_id) REFERENCES ping_decisions(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_price_override_check",
+      "definition": "CHECK (((price_override IS NULL) OR (price_override >= (0)::numeric)))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_source_id_campaign_id_key",
+      "definition": "UNIQUE (source_id, campaign_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_weight_check",
+      "definition": "CHECK ((weight >= 1))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "exchange_sources_pkey",
+      "definition": "PRIMARY KEY (source_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "exchange_sources_rotation_state_check",
+      "definition": "CHECK ((jsonb_typeof(rotation_state) = 'object'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "exchange_sources_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "exchange_sources_strategy_check",
+      "definition": "CHECK ((strategy = ANY (ARRAY['priority_waterfall'::text, 'weighted_rotation'::text, 'highest_price'::text])))"
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "name": "fema_disasters_pkey",
       "definition": "PRIMARY KEY (id)"
@@ -65480,6 +66701,18 @@
     {
       "schema": "public",
       "relation": "ping_campaigns",
+      "name": "ping_campaigns_exchange_daily_cap_check",
+      "definition": "CHECK (((exchange_daily_cap IS NULL) OR (exchange_daily_cap >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_exchange_hourly_cap_check",
+      "definition": "CHECK (((exchange_hourly_cap IS NULL) OR (exchange_hourly_cap >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
       "name": "ping_campaigns_name_check",
       "definition": "CHECK (((length(name) >= 1) AND (length(name) <= 128)))"
     },
@@ -65563,6 +66796,12 @@
     },
     {
       "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_transfer_number_check",
+      "definition": "CHECK (((transfer_number IS NULL) OR (transfer_number ~ '^\\+[1-9][0-9]{7,14}$'::text)))"
+    },
+    {
+      "schema": "public",
       "relation": "ping_decisions",
       "name": "ping_decisions_caller_zip_check",
       "definition": "CHECK (((caller_zip IS NULL) OR (caller_zip ~ '^[0-9]{5}$'::text)))"
@@ -65583,7 +66822,7 @@
       "schema": "public",
       "relation": "ping_decisions",
       "name": "ping_decisions_engine_check",
-      "definition": "CHECK ((engine = ANY (ARRAY['generic'::text, 'shadow'::text])))"
+      "definition": "CHECK ((engine = ANY (ARRAY['generic'::text, 'shadow'::text, 'exchange_eval'::text, 'exchange'::text])))"
     },
     {
       "schema": "public",
@@ -65601,7 +66840,7 @@
       "schema": "public",
       "relation": "ping_decisions",
       "name": "ping_decisions_reason_check",
-      "definition": "CHECK ((reason = ANY (ARRAY['routing_disabled'::text, 'invalid_payload'::text, 'source_paused'::text, 'campaign_inactive'::text, 'outside_staffed_hours'::text, 'state_not_allowed'::text, 'missing_call_identity'::text, 'existing_client_retention'::text, 'cooldown_same_source'::text, 'cooldown_any_source'::text, 'repeat_shopper'::text, 'daily_budget_reached'::text, 'no_eligible_agent'::text, 'all_eligible_busy'::text, 'accepted_full'::text, 'accepted_partial'::text, 'accepted_retention_owner'::text, 'error_rejected'::text])))"
+      "definition": "CHECK ((reason = ANY (ARRAY['routing_disabled'::text, 'invalid_payload'::text, 'source_paused'::text, 'campaign_inactive'::text, 'outside_staffed_hours'::text, 'state_not_allowed'::text, 'missing_call_identity'::text, 'existing_client_retention'::text, 'cooldown_same_source'::text, 'cooldown_any_source'::text, 'repeat_shopper'::text, 'daily_budget_reached'::text, 'no_eligible_agent'::text, 'all_eligible_busy'::text, 'accepted_full'::text, 'accepted_partial'::text, 'accepted_retention_owner'::text, 'error_rejected'::text, 'exchange_no_buyer'::text, 'buyer_cap_reached'::text])))"
     },
     {
       "schema": "public",
@@ -65836,6 +67075,90 @@
       "relation": "plan_terminations",
       "name": "plan_terminations_py2027_only",
       "definition": "CHECK ((plan_year = 2027))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "platform_price_plans_included_pings_check",
+      "definition": "CHECK ((included_pings >= 0))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "platform_price_plans_overage_per_ping_check",
+      "definition": "CHECK ((overage_per_ping >= (0)::numeric))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "platform_price_plans_per_routed_call_check",
+      "definition": "CHECK ((per_routed_call >= (0)::numeric))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "platform_price_plans_per_screener_minute_check",
+      "definition": "CHECK ((per_screener_minute >= (0)::numeric))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "platform_price_plans_pkey",
+      "definition": "PRIMARY KEY (tenant_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "platform_price_plans_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_kind_check",
+      "definition": "CHECK ((kind = ANY (ARRAY['ping'::text, 'routed_call'::text, 'screener_minute'::text, 'screened_qualified'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_quantity_check",
+      "definition": "CHECK ((quantity > (0)::numeric))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_ref_id_check",
+      "definition": "CHECK (((ref_id IS NULL) OR ((length(ref_id) >= 1) AND (length(ref_id) <= 128))))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_unit_price_check",
+      "definition": "CHECK ((unit_price >= (0)::numeric))"
     },
     {
       "schema": "public",
@@ -68733,6 +70056,48 @@
     },
     {
       "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_last_won",
+      "definition": "CREATE INDEX exchange_auctions_last_won ON public.exchange_auctions USING btree (source_id, winner_campaign_id, received_at DESC) WHERE (winner_campaign_id IS NOT NULL)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_pkey",
+      "definition": "CREATE UNIQUE INDEX exchange_auctions_pkey ON public.exchange_auctions USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_auctions",
+      "name": "exchange_auctions_source_time",
+      "definition": "CREATE INDEX exchange_auctions_source_time ON public.exchange_auctions USING btree (source_id, received_at DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_campaign",
+      "definition": "CREATE INDEX exchange_routes_campaign ON public.exchange_routes USING btree (campaign_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_pkey",
+      "definition": "CREATE UNIQUE INDEX exchange_routes_pkey ON public.exchange_routes USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_routes",
+      "name": "exchange_routes_source_id_campaign_id_key",
+      "definition": "CREATE UNIQUE INDEX exchange_routes_source_id_campaign_id_key ON public.exchange_routes USING btree (source_id, campaign_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "exchange_sources",
+      "name": "exchange_sources_pkey",
+      "definition": "CREATE UNIQUE INDEX exchange_sources_pkey ON public.exchange_sources USING btree (source_id)"
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "name": "fema_disasters_pkey",
       "definition": "CREATE UNIQUE INDEX fema_disasters_pkey ON public.fema_disasters USING btree (id)"
@@ -69648,6 +71013,30 @@
       "relation": "plan_terminations",
       "name": "uq_crosswalk_source_county_year",
       "definition": "CREATE UNIQUE INDEX uq_crosswalk_source_county_year ON public.plan_terminations USING btree (source_key, county_fips, plan_year) NULLS NOT DISTINCT"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "platform_price_plans_pkey",
+      "definition": "CREATE UNIQUE INDEX platform_price_plans_pkey ON public.platform_price_plans USING btree (tenant_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_events_pkey",
+      "definition": "CREATE UNIQUE INDEX platform_usage_events_pkey ON public.platform_usage_events USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_once",
+      "definition": "CREATE UNIQUE INDEX platform_usage_once ON public.platform_usage_events USING btree (kind, ref_id) WHERE (ref_id IS NOT NULL)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_tenant_time",
+      "definition": "CREATE INDEX platform_usage_tenant_time ON public.platform_usage_events USING btree (tenant_id, kind, occurred_at DESC)"
     },
     {
       "schema": "public",
@@ -71804,6 +73193,13 @@
     },
     {
       "schema": "public",
+      "relation": "exchange_sources",
+      "name": "touch_exchange_sources",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER touch_exchange_sources BEFORE UPDATE ON public.exchange_sources FOR EACH ROW EXECUTE FUNCTION touch_ping_updated_at()"
+    },
+    {
+      "schema": "public",
       "relation": "fema_disasters",
       "name": "pilot_require_member_write",
       "enabled": "O",
@@ -72844,6 +74240,20 @@
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.plan_terminations FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_append_only",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER platform_usage_append_only BEFORE DELETE OR UPDATE ON public.platform_usage_events FOR EACH ROW EXECUTE FUNCTION platform_usage_append_only()"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_usage_events",
+      "name": "platform_usage_no_truncate",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER platform_usage_no_truncate BEFORE TRUNCATE ON public.platform_usage_events FOR EACH STATEMENT EXECUTE FUNCTION platform_usage_append_only()"
     },
     {
       "schema": "public",
