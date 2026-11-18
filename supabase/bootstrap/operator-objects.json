@@ -77,6 +77,11 @@
     },
     {
       "schema": "public",
+      "name": "approve_screener_script",
+      "arguments": "p_script uuid, p_approved_by text"
+    },
+    {
+      "schema": "public",
       "name": "attach_supervisor_whisper",
       "arguments": "p_id uuid, p_actor text, p_org text, p_session text, p_call uuid, p_sid text"
     },
@@ -788,6 +793,11 @@
     {
       "schema": "public",
       "name": "guard_practice_settings",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "guard_screener_script",
       "arguments": ""
     },
     {
@@ -1897,6 +1907,11 @@
     },
     {
       "schema": "public",
+      "name": "retire_screener_script",
+      "arguments": "p_script uuid"
+    },
+    {
+      "schema": "public",
       "name": "retry_failed_scoring",
       "arguments": "p_call_id uuid, p_tenant_id uuid, p_request_id uuid, p_reason text, p_requested_by text, p_execute boolean"
     },
@@ -1974,6 +1989,41 @@
       "schema": "public",
       "name": "scoring_transcript_snapshot",
       "arguments": "p_call call_records"
+    },
+    {
+      "schema": "public",
+      "name": "screener_begin",
+      "arguments": "p_call_sid text, p_inbound_call_id uuid, p_campaign_id uuid, p_agent_id text"
+    },
+    {
+      "schema": "public",
+      "name": "screener_finish",
+      "arguments": "p_session uuid, p_outcome text, p_labels jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "screener_labels_valid",
+      "arguments": "p_labels jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "screener_record_zip",
+      "arguments": "p_session uuid, p_zip text"
+    },
+    {
+      "schema": "public",
+      "name": "screener_save_labels",
+      "arguments": "p_session uuid, p_labels jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "screener_set_recording",
+      "arguments": "p_session uuid, p_recording_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "screener_state",
+      "arguments": "p_session uuid, p_call_sid text"
     },
     {
       "schema": "public",

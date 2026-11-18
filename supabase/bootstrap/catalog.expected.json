@@ -1870,6 +1870,33 @@
     },
     {
       "schema": "public",
+      "name": "screener_script_audit",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "screener_scripts",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "screener_sessions",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "script_templates",
       "kind": "r",
       "owner": "postgres",
@@ -20115,6 +20142,28 @@
     },
     {
       "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "traffic_type",
+      "position": 36,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'inbound'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "screener_provider",
+      "position": 37,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'scripted'::text"
+    },
+    {
+      "schema": "public",
       "relation": "ping_decisions",
       "name": "id",
       "position": 1,
@@ -21300,6 +21349,17 @@
       "identity": "",
       "generated": "",
       "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "per_screened_qualified",
+      "position": 7,
+      "type": "numeric(12,4)",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "0"
     },
     {
       "schema": "public",
@@ -25684,6 +25744,435 @@
       "relation": "scoring_templates",
       "name": "policy_version",
       "position": 13,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "campaign_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "script_id",
+      "position": 4,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "version",
+      "position": 5,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "action",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "actor",
+      "position": 7,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "changed_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "campaign_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "version",
+      "position": 4,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "opening",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "q_medicare",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "q_zip",
+      "position": 7,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "q_reason",
+      "position": 8,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "q_connect",
+      "position": 9,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "pass_line",
+      "position": 10,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "fail_line",
+      "position": 11,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "disclaimer",
+      "position": 12,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "voice",
+      "position": 13,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'Polly.Joanna'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "status",
+      "position": 14,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'draft'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "approved_by",
+      "position": 15,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "approved_at",
+      "position": 16,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "created_at",
+      "position": 17,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "campaign_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "script_id",
+      "position": 4,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "inbound_call_id",
+      "position": 5,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "twilio_call_sid",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "agent_id",
+      "position": 7,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "provider",
+      "position": 8,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'scripted'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "started_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "ended_at",
+      "position": 10,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "seconds",
+      "position": 11,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "outcome",
+      "position": 12,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "labels",
+      "position": 13,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "recording_sid",
+      "position": 14,
       "type": "text",
       "not_null": false,
       "identity": "",
@@ -53333,6 +53822,342 @@
     },
     {
       "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "script_templates",
       "grantor": "postgres",
       "grantee": "authenticated",
@@ -59493,6 +60318,19 @@
     },
     {
       "schema": "public",
+      "name": "approve_screener_script",
+      "arguments": "p_script uuid, p_approved_by text",
+      "result": "uuid",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.approve_screener_script(p_script uuid, p_approved_by text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE script screener_scripts; prior screener_scripts; actor text:=nullif(trim(p_approved_by),'');\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RAISE EXCEPTION 'Ping screener disabled'; END IF;\n IF actor IS NULL OR length(actor)>128 THEN RAISE EXCEPTION 'Approver required'; END IF;\n SELECT * INTO script FROM screener_scripts WHERE id=p_script FOR UPDATE;\n IF script.id IS NULL THEN RAISE EXCEPTION 'Unknown screener script'; END IF;\n IF script.status<>'draft' THEN RAISE EXCEPTION 'Only a draft screener script can be approved'; END IF;\n PERFORM pg_advisory_xact_lock(hashtextextended('screener-script:'||script.campaign_id::text,0));\n FOR prior IN SELECT * FROM screener_scripts WHERE campaign_id=script.campaign_id AND status='approved' FOR UPDATE LOOP\n  UPDATE screener_scripts SET status='retired' WHERE id=prior.id;\n  INSERT INTO screener_script_audit(tenant_id,campaign_id,script_id,version,action,actor)\n  VALUES(prior.tenant_id,prior.campaign_id,prior.id,prior.version,'superseded',actor);\n END LOOP;\n UPDATE screener_scripts SET status='approved',approved_by=actor,approved_at=clock_timestamp() WHERE id=script.id;\n INSERT INTO screener_script_audit(tenant_id,campaign_id,script_id,version,action,actor)\n VALUES(script.tenant_id,script.campaign_id,script.id,script.version,'approved',actor);\n RETURN script.id;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "attach_supervisor_whisper",
       "arguments": "p_id uuid, p_actor text, p_org text, p_session text, p_call uuid, p_sid text",
       "result": "jsonb",
@@ -61349,6 +62187,19 @@
       ],
       "acl": "{postgres=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.guard_practice_settings()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF NEW.practice_settings IS DISTINCT FROM OLD.practice_settings AND (NOT public.deployment_feature_enabled('PRACTICE_CALLER_ENABLED') OR NOT EXISTS(SELECT 1 FROM public.admin_action_permit WHERE transaction_id=txid_current())) THEN RAISE EXCEPTION 'Audited settings required' USING ERRCODE='42501'; END IF;\n RETURN NEW;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "guard_screener_script",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.guard_screener_script()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n IF NOT EXISTS(SELECT 1 FROM ping_campaigns WHERE id=NEW.campaign_id AND tenant_id=NEW.tenant_id) THEN\n  RAISE EXCEPTION 'Screener script tenant mismatch';\n END IF;\n IF TG_OP='UPDATE' THEN\n  IF (NEW.tenant_id,NEW.campaign_id,NEW.version) IS DISTINCT FROM (OLD.tenant_id,OLD.campaign_id,OLD.version) THEN\n   RAISE EXCEPTION 'Screener script identity is immutable';\n  END IF;\n  IF OLD.status='retired' THEN RAISE EXCEPTION 'Retired screener script is immutable'; END IF;\n  IF OLD.status<>'draft' AND (NEW.opening,NEW.q_medicare,NEW.q_zip,NEW.q_reason,NEW.q_connect,NEW.pass_line,\n    NEW.fail_line,NEW.disclaimer,NEW.voice) IS DISTINCT FROM (OLD.opening,OLD.q_medicare,OLD.q_zip,OLD.q_reason,\n    OLD.q_connect,OLD.pass_line,OLD.fail_line,OLD.disclaimer,OLD.voice) THEN\n   RAISE EXCEPTION 'Approved screener script text is immutable';\n  END IF;\n END IF;\n RETURN NEW;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -64225,6 +65076,19 @@
     },
     {
       "schema": "public",
+      "name": "retire_screener_script",
+      "arguments": "p_script uuid",
+      "result": "uuid",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.retire_screener_script(p_script uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE script screener_scripts;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RAISE EXCEPTION 'Ping screener disabled'; END IF;\n SELECT * INTO script FROM screener_scripts WHERE id=p_script FOR UPDATE;\n IF script.id IS NULL THEN RAISE EXCEPTION 'Unknown screener script'; END IF;\n IF script.status='retired' THEN RETURN script.id; END IF;\n UPDATE screener_scripts SET status='retired' WHERE id=script.id;\n INSERT INTO screener_script_audit(tenant_id,campaign_id,script_id,version,action,actor)\n VALUES(script.tenant_id,script.campaign_id,script.id,script.version,'retired','service_role');\n RETURN script.id;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "retry_failed_scoring",
       "arguments": "p_call_id uuid, p_tenant_id uuid, p_request_id uuid, p_reason text, p_requested_by text, p_execute boolean",
       "result": "jsonb",
@@ -64430,6 +65294,97 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.scoring_transcript_snapshot(p_call call_records)\n RETURNS jsonb\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\n  SELECT jsonb_build_object('raw',p_call.transcript_raw,'diarized',p_call.transcript_diarized,'duration',p_call.call_duration_seconds);\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "screener_begin",
+      "arguments": "p_call_sid text, p_inbound_call_id uuid, p_campaign_id uuid, p_agent_id text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.screener_begin(p_call_sid text, p_inbound_call_id uuid, p_campaign_id uuid, p_agent_id text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE camp ping_campaigns; script screener_scripts; call inbound_calls; s screener_sessions;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n IF p_call_sid IS NULL OR p_call_sid !~ '^CA[0-9a-fA-F]{32}$' OR nullif(p_agent_id,'') IS NULL THEN\n  RETURN jsonb_build_object('status','skipped','reason','invalid_call');\n END IF;\n SELECT * INTO camp FROM ping_campaigns WHERE id=p_campaign_id;\n IF camp.id IS NULL THEN RETURN jsonb_build_object('status','skipped','reason','no_campaign'); END IF;\n IF NOT (camp.screener_mode='always' OR (camp.screener_mode='inbound_only' AND camp.traffic_type='inbound')) THEN\n  RETURN jsonb_build_object('status','skipped','reason','mode');\n END IF;\n SELECT * INTO call FROM inbound_calls WHERE id=p_inbound_call_id AND twilio_call_sid=p_call_sid AND tenant_id=camp.tenant_id;\n IF call.id IS NULL THEN RETURN jsonb_build_object('status','skipped','reason','no_call'); END IF;\n SELECT * INTO script FROM screener_scripts WHERE campaign_id=camp.id AND tenant_id=camp.tenant_id AND status='approved';\n IF script.id IS NULL THEN RETURN jsonb_build_object('status','skipped','reason','no_approved_script'); END IF;\n INSERT INTO screener_sessions(tenant_id,campaign_id,script_id,inbound_call_id,twilio_call_sid,agent_id,provider)\n VALUES(camp.tenant_id,camp.id,script.id,call.id,p_call_sid,p_agent_id,camp.screener_provider)\n ON CONFLICT (twilio_call_sid) DO NOTHING;\n SELECT * INTO s FROM screener_sessions WHERE twilio_call_sid=p_call_sid AND tenant_id=camp.tenant_id;\n IF s.id IS NULL THEN RETURN jsonb_build_object('status','skipped','reason','session_conflict'); END IF;\n RETURN jsonb_build_object('status','screen','session_id',s.id,'provider',s.provider);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "screener_finish",
+      "arguments": "p_session uuid, p_outcome text, p_labels jsonb",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.screener_finish(p_session uuid, p_outcome text, p_labels jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE s screener_sessions; plan platform_price_plans; minutes integer;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RETURN NULL; END IF;\n IF p_outcome IS NULL OR p_outcome NOT IN ('passed','failed_not_medicare','failed_declined','abandoned',\n   'failed_open_error','failed_open_uncertain') THEN RAISE EXCEPTION 'Invalid screener outcome'; END IF;\n IF NOT public.screener_labels_valid(coalesce(p_labels,'{}'::jsonb)) THEN RAISE EXCEPTION 'Invalid screener labels'; END IF;\n UPDATE screener_sessions SET outcome=p_outcome,ended_at=clock_timestamp(),\n   seconds=greatest(0,ceil(extract(epoch FROM clock_timestamp()-started_at)))::integer,\n   labels=labels||coalesce(p_labels,'{}'::jsonb)\n  WHERE id=p_session AND outcome IS NULL RETURNING * INTO s;\n IF s.id IS NULL THEN\n  SELECT * INTO s FROM screener_sessions WHERE id=p_session;\n  RETURN CASE WHEN s.id IS NULL THEN NULL ELSE jsonb_build_object('outcome',s.outcome,'seconds',s.seconds,'first',false) END;\n END IF;\n PERFORM pg_advisory_xact_lock(hashtextextended('platform-usage:'||s.tenant_id::text,0));\n SELECT * INTO plan FROM platform_price_plans WHERE tenant_id=s.tenant_id AND effective_at<=clock_timestamp();\n minutes:=greatest(1,ceil(s.seconds/60.0))::integer;\n INSERT INTO platform_usage_events(tenant_id,kind,quantity,unit_price,source_id,campaign_id,ref_id)\n SELECT s.tenant_id,'screener_minute',minutes,coalesce(plan.per_screener_minute,0),c.source_id,s.campaign_id,'screener:'||s.id\n  FROM ping_campaigns c WHERE c.id=s.campaign_id\n ON CONFLICT DO NOTHING;\n IF s.outcome='passed' THEN\n  INSERT INTO platform_usage_events(tenant_id,kind,quantity,unit_price,source_id,campaign_id,ref_id)\n  SELECT s.tenant_id,'screened_qualified',1,coalesce(plan.per_screened_qualified,0),c.source_id,s.campaign_id,'screener:'||s.id\n   FROM ping_campaigns c WHERE c.id=s.campaign_id\n  ON CONFLICT DO NOTHING;\n END IF;\n RETURN jsonb_build_object('outcome',s.outcome,'seconds',s.seconds,'minutes',minutes,'first',true);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "screener_labels_valid",
+      "arguments": "p_labels jsonb",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.screener_labels_valid(p_labels jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'public'\nAS $function$\nDECLARE k text; v jsonb;\nBEGIN\n IF p_labels IS NULL OR jsonb_typeof(p_labels)<>'object' THEN RETURN false; END IF;\n FOR k,v IN SELECT key,value FROM jsonb_each(p_labels) LOOP\n  IF k IN ('medicare','connect') THEN\n   IF jsonb_typeof(v)<>'string' OR v#>>'{}' NOT IN ('yes','no','unclear') THEN RETURN false; END IF;\n  ELSIF k='reason' THEN\n   IF jsonb_typeof(v)<>'string' OR v#>>'{}' NOT IN ('plan_review','new_enrollment','benefits_question',\n     'allowance_or_card','current_plan_service','not_medicare','other','unclear') THEN RETURN false; END IF;\n  ELSIF k='zip' THEN\n   IF jsonb_typeof(v)<>'string' OR v#>>'{}' !~ '^[0-9]{5}$' THEN RETURN false; END IF;\n  ELSIF k='zip_state' THEN\n   IF jsonb_typeof(v)<>'string' OR v#>>'{}' !~ '^[A-Z]{2}$' THEN RETURN false; END IF;\n  ELSIF k='wrong_state' THEN\n   IF jsonb_typeof(v)<>'boolean' THEN RETURN false; END IF;\n  ELSIF k ~ '^(medicare|zip|reason|connect)_source$' THEN\n   IF jsonb_typeof(v)<>'string' OR v#>>'{}' NOT IN ('dtmf','speech_digits','model','none') THEN RETURN false; END IF;\n  ELSIF k ~ '^(medicare|zip|reason|connect)_confidence$' THEN\n   IF jsonb_typeof(v)<>'number' OR (v#>>'{}')::numeric NOT BETWEEN 0 AND 1 THEN RETURN false; END IF;\n  ELSIF k ~ '^(medicare|zip|reason|connect)_attempts$' THEN\n   IF jsonb_typeof(v)<>'number' OR (v#>>'{}')::numeric NOT IN (1,2) THEN RETURN false; END IF;\n  ELSIF k ~ '^(medicare|zip|reason|connect|model)_ms$' THEN\n   IF jsonb_typeof(v)<>'number' OR (v#>>'{}')::numeric<0 OR (v#>>'{}')::numeric>600000\n     OR (v#>>'{}')::numeric<>trunc((v#>>'{}')::numeric) THEN RETURN false; END IF;\n  ELSIF k='error' THEN\n   IF jsonb_typeof(v)<>'string' OR v#>>'{}' NOT IN ('model_timeout','model_error','not_available',\n     'recording_failed','time_cap','state_unavailable') THEN RETURN false; END IF;\n  ELSE RETURN false;\n  END IF;\n END LOOP;\n RETURN true;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "screener_record_zip",
+      "arguments": "p_session uuid, p_zip text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.screener_record_zip(p_session uuid, p_zip text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE s screener_sessions; call inbound_calls; zip_state text; wrong boolean:=false;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RETURN NULL; END IF;\n IF p_zip IS NULL OR p_zip !~ '^[0-9]{5}$' THEN RAISE EXCEPTION 'Invalid ZIP'; END IF;\n SELECT * INTO s FROM screener_sessions WHERE id=p_session AND outcome IS NULL;\n IF s.id IS NULL THEN RETURN NULL; END IF;\n SELECT * INTO call FROM inbound_calls WHERE id=s.inbound_call_id AND tenant_id=s.tenant_id;\n SELECT x.state_code INTO zip_state FROM ping_zip_county_crosswalk x\n  WHERE x.zip=p_zip AND x.county_fips=public.primary_county_for_zip(p_zip) LIMIT 1;\n wrong:=zip_state IS NOT NULL AND call.caller_state IS NOT NULL AND zip_state<>call.caller_state;\n UPDATE screener_sessions SET labels=labels||jsonb_build_object('zip',p_zip,'wrong_state',wrong)\n   ||CASE WHEN zip_state IS NOT NULL THEN jsonb_build_object('zip_state',zip_state) ELSE '{}'::jsonb END\n  WHERE id=s.id;\n IF wrong THEN\n  UPDATE inbound_calls SET confirmed_zip=p_zip,confirmed_state=zip_state,wrong_state=true\n   WHERE id=call.id AND tenant_id=call.tenant_id;\n END IF;\n RETURN jsonb_build_object('zip',p_zip,'zip_state',zip_state,'wrong_state',wrong);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "screener_save_labels",
+      "arguments": "p_session uuid, p_labels jsonb",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.screener_save_labels(p_session uuid, p_labels jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RETURN false; END IF;\n IF NOT public.screener_labels_valid(coalesce(p_labels,'{}'::jsonb)) THEN RAISE EXCEPTION 'Invalid screener labels'; END IF;\n UPDATE screener_sessions SET labels=labels||coalesce(p_labels,'{}'::jsonb) WHERE id=p_session AND outcome IS NULL;\n RETURN FOUND;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "screener_set_recording",
+      "arguments": "p_session uuid, p_recording_sid text",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.screener_set_recording(p_session uuid, p_recording_sid text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RETURN false; END IF;\n IF p_recording_sid IS NULL OR p_recording_sid !~ '^RE[0-9a-fA-F]{32}$' THEN RAISE EXCEPTION 'Invalid recording sid'; END IF;\n UPDATE screener_sessions SET recording_sid=p_recording_sid WHERE id=p_session AND recording_sid IS NULL;\n RETURN FOUND;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "screener_state",
+      "arguments": "p_session uuid, p_call_sid text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.screener_state(p_session uuid, p_call_sid text)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE s screener_sessions; script screener_scripts;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RETURN NULL; END IF;\n SELECT * INTO s FROM screener_sessions WHERE id=p_session AND twilio_call_sid=p_call_sid;\n IF s.id IS NULL THEN RETURN NULL; END IF;\n SELECT * INTO script FROM screener_scripts WHERE id=s.script_id;\n RETURN jsonb_build_object('session_id',s.id,'tenant_id',s.tenant_id,'campaign_id',s.campaign_id,\n  'inbound_call_id',s.inbound_call_id,'call_sid',s.twilio_call_sid,'agent_id',s.agent_id,'provider',s.provider,\n  'outcome',s.outcome,'labels',s.labels,'recording_sid',s.recording_sid,\n  'elapsed_seconds',greatest(0,extract(epoch FROM clock_timestamp()-s.started_at))::numeric(10,3),\n  'script',jsonb_build_object('id',script.id,'version',script.version,'voice',script.voice,'opening',script.opening,\n    'disclaimer',script.disclaimer,'q_medicare',script.q_medicare,'q_zip',script.q_zip,'q_reason',script.q_reason,\n    'q_connect',script.q_connect,'pass_line',script.pass_line,'fail_line',script.fail_line));\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -68715,6 +69670,12 @@
     {
       "schema": "public",
       "relation": "ping_campaigns",
+      "name": "ping_campaigns_screener_provider_check",
+      "definition": "CHECK ((screener_provider = ANY (ARRAY['scripted'::text, 'conversational'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
       "name": "ping_campaigns_source_id_fkey",
       "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id) ON DELETE CASCADE"
     },
@@ -68735,6 +69696,12 @@
       "relation": "ping_campaigns",
       "name": "ping_campaigns_tenant_id_source_id_name_key",
       "definition": "UNIQUE (tenant_id, source_id, name)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_traffic_type_check",
+      "definition": "CHECK ((traffic_type = ANY (ARRAY['inbound'::text, 'warm_transfer'::text])))"
     },
     {
       "schema": "public",
@@ -69113,6 +70080,12 @@
       "relation": "platform_price_plans",
       "name": "platform_price_plans_per_routed_call_check",
       "definition": "CHECK ((per_routed_call >= (0)::numeric))"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_price_plans",
+      "name": "platform_price_plans_per_screened_qualified_check",
+      "definition": "CHECK ((per_screened_qualified >= (0)::numeric))"
     },
     {
       "schema": "public",
@@ -70211,6 +71184,210 @@
       "relation": "scoring_templates",
       "name": "scoring_templates_pkey",
       "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "screener_script_audit_action_check",
+      "definition": "CHECK ((action = ANY (ARRAY['approved'::text, 'retired'::text, 'superseded'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "screener_script_audit_actor_check",
+      "definition": "CHECK (((length(actor) >= 1) AND (length(actor) <= 128)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "screener_script_audit_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "screener_script_audit_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_approved_by_check",
+      "definition": "CHECK (((approved_by IS NULL) OR ((length(approved_by) >= 1) AND (length(approved_by) <= 128))))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_campaign_id_version_key",
+      "definition": "UNIQUE (campaign_id, version)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_check",
+      "definition": "CHECK (((status = 'draft'::text) OR ((approved_by IS NOT NULL) AND (approved_at IS NOT NULL)) OR (status = 'retired'::text)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_disclaimer_check",
+      "definition": "CHECK (((disclaimer IS NULL) OR ((length(disclaimer) >= 1) AND (length(disclaimer) <= 1000))))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_fail_line_check",
+      "definition": "CHECK (((length(fail_line) >= 1) AND (length(fail_line) <= 600)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_opening_check",
+      "definition": "CHECK (((length(opening) >= 1) AND (length(opening) <= 600)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_pass_line_check",
+      "definition": "CHECK (((length(pass_line) >= 1) AND (length(pass_line) <= 600)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_q_connect_check",
+      "definition": "CHECK (((length(q_connect) >= 1) AND (length(q_connect) <= 600)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_q_medicare_check",
+      "definition": "CHECK (((length(q_medicare) >= 1) AND (length(q_medicare) <= 600)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_q_reason_check",
+      "definition": "CHECK (((length(q_reason) >= 1) AND (length(q_reason) <= 600)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_q_zip_check",
+      "definition": "CHECK (((length(q_zip) >= 1) AND (length(q_zip) <= 600)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'approved'::text, 'retired'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_version_check",
+      "definition": "CHECK ((version >= 1))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_voice_check",
+      "definition": "CHECK ((voice ~ '^Polly\\.[A-Za-z]+(-[A-Za-z]+)?$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_check",
+      "definition": "CHECK ((((outcome IS NULL) = (ended_at IS NULL)) AND ((ended_at IS NULL) = (seconds IS NULL))))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_inbound_call_id_fkey",
+      "definition": "FOREIGN KEY (inbound_call_id) REFERENCES inbound_calls(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_labels_check",
+      "definition": "CHECK (screener_labels_valid(labels))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_outcome_check",
+      "definition": "CHECK (((outcome IS NULL) OR (outcome = ANY (ARRAY['passed'::text, 'failed_not_medicare'::text, 'failed_declined'::text, 'abandoned'::text, 'failed_open_error'::text, 'failed_open_uncertain'::text]))))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_provider_check",
+      "definition": "CHECK ((provider = ANY (ARRAY['scripted'::text, 'conversational'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_recording_sid_check",
+      "definition": "CHECK (((recording_sid IS NULL) OR (recording_sid ~ '^RE[0-9a-fA-F]{32}$'::text)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_script_id_fkey",
+      "definition": "FOREIGN KEY (script_id) REFERENCES screener_scripts(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_seconds_check",
+      "definition": "CHECK (((seconds IS NULL) OR (seconds >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_twilio_call_sid_check",
+      "definition": "CHECK ((twilio_call_sid ~ '^CA[0-9a-fA-F]{32}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_twilio_call_sid_key",
+      "definition": "UNIQUE (twilio_call_sid)"
     },
     {
       "schema": "public",
@@ -73624,6 +74801,60 @@
     },
     {
       "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "screener_script_audit_campaign",
+      "definition": "CREATE INDEX screener_script_audit_campaign ON public.screener_script_audit USING btree (campaign_id, changed_at DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "screener_script_audit_pkey",
+      "definition": "CREATE UNIQUE INDEX screener_script_audit_pkey ON public.screener_script_audit USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_campaign_id_version_key",
+      "definition": "CREATE UNIQUE INDEX screener_scripts_campaign_id_version_key ON public.screener_scripts USING btree (campaign_id, version)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_one_approved",
+      "definition": "CREATE UNIQUE INDEX screener_scripts_one_approved ON public.screener_scripts USING btree (campaign_id) WHERE (status = 'approved'::text)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "screener_scripts_pkey",
+      "definition": "CREATE UNIQUE INDEX screener_scripts_pkey ON public.screener_scripts USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_campaign",
+      "definition": "CREATE INDEX screener_sessions_campaign ON public.screener_sessions USING btree (tenant_id, campaign_id, started_at DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_inbound",
+      "definition": "CREATE INDEX screener_sessions_inbound ON public.screener_sessions USING btree (inbound_call_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_pkey",
+      "definition": "CREATE UNIQUE INDEX screener_sessions_pkey ON public.screener_sessions USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_sessions",
+      "name": "screener_sessions_twilio_call_sid_key",
+      "definition": "CREATE UNIQUE INDEX screener_sessions_twilio_call_sid_key ON public.screener_sessions USING btree (twilio_call_sid)"
+    },
+    {
+      "schema": "public",
       "relation": "script_templates",
       "name": "idx_script_templates_tenant_flow",
       "definition": "CREATE INDEX idx_script_templates_tenant_flow ON public.script_templates USING btree (tenant_id, flow_type, is_active, version DESC)"
@@ -76973,6 +78204,27 @@
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.scoring_templates FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "screener_script_audit_append_only",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER screener_script_audit_append_only BEFORE DELETE OR UPDATE ON public.screener_script_audit FOR EACH ROW EXECUTE FUNCTION ping_audit_append_only()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_script_audit",
+      "name": "screener_script_audit_no_truncate",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER screener_script_audit_no_truncate BEFORE TRUNCATE ON public.screener_script_audit FOR EACH STATEMENT EXECUTE FUNCTION ping_audit_append_only()"
+    },
+    {
+      "schema": "public",
+      "relation": "screener_scripts",
+      "name": "guard_screener_script",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER guard_screener_script BEFORE INSERT OR UPDATE ON public.screener_scripts FOR EACH ROW EXECUTE FUNCTION guard_screener_script()"
     },
     {
       "schema": "public",
