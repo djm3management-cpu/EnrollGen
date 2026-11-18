@@ -137,6 +137,76 @@
     },
     {
       "schema": "public",
+      "name": "buyer_ack_retention_alert",
+      "arguments": "p_key uuid, p_alert uuid"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_api_admit",
+      "arguments": "p_key_hash text, p_scope text, p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_api_campaign_json",
+      "arguments": "c ping_campaigns"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_api_tenant",
+      "arguments": "p_key uuid"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_campaigns",
+      "arguments": "p_key uuid"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_create_screener_draft",
+      "arguments": "p_key uuid, p_campaign uuid, p_script jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_hours_valid",
+      "arguments": "p_hours jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_invoice_lines",
+      "arguments": "p_key uuid, p_month date"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_retention_alerts",
+      "arguments": "p_key uuid, p_open_only boolean, p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_scorecard",
+      "arguments": "p_key uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[]"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_screener_scripts",
+      "arguments": "p_key uuid, p_campaign uuid"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_set_campaign_paused",
+      "arguments": "p_key uuid, p_campaign uuid, p_paused boolean"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_update_campaign",
+      "arguments": "p_key uuid, p_campaign uuid, p_patch jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_usage",
+      "arguments": "p_key uuid, p_month date"
+    },
+    {
+      "schema": "public",
       "name": "capture_lifecycle_purge_marker",
       "arguments": "p_table text, p_id uuid"
     },
@@ -387,6 +457,11 @@
     },
     {
       "schema": "public",
+      "name": "create_buyer_api_key",
+      "arguments": "p_tenant uuid, p_name text, p_scopes text[], p_actor text"
+    },
+    {
+      "schema": "public",
       "name": "create_workspace_record",
       "arguments": "p_table text, p_fields jsonb"
     },
@@ -574,6 +649,11 @@
       "schema": "public",
       "name": "evidence_tenant_member",
       "arguments": "p_tenant_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "exchange_cap_scope",
+      "arguments": "p_campaign uuid, p_daily integer, p_hourly integer, p_hours jsonb, p_at timestamp with time zone"
     },
     {
       "schema": "public",
@@ -778,6 +858,11 @@
     {
       "schema": "public",
       "name": "get_sale_compliance_dispatch_pre133",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "guard_buyer_api_key",
       "arguments": ""
     },
     {
@@ -1099,6 +1184,11 @@
       "schema": "public",
       "name": "ping_agent_conversion",
       "arguments": "p_campaign uuid, p_agent text, p_average numeric"
+    },
+    {
+      "schema": "public",
+      "name": "ping_agent_held",
+      "arguments": "p_agent text"
     },
     {
       "schema": "public",
@@ -1934,6 +2024,11 @@
       "schema": "public",
       "name": "review_post_call_coaching",
       "arguments": "p_actor text, p_org text, p_call uuid"
+    },
+    {
+      "schema": "public",
+      "name": "revoke_buyer_api_key",
+      "arguments": "p_key uuid, p_actor text"
     },
     {
       "schema": "public",

@@ -236,6 +236,24 @@
     },
     {
       "schema": "public",
+      "name": "buyer_api_audit",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "buyer_api_keys",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "calibration_overrides",
       "kind": "r",
       "owner": "postgres",
@@ -4244,6 +4262,204 @@
       "identity": "",
       "generated": "",
       "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "key_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "action",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "resource_id",
+      "position": 5,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "outcome",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "detail",
+      "position": 7,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "actor",
+      "position": 8,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "created_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "name",
+      "position": 3,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "key_hash",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "scopes",
+      "position": 5,
+      "type": "text[]",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "active",
+      "position": 6,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "true"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "created_at",
+      "position": 7,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "last_used_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "revoked_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
     },
     {
       "schema": "public",
@@ -16113,6 +16329,17 @@
       "identity": "",
       "generated": "",
       "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "lead_sources",
+      "name": "sandbox",
+      "position": 16,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "false"
     },
     {
       "schema": "public",
@@ -35775,6 +36002,230 @@
     {
       "schema": "public",
       "relation": "bulletins_duplicate_archive",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
@@ -60474,6 +60925,188 @@
     },
     {
       "schema": "public",
+      "name": "buyer_ack_retention_alert",
+      "arguments": "p_key uuid, p_alert uuid",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_ack_retention_alert(p_key uuid, p_alert uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key); a ping_retention_alerts;\nBEGIN\n UPDATE ping_retention_alerts SET acknowledged_at=coalesce(acknowledged_at,clock_timestamp())\n  WHERE id=p_alert AND tenant_id=t RETURNING * INTO a;\n INSERT INTO buyer_api_audit(tenant_id,key_id,action,resource_id,outcome,actor)\n VALUES(t,p_key,'alert_ack',a.id,CASE WHEN a.id IS NULL THEN 'not_found' ELSE 'ok' END,'buyer-api:'||p_key::text);\n IF a.id IS NULL THEN RETURN jsonb_build_object('status','not_found'); END IF;\n RETURN jsonb_build_object('status','ok','alert',jsonb_build_object('id',a.id,'campaign_id',a.campaign_id,\n   'acknowledged_at',a.acknowledged_at));\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_api_admit",
+      "arguments": "p_key_hash text, p_scope text, p_limit integer",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_api_admit(p_key_hash text, p_scope text, p_limit integer)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE k buyer_api_keys; gate jsonb;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n IF p_scope IS NULL OR p_scope NOT IN ('campaigns:read','campaigns:write','reports:read','alerts:write','screener:write')\n THEN RAISE EXCEPTION 'Invalid buyer API scope'; END IF;\n SELECT * INTO k FROM buyer_api_keys WHERE key_hash=p_key_hash AND active;\n IF k.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n gate:=public.consume_admission(jsonb_build_array(jsonb_build_object('key','buyer-api:'||k.id::text,'seconds',60,'limit',p_limit)));\n IF (gate->>'allowed')::boolean THEN UPDATE buyer_api_keys SET last_used_at=clock_timestamp() WHERE id=k.id; END IF;\n RETURN gate||jsonb_build_object('authorized',true,'key_id',k.id,'tenant_id',k.tenant_id,'scope_ok',p_scope=ANY(k.scopes));\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_api_campaign_json",
+      "arguments": "c ping_campaigns",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_api_campaign_json(c ping_campaigns)\n RETURNS jsonb\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT jsonb_build_object('id',c.id,'name',c.name,'product_line',c.product_line,'active',c.active,\n    'engine_mode',c.engine_mode,'allowed_states',to_jsonb(c.allowed_states),'pricing_model',c.pricing_model,\n    'rate',c.rate,'transfer_number',c.transfer_number,'staffed_hours_override',c.staffed_hours_override,\n    'daily_budget_calls',c.daily_budget_calls,'exchange_daily_cap',c.exchange_daily_cap,\n    'exchange_hourly_cap',c.exchange_hourly_cap,'retention_mode',c.retention_mode,'screener_mode',c.screener_mode,\n    'performance_routing',c.performance_routing,\n    'paused',EXISTS(SELECT 1 FROM ping_source_controls p WHERE p.tenant_id=c.tenant_id AND p.source_id=c.source_id\n      AND p.paused AND (p.campaign_id IS NULL OR p.campaign_id=c.id)),\n    'created_at',c.created_at,'updated_at',c.updated_at);\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_api_tenant",
+      "arguments": "p_key uuid",
+      "result": "uuid",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_api_tenant(p_key uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RAISE EXCEPTION 'Ping platform disabled'; END IF;\n SELECT tenant_id INTO t FROM buyer_api_keys WHERE id=p_key AND active;\n IF t IS NULL THEN RAISE EXCEPTION 'Buyer API key inactive'; END IF;\n RETURN t;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_campaigns",
+      "arguments": "p_key uuid",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_campaigns(p_key uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key);\nBEGIN\n RETURN coalesce((SELECT jsonb_agg(public.buyer_api_campaign_json(c) ORDER BY c.name,c.id)\n   FROM ping_campaigns c WHERE c.tenant_id=t),'[]'::jsonb);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_create_screener_draft",
+      "arguments": "p_key uuid, p_campaign uuid, p_script jsonb",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_create_screener_draft(p_key uuid, p_campaign uuid, p_script jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key); c ping_campaigns; s screener_scripts; k text; v jsonb; ok boolean:=true; next_version integer;\n  required text[]:=ARRAY['opening','q_medicare','q_zip','q_reason','q_connect','pass_line','fail_line'];\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RAISE EXCEPTION 'Ping screener disabled'; END IF;\n IF jsonb_typeof(p_script)<>'object' THEN ok:=false; END IF;\n FOR k,v IN SELECT key,value FROM jsonb_each(CASE WHEN jsonb_typeof(p_script)='object' THEN p_script ELSE '{}' END) LOOP\n  ok:=ok AND CASE\n   WHEN k=ANY(required) THEN jsonb_typeof(v)='string' AND length(v#>>'{}') BETWEEN 1 AND 600\n   WHEN k='disclaimer' THEN jsonb_typeof(v)='null' OR (jsonb_typeof(v)='string' AND length(v#>>'{}') BETWEEN 1 AND 1000)\n   WHEN k='voice' THEN jsonb_typeof(v)='string' AND v#>>'{}' ~ '^Polly\\.[A-Za-z]+(-[A-Za-z]+)?$'\n   ELSE false END;\n END LOOP;\n ok:=ok AND jsonb_typeof(p_script)='object' AND p_script ?& required;\n SELECT * INTO c FROM ping_campaigns WHERE id=p_campaign AND tenant_id=t;\n IF ok AND c.id IS NOT NULL THEN\n  PERFORM pg_advisory_xact_lock(hashtextextended('screener-script:'||c.id::text,0));\n  SELECT coalesce(max(version),0)+1 INTO next_version FROM screener_scripts WHERE campaign_id=c.id;\n  INSERT INTO screener_scripts(tenant_id,campaign_id,version,opening,q_medicare,q_zip,q_reason,q_connect,\n    pass_line,fail_line,disclaimer,voice)\n  VALUES(t,c.id,next_version,p_script->>'opening',p_script->>'q_medicare',p_script->>'q_zip',p_script->>'q_reason',\n    p_script->>'q_connect',p_script->>'pass_line',p_script->>'fail_line',p_script->>'disclaimer',\n    coalesce(p_script->>'voice','Polly.Joanna'))\n  RETURNING * INTO s;\n END IF;\n INSERT INTO buyer_api_audit(tenant_id,key_id,action,resource_id,outcome,detail,actor)\n VALUES(t,p_key,'screener_draft_create',coalesce(s.id,c.id),\n   CASE WHEN NOT ok THEN 'rejected' WHEN c.id IS NULL THEN 'not_found' ELSE 'ok' END,\n   jsonb_strip_nulls(jsonb_build_object('campaign_id',c.id,'version',s.version)),'buyer-api:'||p_key::text);\n IF NOT ok THEN RETURN jsonb_build_object('status','invalid'); END IF;\n IF c.id IS NULL THEN RETURN jsonb_build_object('status','not_found'); END IF;\n RETURN jsonb_build_object('status','ok','script',jsonb_build_object('id',s.id,'campaign_id',s.campaign_id,\n   'version',s.version,'status',s.status,'created_at',s.created_at));\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_hours_valid",
+      "arguments": "p_hours jsonb",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_hours_valid(p_hours jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'public'\nAS $function$\nDECLARE k text; v jsonb;\nBEGIN\n IF coalesce(jsonb_typeof(p_hours),'')<>'object' THEN RETURN false; END IF;\n IF EXISTS(SELECT 1 FROM jsonb_object_keys(p_hours) x WHERE x NOT IN ('timezone','days'))\n OR coalesce(jsonb_typeof(p_hours->'timezone'),'')<>'string'\n OR p_hours->>'timezone' !~ '^[A-Z][A-Za-z_]+(/[A-Za-z0-9_+-]+){1,2}$'\n OR coalesce(jsonb_typeof(p_hours->'days'),'')<>'object' THEN RETURN false; END IF;\n FOR k,v IN SELECT key,value FROM jsonb_each(p_hours->'days') LOOP\n  IF k NOT IN ('sun','mon','tue','wed','thu','fri','sat') OR jsonb_typeof(v)<>'object' THEN RETURN false; END IF;\n  IF EXISTS(SELECT 1 FROM jsonb_object_keys(v) x WHERE x NOT IN ('enabled','start','end'))\n  OR coalesce(jsonb_typeof(v->'enabled'),'')<>'boolean' THEN RETURN false; END IF;\n  IF (v->>'enabled')::boolean THEN\n   IF coalesce(v->>'start','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'\n   OR coalesce(v->>'end','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$' THEN RETURN false; END IF;\n   IF (v->>'start')::time>=(v->>'end')::time THEN RETURN false; END IF;\n  END IF;\n END LOOP;\n RETURN true;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_invoice_lines",
+      "arguments": "p_key uuid, p_month date",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_invoice_lines(p_key uuid, p_month date)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key);\nBEGIN\n RETURN coalesce((SELECT jsonb_agg(to_jsonb(l) ORDER BY l.line_no) FROM public.platform_invoice_lines(t,p_month) l),'[]'::jsonb);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_retention_alerts",
+      "arguments": "p_key uuid, p_open_only boolean, p_limit integer",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_retention_alerts(p_key uuid, p_open_only boolean, p_limit integer)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key);\nBEGIN\n RETURN coalesce((SELECT jsonb_agg(jsonb_build_object('id',a.id,'campaign_id',a.campaign_id,'contact_id',a.contact_id,\n     'owner_agent_id',a.owner_agent_id,'decision_id',a.decision_id,'created_at',a.created_at,\n     'acknowledged_at',a.acknowledged_at) ORDER BY a.created_at DESC,a.id)\n   FROM (SELECT * FROM ping_retention_alerts x WHERE x.tenant_id=t AND (NOT coalesce(p_open_only,true) OR x.acknowledged_at IS NULL)\n     ORDER BY x.created_at DESC,x.id LIMIT greatest(1,least(coalesce(p_limit,100),500))) a),'[]'::jsonb);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_scorecard",
+      "arguments": "p_key uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[]",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_scorecard(p_key uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[])\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key);\nBEGIN\n RETURN coalesce((SELECT jsonb_agg(r) FROM public.ping_scorecard(t,p_from,p_to,p_group) r),'[]'::jsonb);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_screener_scripts",
+      "arguments": "p_key uuid, p_campaign uuid",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_screener_scripts(p_key uuid, p_campaign uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key);\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCREENER_ENABLED') THEN RAISE EXCEPTION 'Ping screener disabled'; END IF;\n RETURN coalesce((SELECT jsonb_agg(jsonb_build_object('id',s.id,'campaign_id',s.campaign_id,'version',s.version,\n     'status',s.status,'opening',s.opening,'q_medicare',s.q_medicare,'q_zip',s.q_zip,'q_reason',s.q_reason,\n     'q_connect',s.q_connect,'pass_line',s.pass_line,'fail_line',s.fail_line,'disclaimer',s.disclaimer,'voice',s.voice,\n     'approved_at',s.approved_at,'created_at',s.created_at) ORDER BY s.campaign_id,s.version)\n   FROM screener_scripts s WHERE s.tenant_id=t AND (p_campaign IS NULL OR s.campaign_id=p_campaign)),'[]'::jsonb);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_set_campaign_paused",
+      "arguments": "p_key uuid, p_campaign uuid, p_paused boolean",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_set_campaign_paused(p_key uuid, p_campaign uuid, p_paused boolean)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key); c ping_campaigns;\nBEGIN\n IF p_paused IS NULL THEN RAISE EXCEPTION 'Pause state required'; END IF;\n SELECT * INTO c FROM ping_campaigns WHERE id=p_campaign AND tenant_id=t;\n IF c.id IS NOT NULL THEN\n  PERFORM public.set_ping_source_control(t,c.source_id,c.id,p_paused,'buyer-api:'||p_key::text);\n END IF;\n INSERT INTO buyer_api_audit(tenant_id,key_id,action,resource_id,outcome,actor)\n VALUES(t,p_key,CASE WHEN p_paused THEN 'campaign_pause' ELSE 'campaign_resume' END,c.id,\n   CASE WHEN c.id IS NULL THEN 'not_found' ELSE 'ok' END,'buyer-api:'||p_key::text);\n IF c.id IS NULL THEN RETURN jsonb_build_object('status','not_found'); END IF;\n RETURN jsonb_build_object('status','ok','campaign',public.buyer_api_campaign_json(c));\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_update_campaign",
+      "arguments": "p_key uuid, p_campaign uuid, p_patch jsonb",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_update_campaign(p_key uuid, p_campaign uuid, p_patch jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key); c ping_campaigns; k text; v jsonb; ok boolean:=true;\n  allowed text[]:=ARRAY['active','staffed_hours_override','daily_budget_calls','exchange_daily_cap',\n    'exchange_hourly_cap','retention_mode','screener_mode','performance_routing'];\nBEGIN\n IF jsonb_typeof(p_patch)<>'object' OR p_patch='{}'::jsonb THEN ok:=false; END IF;\n FOR k,v IN SELECT key,value FROM jsonb_each(CASE WHEN jsonb_typeof(p_patch)='object' THEN p_patch ELSE '{}' END) LOOP\n  ok:=ok AND k=ANY(allowed) AND CASE\n   WHEN k IN ('active','performance_routing') THEN jsonb_typeof(v)='boolean'\n   WHEN k='staffed_hours_override' THEN jsonb_typeof(v)='null' OR public.buyer_hours_valid(v)\n   WHEN k IN ('daily_budget_calls','exchange_daily_cap','exchange_hourly_cap') THEN jsonb_typeof(v)='null'\n     OR CASE WHEN jsonb_typeof(v)='number' THEN (v#>>'{}')::numeric=trunc((v#>>'{}')::numeric)\n       AND (v#>>'{}')::numeric BETWEEN 0 AND 1000000 ELSE false END\n   WHEN k='retention_mode' THEN v#>>'{}' IN ('route_owner','reject_and_alert') AND jsonb_typeof(v)='string'\n   WHEN k='screener_mode' THEN v#>>'{}' IN ('off','inbound_only','always') AND jsonb_typeof(v)='string'\n   ELSE false END;\n END LOOP;\n SELECT * INTO c FROM ping_campaigns WHERE id=p_campaign AND tenant_id=t FOR UPDATE;\n IF NOT ok OR c.id IS NULL THEN\n  INSERT INTO buyer_api_audit(tenant_id,key_id,action,resource_id,outcome,detail,actor)\n  VALUES(t,p_key,'campaign_update',c.id,CASE WHEN NOT ok THEN 'rejected' ELSE 'not_found' END,\n    jsonb_build_object('fields',CASE WHEN jsonb_typeof(p_patch)='object' THEN\n      (SELECT coalesce(jsonb_agg(left(x,64) ORDER BY x),'[]'::jsonb) FROM jsonb_object_keys(p_patch) x) ELSE '[]'::jsonb END),\n    'buyer-api:'||p_key::text);\n  RETURN jsonb_build_object('status',CASE WHEN NOT ok THEN 'invalid' ELSE 'not_found' END);\n END IF;\n UPDATE ping_campaigns SET\n   active=CASE WHEN p_patch ? 'active' THEN (p_patch->>'active')::boolean ELSE active END,\n   staffed_hours_override=CASE WHEN p_patch ? 'staffed_hours_override' THEN nullif(p_patch->'staffed_hours_override','null'::jsonb) ELSE staffed_hours_override END,\n   daily_budget_calls=CASE WHEN p_patch ? 'daily_budget_calls' THEN (p_patch->>'daily_budget_calls')::integer ELSE daily_budget_calls END,\n   exchange_daily_cap=CASE WHEN p_patch ? 'exchange_daily_cap' THEN (p_patch->>'exchange_daily_cap')::integer ELSE exchange_daily_cap END,\n   exchange_hourly_cap=CASE WHEN p_patch ? 'exchange_hourly_cap' THEN (p_patch->>'exchange_hourly_cap')::integer ELSE exchange_hourly_cap END,\n   retention_mode=CASE WHEN p_patch ? 'retention_mode' THEN p_patch->>'retention_mode' ELSE retention_mode END,\n   screener_mode=CASE WHEN p_patch ? 'screener_mode' THEN p_patch->>'screener_mode' ELSE screener_mode END,\n   performance_routing=CASE WHEN p_patch ? 'performance_routing' THEN (p_patch->>'performance_routing')::boolean ELSE performance_routing END\n WHERE id=c.id RETURNING * INTO c;\n INSERT INTO buyer_api_audit(tenant_id,key_id,action,resource_id,outcome,detail,actor)\n VALUES(t,p_key,'campaign_update',c.id,'ok',jsonb_build_object('changes',p_patch),'buyer-api:'||p_key::text);\n RETURN jsonb_build_object('status','ok','campaign',public.buyer_api_campaign_json(c));\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "buyer_usage",
+      "arguments": "p_key uuid, p_month date",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.buyer_usage(p_key uuid, p_month date)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE t uuid:=public.buyer_api_tenant(p_key);\nBEGIN\n RETURN public.platform_usage_summary(t,p_month);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "capture_lifecycle_purge_marker",
       "arguments": "p_table text, p_id uuid",
       "result": "void",
@@ -61124,6 +61757,19 @@
     },
     {
       "schema": "public",
+      "name": "create_buyer_api_key",
+      "arguments": "p_tenant uuid, p_name text, p_scopes text[], p_actor text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.create_buyer_api_key(p_tenant uuid, p_name text, p_scopes text[], p_actor text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE plain text; k buyer_api_keys; actor text:=nullif(trim(p_actor),''); scopes text[];\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RAISE EXCEPTION 'Ping platform disabled'; END IF;\n IF actor IS NULL OR length(actor)>128 THEN RAISE EXCEPTION 'Actor required'; END IF;\n IF p_tenant IS NULL OR NOT EXISTS(SELECT 1 FROM tenants WHERE id=p_tenant) THEN RAISE EXCEPTION 'Unknown tenant'; END IF;\n SELECT array_agg(DISTINCT s ORDER BY s) INTO scopes FROM unnest(p_scopes) s;\n IF scopes IS NULL OR array_position(scopes,NULL) IS NOT NULL THEN RAISE EXCEPTION 'Invalid buyer API scopes'; END IF;\n plain:='egb_'||replace(gen_random_uuid()::text,'-','')||replace(gen_random_uuid()::text,'-','');\n INSERT INTO buyer_api_keys(tenant_id,name,key_hash,scopes)\n VALUES(p_tenant,trim(p_name),encode(sha256(convert_to(plain,'UTF8')),'hex'),scopes) RETURNING * INTO k;\n INSERT INTO buyer_api_audit(tenant_id,key_id,action,resource_id,outcome,detail,actor)\n VALUES(k.tenant_id,k.id,'key_created',k.id,'ok',jsonb_build_object('name',k.name,'scopes',to_jsonb(k.scopes)),actor);\n RETURN jsonb_build_object('id',k.id,'tenant_id',k.tenant_id,'name',k.name,'scopes',to_jsonb(k.scopes),'key',plain);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "create_workspace_record",
       "arguments": "p_table text, p_fields jsonb",
       "result": "jsonb",
@@ -61618,6 +62264,19 @@
     },
     {
       "schema": "public",
+      "name": "exchange_cap_scope",
+      "arguments": "p_campaign uuid, p_daily integer, p_hourly integer, p_hours jsonb, p_at timestamp with time zone",
+      "result": "text",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.exchange_cap_scope(p_campaign uuid, p_daily integer, p_hourly integer, p_hours jsonb, p_at timestamp with time zone)\n RETURNS text\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE day_start timestamptz; hour_start timestamptz; used_day integer; used_hour integer;\nBEGIN\n IF p_daily IS NULL AND p_hourly IS NULL THEN RETURN NULL; END IF;\n day_start:=public.exchange_cap_window(p_hours,'day',p_at);\n hour_start:=public.exchange_cap_window(p_hours,'hour',p_at);\n SELECT count(*) FILTER (WHERE x.received_at>=day_start),count(*) FILTER (WHERE x.received_at>=hour_start)\n   INTO used_day,used_hour FROM ping_decisions x\n   WHERE x.campaign_id=p_campaign AND x.engine='exchange' AND x.available\n     AND x.received_at>=least(day_start,hour_start)\n     AND NOT x.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb;\n IF p_daily IS NOT NULL AND used_day>=p_daily THEN RETURN 'daily'; END IF;\n IF p_hourly IS NOT NULL AND used_hour>=p_hourly THEN RETURN 'hourly'; END IF;\n RETURN NULL;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "exchange_cap_window",
       "arguments": "p_hours jsonb, p_unit text, p_at timestamp with time zone",
       "result": "timestamp with time zone",
@@ -61640,7 +62299,7 @@
         "search_path=public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.exchange_ping(p_key_hash text, p_payload jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; xs exchange_sources;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); phone text; call_id text; state_code text:='';\n  sub_id text; consent text; phone_hash text; hash_trace jsonb:='[]'::jsonb;\n  r record; d jsonb; cand jsonb:='[]'::jsonb; accepts jsonb:='[]'::jsonb;\n  cap_scope text; used_day integer; used_hour integer; day_start timestamptz; hour_start timestamptz;\n  committed_campaign uuid; ranking uuid[]; total integer; rotation jsonb;\n  winner_campaign uuid; winner_decision jsonb; pick uuid; cap_decision uuid; auction_id uuid;\n  transfer text; reason text; public_reason text; retention_accepts boolean:=false;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN\n    RETURN jsonb_build_object('status','disabled','feature','PING_PLATFORM_ENABLED'); END IF;\n  IF NOT public.deployment_feature_enabled('PING_EXCHANGE_ENABLED') THEN\n    RETURN jsonb_build_object('status','disabled','feature','PING_EXCHANGE_ENABLED'); END IF;\n  -- Publisher authentication exactly as ping_decide.\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  -- Fail closed: without the pepper no loser row could be written safely.\n  IF public.ping_phone_pepper() IS NULL THEN RAISE EXCEPTION 'Ping phone pepper is not provisioned'; END IF;\n\n  IF jsonb_typeof(payload)='object' THEN\n    phone:=left(nullif(trim(payload->>'phone'),''),32);\n    state_code:=upper(trim(coalesce(payload->>'state','')));\n    call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n    sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n    consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n  END IF;\n  phone_hash:=public.ping_phone_hash(phone);\n  IF phone_hash IS NOT NULL THEN\n    hash_trace:=jsonb_build_array(jsonb_build_object('rule','phone_hash','result','recorded','sha256',phone_hash));\n  END IF;\n\n  -- The row lock serializes this source's auctions and its rotation state.\n  SELECT * INTO xs FROM exchange_sources WHERE source_id=src.id AND active FOR UPDATE;\n  IF xs.source_id IS NOT NULL THEN\n    -- A re-ping inside the 30 second commitment stays with the buyer that\n    -- already holds an agent for it, so two buyers never hold the same call.\n    SELECT x.campaign_id INTO committed_campaign FROM ping_decisions x\n      WHERE x.source_id=src.id AND x.engine='exchange' AND x.available AND x.matched_call_sid IS NULL\n        AND x.received_at+interval '30 seconds'>=started AND x.caller_state=state_code\n        AND ((call_id IS NOT NULL AND x.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND x.caller_phone=phone))\n        AND NOT x.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n      ORDER BY x.received_at DESC LIMIT 1;\n\n    FOR r IN SELECT er.campaign_id,er.priority,er.weight,c.tenant_id AS buyer,c.transfer_number,\n        c.exchange_daily_cap,c.exchange_hourly_cap,coalesce(c.staffed_hours_override,v.staffed_hours) AS hours,\n        coalesce(er.price_override,CASE c.pricing_model WHEN 'free' THEN 0 ELSE c.rate END) AS price,\n        (SELECT max(a.received_at) FROM exchange_auctions a\n          WHERE a.source_id=src.id AND a.winner_campaign_id=er.campaign_id) AS last_won\n      FROM exchange_routes er JOIN ping_campaigns c ON c.id=er.campaign_id\n      LEFT JOIN vendor_controls v ON v.tenant_id=c.tenant_id\n      WHERE er.source_id=src.id AND er.active AND c.active AND c.engine_mode='generic'\n      ORDER BY er.priority,er.campaign_id\n    LOOP\n      -- A campaign without a transfer number can never win; it is not evaluated.\n      IF r.transfer_number IS NULL THEN\n        cand:=cand||jsonb_build_array(jsonb_build_object('campaign_id',r.campaign_id,'decision_id',NULL,\n          'available',false,'reason','campaign_inactive','price',NULL));\n        CONTINUE;\n      END IF;\n      -- Caps count accepted, non-replayed exchange decisions in the buyer's own day and hour.\n      cap_scope:=NULL;\n      IF (r.exchange_daily_cap IS NOT NULL OR r.exchange_hourly_cap IS NOT NULL)\n      AND r.campaign_id IS DISTINCT FROM committed_campaign THEN\n        day_start:=public.exchange_cap_window(r.hours,'day',started);\n        hour_start:=public.exchange_cap_window(r.hours,'hour',started);\n        SELECT count(*) FILTER (WHERE x.received_at>=day_start),count(*) FILTER (WHERE x.received_at>=hour_start)\n          INTO used_day,used_hour FROM ping_decisions x\n          WHERE x.campaign_id=r.campaign_id AND x.engine='exchange' AND x.available\n            AND x.received_at>=least(day_start,hour_start)\n            AND NOT x.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb;\n        IF r.exchange_daily_cap IS NOT NULL AND used_day>=r.exchange_daily_cap THEN cap_scope:='daily';\n        ELSIF r.exchange_hourly_cap IS NOT NULL AND used_hour>=r.exchange_hourly_cap THEN cap_scope:='hourly'; END IF;\n      END IF;\n      IF cap_scope IS NOT NULL THEN\n        INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n          vendor_call_id,publisher_sub_id,consent_cert_id,available,reason,rule_trace,engine)\n        VALUES(r.buyer,src.id,r.campaign_id,0,NULL,nullif(left(state_code,8),''),NULL,call_id,sub_id,consent,false,\n          'buyer_cap_reached',jsonb_build_array(jsonb_build_object('rule','buyer_cap_reached','result','reject','scope',cap_scope))||hash_trace,\n          'exchange_eval')\n        RETURNING id INTO cap_decision;\n        cand:=cand||jsonb_build_array(jsonb_build_object('campaign_id',r.campaign_id,'decision_id',cap_decision,\n          'available',false,'reason','buyer_cap_reached','price',r.price));\n        CONTINUE;\n      END IF;\n\n      d:=public.ping_decide_campaign(r.campaign_id,src.id,payload,'exchange_eval');\n      cand:=cand||jsonb_build_array(jsonb_build_object('campaign_id',r.campaign_id,'decision_id',d->'decision_id',\n        'available',d->'available','reason',d->'reason','price',r.price));\n      -- Pings the publisher or platform could not deliver are not metered.\n      IF d->>'reason' NOT IN ('routing_disabled','invalid_payload','error_rejected') THEN\n        PERFORM public.platform_record_usage(r.buyer,'ping',src.id,r.campaign_id,d->>'decision_id');\n      END IF;\n      IF (d->>'available')::boolean THEN\n        accepts:=accepts||jsonb_build_array(jsonb_build_object('campaign_id',r.campaign_id,'priority',r.priority,\n          'weight',r.weight,'price',r.price,'last_won',r.last_won,\n          'retention',d->>'reason'='accepted_retention_owner'));\n      END IF;\n    END LOOP;\n\n    -- Rank the accepts: the committed buyer, then retention owners, then the\n    -- strategy; ties go to the least recently won, then id. weighted_rotation\n    -- is smooth weighted round robin over rotation_state.\n    rotation:=xs.rotation_state;\n    SELECT coalesce(sum((e->>'weight')::integer),0),coalesce(bool_or((e->>'retention')::boolean),false)\n      INTO total,retention_accepts FROM jsonb_array_elements(accepts) e;\n    SELECT array_agg(x.cid ORDER BY (x.cid IS NOT DISTINCT FROM committed_campaign) DESC,x.retention DESC,\n        CASE xs.strategy WHEN 'priority_waterfall' THEN x.priority END ASC,\n        CASE xs.strategy WHEN 'highest_price' THEN x.price END DESC NULLS LAST,\n        CASE xs.strategy WHEN 'weighted_rotation' THEN x.current END DESC,\n        x.last_won ASC NULLS FIRST,x.cid::text)\n      INTO ranking FROM (SELECT (e->>'campaign_id')::uuid AS cid,(e->>'priority')::integer AS priority,\n        (e->>'price')::numeric AS price,(e->>'last_won')::timestamptz AS last_won,\n        coalesce((e->>'retention')::boolean,false) AS retention,\n        coalesce((rotation->>(e->>'campaign_id'))::numeric,0)+(e->>'weight')::integer AS current\n        FROM jsonb_array_elements(accepts) e) x;\n\n    -- The real decision reserves an agent. If it loses a race, the next best\n    -- accept is tried once.\n    FOR attempt IN 1..least(2,coalesce(array_length(ranking,1),0)) LOOP\n      pick:=ranking[attempt];\n      d:=public.ping_decide_campaign(pick,src.id,payload,'exchange');\n      IF (d->>'available')::boolean THEN winner_campaign:=pick; winner_decision:=d; EXIT; END IF;\n      UPDATE ping_decisions SET caller_phone=NULL,caller_zip=NULL,rule_trace=rule_trace||hash_trace\n        WHERE id=(d->>'decision_id')::uuid;\n    END LOOP;\n\n    IF xs.strategy='weighted_rotation' AND winner_campaign IS NOT NULL\n    AND winner_campaign IS DISTINCT FROM committed_campaign AND NOT retention_accepts THEN\n      SELECT rotation||coalesce(jsonb_object_agg(e->>'campaign_id',\n          coalesce((rotation->>(e->>'campaign_id'))::numeric,0)+(e->>'weight')::integer\n          -CASE WHEN (e->>'campaign_id')::uuid=winner_campaign THEN total ELSE 0 END),'{}'::jsonb)\n        INTO rotation FROM jsonb_array_elements(accepts) e;\n      UPDATE exchange_sources SET rotation_state=rotation WHERE source_id=src.id;\n    END IF;\n  END IF;\n\n  reason:=coalesce(winner_decision->>'reason','exchange_no_buyer');\n  INSERT INTO exchange_auctions(source_id,received_at,latency_ms,strategy,candidate_count,\n    winner_campaign_id,winner_decision_id,reason,candidates)\n  VALUES(src.id,started,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,xs.strategy,\n    jsonb_array_length(cand),winner_campaign,(winner_decision->>'decision_id')::uuid,reason,cand)\n  RETURNING id INTO auction_id;\n  -- One pooled shopper row per exchange ping, under the publisher's tenant.\n  IF phone ~ '^\\+[1-9][0-9]{7,14}$' THEN\n    BEGIN PERFORM public.shopper_history_record(phone,src.tenant_id,src.id);\n    EXCEPTION WHEN OTHERS THEN RAISE WARNING 'shopper_history_record_failed';\n    END;\n  END IF;\n  -- The publisher never learns that the caller is a buyer's existing client.\n  public_reason:=CASE WHEN reason='accepted_retention_owner' THEN\n    CASE public.ping_agent_tier(winner_decision->>'agent_id',state_code,winner_campaign)\n      WHEN 'partial' THEN 'accepted_partial' ELSE 'accepted_full' END\n    ELSE reason END;\n  SELECT c.transfer_number INTO transfer FROM ping_campaigns c WHERE c.id=winner_campaign;\n  RETURN jsonb_build_object('authorized',true,'auction_id',auction_id,'available',winner_campaign IS NOT NULL,\n    'reason',public_reason,'ttl_seconds',(winner_decision->>'ttl_seconds')::integer,'transfer_number',transfer);\nEND;\n$function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.exchange_ping(p_key_hash text, p_payload jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; xs exchange_sources;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); phone text; call_id text; state_code text:='';\n  sub_id text; consent text; phone_hash text; hash_trace jsonb:='[]'::jsonb;\n  r record; d jsonb; cand jsonb:='[]'::jsonb; accepts jsonb:='[]'::jsonb;\n  cap_scope text; used_day integer; used_hour integer; day_start timestamptz; hour_start timestamptz;\n  committed_campaign uuid; ranking uuid[]; total integer; rotation jsonb;\n  winner_campaign uuid; winner_decision jsonb; pick uuid; cap_decision uuid; auction_id uuid;\n  transfer text; reason text; public_reason text; retention_accepts boolean:=false;\n  is_sandbox boolean; key text; evals jsonb:='{}'::jsonb; winner_row jsonb;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN\n    RETURN jsonb_build_object('status','disabled','feature','PING_PLATFORM_ENABLED'); END IF;\n  IF NOT public.deployment_feature_enabled('PING_EXCHANGE_ENABLED') THEN\n    RETURN jsonb_build_object('status','disabled','feature','PING_EXCHANGE_ENABLED'); END IF;\n  -- Publisher authentication exactly as ping_decide.\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  -- Fail closed: without the pepper no loser row could be written safely.\n  IF public.ping_phone_pepper() IS NULL THEN RAISE EXCEPTION 'Ping phone pepper is not provisioned'; END IF;\n  is_sandbox:=coalesce(src.sandbox,false);\n\n  IF jsonb_typeof(payload)='object' THEN\n    phone:=left(nullif(trim(payload->>'phone'),''),32);\n    state_code:=upper(trim(coalesce(payload->>'state','')));\n    call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n    sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n    consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n  END IF;\n  phone_hash:=CASE WHEN NOT is_sandbox THEN public.ping_phone_hash(phone) END;\n  IF phone_hash IS NOT NULL THEN\n    hash_trace:=jsonb_build_array(jsonb_build_object('rule','phone_hash','result','recorded','sha256',phone_hash));\n  END IF;\n  key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id WHEN phone IS NOT NULL THEN 'phone:'||phone END;\n\n  -- S8a: no row lock here. Candidate evaluation runs unserialized; the\n  -- exchange_sources row is locked only to read and update weighted rotation\n  -- state below. Pings for the same call identity on this source serialize so\n  -- the commitment check and the reservation stay one decision.\n  SELECT * INTO xs FROM exchange_sources WHERE source_id=src.id AND active;\n  IF xs.source_id IS NOT NULL AND key IS NOT NULL AND NOT is_sandbox THEN\n    PERFORM pg_advisory_xact_lock(hashtextextended('exchange-ping:'||src.id::text||':'||key,0));\n  END IF;\n  IF xs.source_id IS NOT NULL AND NOT is_sandbox THEN\n    -- A re-ping inside the 30 second commitment stays with the buyer that\n    -- already holds an agent for it, so two buyers never hold the same call.\n    SELECT x.campaign_id INTO committed_campaign FROM ping_decisions x\n      WHERE x.source_id=src.id AND x.engine='exchange' AND x.available AND x.matched_call_sid IS NULL\n        AND x.received_at+interval '30 seconds'>=started AND x.caller_state=state_code\n        AND ((call_id IS NOT NULL AND x.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND x.caller_phone=phone))\n        AND NOT x.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n      ORDER BY x.received_at DESC LIMIT 1;\n  END IF;\n  IF xs.source_id IS NOT NULL THEN\n    FOR r IN SELECT er.campaign_id,er.priority,er.weight,c.tenant_id AS buyer,c.transfer_number,\n        c.exchange_daily_cap,c.exchange_hourly_cap,coalesce(c.staffed_hours_override,v.staffed_hours) AS hours,\n        coalesce(er.price_override,CASE c.pricing_model WHEN 'free' THEN 0 ELSE c.rate END) AS price,\n        (SELECT max(a.received_at) FROM exchange_auctions a\n          WHERE a.source_id=src.id AND a.winner_campaign_id=er.campaign_id) AS last_won\n      FROM exchange_routes er JOIN ping_campaigns c ON c.id=er.campaign_id\n      LEFT JOIN vendor_controls v ON v.tenant_id=c.tenant_id\n      WHERE er.source_id=src.id AND er.active AND c.active AND c.engine_mode='generic'\n      ORDER BY er.priority,er.campaign_id\n    LOOP\n      -- A campaign without a transfer number can never win; it is not evaluated.\n      IF r.transfer_number IS NULL THEN\n        cand:=cand||jsonb_build_array(jsonb_build_object('campaign_id',r.campaign_id,'decision_id',NULL,\n          'available',false,'reason','campaign_inactive','price',NULL));\n        CONTINUE;\n      END IF;\n      -- Caps count accepted, non-replayed exchange decisions in the buyer's own day and hour.\n      cap_scope:=NULL;\n      IF r.campaign_id IS DISTINCT FROM committed_campaign THEN\n        cap_scope:=public.exchange_cap_scope(r.campaign_id,r.exchange_daily_cap,r.exchange_hourly_cap,r.hours,started);\n      END IF;\n      IF cap_scope IS NOT NULL THEN\n        INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n          vendor_call_id,publisher_sub_id,consent_cert_id,available,reason,rule_trace,engine)\n        VALUES(r.buyer,src.id,r.campaign_id,0,NULL,nullif(left(state_code,8),''),NULL,call_id,sub_id,consent,false,\n          'buyer_cap_reached',jsonb_build_array(jsonb_build_object('rule','buyer_cap_reached','result','reject','scope',cap_scope))||hash_trace,\n          CASE WHEN is_sandbox THEN 'sandbox' ELSE 'exchange_eval' END)\n        RETURNING id INTO cap_decision;\n        cand:=cand||jsonb_build_array(jsonb_build_object('campaign_id',r.campaign_id,'decision_id',cap_decision,\n          'available',false,'reason','buyer_cap_reached','price',r.price));\n        CONTINUE;\n      END IF;\n\n      d:=public.ping_decide_campaign(r.campaign_id,src.id,payload,CASE WHEN is_sandbox THEN 'sandbox_exchange' ELSE 'exchange_eval' END);\n      evals:=evals||jsonb_build_object(r.campaign_id::text,d);\n      cand:=cand||jsonb_build_array(jsonb_build_object('campaign_id',r.campaign_id,'decision_id',d->'decision_id',\n        'available',d->'available','reason',d->'reason','price',r.price));\n      -- Pings the publisher or platform could not deliver are not metered.\n      IF NOT is_sandbox AND d->>'reason' NOT IN ('routing_disabled','invalid_payload','error_rejected') THEN\n        PERFORM public.platform_record_usage(r.buyer,'ping',src.id,r.campaign_id,d->>'decision_id');\n      END IF;\n      IF (d->>'available')::boolean THEN\n        accepts:=accepts||jsonb_build_array(jsonb_build_object('campaign_id',r.campaign_id,'priority',r.priority,\n          'weight',r.weight,'price',r.price,'last_won',r.last_won,\n          'retention',d->>'reason'='accepted_retention_owner','daily_cap',r.exchange_daily_cap,\n          'hourly_cap',r.exchange_hourly_cap,'hours',r.hours));\n      END IF;\n    END LOOP;\n\n    -- Rank the accepts: the committed buyer, then retention owners, then the\n    -- strategy; ties go to the least recently won, then id. weighted_rotation\n    -- is smooth weighted round robin over rotation_state.\n    -- Weighted rotation reads its state under the row lock, held from here to\n    -- commit so the read, the reservation and the update are one step.\n    IF xs.strategy='weighted_rotation' AND NOT is_sandbox AND jsonb_array_length(accepts)>0 THEN\n      SELECT e.rotation_state INTO rotation FROM exchange_sources e WHERE e.source_id=src.id FOR UPDATE;\n    END IF;\n    rotation:=coalesce(rotation,xs.rotation_state);\n    SELECT coalesce(sum((e->>'weight')::integer),0),coalesce(bool_or((e->>'retention')::boolean),false)\n      INTO total,retention_accepts FROM jsonb_array_elements(accepts) e;\n    SELECT array_agg(x.cid ORDER BY (x.cid IS NOT DISTINCT FROM committed_campaign) DESC,x.retention DESC,\n        CASE xs.strategy WHEN 'priority_waterfall' THEN x.priority END ASC,\n        CASE xs.strategy WHEN 'highest_price' THEN x.price END DESC NULLS LAST,\n        CASE xs.strategy WHEN 'weighted_rotation' THEN x.current END DESC,\n        x.last_won ASC NULLS FIRST,x.cid::text)\n      INTO ranking FROM (SELECT (e->>'campaign_id')::uuid AS cid,(e->>'priority')::integer AS priority,\n        (e->>'price')::numeric AS price,(e->>'last_won')::timestamptz AS last_won,\n        coalesce((e->>'retention')::boolean,false) AS retention,\n        coalesce((rotation->>(e->>'campaign_id'))::numeric,0)+(e->>'weight')::integer AS current\n        FROM jsonb_array_elements(accepts) e) x;\n\n    -- The real decision reserves an agent. If it loses a race, the next best\n    -- accept is tried once.\n    -- A sandbox ping reserves nothing: the best ranked evaluation is the answer.\n    IF is_sandbox AND coalesce(array_length(ranking,1),0)>0 THEN\n      winner_campaign:=ranking[1]; winner_decision:=evals->(ranking[1]::text);\n    END IF;\n    FOR attempt IN 1..CASE WHEN is_sandbox THEN 0 ELSE least(2,coalesce(array_length(ranking,1),0)) END LOOP\n      pick:=ranking[attempt];\n      -- Capped buyers re-count under a per campaign lock (taken after the\n      -- campaign plus identity lock, the order ping_decide_campaign uses) so\n      -- concurrent auctions never overshoot a cap.\n      SELECT e INTO winner_row FROM jsonb_array_elements(accepts) e WHERE (e->>'campaign_id')::uuid=pick;\n      IF pick IS DISTINCT FROM committed_campaign\n      AND (winner_row->'daily_cap' <> 'null'::jsonb OR winner_row->'hourly_cap' <> 'null'::jsonb) THEN\n        IF key IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||pick::text||key,0)); END IF;\n        PERFORM pg_advisory_xact_lock(hashtextextended('ping-campaign-cap:'||pick::text,0));\n        IF public.exchange_cap_scope(pick,(winner_row->>'daily_cap')::integer,(winner_row->>'hourly_cap')::integer,\n          winner_row->'hours',started) IS NOT NULL THEN CONTINUE; END IF;\n      END IF;\n      d:=public.ping_decide_campaign(pick,src.id,payload,'exchange');\n      IF (d->>'available')::boolean THEN winner_campaign:=pick; winner_decision:=d; EXIT; END IF;\n      UPDATE ping_decisions SET caller_phone=NULL,caller_zip=NULL,rule_trace=rule_trace||hash_trace\n        WHERE id=(d->>'decision_id')::uuid;\n    END LOOP;\n\n    IF xs.strategy='weighted_rotation' AND winner_campaign IS NOT NULL AND NOT is_sandbox\n    AND winner_campaign IS DISTINCT FROM committed_campaign AND NOT retention_accepts THEN\n      SELECT rotation||coalesce(jsonb_object_agg(e->>'campaign_id',\n          coalesce((rotation->>(e->>'campaign_id'))::numeric,0)+(e->>'weight')::integer\n          -CASE WHEN (e->>'campaign_id')::uuid=winner_campaign THEN total ELSE 0 END),'{}'::jsonb)\n        INTO rotation FROM jsonb_array_elements(accepts) e;\n      UPDATE exchange_sources SET rotation_state=rotation WHERE source_id=src.id;\n    END IF;\n  END IF;\n\n  reason:=coalesce(winner_decision->>'reason','exchange_no_buyer');\n  -- A sandbox ping writes no auction row (it would steer least recently won\n  -- tie breaks), no rotation state and no shopper history.\n  IF NOT is_sandbox THEN\n    INSERT INTO exchange_auctions(source_id,received_at,latency_ms,strategy,candidate_count,\n      winner_campaign_id,winner_decision_id,reason,candidates)\n    VALUES(src.id,started,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,xs.strategy,\n      jsonb_array_length(cand),winner_campaign,(winner_decision->>'decision_id')::uuid,reason,cand)\n    RETURNING id INTO auction_id;\n  END IF;\n  -- One pooled shopper row per exchange ping, under the publisher's tenant.\n  IF NOT is_sandbox AND phone ~ '^\\+[1-9][0-9]{7,14}$' THEN\n    BEGIN PERFORM public.shopper_history_record(phone,src.tenant_id,src.id);\n    EXCEPTION WHEN OTHERS THEN RAISE WARNING 'shopper_history_record_failed';\n    END;\n  END IF;\n  -- The publisher never learns that the caller is a buyer's existing client.\n  public_reason:=CASE WHEN reason='accepted_retention_owner' THEN\n    CASE public.ping_agent_tier(winner_decision->>'agent_id',state_code,winner_campaign)\n      WHEN 'partial' THEN 'accepted_partial' ELSE 'accepted_full' END\n    ELSE reason END;\n  SELECT c.transfer_number INTO transfer FROM ping_campaigns c WHERE c.id=winner_campaign;\n  RETURN jsonb_build_object('authorized',true,'auction_id',auction_id,'available',winner_campaign IS NOT NULL,\n    'reason',public_reason,'ttl_seconds',(winner_decision->>'ttl_seconds')::integer,'transfer_number',transfer)\n    ||CASE WHEN is_sandbox THEN jsonb_build_object('sandbox',true) ELSE '{}'::jsonb END;\nEND;\n$function$\n"
     },
     {
       "schema": "public",
@@ -62148,6 +62807,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.get_sale_compliance_dispatch_pre133()\n RETURNS SETOF transcript_score_dispatch\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE c call_records; d transcript_score_dispatch; active_until timestamptz;\nBEGIN\n FOR c IN\n  SELECT cr.* FROM call_records cr JOIN transcript_score_dispatch ds ON ds.call_id=cr.id AND ds.tenant_id=cr.tenant_id\n  WHERE public.is_compliance_sale(cr.call_outcome) AND cr.compliance_requested_at IS NOT NULL\n   AND public.sale_compliance_transcript_ready(cr) AND ds.available_at<=clock_timestamp()\n   AND ds.delivered_revision<ds.revision\n  ORDER BY ds.available_at LIMIT 20 FOR UPDATE OF cr SKIP LOCKED\n LOOP\n  SELECT * INTO d FROM transcript_score_dispatch WHERE call_id=c.id FOR UPDATE;\n  SELECT max(lease_until) INTO active_until FROM scoring_jobs\n   WHERE call_id=c.id AND transcript_revision=md5(scoring_transcript_snapshot(c)::text)\n    AND status='pending' AND lease_until>clock_timestamp();\n  IF active_until IS NOT NULL THEN\n   UPDATE transcript_score_dispatch SET available_at=active_until WHERE call_id=c.id;\n   CONTINUE;\n  END IF;\n  IF d.dispatch_attempts>=3 THEN\n   UPDATE transcript_score_dispatch SET delivered_revision=revision,available_at='infinity',\n    last_error='scoring_attempts_exhausted' WHERE call_id=c.id;\n   UPDATE call_records SET metadata=coalesce(metadata,'{}'::jsonb)||jsonb_build_object(\n    'scoring_status','failed','scoring_error_code','scoring_attempts_exhausted','scoring_failed_at',clock_timestamp()),\n    updated_at=clock_timestamp() WHERE id=c.id;\n   CONTINUE;\n  END IF;\n  UPDATE transcript_score_dispatch SET dispatch_attempts=dispatch_attempts+1,\n   available_at=clock_timestamp()+interval '60 seconds' WHERE call_id=c.id RETURNING * INTO d;\n  RETURN NEXT d;\n END LOOP;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "guard_buyer_api_key",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.guard_buyer_api_key()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\nBEGIN\n IF (NEW.id,NEW.tenant_id,NEW.name,NEW.key_hash,NEW.scopes,NEW.created_at)\n   IS DISTINCT FROM (OLD.id,OLD.tenant_id,OLD.name,OLD.key_hash,OLD.scopes,OLD.created_at) THEN\n  RAISE EXCEPTION 'Buyer API key identity is immutable';\n END IF;\n IF NOT OLD.active AND NEW.active THEN RAISE EXCEPTION 'A revoked buyer API key stays revoked'; END IF;\n RETURN NEW;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -62983,6 +63655,19 @@
     },
     {
       "schema": "public",
+      "name": "ping_agent_held",
+      "arguments": "p_agent text",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_agent_held(p_agent text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=p_agent\n      AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n    OR EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=p_agent\n      AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL);\n$function$\n"
+    },
+    {
+      "schema": "public",
       "name": "ping_agent_tier",
       "arguments": "p_agent_id text, p_state text, p_campaign_id uuid",
       "result": "text",
@@ -63083,7 +63768,7 @@
         "search_path=public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide(p_key_hash text, p_campaign text, p_payload jsonb, p_engine text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE src lead_sources; camp_id uuid; campaign_ref text:=nullif(trim(p_campaign),''); result jsonb; phone text;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_engine IS NULL OR p_engine NOT IN ('generic','shadow') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  -- Campaign: explicit id or name, else the source's single active campaign.\n  IF campaign_ref IS NOT NULL THEN\n    SELECT id INTO camp_id FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id\n      AND (id::text=campaign_ref OR name=campaign_ref) ORDER BY (id::text=campaign_ref) DESC LIMIT 1;\n  ELSIF (SELECT count(*) FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active)=1 THEN\n    SELECT id INTO camp_id FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active;\n  END IF;\n  result:=public.ping_decide_campaign(camp_id,src.id,p_payload,p_engine);\n  IF p_engine='generic' AND jsonb_typeof(p_payload)='object' THEN\n    phone:=nullif(trim(p_payload->>'phone'),'');\n    IF phone ~ '^\\+[1-9][0-9]{7,14}$' THEN\n      BEGIN PERFORM public.shopper_history_record(phone,src.tenant_id,src.id);\n      EXCEPTION WHEN OTHERS THEN RAISE WARNING 'shopper_history_record_failed';\n      END;\n    END IF;\n  END IF;\n  RETURN result;\nEND;\n$function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide(p_key_hash text, p_campaign text, p_payload jsonb, p_engine text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE src lead_sources; camp_id uuid; campaign_ref text:=nullif(trim(p_campaign),''); result jsonb; phone text;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_engine IS NULL OR p_engine NOT IN ('generic','shadow') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  -- Campaign: explicit id or name, else the source's single active campaign.\n  IF campaign_ref IS NOT NULL THEN\n    SELECT id INTO camp_id FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id\n      AND (id::text=campaign_ref OR name=campaign_ref) ORDER BY (id::text=campaign_ref) DESC LIMIT 1;\n  ELSIF (SELECT count(*) FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active)=1 THEN\n    SELECT id INTO camp_id FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active;\n  END IF;\n  -- A sandbox source is evaluated without side effects and never recorded in\n  -- the pooled shopper history.\n  result:=public.ping_decide_campaign(camp_id,src.id,p_payload,CASE WHEN src.sandbox THEN 'sandbox' ELSE p_engine END);\n  IF p_engine='generic' AND NOT src.sandbox AND jsonb_typeof(p_payload)='object' THEN\n    phone:=nullif(trim(p_payload->>'phone'),'');\n    IF phone ~ '^\\+[1-9][0-9]{7,14}$' THEN\n      BEGIN PERFORM public.shopper_history_record(phone,src.tenant_id,src.id);\n      EXCEPTION WHEN OTHERS THEN RAISE WARNING 'shopper_history_record_failed';\n      END;\n    END IF;\n  END IF;\n  RETURN result;\nEND;\n$function$\n"
     },
     {
       "schema": "public",
@@ -63096,7 +63781,7 @@
         "search_path=public"
       ],
       "acl": "{postgres=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide_campaign(p_campaign_id uuid, p_source_id uuid, p_payload jsonb, p_mode text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; camp ping_campaigns; ctl vendor_controls;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); shadow boolean:=p_mode IN ('shadow','exchange_eval');\n  exchange boolean:=p_mode IN ('exchange_eval','exchange');\n  match_mode text:=CASE WHEN p_mode IN ('exchange_eval','exchange') THEN 'generic' ELSE p_mode END;\n  owner_tenant uuid; pause_source uuid;\n  phone text; state_code text:=''; call_id text; zip text; sub_id text; consent text; t65 boolean;\n  routing boolean; valid boolean:=true; key text;\n  existing ping_reservations; selected record; eligible_count integer:=0; committed ping_decisions;\n  decision text; accepted boolean:=false; trace jsonb:='[]'::jsonb; gate_at timestamptz;\n  price numeric; decision_id uuid; phone_hash text;\n  retention_hit boolean:=false; client_contact uuid; owner_agent text;\n  perf boolean:=false; perf_avg numeric; perf_pool boolean:=false;\n  county text; county_carriers text[]; tier_carriers text[];\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_mode IS NULL OR p_mode NOT IN ('generic','shadow','exchange_eval','exchange') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.id=p_source_id AND s.active AND s.type IN ('publisher','aggregator');\n  IF src.id IS NULL THEN RAISE EXCEPTION 'Unknown ping source'; END IF;\n  SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n\n  BEGIN\n    IF jsonb_typeof(payload)='object' THEN\n      phone:=nullif(trim(payload->>'phone'),'');\n      state_code:=upper(trim(coalesce(payload->>'state','')));\n      call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n      zip:=nullif(trim(payload->>'zip'),'');\n      sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n      consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n      valid:=(phone IS NULL OR phone ~ '^\\+[1-9][0-9]{7,14}$')\n        AND (zip IS NULL OR zip ~ '^[0-9]{5}$')\n        AND (payload->'t65' IS NULL OR jsonb_typeof(payload->'t65') IN ('boolean','null'));\n      IF jsonb_typeof(payload->'t65')='boolean' THEN t65:=(payload->>'t65')::boolean; END IF;\n    ELSE valid:=false; END IF;\n    routing:=coalesce(payload->'routing_enabled'='true'::jsonb,false);\n    key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id\n      WHEN phone IS NOT NULL THEN 'phone:'||left(phone,32) ELSE NULL END;\n\n    -- Direct pings reach only the source's own campaigns in its own tenant.\n    -- The exchange reaches a buyer campaign only through an active route.\n    IF p_campaign_id IS NOT NULL THEN\n      IF exchange THEN\n        SELECT c.* INTO camp FROM ping_campaigns c WHERE c.id=p_campaign_id\n          AND EXISTS(SELECT 1 FROM exchange_routes r WHERE r.source_id=src.id AND r.campaign_id=c.id AND r.active);\n      ELSE\n        SELECT c.* INTO camp FROM ping_campaigns c WHERE c.id=p_campaign_id AND c.source_id=src.id AND c.tenant_id=src.tenant_id;\n      END IF;\n    END IF;\n    owner_tenant:=coalesce(camp.tenant_id,src.tenant_id);\n    pause_source:=coalesce(camp.source_id,src.id);\n    routing:=routing AND (camp.id IS NULL OR camp.engine_mode=match_mode);\n    SELECT * INTO ctl FROM vendor_controls WHERE tenant_id=owner_tenant;\n\n    -- Serialize a source's decisions, as paragon_ping does.\n    PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||src.id::text,0));\n    gate_at:=clock_timestamp();\n    IF NOT shadow THEN DELETE FROM ping_reservations WHERE expires_at<clock_timestamp()-interval '1 day'; END IF;\n\n    IF NOT routing THEN decision:='routing_disabled';\n    ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','routing_disabled','result','pass'));\n      IF NOT valid THEN decision:='invalid_payload';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','invalid_payload','result','pass'));\n        -- Tenant-wide pause, or a source-level or campaign-level row (173), of\n        -- the campaign's own tenant and source.\n        IF ctl.tenant_id IS NULL OR ctl.vendor_pause OR EXISTS(SELECT 1 FROM ping_source_controls p\n          WHERE p.tenant_id=owner_tenant AND p.source_id=pause_source AND p.paused\n            AND (p.campaign_id IS NULL OR p.campaign_id=camp.id)) THEN decision:='source_paused';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','source_paused','result','pass')); END IF;\n      END IF;\n    END IF;\n\n    -- The 30 second accepted commitment: a re-ping for the same identity and\n    -- state replays the committed decision without re-checking hours. An\n    -- exchange evaluation never replays; it reports the current state.\n    IF decision IS NULL AND camp.id IS NOT NULL AND p_mode<>'exchange_eval' THEN\n      SELECT * INTO committed FROM ping_decisions d WHERE d.source_id=src.id AND d.campaign_id=camp.id\n        AND d.engine=p_mode AND d.available AND d.matched_call_sid IS NULL\n        AND d.received_at+interval '30 seconds'>=gate_at AND d.caller_state=state_code\n        AND ((call_id IS NOT NULL AND d.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND d.caller_phone=phone))\n        AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n        ORDER BY d.received_at DESC LIMIT 1;\n      IF committed.id IS NOT NULL THEN\n        decision:=committed.reason; accepted:=true;\n        SELECT committed.agent_id AS agent_id,NULL::text AS tier INTO selected;\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','commitment_replay','result','hit','decision_id',committed.id));\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF NOT ping_hours_open(coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at) THEN decision:='outside_staffed_hours';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','outside_staffed_hours','result','pass'));\n        IF camp.id IS NULL OR NOT camp.active THEN decision:='campaign_inactive';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','campaign_inactive','result','pass'));\n          IF state_code='' OR NOT state_code=ANY(camp.allowed_states) THEN decision:='state_not_allowed';\n          ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','state_not_allowed','result','pass'));\n            -- S6: the ZIP's county, only for a campaign that opts in. Nothing is\n            -- traced and tiering is unchanged when no county resolves.\n            IF (camp.county_aware OR camp.county_filter) AND zip ~ '^[0-9]{5}$' THEN\n              county:=public.ping_zip_county(zip,state_code);\n              IF county IS NOT NULL THEN county_carriers:=public.ping_county_carriers(county,camp.plan_year); END IF;\n              IF county_carriers IS NULL THEN county:=NULL; END IF;\n            END IF;\n            IF county IS NOT NULL THEN\n              trace:=trace||jsonb_build_array(jsonb_build_object('rule','county','result','resolved','county_fips',county,\n                'county_aware',camp.county_aware));\n              IF camp.county_aware THEN tier_carriers:=county_carriers; END IF;\n            END IF;\n            IF county IS NOT NULL AND camp.county_filter AND cardinality(camp.required_carriers)>0\n            AND NOT camp.required_carriers && county_carriers THEN decision:='county_not_served';\n            ELSE\n              IF county IS NOT NULL AND camp.county_filter THEN\n                trace:=trace||jsonb_build_array(jsonb_build_object('rule','county_not_served','result','pass'));\n              END IF;\n              IF key IS NULL THEN decision:='missing_call_identity';\n              ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','missing_call_identity','result','pass')); END IF;\n            END IF;\n          END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    -- Rule 8, existing_client_retention: the campaign tenant's own contacts only.\n    IF decision IS NULL THEN\n      IF NOT camp.retention_enabled OR phone IS NULL THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','existing_client_retention','result','skipped'));\n      ELSE\n        SELECT x.contact_id,x.owner_agent_id INTO client_contact,owner_agent\n          FROM public.ping_existing_client(owner_tenant,phone) x;\n        IF client_contact IS NULL THEN\n          trace:=trace||jsonb_build_array(jsonb_build_object('rule','existing_client_retention','result','pass'));\n        ELSE\n          retention_hit:=true;\n          trace:=trace||jsonb_build_array(jsonb_build_object('rule','existing_client_retention','result','hit','mode',camp.retention_mode));\n          IF camp.retention_mode='reject_and_alert' THEN decision:='existing_client_retention'; END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    -- Rule 9, cooldown_same_source. Existing clients are exempt.\n    IF decision IS NULL THEN\n      IF retention_hit OR coalesce(camp.cooldown_same_source_days,0)=0 OR phone IS NULL THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_same_source','result','skipped'));\n      ELSIF public.ping_recent_publisher_call(owner_tenant,phone,src.id,\n          gate_at-make_interval(days=>camp.cooldown_same_source_days),gate_at) THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_same_source','result','hit'));\n        decision:='cooldown_same_source';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_same_source','result','pass')); END IF;\n    END IF;\n\n    -- Rule 10, cooldown_any_source. Existing clients are exempt.\n    IF decision IS NULL THEN\n      IF retention_hit OR coalesce(camp.cooldown_any_source_days,0)=0 OR phone IS NULL THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_any_source','result','skipped'));\n      ELSIF public.ping_recent_publisher_call(owner_tenant,phone,NULL,\n          gate_at-make_interval(days=>camp.cooldown_any_source_days),gate_at) THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_any_source','result','hit'));\n        decision:='cooldown_any_source';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_any_source','result','pass')); END IF;\n    END IF;\n\n    -- Rule 11, repeat_shopper: pooled count only, while the exchange flag and\n    -- the operator opt-in are on. Existing clients are exempt.\n    IF decision IS NULL THEN\n      IF retention_hit OR coalesce(camp.repeat_shopper_threshold,0)=0 OR coalesce(camp.repeat_shopper_window_days,0)=0\n      OR phone IS NULL OR NOT public.ping_pooled_shopper_on() THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','repeat_shopper','result','skipped'));\n      ELSIF public.shopper_history_count(public.ping_phone_hash(left(phone,32)),camp.repeat_shopper_window_days)\n          >=camp.repeat_shopper_threshold THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','repeat_shopper','result','hit'));\n        decision:='repeat_shopper';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','repeat_shopper','result','pass')); END IF;\n    END IF;\n\n    -- Rule 12, daily_budget_reached, in the campaign tenant's own day.\n    IF decision IS NULL THEN\n      IF coalesce(camp.daily_budget_calls,0)=0 THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','daily_budget_reached','result','skipped'));\n      ELSIF public.ping_campaign_accepted_today(camp.id,coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at)\n          >=camp.daily_budget_calls THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','daily_budget_reached','result','hit'));\n        decision:='daily_budget_reached';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','daily_budget_reached','result','pass')); END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||camp.id::text||key,0));\n      IF shadow THEN SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key;\n      ELSE SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key FOR UPDATE; END IF;\n      IF existing.id IS NOT NULL AND existing.expires_at>clock_timestamp()\n        AND existing.consumed_call_sid IS NULL AND existing.caller_state=state_code\n        AND EXISTS(SELECT 1 FROM agent_availability a WHERE a.agent_id=existing.agent_id\n          AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)) THEN\n        SELECT existing.agent_id AS agent_id,public.ping_agent_tier(existing.agent_id,state_code,camp.id,tier_carriers) AS tier INTO selected;\n        IF selected.tier NOT IN ('full','partial') THEN SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','reservation_reuse','result','hit')); END IF;\n      END IF;\n      IF selected.agent_id IS NULL THEN\n        IF NOT shadow THEN DELETE FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key; END IF;\n        SELECT count(*) INTO eligible_count FROM agent_availability a\n          WHERE public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial');\n        -- Performance routing (180): only when the campaign opts in.\n        perf:=coalesce(camp.performance_routing,false);\n        IF perf THEN perf_avg:=public.ping_campaign_conversion(camp.id); END IF;\n        -- Rule 8 route_owner: the owner first, while routable, eligible and not\n        -- held by another reservation; otherwise the pool below.\n        IF retention_hit AND owner_agent IS NOT NULL THEN\n          IF shadow THEN\n            SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) AS tier\n              INTO selected FROM agent_availability a\n              WHERE a.agent_id=owner_agent\n                AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n                AND public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial')\n                AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n                AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL);\n          ELSE\n            SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) AS tier\n              INTO selected FROM agent_availability a\n              WHERE a.agent_id=owner_agent\n                AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n                AND public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial')\n                AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n                AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              FOR UPDATE OF a SKIP LOCKED;\n          END IF;\n          trace:=trace||jsonb_build_array(jsonb_build_object('rule','retention_owner',\n            'result',CASE WHEN selected.agent_id IS NOT NULL THEN 'hit' ELSE 'pass' END));\n        END IF;\n        -- Agents are shared across engines: a live legacy reservation also holds the agent.\n        perf_pool:=perf AND selected.agent_id IS NULL;\n        IF selected.agent_id IS NULL AND shadow THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) WHEN 'full' THEN 0 ELSE 1 END,\n              CASE WHEN perf THEN public.ping_agent_conversion(camp.id,a.agent_id,perf_avg) END DESC NULLS LAST,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            LIMIT 1;\n        ELSIF selected.agent_id IS NULL THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) WHEN 'full' THEN 0 ELSE 1 END,\n              CASE WHEN perf THEN public.ping_agent_conversion(camp.id,a.agent_id,perf_avg) END DESC NULLS LAST,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            FOR UPDATE OF a SKIP LOCKED LIMIT 1;\n        END IF;\n        IF perf_pool AND selected.agent_id IS NOT NULL THEN\n          trace:=trace||jsonb_build_array(jsonb_build_object('rule','performance_routing','result','applied'));\n        END IF;\n        IF NOT shadow AND selected.agent_id IS NOT NULL THEN\n          INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)\n            VALUES(owner_tenant,camp.id,key,state_code,selected.agent_id,\n              clock_timestamp()+make_interval(secs=>camp.reservation_ttl_seconds));\n        END IF;\n      END IF;\n      IF selected.agent_id IS NOT NULL THEN\n        accepted:=true;\n        decision:=CASE WHEN retention_hit THEN 'accepted_retention_owner'\n          WHEN selected.tier='full' THEN 'accepted_full' ELSE 'accepted_partial' END;\n      ELSE\n        decision:=CASE WHEN eligible_count>0 THEN 'all_eligible_busy' ELSE 'no_eligible_agent' END;\n      END IF;\n    END IF;\n    IF accepted THEN price:=CASE camp.pricing_model WHEN 'free' THEN 0 ELSE camp.rate END; END IF;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule',decision,'result',CASE WHEN accepted THEN 'accept' ELSE 'reject' END));\n  EXCEPTION WHEN OTHERS THEN\n    -- Publisher pings fail closed. The subtransaction rolled back any reservation.\n    decision:='error_rejected'; accepted:=false; price:=NULL; retention_hit:=false;\n    SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule','error_rejected','result','reject','sqlstate',SQLSTATE));\n  END;\n\n  -- An exchange evaluation never stores the caller's phone or ZIP; only the\n  -- winning tenant's 'exchange' decision does.\n  IF p_mode='exchange_eval' THEN\n    phone_hash:=public.ping_phone_hash(left(phone,32));\n    IF phone_hash IS NOT NULL THEN\n      trace:=trace||jsonb_build_array(jsonb_build_object('rule','phone_hash','result','recorded','sha256',phone_hash));\n    END IF;\n  END IF;\n  INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n    vendor_call_id,publisher_sub_id,consent_cert_id,t65_flag,available,reason,agent_id,price,rule_trace,engine)\n  VALUES(owner_tenant,src.id,camp.id,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,\n    CASE WHEN p_mode<>'exchange_eval' THEN left(phone,32) END,nullif(left(state_code,8),''),\n    CASE WHEN p_mode<>'exchange_eval' AND zip ~ '^[0-9]{5}$' THEN zip END,\n    call_id,sub_id,consent,t65,accepted,decision,selected.agent_id,price,trace,p_mode)\n  RETURNING id INTO decision_id;\n\n  -- Rule 8 alert in the campaign's own tenant. Never blocks the decision.\n  IF retention_hit AND client_contact IS NOT NULL\n  AND (p_mode IN ('generic','exchange') OR (p_mode='exchange_eval' AND decision='existing_client_retention'))\n  AND public.deployment_feature_enabled('PING_RETENTION_ALERTS_ENABLED') THEN\n    BEGIN\n      INSERT INTO ping_retention_alerts(tenant_id,contact_id,owner_agent_id,source_id,campaign_id,decision_id)\n      VALUES(owner_tenant,client_contact,owner_agent,src.id,camp.id,decision_id);\n    EXCEPTION WHEN OTHERS THEN RAISE WARNING 'ping_retention_alert_failed';\n    END;\n  END IF;\n  RETURN jsonb_build_object('authorized',true,'decision_id',decision_id,'available',accepted,'reason',decision,\n    'agent_id',selected.agent_id,'price',price,\n    'ttl_seconds',CASE WHEN accepted THEN camp.reservation_ttl_seconds END);\nEND;\n$function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide_campaign(p_campaign_id uuid, p_source_id uuid, p_payload jsonb, p_mode text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; camp ping_campaigns; ctl vendor_controls;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); run_mode text:=p_mode; shadow boolean; exchange boolean;\n  match_mode text; is_sandbox boolean; held_skip text[]:='{}'; pick_attempt integer;\n  owner_tenant uuid; pause_source uuid;\n  phone text; state_code text:=''; call_id text; zip text; sub_id text; consent text; t65 boolean;\n  routing boolean; valid boolean:=true; key text;\n  existing ping_reservations; selected record; eligible_count integer:=0; committed ping_decisions;\n  decision text; accepted boolean:=false; trace jsonb:='[]'::jsonb; gate_at timestamptz;\n  price numeric; decision_id uuid; phone_hash text;\n  retention_hit boolean:=false; client_contact uuid; owner_agent text;\n  perf boolean:=false; perf_avg numeric; perf_pool boolean:=false;\n  county text; county_carriers text[]; tier_carriers text[];\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_mode IS NULL OR p_mode NOT IN ('generic','shadow','exchange_eval','exchange','sandbox','sandbox_exchange')\n  THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.id=p_source_id AND s.active AND s.type IN ('publisher','aggregator');\n  IF src.id IS NULL THEN RAISE EXCEPTION 'Unknown ping source'; END IF;\n  -- A sandbox source is only ever evaluated in a sandbox mode, whatever the caller asked.\n  IF src.sandbox THEN\n    run_mode:=CASE WHEN p_mode IN ('exchange_eval','exchange','sandbox_exchange') THEN 'sandbox_exchange' ELSE 'sandbox' END;\n  END IF;\n  is_sandbox:=run_mode IN ('sandbox','sandbox_exchange');\n  shadow:=run_mode IN ('shadow','exchange_eval','sandbox','sandbox_exchange');\n  exchange:=run_mode IN ('exchange_eval','exchange','sandbox_exchange');\n  match_mode:=CASE WHEN run_mode IN ('exchange_eval','exchange','sandbox','sandbox_exchange') THEN 'generic' ELSE run_mode END;\n  SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n\n  BEGIN\n    IF jsonb_typeof(payload)='object' THEN\n      phone:=nullif(trim(payload->>'phone'),'');\n      state_code:=upper(trim(coalesce(payload->>'state','')));\n      call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n      zip:=nullif(trim(payload->>'zip'),'');\n      sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n      consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n      valid:=(phone IS NULL OR phone ~ '^\\+[1-9][0-9]{7,14}$')\n        AND (zip IS NULL OR zip ~ '^[0-9]{5}$')\n        AND (payload->'t65' IS NULL OR jsonb_typeof(payload->'t65') IN ('boolean','null'));\n      IF jsonb_typeof(payload->'t65')='boolean' THEN t65:=(payload->>'t65')::boolean; END IF;\n    ELSE valid:=false; END IF;\n    routing:=coalesce(payload->'routing_enabled'='true'::jsonb,false);\n    key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id\n      WHEN phone IS NOT NULL THEN 'phone:'||left(phone,32) ELSE NULL END;\n\n    -- Direct pings reach only the source's own campaigns in its own tenant.\n    -- The exchange reaches a buyer campaign only through an active route.\n    IF p_campaign_id IS NOT NULL THEN\n      IF exchange THEN\n        SELECT c.* INTO camp FROM ping_campaigns c WHERE c.id=p_campaign_id\n          AND EXISTS(SELECT 1 FROM exchange_routes r WHERE r.source_id=src.id AND r.campaign_id=c.id AND r.active);\n      ELSE\n        SELECT c.* INTO camp FROM ping_campaigns c WHERE c.id=p_campaign_id AND c.source_id=src.id AND c.tenant_id=src.tenant_id;\n      END IF;\n    END IF;\n    owner_tenant:=coalesce(camp.tenant_id,src.tenant_id);\n    pause_source:=coalesce(camp.source_id,src.id);\n    routing:=routing AND (camp.id IS NULL OR camp.engine_mode=match_mode);\n    SELECT * INTO ctl FROM vendor_controls WHERE tenant_id=owner_tenant;\n\n    -- S8a: serialize per campaign plus call identity, not per source. Only the\n    -- modes with side effects lock; evaluations read. Agent safety comes from\n    -- FOR UPDATE SKIP LOCKED on the agent row plus the re-check below.\n    IF NOT shadow AND camp.id IS NOT NULL AND key IS NOT NULL THEN\n      PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||camp.id::text||key,0));\n    END IF;\n    gate_at:=clock_timestamp();\n    IF NOT shadow THEN DELETE FROM ping_reservations WHERE expires_at<clock_timestamp()-interval '1 day'; END IF;\n\n    IF NOT routing THEN decision:='routing_disabled';\n    ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','routing_disabled','result','pass'));\n      IF NOT valid THEN decision:='invalid_payload';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','invalid_payload','result','pass'));\n        -- Tenant-wide pause, or a source-level or campaign-level row (173), of\n        -- the campaign's own tenant and source.\n        IF ctl.tenant_id IS NULL OR ctl.vendor_pause OR EXISTS(SELECT 1 FROM ping_source_controls p\n          WHERE p.tenant_id=owner_tenant AND p.source_id=pause_source AND p.paused\n            AND (p.campaign_id IS NULL OR p.campaign_id=camp.id)) THEN decision:='source_paused';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','source_paused','result','pass')); END IF;\n      END IF;\n    END IF;\n\n    -- The 30 second accepted commitment: a re-ping for the same identity and\n    -- state replays the committed decision without re-checking hours. An\n    -- exchange evaluation and a sandbox ping never replay; they report the current state.\n    IF decision IS NULL AND camp.id IS NOT NULL AND run_mode NOT IN ('exchange_eval','sandbox','sandbox_exchange') THEN\n      SELECT * INTO committed FROM ping_decisions d WHERE d.source_id=src.id AND d.campaign_id=camp.id\n        AND d.engine=run_mode AND d.available AND d.matched_call_sid IS NULL\n        AND d.received_at+interval '30 seconds'>=gate_at AND d.caller_state=state_code\n        AND ((call_id IS NOT NULL AND d.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND d.caller_phone=phone))\n        AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n        ORDER BY d.received_at DESC LIMIT 1;\n      IF committed.id IS NOT NULL THEN\n        decision:=committed.reason; accepted:=true;\n        SELECT committed.agent_id AS agent_id,NULL::text AS tier INTO selected;\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','commitment_replay','result','hit','decision_id',committed.id));\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF NOT ping_hours_open(coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at) THEN decision:='outside_staffed_hours';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','outside_staffed_hours','result','pass'));\n        IF camp.id IS NULL OR NOT camp.active THEN decision:='campaign_inactive';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','campaign_inactive','result','pass'));\n          IF state_code='' OR NOT state_code=ANY(camp.allowed_states) THEN decision:='state_not_allowed';\n          ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','state_not_allowed','result','pass'));\n            -- S6: the ZIP's county, only for a campaign that opts in. Nothing is\n            -- traced and tiering is unchanged when no county resolves.\n            IF (camp.county_aware OR camp.county_filter) AND zip ~ '^[0-9]{5}$' THEN\n              county:=public.ping_zip_county(zip,state_code);\n              IF county IS NOT NULL THEN county_carriers:=public.ping_county_carriers(county,camp.plan_year); END IF;\n              IF county_carriers IS NULL THEN county:=NULL; END IF;\n            END IF;\n            IF county IS NOT NULL THEN\n              trace:=trace||jsonb_build_array(jsonb_build_object('rule','county','result','resolved','county_fips',county,\n                'county_aware',camp.county_aware));\n              IF camp.county_aware THEN tier_carriers:=county_carriers; END IF;\n            END IF;\n            IF county IS NOT NULL AND camp.county_filter AND cardinality(camp.required_carriers)>0\n            AND NOT camp.required_carriers && county_carriers THEN decision:='county_not_served';\n            ELSE\n              IF county IS NOT NULL AND camp.county_filter THEN\n                trace:=trace||jsonb_build_array(jsonb_build_object('rule','county_not_served','result','pass'));\n              END IF;\n              IF key IS NULL THEN decision:='missing_call_identity';\n              ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','missing_call_identity','result','pass')); END IF;\n            END IF;\n          END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    -- Rule 8, existing_client_retention: the campaign tenant's own contacts only.\n    IF decision IS NULL THEN\n      IF NOT camp.retention_enabled OR phone IS NULL THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','existing_client_retention','result','skipped'));\n      ELSE\n        SELECT x.contact_id,x.owner_agent_id INTO client_contact,owner_agent\n          FROM public.ping_existing_client(owner_tenant,phone) x;\n        IF client_contact IS NULL THEN\n          trace:=trace||jsonb_build_array(jsonb_build_object('rule','existing_client_retention','result','pass'));\n        ELSE\n          retention_hit:=true;\n          trace:=trace||jsonb_build_array(jsonb_build_object('rule','existing_client_retention','result','hit','mode',camp.retention_mode));\n          IF camp.retention_mode='reject_and_alert' THEN decision:='existing_client_retention'; END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    -- Rule 9, cooldown_same_source. Existing clients are exempt.\n    IF decision IS NULL THEN\n      IF retention_hit OR coalesce(camp.cooldown_same_source_days,0)=0 OR phone IS NULL THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_same_source','result','skipped'));\n      ELSIF public.ping_recent_publisher_call(owner_tenant,phone,src.id,\n          gate_at-make_interval(days=>camp.cooldown_same_source_days),gate_at) THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_same_source','result','hit'));\n        decision:='cooldown_same_source';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_same_source','result','pass')); END IF;\n    END IF;\n\n    -- Rule 10, cooldown_any_source. Existing clients are exempt.\n    IF decision IS NULL THEN\n      IF retention_hit OR coalesce(camp.cooldown_any_source_days,0)=0 OR phone IS NULL THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_any_source','result','skipped'));\n      ELSIF public.ping_recent_publisher_call(owner_tenant,phone,NULL,\n          gate_at-make_interval(days=>camp.cooldown_any_source_days),gate_at) THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_any_source','result','hit'));\n        decision:='cooldown_any_source';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','cooldown_any_source','result','pass')); END IF;\n    END IF;\n\n    -- Rule 11, repeat_shopper: pooled count only, while the exchange flag and\n    -- the operator opt-in are on. Existing clients are exempt.\n    IF decision IS NULL THEN\n      IF retention_hit OR coalesce(camp.repeat_shopper_threshold,0)=0 OR coalesce(camp.repeat_shopper_window_days,0)=0\n      OR phone IS NULL OR NOT public.ping_pooled_shopper_on() THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','repeat_shopper','result','skipped'));\n      ELSIF public.shopper_history_count(public.ping_phone_hash(left(phone,32)),camp.repeat_shopper_window_days)\n          >=camp.repeat_shopper_threshold THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','repeat_shopper','result','hit'));\n        decision:='repeat_shopper';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','repeat_shopper','result','pass')); END IF;\n    END IF;\n\n    -- Rule 12, daily_budget_reached, in the campaign tenant's own day. With the\n    -- per source lock gone, a reserving decision for a budgeted campaign holds a\n    -- per campaign lock from the count to commit so concurrent pings never overshoot.\n    IF decision IS NULL THEN\n      IF NOT shadow AND coalesce(camp.daily_budget_calls,0)>0 THEN\n        PERFORM pg_advisory_xact_lock(hashtextextended('ping-campaign-cap:'||camp.id::text,0));\n      END IF;\n      IF coalesce(camp.daily_budget_calls,0)=0 THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','daily_budget_reached','result','skipped'));\n      ELSIF public.ping_campaign_accepted_today(camp.id,coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at)\n          >=camp.daily_budget_calls THEN\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','daily_budget_reached','result','hit'));\n        decision:='daily_budget_reached';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','daily_budget_reached','result','pass')); END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF shadow THEN SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key;\n      ELSE SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key FOR UPDATE; END IF;\n      IF existing.id IS NOT NULL AND existing.expires_at>clock_timestamp()\n        AND existing.consumed_call_sid IS NULL AND existing.caller_state=state_code\n        AND EXISTS(SELECT 1 FROM agent_availability a WHERE a.agent_id=existing.agent_id\n          AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)) THEN\n        SELECT existing.agent_id AS agent_id,public.ping_agent_tier(existing.agent_id,state_code,camp.id,tier_carriers) AS tier INTO selected;\n        IF selected.tier NOT IN ('full','partial') THEN SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','reservation_reuse','result','hit')); END IF;\n      END IF;\n      IF selected.agent_id IS NULL THEN\n        IF NOT shadow THEN DELETE FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key; END IF;\n        SELECT count(*) INTO eligible_count FROM agent_availability a\n          WHERE public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial');\n        -- Performance routing (180): only when the campaign opts in.\n        perf:=coalesce(camp.performance_routing,false);\n        IF perf THEN perf_avg:=public.ping_campaign_conversion(camp.id); END IF;\n        -- Rule 8 route_owner: the owner first, while routable, eligible and not\n        -- held by another reservation; otherwise the pool below.\n        IF retention_hit AND owner_agent IS NOT NULL THEN\n          IF shadow THEN\n            SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) AS tier\n              INTO selected FROM agent_availability a\n              WHERE a.agent_id=owner_agent\n                AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n                AND public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial')\n                AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n                AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL);\n          ELSE\n            SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) AS tier\n              INTO selected FROM agent_availability a\n              WHERE a.agent_id=owner_agent\n                AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n                AND public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial')\n                AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n                AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              FOR UPDATE OF a SKIP LOCKED;\n            -- Re-check with a fresh snapshot now that the agent row is ours: a\n            -- reservation committed by whoever held the row lock is visible here.\n            IF selected.agent_id IS NOT NULL AND public.ping_agent_held(selected.agent_id) THEN\n              held_skip:=held_skip||selected.agent_id::text;\n              SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n            END IF;\n          END IF;\n          trace:=trace||jsonb_build_array(jsonb_build_object('rule','retention_owner',\n            'result',CASE WHEN selected.agent_id IS NOT NULL THEN 'hit' ELSE 'pass' END));\n        END IF;\n        -- Agents are shared across engines: a live legacy reservation also holds the agent.\n        perf_pool:=perf AND selected.agent_id IS NULL;\n        IF selected.agent_id IS NULL AND shadow THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) WHEN 'full' THEN 0 ELSE 1 END,\n              CASE WHEN perf THEN public.ping_agent_conversion(camp.id,a.agent_id,perf_avg) END DESC NULLS LAST,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            LIMIT 1;\n        ELSIF selected.agent_id IS NULL THEN\n          -- An agent whose fresh re-check finds a live reservation is skipped and\n          -- the next one tried, at most three times.\n          FOR pick_attempt IN 1..3 LOOP\n            SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) AS tier\n              INTO selected FROM agent_availability a\n              WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n                AND a.agent_id<>ALL(held_skip)\n                AND public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) IN ('full','partial')\n                AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n                AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                  AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id,tier_carriers) WHEN 'full' THEN 0 ELSE 1 END,\n                CASE WHEN perf THEN public.ping_agent_conversion(camp.id,a.agent_id,perf_avg) END DESC NULLS LAST,\n                a.last_assigned_at ASC NULLS FIRST,a.agent_id\n              FOR UPDATE OF a SKIP LOCKED LIMIT 1;\n            EXIT WHEN selected.agent_id IS NULL OR NOT public.ping_agent_held(selected.agent_id);\n            held_skip:=held_skip||selected.agent_id::text;\n            SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n          END LOOP;\n        END IF;\n        IF perf_pool AND selected.agent_id IS NOT NULL THEN\n          trace:=trace||jsonb_build_array(jsonb_build_object('rule','performance_routing','result','applied'));\n        END IF;\n        IF NOT shadow AND selected.agent_id IS NOT NULL THEN\n          INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)\n            VALUES(owner_tenant,camp.id,key,state_code,selected.agent_id,\n              clock_timestamp()+make_interval(secs=>camp.reservation_ttl_seconds));\n        END IF;\n      END IF;\n      IF selected.agent_id IS NOT NULL THEN\n        accepted:=true;\n        decision:=CASE WHEN retention_hit THEN 'accepted_retention_owner'\n          WHEN selected.tier='full' THEN 'accepted_full' ELSE 'accepted_partial' END;\n      ELSE\n        decision:=CASE WHEN eligible_count>0 THEN 'all_eligible_busy' ELSE 'no_eligible_agent' END;\n      END IF;\n    END IF;\n    IF accepted THEN price:=CASE camp.pricing_model WHEN 'free' THEN 0 ELSE camp.rate END; END IF;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule',decision,'result',CASE WHEN accepted THEN 'accept' ELSE 'reject' END));\n  EXCEPTION WHEN OTHERS THEN\n    -- Publisher pings fail closed. The subtransaction rolled back any reservation.\n    decision:='error_rejected'; accepted:=false; price:=NULL; retention_hit:=false;\n    SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule','error_rejected','result','reject','sqlstate',SQLSTATE));\n  END;\n\n  -- An exchange evaluation never stores the caller's phone or ZIP; only the\n  -- winning tenant's 'exchange' decision does. A sandbox decision stores neither.\n  IF run_mode='exchange_eval' THEN\n    phone_hash:=public.ping_phone_hash(left(phone,32));\n    IF phone_hash IS NOT NULL THEN\n      trace:=trace||jsonb_build_array(jsonb_build_object('rule','phone_hash','result','recorded','sha256',phone_hash));\n    END IF;\n  END IF;\n  INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n    vendor_call_id,publisher_sub_id,consent_cert_id,t65_flag,available,reason,agent_id,price,rule_trace,engine)\n  VALUES(owner_tenant,src.id,camp.id,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,\n    CASE WHEN run_mode IN ('generic','shadow','exchange') THEN left(phone,32) END,nullif(left(state_code,8),''),\n    CASE WHEN run_mode IN ('generic','shadow','exchange') AND zip ~ '^[0-9]{5}$' THEN zip END,\n    call_id,sub_id,consent,t65,accepted,decision,selected.agent_id,price,trace,\n    CASE WHEN is_sandbox THEN 'sandbox' ELSE run_mode END)\n  RETURNING id INTO decision_id;\n\n  -- Rule 8 alert in the campaign's own tenant. Never blocks the decision.\n  IF retention_hit AND client_contact IS NOT NULL\n  AND (run_mode IN ('generic','exchange') OR (run_mode='exchange_eval' AND decision='existing_client_retention'))\n  AND public.deployment_feature_enabled('PING_RETENTION_ALERTS_ENABLED') THEN\n    BEGIN\n      INSERT INTO ping_retention_alerts(tenant_id,contact_id,owner_agent_id,source_id,campaign_id,decision_id)\n      VALUES(owner_tenant,client_contact,owner_agent,src.id,camp.id,decision_id);\n    EXCEPTION WHEN OTHERS THEN RAISE WARNING 'ping_retention_alert_failed';\n    END;\n  END IF;\n  RETURN jsonb_build_object('authorized',true,'decision_id',decision_id,'available',accepted,'reason',decision,\n    'agent_id',selected.agent_id,'price',price,\n    'ttl_seconds',CASE WHEN accepted THEN camp.reservation_ttl_seconds END)\n    ||CASE WHEN is_sandbox THEN jsonb_build_object('sandbox',true) ELSE '{}'::jsonb END;\nEND;\n$function$\n"
     },
     {
       "schema": "public",
@@ -65154,6 +65839,19 @@
     },
     {
       "schema": "public",
+      "name": "revoke_buyer_api_key",
+      "arguments": "p_key uuid, p_actor text",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.revoke_buyer_api_key(p_key uuid, p_actor text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE k buyer_api_keys; actor text:=nullif(trim(p_actor),'');\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RAISE EXCEPTION 'Ping platform disabled'; END IF;\n IF actor IS NULL OR length(actor)>128 THEN RAISE EXCEPTION 'Actor required'; END IF;\n SELECT * INTO k FROM buyer_api_keys WHERE id=p_key FOR UPDATE;\n IF k.id IS NULL THEN RETURN false; END IF;\n IF k.active THEN\n  UPDATE buyer_api_keys SET active=false,revoked_at=clock_timestamp() WHERE id=k.id;\n  INSERT INTO buyer_api_audit(tenant_id,key_id,action,resource_id,outcome,actor)\n  VALUES(k.tenant_id,k.id,'key_revoked',k.id,'ok',actor);\n END IF;\n RETURN true;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "sale_compliance_transcript_ready",
       "arguments": "p_call call_records",
       "result": "boolean",
@@ -66654,6 +67352,90 @@
       "relation": "bulletins_duplicate_archive",
       "name": "bulletins_duplicate_archive_pkey",
       "definition": "PRIMARY KEY (bulletin_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_action_check",
+      "definition": "CHECK ((action = ANY (ARRAY['key_created'::text, 'key_revoked'::text, 'campaign_update'::text, 'campaign_pause'::text, 'campaign_resume'::text, 'alert_ack'::text, 'screener_draft_create'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_actor_check",
+      "definition": "CHECK (((length(actor) >= 1) AND (length(actor) <= 128)))"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_detail_check",
+      "definition": "CHECK ((jsonb_typeof(detail) = 'object'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_key_id_fkey",
+      "definition": "FOREIGN KEY (key_id) REFERENCES buyer_api_keys(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_outcome_check",
+      "definition": "CHECK ((outcome = ANY (ARRAY['ok'::text, 'not_found'::text, 'rejected'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_check",
+      "definition": "CHECK (((revoked_at IS NULL) = active))"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_key_hash_check",
+      "definition": "CHECK ((key_hash ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_key_hash_key",
+      "definition": "UNIQUE (key_hash)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_name_check",
+      "definition": "CHECK (((length(name) >= 1) AND (length(name) <= 128)))"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_scopes_check",
+      "definition": "CHECK ((((cardinality(scopes) >= 1) AND (cardinality(scopes) <= 5)) AND (scopes <@ ARRAY['campaigns:read'::text, 'campaigns:write'::text, 'reports:read'::text, 'alerts:write'::text, 'screener:write'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
     },
     {
       "schema": "public",
@@ -69731,7 +70513,7 @@
       "schema": "public",
       "relation": "ping_decisions",
       "name": "ping_decisions_engine_check",
-      "definition": "CHECK ((engine = ANY (ARRAY['generic'::text, 'shadow'::text, 'exchange_eval'::text, 'exchange'::text])))"
+      "definition": "CHECK ((engine = ANY (ARRAY['generic'::text, 'shadow'::text, 'exchange_eval'::text, 'exchange'::text, 'sandbox'::text])))"
     },
     {
       "schema": "public",
@@ -72314,6 +73096,42 @@
       "relation": "bulletins_duplicate_archive",
       "name": "bulletins_duplicate_archive_pkey",
       "definition": "CREATE UNIQUE INDEX bulletins_duplicate_archive_pkey ON public.bulletins_duplicate_archive USING btree (bulletin_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_key",
+      "definition": "CREATE INDEX buyer_api_audit_key ON public.buyer_api_audit USING btree (key_id, created_at DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_pkey",
+      "definition": "CREATE UNIQUE INDEX buyer_api_audit_pkey ON public.buyer_api_audit USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_tenant",
+      "definition": "CREATE INDEX buyer_api_audit_tenant ON public.buyer_api_audit USING btree (tenant_id, created_at DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_key_hash_key",
+      "definition": "CREATE UNIQUE INDEX buyer_api_keys_key_hash_key ON public.buyer_api_keys USING btree (key_hash)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_pkey",
+      "definition": "CREATE UNIQUE INDEX buyer_api_keys_pkey ON public.buyer_api_keys USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_tenant",
+      "definition": "CREATE INDEX buyer_api_keys_tenant ON public.buyer_api_keys USING btree (tenant_id, created_at DESC)"
     },
     {
       "schema": "public",
@@ -75558,6 +76376,34 @@
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.bulletins_duplicate_archive FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_append_only",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER buyer_api_audit_append_only BEFORE DELETE OR UPDATE ON public.buyer_api_audit FOR EACH ROW EXECUTE FUNCTION ping_audit_append_only()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_audit",
+      "name": "buyer_api_audit_no_truncate",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER buyer_api_audit_no_truncate BEFORE TRUNCATE ON public.buyer_api_audit FOR EACH STATEMENT EXECUTE FUNCTION ping_audit_append_only()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "buyer_api_keys_no_delete",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER buyer_api_keys_no_delete BEFORE DELETE ON public.buyer_api_keys FOR EACH ROW EXECUTE FUNCTION ping_audit_append_only()"
+    },
+    {
+      "schema": "public",
+      "relation": "buyer_api_keys",
+      "name": "guard_buyer_api_key",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER guard_buyer_api_key BEFORE UPDATE ON public.buyer_api_keys FOR EACH ROW EXECUTE FUNCTION guard_buyer_api_key()"
     },
     {
       "schema": "public",
