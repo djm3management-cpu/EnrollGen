@@ -1,10 +1,10 @@
-// Pure mirror of SQL ping_decide (migrations 172, 173, 178 and 180). No I/O. Same rule order and
+// Pure mirror of SQL ping_decide (migrations 172, 173, 178, 180 and 182). No I/O. Same rule order and
 // closed reason list as spec section 6; the paragon_ping order is kept for
 // staffed hours before campaign_inactive.
 
 export const REASONS = Object.freeze([
   'routing_disabled', 'invalid_payload', 'source_paused', 'campaign_inactive',
-  'outside_staffed_hours', 'state_not_allowed', 'missing_call_identity',
+  'outside_staffed_hours', 'state_not_allowed', 'county_not_served', 'missing_call_identity',
   'existing_client_retention', 'cooldown_same_source', 'cooldown_any_source',
   'repeat_shopper', 'daily_budget_reached', 'no_eligible_agent', 'all_eligible_busy',
   'accepted_full', 'accepted_partial', 'accepted_retention_owner', 'error_rejected',
@@ -45,18 +45,82 @@ export function hoursOpen(hours, now) {
 }
 
 /**
- * Mirror of ping_agent_tier. rows: [{agent_id, state, carrier, enabled, plan_year, active}]
+ * Mirror of ping_agent_tier. rows: [{agent_id, state, carrier, enabled, plan_year, active, origin}]
  * where agent_id is the agent slug. Any row for (agent, state, plan year) is the license assertion.
+ * Rows with origin 'rts' count only when the campaign's eligibility_source is 'rts' (182).
+ * countyCarriers (182): the carrier keys with a plan in the caller's county, or null. A
+ * required carrier absent from the county is ignored for the required and critical checks;
+ * null is exactly the 172 tier.
  */
-export function agentTier({ agentId, state, rows = [], campaign }) {
+export function agentTier({ agentId, state, rows = [], campaign, countyCarriers = null }) {
   if (!campaign) return 'ineligible';
+  const rtsOn = campaign.eligibility_source === 'rts';
   const matrix = rows.filter(row => row.agent_id === agentId && row.state === state &&
-    row.plan_year === campaign.plan_year && row.active !== false);
+    row.plan_year === campaign.plan_year && row.active !== false && (row.origin !== 'rts' || rtsOn));
   if (!matrix.length) return 'ineligible';
   const covered = new Set(matrix.filter(row => row.enabled !== false).map(row => row.carrier));
-  const missing = (campaign.required_carriers || []).filter(carrier => !covered.has(carrier));
+  const inCounty = carrier => countyCarriers == null || countyCarriers.includes(carrier);
+  const missing = (campaign.required_carriers || []).filter(carrier => !covered.has(carrier) && inCounty(carrier));
   if (missing.some(carrier => (campaign.critical_carriers || []).includes(carrier))) return 'ineligible';
   return missing.length ? 'partial' : 'full';
+}
+
+// Mirror of the carrier_aliases seed (181): normalized name to matrix key.
+export const CARRIER_ALIASES = Object.freeze({
+  aetna: 'aetna', humana: 'humana', uhc: 'uhc', wellcare: 'wellcare', devoted: 'devoted', healthspring: 'healthspring',
+  unitedhealthcare: 'uhc', unitedhealthcaregroup: 'uhc', centene: 'wellcare', cigna: 'healthspring',
+  aetnasilverscript: 'aetna', devotedhealth: 'devoted', healthspringhcsccigna: 'healthspring',
+  aetnamedicare: 'aetna', aetnamedicarefide: 'aetna', aetnamedicarehide: 'aetna',
+});
+const normalizedName = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/** Mirror of normalize_carrier_key (181): alias lookup, else the normalized text, else null. */
+export function normalizeCarrierKey(value) {
+  const key = normalizedName(value);
+  return CARRIER_ALIASES[key] || key || null;
+}
+
+/**
+ * Mirror of primary_county_for_zip (181). crosswalk: [{zip, county_fips, res_ratio}].
+ * Highest res_ratio, ties broken by county_fips; null when the ZIP is absent.
+ */
+export function primaryCounty(crosswalk = [], zip) {
+  const rows = crosswalk.filter(row => row.zip === String(zip ?? '').trim());
+  rows.sort((a, b) => Number(b.res_ratio) - Number(a.res_ratio) || String(a.county_fips).localeCompare(String(b.county_fips)));
+  return rows[0]?.county_fips ?? null;
+}
+
+/**
+ * Mirror of ping_county_carriers (182). plans: [{county_fips, plan_year, category, carrier}].
+ * Mapped carrier keys with an MA, MA-PD or SNP plan in the county, sorted; null when the
+ * county has no such plan at all. Unmapped carriers are ignored.
+ */
+export function countyCarriers(plans = [], county, planYear) {
+  const rows = plans.filter(plan => plan.county_fips === county && plan.plan_year === planYear &&
+    ['MA', 'MA-PD', 'SNP'].includes(plan.category));
+  if (!rows.length) return null;
+  return [...new Set(rows.map(plan => CARRIER_ALIASES[normalizedName(plan.carrier)]).filter(Boolean))].sort();
+}
+
+/**
+ * Mirror of the county steps of ping_decide_campaign (182), run right after
+ * state_not_allowed passes. county: {county_fips, carriers} as resolved by
+ * ping_zip_county and ping_county_carriers, or null. Appends trace steps and
+ * returns {reject: 'county_not_served' or null, tierCarriers}. With no county,
+ * or neither county switch on, nothing is traced and tierCarriers is null.
+ */
+export function applyCountyRules({ campaign, county = null, trace = [] }) {
+  if (!county || county.carriers == null || !(campaign?.county_aware || campaign?.county_filter)) {
+    return { reject: null, tierCarriers: null };
+  }
+  trace.push({ rule: 'county', result: 'resolved', county_fips: county.county_fips, county_aware: campaign.county_aware === true });
+  const tierCarriers = campaign.county_aware ? county.carriers : null;
+  const required = campaign.required_carriers || [];
+  if (campaign.county_filter && required.length && !required.some(carrier => county.carriers.includes(carrier))) {
+    return { reject: 'county_not_served', tierCarriers };
+  }
+  if (campaign.county_filter) trace.push({ rule: 'county_not_served', result: 'pass' });
+  return { reject: null, tierCarriers };
 }
 
 export const ACCEPTED = Object.freeze(['accepted_full', 'accepted_partial', 'accepted_retention_owner']);
@@ -151,10 +215,12 @@ export function orderPool(agents, performance = null, { preferred = null } = {})
  * A missing tier is computed with agentTier from `rows`. `staffed` overrides the
  * hours computed from campaign.staffed_hours_override or `hours` at `now`.
  * performance: see orderPool; the retention owner is still chosen before the pool.
+ * county: see applyCountyRules; only used by campaigns with county_aware or county_filter.
  */
 export function decidePing({
   campaign, now = Date.now(), staffed, paused = false, state, callIdentity, agents = [],
   routingEnabled = true, engine = 'generic', validPayload = true, hours, rows = [], filters = {}, performance = null,
+  county = null,
 }) {
   const trace = [];
   let retention = false;
@@ -182,6 +248,8 @@ export function decidePing({
     pass('campaign_inactive');
     if (!stateCode || !(campaign.allowed_states || []).includes(stateCode)) return done('state_not_allowed');
     pass('state_not_allowed');
+    const counted = applyCountyRules({ campaign, county, trace });
+    if (counted.reject) return done(counted.reject);
     if (!callIdentity) return done('missing_call_identity');
     pass('missing_call_identity');
     const filtered = applyFilterRules({ campaign, filters, trace });
@@ -189,7 +257,8 @@ export function decidePing({
     if (filtered.reject) return done(filtered.reject);
 
     const tiered = agents.map(agent => ({
-      ...agent, tier: agent.tier ?? agentTier({ agentId: agent.agent_id, state: stateCode, rows, campaign }),
+      ...agent, tier: agent.tier ?? agentTier({ agentId: agent.agent_id, state: stateCode, rows, campaign,
+        countyCarriers: counted.tierCarriers }),
     }));
     const eligible = tiered.filter(agent => agent.tier === 'full' || agent.tier === 'partial');
     const free = eligible.filter(agent => routable(agent) && !agent.reserved);
