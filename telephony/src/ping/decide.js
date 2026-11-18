@@ -1,4 +1,4 @@
-// Pure mirror of SQL ping_decide (migrations 172, 173 and 178). No I/O. Same rule order and
+// Pure mirror of SQL ping_decide (migrations 172, 173, 178 and 180). No I/O. Same rule order and
 // closed reason list as spec section 6; the paragon_ping order is kept for
 // staffed hours before campaign_inactive.
 
@@ -122,13 +122,39 @@ const routable = agent => agent.available === true && (agent.status == null || a
 const assignedAt = agent => agent.last_assigned_at == null ? -Infinity : new Date(agent.last_assigned_at).getTime();
 
 /**
+ * Mirror of ping_agent_conversion (180): the agent's stored conversion, else
+ * the campaign average, else 0.
+ */
+export function agentConversion(performance, agentId) {
+  const value = performance?.conversions?.[agentId];
+  return Number(value ?? performance?.average ?? 0);
+}
+
+/**
+ * Pool ordering of ping_decide_campaign and ping_claim_arrival. performance:
+ * {enabled, conversions: {agent_id: conversion}, average} mirrors the
+ * campaign's performance_routing and agent_performance rows (180). preferred
+ * ranks right after tier, as at arrival. With performance off or absent the
+ * order is tier, last_assigned_at (never assigned first), agent_id, as in S4.
+ */
+export function orderPool(agents, performance = null, { preferred = null } = {}) {
+  const ranked = performance?.enabled === true;
+  return [...agents].sort((a, b) =>
+    (a.tier === 'full' ? 0 : 1) - (b.tier === 'full' ? 0 : 1) ||
+    (preferred == null ? 0 : (a.agent_id === preferred ? 0 : 1) - (b.agent_id === preferred ? 0 : 1)) ||
+    (ranked ? agentConversion(performance, b.agent_id) - agentConversion(performance, a.agent_id) : 0) ||
+    assignedAt(a) - assignedAt(b) || String(a.agent_id).localeCompare(String(b.agent_id)));
+}
+
+/**
  * agents: [{agent_id, tier?, available, status, active_call_sid, reserved, last_assigned_at}].
  * A missing tier is computed with agentTier from `rows`. `staffed` overrides the
  * hours computed from campaign.staffed_hours_override or `hours` at `now`.
+ * performance: see orderPool; the retention owner is still chosen before the pool.
  */
 export function decidePing({
   campaign, now = Date.now(), staffed, paused = false, state, callIdentity, agents = [],
-  routingEnabled = true, engine = 'generic', validPayload = true, hours, rows = [], filters = {},
+  routingEnabled = true, engine = 'generic', validPayload = true, hours, rows = [], filters = {}, performance = null,
 }) {
   const trace = [];
   let retention = false;
@@ -174,9 +200,10 @@ export function decidePing({
       selected = free.find(agent => agent.agent_id === owner) ?? null;
       trace.push({ rule: 'retention_owner', result: selected ? 'hit' : 'pass' });
     }
-    selected ??= free.sort((a, b) =>
-      (a.tier === 'full' ? 0 : 1) - (b.tier === 'full' ? 0 : 1) ||
-      assignedAt(a) - assignedAt(b) || String(a.agent_id).localeCompare(String(b.agent_id)))[0];
+    if (!selected) {
+      selected = orderPool(free, performance)[0];
+      if (selected && performance?.enabled === true) trace.push({ rule: 'performance_routing', result: 'applied' });
+    }
     if (selected) {
       const reason = retention ? 'accepted_retention_owner' : selected.tier === 'full' ? 'accepted_full' : 'accepted_partial';
       return done(reason, { agent_id: selected.agent_id, tier: selected.tier });
