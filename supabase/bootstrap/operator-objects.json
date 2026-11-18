@@ -572,6 +572,16 @@
     },
     {
       "schema": "public",
+      "name": "exchange_cap_window",
+      "arguments": "p_hours jsonb, p_unit text, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "exchange_ping",
+      "arguments": "p_key_hash text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
       "name": "execute_admin_action",
       "arguments": "p_actor text, p_org text, p_action text, p_request uuid, p_command jsonb, p_verified_admin boolean"
     },
@@ -1102,6 +1112,16 @@
     },
     {
       "schema": "public",
+      "name": "ping_phone_hash",
+      "arguments": "p_phone text"
+    },
+    {
+      "schema": "public",
+      "name": "ping_phone_pepper",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "ping_resolve_arrival",
       "arguments": "p_phone text, p_call_id text, p_call_sid text, p_to_number text, p_arrived_at timestamp with time zone"
     },
@@ -1179,6 +1199,11 @@
       "schema": "public",
       "name": "provision_deployment_roster",
       "arguments": "p_profile jsonb, p_agents jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "provision_ping_phone_pepper",
+      "arguments": "p_secret text"
     },
     {
       "schema": "public",
