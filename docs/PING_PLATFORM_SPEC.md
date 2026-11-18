@@ -66,7 +66,9 @@ Added in later sessions:
 
 ## 6. Reason codes
 
-As built in S1 (order follows live `paragon_ping`: hours before campaign). S3 adds `exchange_no_buyer` and `buyer_cap_reached`. S4 activates rules 8 to 12. No other codes without a spec change.
+As built in S1 (order follows live `paragon_ping`: hours before campaign). S3 adds `exchange_no_buyer` and `buyer_cap_reached`. S4 activates rules 8 to 12. S6 adds `county_not_served`, evaluated right after `state_not_allowed` and before `missing_call_identity`, only for campaigns with `county_filter` on whose ping ZIP resolves to a county where none of the required carriers has a plan. No other codes without a spec change.
+
+Evaluation order: `routing_disabled`, `invalid_payload`, `source_paused`, `outside_staffed_hours`, `campaign_inactive`, `state_not_allowed`, `county_not_served`, `missing_call_identity`, `existing_client_retention`, `cooldown_same_source`, `cooldown_any_source`, `repeat_shopper`, `daily_budget_reached`, then `no_eligible_agent` or `all_eligible_busy`, or `accepted_full`, `accepted_partial` or `accepted_retention_owner`. `error_rejected` can end any evaluation; `exchange_no_buyer` and `buyer_cap_reached` are exchange outcomes.
 
 ## 7. Engine
 
