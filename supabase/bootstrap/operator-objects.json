@@ -732,6 +732,11 @@
     },
     {
       "schema": "public",
+      "name": "generate_rts_eligibility",
+      "arguments": "p_campaign uuid"
+    },
+    {
+      "schema": "public",
       "name": "get_availability_feed",
       "arguments": "p_key_hash text, p_agent_id text"
     },
@@ -1092,6 +1097,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_agent_tier",
+      "arguments": "p_agent_id text, p_state text, p_campaign_id uuid, p_county_carriers text[]"
+    },
+    {
+      "schema": "public",
       "name": "ping_audit_append_only",
       "arguments": ""
     },
@@ -1109,6 +1119,11 @@
       "schema": "public",
       "name": "ping_claim_arrival",
       "arguments": "p_call_sid text, p_phone text, p_call_id text, p_to_number text, p_exclude text[], p_preferred_agent_id text, p_arrived_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ping_county_carriers",
+      "arguments": "p_county text, p_plan_year integer"
     },
     {
       "schema": "public",
@@ -1167,6 +1182,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_rts_ma_line",
+      "arguments": "p_line text"
+    },
+    {
+      "schema": "public",
       "name": "ping_scorecard",
       "arguments": "p_tenant uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[]"
     },
@@ -1179,6 +1199,11 @@
       "schema": "public",
       "name": "ping_tenant_zone",
       "arguments": "p_tenant uuid"
+    },
+    {
+      "schema": "public",
+      "name": "ping_zip_county",
+      "arguments": "p_zip text, p_state text"
     },
     {
       "schema": "public",

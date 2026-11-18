@@ -28,5 +28,6 @@
   "178_ping_filter_decide.sql": "73baac8adb25997e50f3aed6f525d66653126e1ccdca0bf99e746eab4a3528bb",
   "179_ping_scorecard_usage.sql": "a92dfa3ed1c65c58dde59a05cd51a5f28ca731aeb6f9681d65677f1932be009d",
   "180_ping_performance_routing.sql": "38b049321577e4c5dafecfc5d814f0ed8b149ca4cb5343127dbbed6f52ef5b90",
-  "181_ping_eligibility_sources.sql": "08afde6adeaf1f09554fce111310666facd5a3aff905e109ef01f4aa41886a7c"
+  "181_ping_eligibility_sources.sql": "08afde6adeaf1f09554fce111310666facd5a3aff905e109ef01f4aa41886a7c",
+  "182_ping_rts_county_eligibility.sql": "ea5c977350a8157f53916c11f0858e446eea9b42f9bd3cabdb5c58caa7065fa3"
 }
