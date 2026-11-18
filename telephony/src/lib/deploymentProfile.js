@@ -91,7 +91,7 @@ export function parseDeploymentProfile(raw, features = deploymentFeatures()) {
   }
   if(Object.keys(p.supervisorListen).some(key=>!['maxSeconds','perCall','perAgency'].includes(key)))fail('supervisorListen');
   if(p.admissionLimits) {
-    const keys=['supervisorWhisper','supervisorFloor','supervisorListen','clientRecap','coachingRegenerate','lifecycleExport','vendorLead','vendorPing','availability','voiceToken','agentSocket','sms','gifs','coach','transcription','sttStream','scoring','summary','embeddings'];
+    const keys=['supervisorWhisper','supervisorFloor','supervisorListen','clientRecap','coachingRegenerate','lifecycleExport','vendorLead','vendorPing','buyerApi','availability','voiceToken','agentSocket','sms','gifs','coach','transcription','sttStream','scoring','summary','embeddings'];
     for(const [route,limits] of Object.entries(p.admissionLimits)) {
       if(!keys.includes(route)||!limits||typeof limits!=='object'||Array.isArray(limits))fail('admissionLimits');
       for(const [key,value] of Object.entries(limits))if(!['minute','subjectDay','deploymentDay','concurrent'].includes(key)||!Number.isInteger(value)||value<1||value>1000000)fail('admissionLimits value');
