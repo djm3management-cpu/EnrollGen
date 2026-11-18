@@ -14,15 +14,17 @@ import { fieldMapFor, parsePingFieldMaps, phoneLast4, pingPayload, readPing } fr
 const defaultLogger = createLogger('telephony', 'exchangev1');
 export const EXCHANGE_FLAGS = Object.freeze(['PING_PLATFORM_ENABLED', 'PING_EXCHANGE_ENABLED']);
 
-/** The publisher-facing body: only these five fields, ever. */
+/** The publisher-facing body: only these five fields, plus "sandbox": true for a sandbox source. */
 export function exchangeResponse(data) {
-  return {
+  const body = {
     auction_id: data?.auction_id ?? null,
     available: data?.available === true,
     reason: data?.reason ?? 'error_rejected',
     ttl_seconds: data?.available === true ? data.ttl_seconds ?? null : null,
     transfer_number: data?.available === true ? data.transfer_number ?? null : null,
   };
+  if (data?.sandbox === true) body.sandbox = true;
+  return body;
 }
 
 export function createExchangeV1Router({

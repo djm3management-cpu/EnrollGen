@@ -58,6 +58,8 @@ export function createPingV1Router({
       };
       // Price disclosure is off by default (owner decision D6); ping_decide never sets it in S1.
       if (data.disclose_price === true && data.price != null) body.price = Number(data.price);
+      // A sandbox source (S8a) is evaluated without a reservation; say so.
+      if (data.sandbox === true) body.sandbox = true;
       return reply(body);
     } catch {
       return reply({ available: false, reason: 'error_rejected' });
