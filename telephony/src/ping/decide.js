@@ -1,4 +1,4 @@
-// Pure mirror of SQL ping_decide (migrations 172 and 173). No I/O. Same rule order and
+// Pure mirror of SQL ping_decide (migrations 172, 173 and 178). No I/O. Same rule order and
 // closed reason list as spec section 6; the paragon_ping order is kept for
 // staffed hours before campaign_inactive.
 
@@ -10,7 +10,8 @@ export const REASONS = Object.freeze([
   'accepted_full', 'accepted_partial', 'accepted_retention_owner', 'error_rejected',
 ]);
 
-// Rules 8 to 12 are S3 filter rules. They run in order and record "skipped".
+// Rules 8 to 12, the S4 filter rules, in evaluation order. Each records pass,
+// hit or skipped; a rule whose campaign fields are null, zero or false is skipped.
 export const FILTER_RULES = Object.freeze([
   'existing_client_retention', 'cooldown_same_source', 'cooldown_any_source', 'repeat_shopper', 'daily_budget_reached',
 ]);
@@ -58,6 +59,64 @@ export function agentTier({ agentId, state, rows = [], campaign }) {
   return missing.length ? 'partial' : 'full';
 }
 
+export const ACCEPTED = Object.freeze(['accepted_full', 'accepted_partial', 'accepted_retention_owner']);
+
+const positive = value => value != null && Number(value) > 0;
+
+/**
+ * Mirror of rules 8 to 12 in ping_decide_campaign (178). filters holds what the
+ * SQL looks up: {hasPhone = true, existingClient: {contact_id, owner_agent_id}
+ * or null, recentSameSource, recentAnySource, pooledOn, shopperCount,
+ * acceptedToday, alertsEnabled}. pooledOn means PING_EXCHANGE_ENABLED and the
+ * operator's pooled_shopper_enabled; shopperCount excludes the current ping. Appends one trace step per evaluated rule and returns
+ * {reject: reason or null, retention: route_owner existing client}.
+ */
+export function applyFilterRules({ campaign, filters = {}, trace = [] }) {
+  const hasPhone = filters.hasPhone !== false;
+  const step = (rule, result, extra = {}) => trace.push({ rule, result, ...extra });
+  const hit = rule => { step(rule, 'hit'); return { reject: rule, retention: false, trace }; };
+  let retention = false;
+
+  if (!campaign?.retention_enabled || !hasPhone) step('existing_client_retention', 'skipped');
+  else if (filters.existingClient) {
+    const mode = campaign.retention_mode || 'route_owner';
+    step('existing_client_retention', 'hit', { mode });
+    if (mode === 'reject_and_alert') return { reject: 'existing_client_retention', retention: true, trace };
+    retention = true;
+  } else step('existing_client_retention', 'pass');
+
+  // Existing clients are exempt from the cooldowns and the repeat shopper rule.
+  if (retention || !positive(campaign?.cooldown_same_source_days) || !hasPhone) step('cooldown_same_source', 'skipped');
+  else if (filters.recentSameSource) return hit('cooldown_same_source');
+  else step('cooldown_same_source', 'pass');
+
+  if (retention || !positive(campaign?.cooldown_any_source_days) || !hasPhone) step('cooldown_any_source', 'skipped');
+  else if (filters.recentAnySource) return hit('cooldown_any_source');
+  else step('cooldown_any_source', 'pass');
+
+  if (retention || !positive(campaign?.repeat_shopper_threshold) || !positive(campaign?.repeat_shopper_window_days) ||
+    !hasPhone || filters.pooledOn !== true) step('repeat_shopper', 'skipped');
+  else if (Number(filters.shopperCount ?? 0) >= Number(campaign.repeat_shopper_threshold)) return hit('repeat_shopper');
+  else step('repeat_shopper', 'pass');
+
+  if (!positive(campaign?.daily_budget_calls)) step('daily_budget_reached', 'skipped');
+  else if (Number(filters.acceptedToday ?? 0) >= Number(campaign.daily_budget_calls)) return hit('daily_budget_reached');
+  else step('daily_budget_reached', 'pass');
+
+  return { reject: null, retention, trace };
+}
+
+/**
+ * Whether ping_decide_campaign writes a retention alert. alertsEnabled mirrors
+ * PING_RETENTION_ALERTS_ENABLED (default off). Generic and exchange decisions, and an exchange_eval reject_and_alert, which
+ * is that buyer's final decision. Shadow never alerts.
+ */
+export function retentionAlerts(engine, reason, { alertsEnabled = false } = {}) {
+  if (!alertsEnabled || reason === 'error_rejected') return false;
+  if (engine === 'generic' || engine === 'exchange') return true;
+  return engine === 'exchange_eval' && reason === 'existing_client_retention';
+}
+
 const routable = agent => agent.available === true && (agent.status == null || agent.status === 'available') &&
   !agent.active_call_sid;
 const assignedAt = agent => agent.last_assigned_at == null ? -Infinity : new Date(agent.last_assigned_at).getTime();
@@ -69,18 +128,22 @@ const assignedAt = agent => agent.last_assigned_at == null ? -Infinity : new Dat
  */
 export function decidePing({
   campaign, now = Date.now(), staffed, paused = false, state, callIdentity, agents = [],
-  routingEnabled = true, engine = 'generic', validPayload = true, hours, rows = [],
+  routingEnabled = true, engine = 'generic', validPayload = true, hours, rows = [], filters = {},
 }) {
   const trace = [];
+  let retention = false;
   const done = (reason, extra = {}) => {
-    const available = reason === 'accepted_full' || reason === 'accepted_partial';
+    const available = ACCEPTED.includes(reason);
     trace.push({ rule: reason, result: available ? 'accept' : 'reject' });
-    return { available, reason, agent_id: extra.agent_id ?? null, tier: extra.tier ?? null, rule_trace: trace };
+    return { available, reason, agent_id: extra.agent_id ?? null, tier: extra.tier ?? null, rule_trace: trace,
+      retention_alert: retention && retentionAlerts(engine, reason, filters) };
   };
   const pass = rule => trace.push({ rule, result: 'pass' });
   try {
     const stateCode = String(state ?? '').trim().toUpperCase();
-    if (!routingEnabled || (campaign && campaign.engine_mode !== engine)) return done('routing_disabled');
+    // Exchange modes evaluate generic campaigns, as match_mode in 175.
+    const matchMode = engine === 'exchange' || engine === 'exchange_eval' ? 'generic' : engine;
+    if (!routingEnabled || (campaign && campaign.engine_mode !== matchMode)) return done('routing_disabled');
     pass('routing_disabled');
     if (!validPayload) return done('invalid_payload');
     pass('invalid_payload');
@@ -95,20 +158,32 @@ export function decidePing({
     pass('state_not_allowed');
     if (!callIdentity) return done('missing_call_identity');
     pass('missing_call_identity');
-    for (const rule of FILTER_RULES) trace.push({ rule, result: 'skipped' });
+    const filtered = applyFilterRules({ campaign, filters, trace });
+    retention = filtered.retention;
+    if (filtered.reject) return done(filtered.reject);
 
     const tiered = agents.map(agent => ({
       ...agent, tier: agent.tier ?? agentTier({ agentId: agent.agent_id, state: stateCode, rows, campaign }),
     }));
     const eligible = tiered.filter(agent => agent.tier === 'full' || agent.tier === 'partial');
-    const [selected] = eligible.filter(agent => routable(agent) && !agent.reserved).sort((a, b) =>
+    const free = eligible.filter(agent => routable(agent) && !agent.reserved);
+    // route_owner: the owner first while routable, eligible and free, else the pool.
+    let selected = null;
+    const owner = filters.existingClient?.owner_agent_id ?? null;
+    if (retention && owner) {
+      selected = free.find(agent => agent.agent_id === owner) ?? null;
+      trace.push({ rule: 'retention_owner', result: selected ? 'hit' : 'pass' });
+    }
+    selected ??= free.sort((a, b) =>
       (a.tier === 'full' ? 0 : 1) - (b.tier === 'full' ? 0 : 1) ||
-      assignedAt(a) - assignedAt(b) || String(a.agent_id).localeCompare(String(b.agent_id)));
-    if (selected) return done(selected.tier === 'full' ? 'accepted_full' : 'accepted_partial',
-      { agent_id: selected.agent_id, tier: selected.tier });
+      assignedAt(a) - assignedAt(b) || String(a.agent_id).localeCompare(String(b.agent_id)))[0];
+    if (selected) {
+      const reason = retention ? 'accepted_retention_owner' : selected.tier === 'full' ? 'accepted_full' : 'accepted_partial';
+      return done(reason, { agent_id: selected.agent_id, tier: selected.tier });
+    }
     return done(eligible.length ? 'all_eligible_busy' : 'no_eligible_agent');
   } catch {
     trace.push({ rule: 'error_rejected', result: 'reject' });
-    return { available: false, reason: 'error_rejected', agent_id: null, tier: null, rule_trace: trace };
+    return { available: false, reason: 'error_rejected', agent_id: null, tier: null, rule_trace: trace, retention_alert: false };
   }
 }

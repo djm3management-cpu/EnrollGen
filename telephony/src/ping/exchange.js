@@ -1,5 +1,5 @@
-// Pure mirror of the exchange selection in SQL exchange_ping (migration 176).
-// No I/O. Spec section 9: priority_waterfall, weighted_rotation (smooth
+// Pure mirror of the exchange selection in SQL exchange_ping (migrations 176
+// and 178). No I/O. Spec section 9: priority_waterfall, weighted_rotation (smooth
 // weighted round robin) and highest_price; ties go to the least recently won.
 
 export const STRATEGIES = Object.freeze(['priority_waterfall', 'weighted_rotation', 'highest_price']);
@@ -10,7 +10,11 @@ const byText = (a, b) => (String(a) < String(b) ? -1 : String(a) > String(b) ? 1
 const num = value => (value == null || value === '' ? null : Number(value));
 
 /**
- * candidates: accepting candidates [{campaign_id, priority, weight, price, last_won}].
+ * candidates: accepting candidates [{campaign_id, priority, weight, price, last_won, retention}].
+ * retention: the candidate's decision is accepted_retention_owner; such
+ * candidates rank before every other accept (after a committed one), the
+ * strategy ordering the rest and breaking ties among them, and the rotation
+ * state is left untouched when any accepting candidate has retention.
  * rotationState: {campaign_id: current weight} for weighted_rotation.
  * committed: a campaign that already holds this call inside the 30 second
  * commitment; it ranks first and leaves the rotation untouched.
@@ -38,12 +42,14 @@ export function selectWinner({ strategy, candidates = [], rotationState = {}, co
     return b.current - a.current;
   };
   const ranking = scored.sort((a, b) =>
-    (b.campaign_id === committed) - (a.campaign_id === committed) || primary(a, b) ||
+    (b.campaign_id === committed) - (a.campaign_id === committed) ||
+    (b.retention === true) - (a.retention === true) || primary(a, b) ||
     time(a.last_won) - time(b.last_won) || byText(a.campaign_id, b.campaign_id))
     .map(candidate => candidate.campaign_id);
   // The real decision is tried for the best candidate, then the next best once.
   const winner = ranking.slice(0, 2).find(id => !failed.includes(id)) ?? null;
-  if (strategy === 'weighted_rotation' && winner && winner !== committed) {
+  const retentionAccepted = candidates.some(candidate => candidate.retention === true);
+  if (strategy === 'weighted_rotation' && winner && winner !== committed && !retentionAccepted) {
     for (const candidate of scored) {
       state[candidate.campaign_id] = candidate.current - (candidate.campaign_id === winner ? total : 0);
     }
@@ -66,4 +72,14 @@ export function capCheck({ dailyCap = null, hourlyCap = null, dailyCount = 0, ho
 export function pingUnitPrice({ plan, usedThisMonth }) {
   if (!plan) return 0;
   return usedThisMonth + 1 <= plan.included_pings ? 0 : Number(plan.overage_per_ping);
+}
+
+/**
+ * Mirror of the publisher-facing reason in exchange_ping (178): a retention
+ * winner is reported by the reserved agent's tier, so the publisher never
+ * learns that the caller is a buyer's existing client.
+ */
+export function publisherReason(reason, tier) {
+  if (reason !== 'accepted_retention_owner') return reason;
+  return tier === 'partial' ? 'accepted_partial' : 'accepted_full';
 }
