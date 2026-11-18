@@ -25,6 +25,7 @@ import http from "node:http";
 import express from "express";
 import { config } from "./config.js";
 import { twilioVoiceRouter } from "./routes/twilioVoice.js";
+import { screenerRouter } from "./routes/screener.js";
 import { twilioStatusRouter } from "./routes/twilioStatus.js";
 import { leadsRouter } from "./routes/leads.js";
 import { voiceTokenRouter } from "./routes/voiceToken.js";
@@ -88,6 +89,7 @@ app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 app.post('/internal/post-call-status',createPostCallStatusHandler({db:supabase,config}));
 app.use(twilioVoiceRouter);
+app.use(screenerRouter);
 app.use(twilioStatusRouter);
 app.use(leadsRouter);
 app.use(vendorPingRouter);

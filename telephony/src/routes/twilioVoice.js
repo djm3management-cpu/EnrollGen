@@ -20,6 +20,7 @@ import { routingReplay, sendRoutingTwiml as sendTwiml } from "../routingReplay.j
 import { classifyCaller, decideMatchedParagon } from "../paragonRouting.js";
 import { endedParentCall } from "../terminalRouting.js";
 import { genericArrival, isGenericMatchedCall } from "../ping/arrival.js";
+import { startScreener } from "../ping/screener.js";
 
 import { signalMediaLifecycle } from '../media/mediaLifecycle.js';
 
@@ -70,13 +71,16 @@ async function logEvent({ inboundCallId, callSid, event, payload }) {
   if (error) logger.error("twiliovoice_telephony_events_insert_failed", 'request_failed');
 }
 
-async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds }) {
+// screener (S7, optional): { preface: { voice, text }, params }. Without it the
+// TwiML is exactly the S6 dial.
+export async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentIds, screener = null }) {
   const attemptId = await createCallAttempt({
     callSid: inboundCall.twilio_call_sid, agentId: agent.agent_id, contactId: contact?.id || null,
     direction: "inbound", inboundCallId: inboundCall.id, to: agent.agent_id,
   });
   const attributionQuery = `attemptId=${attemptId}&agentId=${encodeURIComponent(agent.agent_id)}`;
   const response = new VoiceResponse();
+  if (screener?.preface?.text) response.say({ voice: screener.preface.voice }, screener.preface.text);
 
   if (triedAgentIds.length) response.stop().stream({ name: "agent-transcription" });
   const start = response.start();
@@ -120,6 +124,7 @@ async function dialAgentTwiml({ agent, inboundCall, contact, intel, triedAgentId
   for (const [name, value] of Object.entries(params)) {
     client.parameter({ name, value });
   }
+  for (const [name, value] of Object.entries(screener?.params || {})) client.parameter({ name, value });
   return response;
 }
 
@@ -158,6 +163,9 @@ twilioVoiceRouter.post("/twilio/voice", requireTwilioSignature, (req,res,next)=>
       claimedAgent = generic.agent;
       if (generic.ended) { const response = new VoiceResponse(); response.hangup(); return sendTwiml(res, response); }
       if (!generic.agent) return sendTwiml(res, busyRejectTwiml());
+      // Ping platform S7: null unless the screener is on and applies to this campaign.
+      const screening = await startScreener(supabase, { agent: generic.agent, inboundCall: generic.inboundCall });
+      if (screening) return sendTwiml(res, screening);
       const intel = contact?.id ? await latestLeadIntel(contact.id) : null;
       return sendTwiml(res, await dialAgentTwiml({ agent: generic.agent, inboundCall: generic.inboundCall, contact, intel, triedAgentIds: [] }));
     }
