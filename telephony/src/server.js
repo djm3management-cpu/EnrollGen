@@ -34,6 +34,7 @@ import { voiceOutboundRouter } from "./routes/voiceOutbound.js";
 import { vendorPingRouter } from "./routes/vendorPing.js";
 import { pingV1Router } from "./routes/pingV1.js";
 import { exchangeV1Router } from "./routes/exchangeV1.js";
+import { buyerV1Router } from "./routes/buyerV1.js";
 import { smsRouter } from "./routes/sms.js";
 import { handleMediaUpgrade } from "./media/mediaStream.js";
 import { handleAgentUpgrade } from "./media/agentSocket.js";
@@ -97,6 +98,8 @@ app.use(vendorPingRouter);
 app.use(await pingV1Router());
 // Ping exchange; answers 503 unless PING_PLATFORM_ENABLED and PING_EXCHANGE_ENABLED.
 app.use(await exchangeV1Router());
+// Buyer API; answers 503 unless PING_PLATFORM_ENABLED (reports and screener drafts need their own flags).
+app.use(await buyerV1Router());
 app.use(voiceTokenRouter);
 app.use(voiceEventsRouter);
 // Keep removal/recovery for durable coach legs after disabling new admission.
