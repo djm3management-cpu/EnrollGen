@@ -15,6 +15,8 @@
     "typecheck:llm": "tsc -p tsconfig.llm.json",
     "pilot:load:short": "node scripts/pilot/run-local.mjs",
     "pilot:load:long": "node scripts/pilot/run-local.mjs --long",
+    "ping:load:short": "node scripts/ping_load.js --short",
+    "ping:load:long": "node scripts/ping_load.js --long",
     "verify": "node scripts/verify.mjs",
     "recovery:backup": "node scripts/recovery/backup.mjs",
     "recovery:restore": "node scripts/recovery/restore.mjs",
