@@ -1,0 +1,656 @@
+openapi: 3.1.0
+info:
+  title: EnrollGen ping platform API
+  version: 1.0.0-s8a
+  summary: Publisher ping, exchange ping and buyer API.
+  description: |
+    Server to server API for the EnrollGen ping platform (docs/PING_PLATFORM_SPEC.md).
+    Publishers send pings to `/api/ping/v1` (one buyer, their own campaigns) or
+    `/api/exchange/v1/ping` (every routed buyer campaign, one winner). Buyers manage
+    their own campaigns and read their own reports under `/api/buyer/v1`.
+
+    Every endpoint answers 503 with `{"status":"disabled","feature":...}` until the
+    operator enables `PING_PLATFORM_ENABLED` (and `PING_EXCHANGE_ENABLED` for the
+    exchange, `PING_SCORECARD_ENABLED` for reports, `PING_SCREENER_ENABLED` for
+    screener scripts). Publisher and buyer integration guides:
+    docs/api/publisher-integration.md and docs/api/buyer-integration.md.
+
+    Rate limits are fixed 60 second windows per key: 600 requests for a publisher
+    ping key (`vendorPing`) and 120 for a buyer key (`buyerApi`). Over the limit the
+    answer is 429 with `Retry-After` in seconds. Operators may lower or raise these
+    per deployment.
+
+    Publisher pings fail closed: any internal failure answers 200 with
+    `available: false` and `reason: error_rejected`, never a transfer number.
+servers:
+  - url: https://YOUR_ASSIGNED_VOICE_HOST
+    description: Assigned per deployment. Never a shared host.
+security:
+  - apiKey: []
+tags:
+  - name: publisher
+  - name: buyer
+paths:
+  /api/ping/v1:
+    post:
+      tags: [publisher]
+      operationId: pingV1
+      summary: Ping your own campaign for one caller.
+      description: |
+        Evaluates the publisher's own campaign (by `campaign` id or name, else the
+        source's single active campaign) and, when accepted, holds an agent for
+        `ttl_seconds`. Transfer the call within that window. A re-ping for the same
+        call identity and state within 30 seconds of an acceptance replays it.
+        Field names can be mapped per source by the operator.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PingRequest' }
+          application/x-www-form-urlencoded:
+            schema: { $ref: '#/components/schemas/PingRequest' }
+      responses:
+        '200':
+          description: A decision. Rejections are 200 with available false.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PingResponse' }
+              examples:
+                accepted: { value: { decision_id: 6b0b6f1e-2f0a-4d7e-9a5e-1c2d3e4f5a6b, available: true, reason: accepted_full, ttl_seconds: 30 } }
+                rejected: { value: { decision_id: 6b0b6f1e-2f0a-4d7e-9a5e-1c2d3e4f5a6c, available: false, reason: state_not_allowed, ttl_seconds: null } }
+                sandbox: { value: { decision_id: 6b0b6f1e-2f0a-4d7e-9a5e-1c2d3e4f5a6d, available: true, reason: accepted_full, ttl_seconds: 30, sandbox: true } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/exchange/v1/ping:
+    post:
+      tags: [publisher]
+      operationId: exchangePingV1
+      summary: Ping the exchange for one caller.
+      description: |
+        Every buyer campaign routed from your source is evaluated; one winner is
+        picked by the operator's strategy for your source and holds an agent for
+        `ttl_seconds`. Transfer to `transfer_number` within that window. The
+        response never carries a price, another buyer, a candidate count or the
+        winner's identity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PingRequest' }
+          application/x-www-form-urlencoded:
+            schema: { $ref: '#/components/schemas/PingRequest' }
+      responses:
+        '200':
+          description: An auction result. No buyer is 200 with available false.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExchangeResponse' }
+              examples:
+                accepted: { value: { auction_id: 0c4d5e6f-1a2b-4c3d-8e9f-0a1b2c3d4e5f, available: true, reason: accepted_full, ttl_seconds: 30, transfer_number: '+15005550201' } }
+                none: { value: { auction_id: 0c4d5e6f-1a2b-4c3d-8e9f-0a1b2c3d4e60, available: false, reason: exchange_no_buyer, ttl_seconds: null, transfer_number: null } }
+                sandbox: { value: { auction_id: null, available: true, reason: accepted_full, ttl_seconds: 30, transfer_number: '+15005550201', sandbox: true } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/campaigns:
+    get:
+      tags: [buyer]
+      operationId: buyerListCampaigns
+      summary: List your campaigns.
+      description: 'Scope `campaigns:read`. No query parameters.'
+      responses:
+        '200':
+          description: Your tenant's campaigns only.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [campaigns]
+                properties:
+                  campaigns: { type: array, items: { $ref: '#/components/schemas/Campaign' } }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/campaigns/{id}:
+    patch:
+      tags: [buyer]
+      operationId: buyerUpdateCampaign
+      summary: Change allowlisted fields on one of your campaigns.
+      description: |
+        Scope `campaigns:write`. Only the fields in CampaignPatch may be sent; any
+        other field (for example rate, states, carriers, engine_mode,
+        transfer_number) is 400 and nothing changes. Every call is audited,
+        rejected ones included.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CampaignPatch' }
+      responses:
+        '200': { $ref: '#/components/responses/CampaignResult' }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/campaigns/{id}/pause:
+    post:
+      tags: [buyer]
+      operationId: buyerPauseCampaign
+      summary: Pause one of your campaigns.
+      description: 'Scope `campaigns:write`. No body. New pings reject with source_paused; calls already on a held agent still arrive. Audited.'
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { $ref: '#/components/responses/CampaignResult' }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/campaigns/{id}/resume:
+    post:
+      tags: [buyer]
+      operationId: buyerResumeCampaign
+      summary: Resume one of your campaigns.
+      description: 'Scope `campaigns:write`. No body. Audited. A source wide pause set by the operator stays in force.'
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { $ref: '#/components/responses/CampaignResult' }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/scorecard:
+    get:
+      tags: [buyer]
+      operationId: buyerScorecard
+      summary: Your scorecard for a window, optionally grouped.
+      description: 'Scope `reports:read`; needs PING_SCORECARD_ENABLED. Window at most 92 days.'
+      parameters:
+        - { name: from, in: query, required: true, schema: { type: string, format: date-time }, description: 'Inclusive start, ISO 8601.' }
+        - { name: to, in: query, required: true, schema: { type: string, format: date-time }, description: 'Exclusive end, ISO 8601.' }
+        - name: group
+          in: query
+          required: false
+          description: 'Comma separated, each at most once: source, sub_id, campaign, state, day. Empty gives one total row.'
+          schema: { type: string, pattern: '^((source|sub_id|campaign|state|day)(,(source|sub_id|campaign|state|day))*)?$' }
+      responses:
+        '200':
+          description: One row per group. Never a caller phone, ZIP, contact or another tenant's id.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [from, to, group, rows]
+                properties:
+                  from: { type: string, format: date-time }
+                  to: { type: string, format: date-time }
+                  group: { type: array, items: { type: string } }
+                  rows: { type: array, items: { $ref: '#/components/schemas/ScorecardRow' } }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/usage:
+    get:
+      tags: [buyer]
+      operationId: buyerUsage
+      summary: Your platform usage and invoice preview for a UTC month.
+      description: 'Scope `reports:read`; needs PING_SCORECARD_ENABLED.'
+      parameters: [{ $ref: '#/components/parameters/Month' }]
+      responses:
+        '200':
+          description: Usage summary.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [usage]
+                properties:
+                  usage: { $ref: '#/components/schemas/UsageSummary' }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/invoice-lines:
+    get:
+      tags: [buyer]
+      operationId: buyerInvoiceLines
+      summary: Your invoice lines for a UTC month.
+      description: 'Scope `reports:read`; needs PING_SCORECARD_ENABLED. One line per usage kind with events.'
+      parameters: [{ $ref: '#/components/parameters/Month' }]
+      responses:
+        '200':
+          description: Invoice lines.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [month, lines]
+                properties:
+                  month: { type: string, format: date }
+                  lines: { type: array, items: { $ref: '#/components/schemas/InvoiceLine' } }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/retention-alerts:
+    get:
+      tags: [buyer]
+      operationId: buyerRetentionAlerts
+      summary: Pings that matched one of your existing clients.
+      description: 'Scope `reports:read`. Newest first.'
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [open, all], default: open } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 500, default: 100 } }
+      responses:
+        '200':
+          description: Alerts. Never a phone number.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [alerts]
+                properties:
+                  alerts: { type: array, items: { $ref: '#/components/schemas/RetentionAlert' } }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/retention-alerts/{id}/ack:
+    post:
+      tags: [buyer]
+      operationId: buyerAckRetentionAlert
+      summary: Acknowledge one of your retention alerts.
+      description: 'Scope `alerts:write`. No body. Idempotent: a second ack keeps the first time. Audited.'
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200':
+          description: Acknowledged.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [alert]
+                properties:
+                  alert:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id: { type: string, format: uuid }
+                      campaign_id: { type: string, format: uuid }
+                      acknowledged_at: { type: string, format: date-time }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/buyer/v1/screener-scripts:
+    get:
+      tags: [buyer]
+      operationId: buyerScreenerScripts
+      summary: Your screener scripts, every version and status.
+      description: 'Scope `campaigns:read`; needs PING_SCREENER_ENABLED.'
+      parameters:
+        - { name: campaign_id, in: query, required: false, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Scripts.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [scripts]
+                properties:
+                  scripts: { type: array, items: { $ref: '#/components/schemas/ScreenerScript' } }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    post:
+      tags: [buyer]
+      operationId: buyerCreateScreenerDraft
+      summary: Create the next draft script version for one of your campaigns.
+      description: |
+        Scope `screener:write`; needs PING_SCREENER_ENABLED. Creates a draft only.
+        Approval is done by the platform operator and has no buyer endpoint; a
+        draft is never played to callers. Audited (never the script text).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScreenerDraft' }
+      responses:
+        '201':
+          description: Draft created.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [script]
+                properties:
+                  script:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id: { type: string, format: uuid }
+                      campaign_id: { type: string, format: uuid }
+                      version: { type: integer, minimum: 1 }
+                      status: { type: string, const: draft }
+                      created_at: { type: string, format: date-time }
+        '400': { $ref: '#/components/responses/Invalid' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: |
+        Publisher endpoints take the source's ping key. Buyer endpoints take a buyer
+        key (`egb_` plus 64 hex characters) issued by the operator with a set of
+        scopes: campaigns:read, campaigns:write, reports:read, alerts:write,
+        screener:write. Only a hash of each key is stored; a revoked key is 401.
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Month:
+      name: month
+      in: query
+      required: true
+      description: 'UTC calendar month, YYYY-MM.'
+      schema: { type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$' }
+  responses:
+    Unauthorized:
+      description: Missing, unknown or revoked key.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: The key lacks the endpoint's scope.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - { $ref: '#/components/schemas/Error' }
+              - { type: object, properties: { required_scope: { type: string } } }
+    NotFound:
+      description: No such resource in your tenant. Another tenant's ids are always 404.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Invalid:
+      description: An unknown field or query parameter, or a value outside its allowlist. Nothing changed.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    AdmissionLimited:
+      description: Over the per key rate limit.
+      headers:
+        Retry-After: { schema: { type: integer, minimum: 1 }, description: Seconds to wait. }
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, retry_after]
+            properties:
+              error: { type: string, const: admission_limited }
+              retry_after: { type: integer, minimum: 1 }
+    Unavailable:
+      description: A required feature is off, or the platform could not admit or serve the request.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - type: object
+                required: [status, feature]
+                properties:
+                  status: { type: string, const: disabled }
+                  feature: { type: string, enum: [PING_PLATFORM_ENABLED, PING_EXCHANGE_ENABLED, PING_SCORECARD_ENABLED, PING_SCREENER_ENABLED] }
+              - { $ref: '#/components/schemas/Error' }
+    CampaignResult:
+      description: The campaign after the change.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [campaign]
+            properties:
+              campaign: { $ref: '#/components/schemas/Campaign' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, enum: [unauthorized, insufficient_scope, invalid_request, not_found, admission_unavailable, unavailable, Unauthorized, Admission unavailable] }
+        detail: { type: string }
+    PingRequest:
+      type: object
+      description: |
+        Identifiers, state, ZIP and coarse flags only. Never send MBI, date of birth,
+        names, addresses or health details. Field names may be remapped for your
+        source by the operator.
+      properties:
+        phone: { type: string, description: 'Caller phone; normalized to E.164. Invalid values reject as invalid_payload.' }
+        state: { type: string, pattern: '^[A-Za-z]{2}$', description: 'Caller state, two letters.' }
+        zip: { type: string, pattern: '^[0-9]{5}$' }
+        call_id: { type: string, maxLength: 128, description: 'Your call id. The call identity is call_id, else phone.' }
+        sub_id: { type: string, maxLength: 128 }
+        campaign: { type: string, maxLength: 128, description: '/api/ping/v1 only: your campaign id or name.' }
+        consent_cert_id: { type: string, maxLength: 128 }
+        t65: { type: [boolean, string, integer], description: 'Turning 65 flag: true/false, "true"/"false", 1/0.' }
+    PingReason:
+      type: string
+      enum: [routing_disabled, invalid_payload, source_paused, outside_staffed_hours, campaign_inactive, state_not_allowed,
+        county_not_served, missing_call_identity, existing_client_retention, cooldown_same_source, cooldown_any_source,
+        repeat_shopper, daily_budget_reached, no_eligible_agent, all_eligible_busy, accepted_full, accepted_partial,
+        accepted_retention_owner, error_rejected]
+    PingResponse:
+      type: object
+      additionalProperties: false
+      required: [available, reason]
+      properties:
+        decision_id: { type: [string, 'null'], format: uuid }
+        available: { type: boolean }
+        reason: { $ref: '#/components/schemas/PingReason' }
+        ttl_seconds: { type: [integer, 'null'], description: 'Seconds the agent is held; transfer within it.' }
+        price: { type: number, description: 'Only when the operator enabled price disclosure for you. Off by default.' }
+        sandbox: { type: boolean, const: true, description: 'Present only for a sandbox source.' }
+    ExchangeResponse:
+      type: object
+      additionalProperties: false
+      required: [auction_id, available, reason, ttl_seconds, transfer_number]
+      properties:
+        auction_id: { type: [string, 'null'], format: uuid, description: 'Null for a sandbox source or a failed ping.' }
+        available: { type: boolean }
+        reason:
+          type: string
+          enum: [accepted_full, accepted_partial, exchange_no_buyer, error_rejected]
+        ttl_seconds: { type: [integer, 'null'] }
+        transfer_number: { type: [string, 'null'], pattern: '^\+[1-9][0-9]{7,14}$' }
+        sandbox: { type: boolean, const: true, description: 'Present only for a sandbox source.' }
+    HoursOverride:
+      type: object
+      additionalProperties: false
+      required: [timezone, days]
+      properties:
+        timezone: { type: string, pattern: '^[A-Z][A-Za-z_]+(/[A-Za-z0-9_+-]+){1,2}$', description: 'IANA region zone, for example America/Chicago.' }
+        days:
+          type: object
+          additionalProperties: false
+          patternProperties:
+            '^(sun|mon|tue|wed|thu|fri|sat)$':
+              type: object
+              additionalProperties: false
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+                start: { type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' }
+                end: { type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$', description: 'After start; same day.' }
+    CampaignPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        active: { type: boolean }
+        staffed_hours_override: { oneOf: [{ $ref: '#/components/schemas/HoursOverride' }, { type: 'null' }] }
+        daily_budget_calls: { type: [integer, 'null'], minimum: 0, maximum: 1000000 }
+        exchange_daily_cap: { type: [integer, 'null'], minimum: 0, maximum: 1000000 }
+        exchange_hourly_cap: { type: [integer, 'null'], minimum: 0, maximum: 1000000 }
+        retention_mode: { type: string, enum: [route_owner, reject_and_alert] }
+        screener_mode: { type: string, enum: [off, inbound_only, always] }
+        performance_routing: { type: boolean }
+    Campaign:
+      type: object
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        product_line: { type: string, enum: [ma, medsupp, u65, aca, annuity] }
+        active: { type: boolean }
+        engine_mode: { type: string, enum: [legacy, shadow, generic] }
+        allowed_states: { type: array, items: { type: string } }
+        pricing_model: { type: string, enum: [per_call, per_app, free] }
+        rate: { type: [number, 'null'] }
+        transfer_number: { type: [string, 'null'] }
+        staffed_hours_override: { oneOf: [{ $ref: '#/components/schemas/HoursOverride' }, { type: 'null' }] }
+        daily_budget_calls: { type: [integer, 'null'] }
+        exchange_daily_cap: { type: [integer, 'null'] }
+        exchange_hourly_cap: { type: [integer, 'null'] }
+        retention_mode: { type: string, enum: [route_owner, reject_and_alert] }
+        screener_mode: { type: string, enum: [off, inbound_only, always] }
+        performance_routing: { type: boolean }
+        paused: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ScorecardRow:
+      type: object
+      description: Group keys present only when grouped by them.
+      properties:
+        source: { type: [string, 'null'], format: uuid }
+        sub_id: { type: [string, 'null'] }
+        campaign: { type: [string, 'null'], format: uuid }
+        state: { type: [string, 'null'] }
+        day: { type: [string, 'null'], format: date }
+        pings: { type: integer }
+        accepts: { type: integer }
+        accept_rate: { type: [number, 'null'] }
+        rejects_by_reason: { type: object, additionalProperties: { type: integer } }
+        exchange_wins: { type: integer }
+        arrivals: { type: integer }
+        connects: { type: integer }
+        billable_calls: { type: integer }
+        cost: { type: number }
+        apps: { type: integer }
+        enrollments: { type: integer }
+        cost_per_app: { type: [number, 'null'] }
+        cost_per_enrollment: { type: [number, 'null'] }
+        returns_open: { type: integer }
+        returns_credited: { type: integer }
+        retention_hits: { type: integer }
+    UsageSummary:
+      type: object
+      properties:
+        tenant_id: { type: string, format: uuid }
+        month: { type: string, format: date }
+        period_start: { type: string, format: date-time }
+        period_end: { type: string, format: date-time }
+        by_kind: { type: object, additionalProperties: { type: object, properties: { quantity: { type: number }, amount: { type: number } } } }
+        pings: { type: number }
+        pings_inside_allowance: { type: number }
+        overage_pings: { type: number }
+        overage_amount: { type: number }
+        routed_calls: { type: number }
+        routed_calls_amount: { type: number }
+        screener_minutes: { type: number }
+        screener_minutes_amount: { type: number }
+        screened_qualified: { type: number }
+        screened_qualified_amount: { type: number }
+        screener_amount: { type: number }
+        total: { type: number }
+    InvoiceLine:
+      type: object
+      additionalProperties: false
+      properties:
+        line_no: { type: integer }
+        kind: { type: string, enum: [ping, routed_call, screener_minute, screened_qualified] }
+        description: { type: string }
+        quantity: { type: number }
+        included_quantity: { type: number }
+        charged_quantity: { type: number }
+        amount: { type: number }
+    RetentionAlert:
+      type: object
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        campaign_id: { type: string, format: uuid }
+        contact_id: { type: string, format: uuid, description: 'Your own CRM contact.' }
+        owner_agent_id: { type: [string, 'null'] }
+        decision_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+        acknowledged_at: { type: [string, 'null'], format: date-time }
+    ScreenerScript:
+      type: object
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        campaign_id: { type: string, format: uuid }
+        version: { type: integer }
+        status: { type: string, enum: [draft, approved, retired] }
+        opening: { type: string }
+        q_medicare: { type: string }
+        q_zip: { type: string }
+        q_reason: { type: string }
+        q_connect: { type: string }
+        pass_line: { type: string }
+        fail_line: { type: string }
+        disclaimer: { type: [string, 'null'] }
+        voice: { type: string }
+        approved_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+    ScreenerDraft:
+      type: object
+      additionalProperties: false
+      required: [campaign_id, opening, q_medicare, q_zip, q_reason, q_connect, pass_line, fail_line]
+      properties:
+        campaign_id: { type: string, format: uuid }
+        opening: { type: string, minLength: 1, maxLength: 600 }
+        q_medicare: { type: string, minLength: 1, maxLength: 600 }
+        q_zip: { type: string, minLength: 1, maxLength: 600 }
+        q_reason: { type: string, minLength: 1, maxLength: 600 }
+        q_connect: { type: string, minLength: 1, maxLength: 600 }
+        pass_line: { type: string, minLength: 1, maxLength: 600 }
+        fail_line: { type: string, minLength: 1, maxLength: 600 }
+        disclaimer: { type: [string, 'null'], minLength: 1, maxLength: 1000 }
+        voice: { type: string, pattern: '^Polly\.[A-Za-z]+(-[A-Za-z]+)?$', default: Polly.Joanna }
