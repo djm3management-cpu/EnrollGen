@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import twilio from 'twilio';
 import { setFeatures, source as paragonSource } from './helpers/pingDb.js';
-import { createS2Db, supabaseLike } from './helpers/pingS2Db.js';
+import { createS2Db, supabaseLike, seedPublisherB, callSid, B } from './helpers/pingS2Db.js';
 
 for (const name of ['PUBLIC_BASE_URL', 'SUPABASE_URL']) process.env[name] = 'https://example.test';
 for (const name of ['SUPABASE_SERVICE_ROLE_KEY', 'TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN',
@@ -18,6 +18,7 @@ for (const name of ['SUPABASE_SERVICE_ROLE_KEY', 'TWILIO_ACCOUNT_SID', 'TWILIO_A
 const { supabase } = await import('../src/supabase.js');
 const { config } = await import('../src/config.js');
 const { twilioVoiceRouter } = await import('../src/routes/twilioVoice.js');
+const { arrivalDeps } = await import('../src/ping/arrival.js');
 
 const GOLDEN = new URL('./fixtures/ping-voice-golden.json', import.meta.url);
 const WRITE = process.env.PING_VOICE_GOLDEN_WRITE === '1';
@@ -28,6 +29,7 @@ let pg; let pgClient;
 before(async () => {
   pg = await createS2Db();
   pgClient = supabaseLike(pg);
+  await seedPublisherB(pg);
   // The Paragon source owns the shared number; a generic-engine decision for
   // its legacy campaign would match this caller if the campaign were generic.
   await pg.query('UPDATE lead_sources SET twilio_number=$2 WHERE id=$1', [paragonSource, config.twilioPhoneNumber]);
@@ -181,4 +183,73 @@ test('generic hook golden: flag on with only a legacy-mode Paragon campaign retu
   } finally { await pg.exec('ROLLBACK'); }
   const outputs = await runScenarios('flag_on_legacy');
   assert.deepEqual(outputs, JSON.parse(readFileSync(GOLDEN, 'utf8')));
+});
+
+// Generic path: Test Publisher B's number, real clock, Twilio arrival verified
+// by a stand-in for the REST lookup.
+const GENERIC_CALLER = '+15550006000';
+async function genericScenario(t, { flag = true, busy = false } = {}) {
+  restore();
+  Object.assign(config, { paragonEnabled: true, paragonStateRoutingEnabled: true, stickyRoutingEnabled: false });
+  process.env.PARAGON_ENABLED = 'true'; process.env.PARAGON_STATE_ROUTING_ENABLED = 'true';
+  process.env.PING_PLATFORM_ENABLED = flag ? 'true' : 'false';
+  await setFeatures(pg);
+  const verify = arrivalDeps.verifyArrival;
+  arrivalDeps.verifyArrival = async () => new Date().toISOString();
+  await pg.exec('BEGIN');
+  t.after(async () => { arrivalDeps.verifyArrival = verify; restore(); await pg.exec('ROLLBACK'); });
+  const decision = (await pg.query(`SELECT ping_decide($1,'ma-central',$2,'generic') d`,
+    [B.hash, { phone: GENERIC_CALLER, state: 'KS', routing_enabled: true }])).rows[0].d;
+  assert.equal(decision.reason, 'accepted_full');
+  if (busy) await pg.query(`UPDATE agent_availability SET status='busy',available=false WHERE agent_id=ANY($1)`, [B.agents]);
+  const state = database();
+  const sid = callSid(7);
+  const voice = await request('/twilio/voice', { CallSid: sid, From: GENERIC_CALLER, To: B.number });
+  return { state, sid, voice, decision };
+}
+
+test('a generic match claims the reserved agent, books billing and dials it like today', async t => {
+  const { state, sid, voice, decision } = await genericScenario(t);
+  assert.match(voice.body, /<Client [^>]*><Identity>agent_x<\/Identity>/);
+  assert.match(voice.body, /<Parameter name="paragon" value="false"\/>/);
+  assert.match(voice.body, /<Dial [^>]*answerOnBridge="true"/);
+  const [call] = state.tables.inbound_calls;
+  assert.deepEqual([call.tenant_id, call.lead_source_id, call.status, call.routed_agent_id, call.source_kind, call.caller_state],
+    [B.tenant, B.source, 'ringing', 'agent_x', 'publisher', 'KS']);
+  assert.equal(call.contact_id, null, 'no cross-tenant contact link');
+  assert.deepEqual([call.vendor_metadata.ping_generic_matched, call.vendor_metadata.ping_decision_id], [true, decision.decision_id]);
+  const routed = state.tables.telephony_events.find(e => e.event === 'routing_agent_selected');
+  assert.deepEqual([routed.tenant_id, routed.payload.routing_method, routed.payload.agent_id], [B.tenant, 'ping_reserved', 'agent_x']);
+  assert.ok(!state.rpcs.some(name => /paragon|claim_call_agent|claim_customer_call_agent/.test(name)), state.rpcs.join());
+  const [billing] = (await pg.query('SELECT * FROM ping_call_billing WHERE parent_call_sid=$1', [sid])).rows;
+  assert.deepEqual([billing.decision_id, Number(billing.rate)], [decision.decision_id, 35]);
+  assert.equal((await pg.query('SELECT count(*)::int n FROM ping_call_billing_events WHERE parent_call_sid=$1', [sid])).rows[0].n, 1);
+  assert.equal((await pg.query(`SELECT active_call_sid FROM agent_availability WHERE agent_id='agent_x'`)).rows[0].active_call_sid, sid);
+});
+
+test('dial-result fast rejects a generic matched call on dial failure', async t => {
+  const { state, sid } = await genericScenario(t);
+  const before = state.rpcs.length;
+  const result = await request('/twilio/dial-result', { CallSid: sid, DialCallStatus: 'no-answer' },
+    { inboundCallId: 'inbound_calls-1', tried: 'agent_x', attemptId: 'telephony_call_attempts-1', agentId: 'agent_x' });
+  assert.equal(result.body, '<?xml version="1.0" encoding="UTF-8"?><Response><Reject reason="busy"/></Response>');
+  assert.equal(state.tables.inbound_calls[0].status, 'rejected');
+  assert.ok(state.tables.telephony_events.some(e => e.event === 'ping_fast_reject' && e.payload.reason === 'dial_failed'));
+  assert.ok(!state.rpcs.slice(before).some(name => /claim_call_agent|claim_customer_call_agent/.test(name)), 'no reroute');
+});
+
+test('a generic match with no free eligible agent fast rejects with busy', async t => {
+  const { state, voice } = await genericScenario(t, { busy: true });
+  assert.equal(voice.body, '<?xml version="1.0" encoding="UTF-8"?><Response><Reject reason="busy"/></Response>');
+  const [call] = state.tables.inbound_calls;
+  assert.deepEqual([call.status, call.routed_agent_id, call.vendor_metadata.ping_generic_matched], ['rejected', null, true]);
+  const reject = state.tables.telephony_events.find(e => e.event === 'ping_fast_reject');
+  assert.equal(reject.payload.reason, 'all_eligible_busy');
+});
+
+test('with PING_PLATFORM_ENABLED off the same generic decision falls through untouched', async t => {
+  const { state, voice } = await genericScenario(t, { flag: false });
+  assert.match(voice.body, /<Identity>a<\/Identity>/, 'existing round robin path');
+  assert.ok(!state.rpcs.some(name => name.startsWith('ping_')), state.rpcs.join());
+  assert.equal(state.tables.inbound_calls[0].vendor_metadata.ping_generic_matched, undefined);
 });
