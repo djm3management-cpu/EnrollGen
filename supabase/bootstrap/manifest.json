@@ -904,6 +904,10 @@
       "sha256": "3bcb62c05c47d0c3ecb216b4a9fbfb6302711b00926066a77892e7478defcb48"
     },
     {
+      "file": "sql/m179.sql",
+      "sha256": "497de442216163c15f3acf399a9ef32d3a367b7c9cc36373873d42fff3ce03aa"
+    },
+    {
       "file": "sql/seal.sql",
       "source": "Fresh-install baseline",
       "sha256": "2e680a3828aeb7af574962e3e57b9c74873837215198d867017d88638f0a4549"

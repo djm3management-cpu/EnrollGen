@@ -61407,6 +61407,19 @@
     },
     {
       "schema": "public",
+      "name": "ping_operator_scorecard",
+      "arguments": "p_from timestamp with time zone, p_to timestamp with time zone, p_group text[]",
+      "result": "SETOF jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_operator_scorecard(p_from timestamp with time zone, p_to timestamp with time zone, p_group text[])\n RETURNS SETOF jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n RETURN QUERY SELECT * FROM public.ping_scorecard_rows(NULL,p_from,p_to,p_group,true);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "ping_phone_hash",
       "arguments": "p_phone text",
       "result": "text",
@@ -61472,6 +61485,58 @@
     },
     {
       "schema": "public",
+      "name": "ping_scorecard",
+      "arguments": "p_tenant uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[]",
+      "result": "SETOF jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_scorecard(p_tenant uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[])\n RETURNS SETOF jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n IF p_tenant IS NULL THEN RAISE EXCEPTION 'Scorecard tenant required'; END IF;\n RETURN QUERY SELECT * FROM public.ping_scorecard_rows(p_tenant,p_from,p_to,p_group,false);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_scorecard_rows",
+      "arguments": "p_tenant uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[], p_operator boolean",
+      "result": "SETOF jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_scorecard_rows(p_tenant uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[], p_operator boolean)\n RETURNS SETOF jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE g text[]:=coalesce(p_group,'{}'::text[]);\n  allowed text[]:=ARRAY['source','sub_id','campaign','state','day'];\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCORECARD_ENABLED') THEN RAISE EXCEPTION 'Ping scorecard disabled'; END IF;\n IF p_operator THEN allowed:=allowed||ARRAY['buyer_tenant'];\n ELSIF p_tenant IS NULL THEN RAISE EXCEPTION 'Scorecard tenant required'; END IF;\n IF p_from IS NULL OR p_to IS NULL OR p_to<=p_from THEN RAISE EXCEPTION 'Invalid scorecard window'; END IF;\n IF EXISTS(SELECT 1 FROM unnest(g) x WHERE x IS NULL OR NOT x=ANY(allowed)) THEN\n  RAISE EXCEPTION 'Unknown scorecard group'; END IF;\n RETURN QUERY\n WITH base AS (\n   SELECT d.id,d.tenant_id,d.source_id,d.campaign_id,d.received_at,d.caller_state,d.publisher_sub_id,\n     d.available,d.reason,d.rule_trace,d.engine,d.matched_call_sid\n   FROM ping_decisions d\n   WHERE (p_operator AND p_tenant IS NULL OR d.tenant_id=p_tenant)\n     AND d.received_at>=p_from AND d.received_at<p_to\n     AND d.engine IN ('generic','exchange_eval','exchange')\n ), zones AS (\n   SELECT t.tenant_id,public.ping_tenant_zone(t.tenant_id) AS zone FROM (SELECT DISTINCT tenant_id FROM base) t\n ), facts AS (\n   SELECT\n     CASE WHEN 'buyer_tenant'=ANY(g) THEN b.tenant_id END AS k_tenant,\n     CASE WHEN 'source'=ANY(g) THEN b.source_id END AS k_source,\n     CASE WHEN 'sub_id'=ANY(g) THEN b.publisher_sub_id END AS k_sub,\n     CASE WHEN 'campaign'=ANY(g) THEN b.campaign_id END AS k_campaign,\n     CASE WHEN 'state'=ANY(g) THEN b.caller_state END AS k_state,\n     CASE WHEN 'day'=ANY(g) THEN (b.received_at AT TIME ZONE z.zone)::date END AS k_day,\n     b.engine IN ('generic','exchange_eval') AS is_ping,\n     b.available,b.reason,\n     b.engine='exchange' AND b.available AND NOT b.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb AS is_win,\n     b.engine IN ('generic','exchange_eval')\n       AND b.rule_trace @> '[{\"rule\":\"existing_client_retention\",\"result\":\"hit\"}]'::jsonb AS is_retention,\n     b.engine IN ('generic','exchange') AND b.matched_call_sid IS NOT NULL AS is_arrival,\n     i.answered_agent_id IS NOT NULL AS is_connect,\n     coalesce(bill.finalized_at IS NOT NULL AND bill.billable_seconds>=bill.billable_threshold_seconds,false) AS is_billable,\n     coalesce(r.app_written,false) AS is_app,\n     coalesce(r.call_outcome='enrolled' AND r.is_test_enrollment IS NOT TRUE,false) AS is_enrolled,\n     bill.rate,rt.open_returns,rt.credited_returns\n   FROM base b JOIN zones z ON z.tenant_id=b.tenant_id\n   LEFT JOIN ping_call_billing bill ON b.engine IN ('generic','exchange') AND b.matched_call_sid IS NOT NULL\n     AND bill.decision_id=b.id AND bill.tenant_id=b.tenant_id\n   LEFT JOIN LATERAL (SELECT x.answered_agent_id,x.call_record_id FROM inbound_calls x\n     WHERE b.engine IN ('generic','exchange') AND b.matched_call_sid IS NOT NULL\n       AND x.twilio_call_sid=b.matched_call_sid AND x.tenant_id=b.tenant_id\n     ORDER BY x.created_at,x.id LIMIT 1) i ON true\n   LEFT JOIN call_records r ON r.id=i.call_record_id AND r.tenant_id=b.tenant_id\n   LEFT JOIN LATERAL (SELECT count(*) FILTER (WHERE x.status IN ('open','submitted')) AS open_returns,\n       count(*) FILTER (WHERE x.status='credited') AS credited_returns\n     FROM ping_returns x WHERE x.billing_parent_call_sid=bill.parent_call_sid AND x.tenant_id=b.tenant_id) rt ON true\n ), agg AS (\n   SELECT k_tenant,k_source,k_sub,k_campaign,k_state,k_day,\n     count(*) FILTER (WHERE is_ping) AS pings,\n     count(*) FILTER (WHERE is_ping AND available) AS accepts,\n     count(*) FILTER (WHERE is_win) AS wins,\n     count(*) FILTER (WHERE is_arrival) AS arrivals,\n     count(*) FILTER (WHERE is_arrival AND is_connect) AS connects,\n     count(*) FILTER (WHERE is_arrival AND is_billable) AS billable,\n     coalesce(sum(rate) FILTER (WHERE is_arrival AND is_billable),0)::numeric AS cost,\n     count(*) FILTER (WHERE is_arrival AND is_app) AS apps,\n     count(*) FILTER (WHERE is_arrival AND is_enrolled) AS enrollments,\n     coalesce(sum(open_returns) FILTER (WHERE is_arrival),0)::bigint AS returns_open,\n     coalesce(sum(credited_returns) FILTER (WHERE is_arrival),0)::bigint AS returns_credited,\n     count(*) FILTER (WHERE is_retention) AS retention_hits\n   FROM facts GROUP BY k_tenant,k_source,k_sub,k_campaign,k_state,k_day\n ), rej AS (\n   SELECT k_tenant,k_source,k_sub,k_campaign,k_state,k_day,jsonb_object_agg(reason,n) AS obj\n   FROM (SELECT k_tenant,k_source,k_sub,k_campaign,k_state,k_day,reason,count(*) AS n FROM facts\n     WHERE is_ping AND NOT available GROUP BY k_tenant,k_source,k_sub,k_campaign,k_state,k_day,reason) x\n   GROUP BY k_tenant,k_source,k_sub,k_campaign,k_state,k_day\n )\n SELECT\n   CASE WHEN 'buyer_tenant'=ANY(g) THEN jsonb_build_object('buyer_tenant',a.k_tenant) ELSE '{}'::jsonb END\n   ||CASE WHEN 'source'=ANY(g) THEN jsonb_build_object('source',a.k_source) ELSE '{}'::jsonb END\n   ||CASE WHEN 'sub_id'=ANY(g) THEN jsonb_build_object('sub_id',a.k_sub) ELSE '{}'::jsonb END\n   ||CASE WHEN 'campaign'=ANY(g) THEN jsonb_build_object('campaign',a.k_campaign) ELSE '{}'::jsonb END\n   ||CASE WHEN 'state'=ANY(g) THEN jsonb_build_object('state',a.k_state) ELSE '{}'::jsonb END\n   ||CASE WHEN 'day'=ANY(g) THEN jsonb_build_object('day',a.k_day) ELSE '{}'::jsonb END\n   ||jsonb_build_object('pings',a.pings,'accepts',a.accepts,\n     'accept_rate',CASE WHEN a.pings>0 THEN round(a.accepts::numeric/a.pings,4) END,\n     'rejects_by_reason',coalesce(rj.obj,'{}'::jsonb),'exchange_wins',a.wins,\n     'arrivals',a.arrivals,'connects',a.connects,'billable_calls',a.billable,'cost',a.cost,\n     'apps',a.apps,'enrollments',a.enrollments,\n     'cost_per_app',CASE WHEN a.apps>0 THEN round(a.cost/a.apps,2) END,\n     'cost_per_enrollment',CASE WHEN a.enrollments>0 THEN round(a.cost/a.enrollments,2) END,\n     'returns_open',a.returns_open,'returns_credited',a.returns_credited,'retention_hits',a.retention_hits)\n FROM agg a LEFT JOIN rej rj ON rj.k_tenant IS NOT DISTINCT FROM a.k_tenant AND rj.k_source IS NOT DISTINCT FROM a.k_source\n   AND rj.k_sub IS NOT DISTINCT FROM a.k_sub AND rj.k_campaign IS NOT DISTINCT FROM a.k_campaign\n   AND rj.k_state IS NOT DISTINCT FROM a.k_state AND rj.k_day IS NOT DISTINCT FROM a.k_day\n ORDER BY a.k_tenant::text,a.k_source::text,a.k_sub,a.k_campaign::text,a.k_state,a.k_day;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_tenant_zone",
+      "arguments": "p_tenant uuid",
+      "result": "text",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_tenant_zone(p_tenant uuid)\n RETURNS text\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE zone text;\nBEGIN\n SELECT v.staffed_hours->>'timezone' INTO zone FROM vendor_controls v WHERE v.tenant_id=p_tenant;\n IF zone IS NULL OR zone !~ '^[A-Z][A-Za-z_]+(/[A-Za-z0-9_+-]+){1,2}$' THEN RETURN 'UTC'; END IF;\n -- An unknown zone raises here and the handler falls back to UTC.\n PERFORM clock_timestamp() AT TIME ZONE zone;\n RETURN zone;\nEXCEPTION WHEN OTHERS THEN RETURN 'UTC';\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "platform_invoice_lines",
+      "arguments": "p_tenant uuid, p_month date",
+      "result": "TABLE(line_no integer, kind text, description text, quantity numeric, included_quantity numeric, charged_quantity numeric, amount numeric)",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.platform_invoice_lines(p_tenant uuid, p_month date)\n RETURNS TABLE(line_no integer, kind text, description text, quantity numeric, included_quantity numeric, charged_quantity numeric, amount numeric)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n#variable_conflict use_column\nDECLARE month_start date;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCORECARD_ENABLED') THEN RAISE EXCEPTION 'Ping scorecard disabled'; END IF;\n IF p_tenant IS NULL OR p_month IS NULL THEN RAISE EXCEPTION 'Invalid usage period'; END IF;\n month_start:=date_trunc('month',p_month)::date;\n RETURN QUERY\n SELECT k.n,k.kind,k.description,sum(e.quantity),\n   coalesce(sum(e.quantity) FILTER (WHERE e.unit_price=0),0),\n   coalesce(sum(e.quantity) FILTER (WHERE e.unit_price>0),0),\n   round(sum(e.quantity*e.unit_price),2)\n FROM (VALUES (1,'ping','Pings evaluated'),(2,'routed_call','Routed calls'),\n   (3,'screener_minute','Screener minutes'),(4,'screened_qualified','Screened qualified results')) k(n,kind,description)\n JOIN platform_usage_events e ON e.kind=k.kind AND e.tenant_id=p_tenant\n   AND e.occurred_at>=month_start::timestamp AT TIME ZONE 'UTC'\n   AND e.occurred_at<(month_start+interval '1 month')::timestamp AT TIME ZONE 'UTC'\n GROUP BY k.n,k.kind,k.description\n ORDER BY k.n;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "platform_record_usage",
       "arguments": "p_tenant uuid, p_kind text, p_source uuid, p_campaign uuid, p_ref text",
       "result": "uuid",
@@ -61495,6 +61560,19 @@
       ],
       "acl": "{postgres=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.platform_usage_append_only()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\nBEGIN RAISE EXCEPTION 'Platform usage events are append only'; END $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "platform_usage_summary",
+      "arguments": "p_tenant uuid, p_month date",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.platform_usage_summary(p_tenant uuid, p_month date)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE month_start date; result jsonb;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_SCORECARD_ENABLED') THEN RAISE EXCEPTION 'Ping scorecard disabled'; END IF;\n IF p_tenant IS NULL OR p_month IS NULL THEN RAISE EXCEPTION 'Invalid usage period'; END IF;\n month_start:=date_trunc('month',p_month)::date;\n SELECT jsonb_build_object('tenant_id',p_tenant,'month',month_start,\n   'period_start',month_start::timestamp AT TIME ZONE 'UTC',\n   'period_end',(month_start+interval '1 month')::timestamp AT TIME ZONE 'UTC',\n   'by_kind',coalesce(jsonb_object_agg(l.kind,jsonb_build_object('quantity',l.quantity,'amount',l.amount))\n     FILTER (WHERE l.kind IS NOT NULL),'{}'::jsonb),\n   'pings',coalesce(sum(l.quantity) FILTER (WHERE l.kind='ping'),0),\n   'pings_inside_allowance',coalesce(sum(l.included_quantity) FILTER (WHERE l.kind='ping'),0),\n   'overage_pings',coalesce(sum(l.charged_quantity) FILTER (WHERE l.kind='ping'),0),\n   'overage_amount',coalesce(sum(l.amount) FILTER (WHERE l.kind='ping'),0),\n   'routed_calls',coalesce(sum(l.quantity) FILTER (WHERE l.kind='routed_call'),0),\n   'routed_calls_amount',coalesce(sum(l.amount) FILTER (WHERE l.kind='routed_call'),0),\n   'screener_minutes',coalesce(sum(l.quantity) FILTER (WHERE l.kind='screener_minute'),0),\n   'screener_minutes_amount',coalesce(sum(l.amount) FILTER (WHERE l.kind='screener_minute'),0),\n   'screened_qualified',coalesce(sum(l.quantity) FILTER (WHERE l.kind='screened_qualified'),0),\n   'screened_qualified_amount',coalesce(sum(l.amount) FILTER (WHERE l.kind='screened_qualified'),0),\n   'screener_amount',coalesce(sum(l.amount) FILTER (WHERE l.kind IN ('screener_minute','screened_qualified')),0),\n   'total',coalesce(sum(l.amount),0))\n INTO result FROM public.platform_invoice_lines(p_tenant,month_start) l;\n RETURN result;\nEND $function$\n"
     },
     {
       "schema": "public",

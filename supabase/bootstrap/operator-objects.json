@@ -1122,6 +1122,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_operator_scorecard",
+      "arguments": "p_from timestamp with time zone, p_to timestamp with time zone, p_group text[]"
+    },
+    {
+      "schema": "public",
       "name": "ping_phone_hash",
       "arguments": "p_phone text"
     },
@@ -1147,6 +1152,26 @@
     },
     {
       "schema": "public",
+      "name": "ping_scorecard",
+      "arguments": "p_tenant uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[]"
+    },
+    {
+      "schema": "public",
+      "name": "ping_scorecard_rows",
+      "arguments": "p_tenant uuid, p_from timestamp with time zone, p_to timestamp with time zone, p_group text[], p_operator boolean"
+    },
+    {
+      "schema": "public",
+      "name": "ping_tenant_zone",
+      "arguments": "p_tenant uuid"
+    },
+    {
+      "schema": "public",
+      "name": "platform_invoice_lines",
+      "arguments": "p_tenant uuid, p_month date"
+    },
+    {
+      "schema": "public",
       "name": "platform_record_usage",
       "arguments": "p_tenant uuid, p_kind text, p_source uuid, p_campaign uuid, p_ref text"
     },
@@ -1154,6 +1179,11 @@
       "schema": "public",
       "name": "platform_usage_append_only",
       "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "platform_usage_summary",
+      "arguments": "p_tenant uuid, p_month date"
     },
     {
       "schema": "public",
