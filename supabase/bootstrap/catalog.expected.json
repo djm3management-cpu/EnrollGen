@@ -110,6 +110,15 @@
     },
     {
       "schema": "public",
+      "name": "agent_campaign_carriers",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "agent_coaching",
       "kind": "r",
       "owner": "postgres",
@@ -1277,6 +1286,33 @@
     {
       "schema": "public",
       "name": "pii_access_log",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "ping_campaigns",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "ping_decisions",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "ping_reservations",
       "kind": "r",
       "owner": "postgres",
       "rls": true,
@@ -2754,6 +2790,105 @@
       "identity": "",
       "generated": "",
       "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "tenant_id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "campaign_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "plan_year",
+      "position": 3,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_id",
+      "position": 4,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "state",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "carrier",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "enabled",
+      "position": 7,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "true"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "updated_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "updated_by",
+      "position": 9,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
     },
     {
       "schema": "public",
@@ -18729,6 +18864,600 @@
     },
     {
       "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "source_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "name",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "product_line",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "active",
+      "position": 6,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "true"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "engine_mode",
+      "position": 7,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'legacy'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "allowed_states",
+      "position": 8,
+      "type": "text[]",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::text[]"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "required_carriers",
+      "position": 9,
+      "type": "text[]",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::text[]"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "critical_carriers",
+      "position": 10,
+      "type": "text[]",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'{}'::text[]"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "plan_year",
+      "position": 11,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "pricing_model",
+      "position": 12,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'per_call'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "rate",
+      "position": 13,
+      "type": "numeric(10,2)",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "billable_seconds",
+      "position": 14,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "90"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "reservation_ttl_seconds",
+      "position": 15,
+      "type": "integer",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "30"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "cooldown_same_source_days",
+      "position": 16,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "cooldown_any_source_days",
+      "position": 17,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "repeat_shopper_threshold",
+      "position": 18,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "repeat_shopper_window_days",
+      "position": 19,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "daily_budget_calls",
+      "position": 20,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "screener_mode",
+      "position": 21,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'off'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "retention_mode",
+      "position": 22,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'route_owner'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "staffed_hours_override",
+      "position": 23,
+      "type": "jsonb",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "created_at",
+      "position": 24,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "updated_at",
+      "position": 25,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "source_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "campaign_id",
+      "position": 4,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "received_at",
+      "position": 5,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "latency_ms",
+      "position": 6,
+      "type": "integer",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "caller_phone",
+      "position": 7,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "caller_state",
+      "position": 8,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "caller_zip",
+      "position": 9,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "vendor_call_id",
+      "position": 10,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "publisher_sub_id",
+      "position": 11,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "consent_cert_id",
+      "position": 12,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "t65_flag",
+      "position": 13,
+      "type": "boolean",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "available",
+      "position": 14,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "reason",
+      "position": 15,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "agent_id",
+      "position": 16,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "price",
+      "position": 17,
+      "type": "numeric(10,2)",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "rule_trace",
+      "position": 18,
+      "type": "jsonb",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'[]'::jsonb"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "engine",
+      "position": 19,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "matched_call_sid",
+      "position": 20,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "campaign_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "reservation_key",
+      "position": 4,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "caller_state",
+      "position": 5,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "agent_id",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "expires_at",
+      "position": 7,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "created_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "consumed_call_sid",
+      "position": 9,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
       "relation": "pipeline_stages",
       "name": "id",
       "position": 1,
@@ -31295,6 +32024,118 @@
     },
     {
       "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "agent_coaching",
       "grantor": "postgres",
       "grantee": "postgres",
@@ -44512,6 +45353,342 @@
     {
       "schema": "public",
       "relation": "pii_access_log",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
@@ -55137,7 +56314,7 @@
         "search_path=pg_catalog, public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.configure_operational_profile(p_summary jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; previous jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Operator required' USING ERRCODE='42501'; END IF;\n IF jsonb_typeof(p_summary)<>'object' OR EXISTS(SELECT 1 FROM jsonb_each(p_summary) WHERE key NOT IN ('alert_audit_failures','alert_delivery_retry_seconds','alert_evaluation_seconds','alert_exhausted_jobs','alert_lease_conflicts','alert_paid_budget_percent','alert_provider_error_percent','alert_provider_minimum_requests','alert_purge_failures','alert_queue_age_seconds','alert_queue_depth','alert_rate_rejections','alert_routing_anomalies','alert_secret_review_days','alert_subject_denials','alert_window_seconds','approved_retention_overrides','feature_consumer_lifecycle_enabled','feature_post_call_coaching_enabled','feature_client_recap_enabled','feature_supervisor_whisper_enabled','feature_supervisor_floor_enabled','feature_supervisor_listen_enabled','feature_reshop_list_enabled','feature_conference_calling_enabled','feature_conversely_upload_enabled','feature_daily_verse_enabled','feature_ghl_enabled','feature_ix_report_enabled','feature_ix_upload_enabled','feature_operational_email_enabled','feature_paragon_enabled','feature_paragon_state_routing_enabled','feature_retention_purge_enabled','feature_scoring_enabled','feature_stripe_billing_enabled','feature_transcript_auto_recovery_enabled','feature_transcript_gap_fill_enabled','retention_contact_review_years','retention_enrollment_recording_years','retention_enrollment_transcript_years','retention_enrollment_years','retention_evidence_audit_years','retention_marketing_recording_years','retention_marketing_transcript_years','retention_operational_days','retention_reduced_marketing_rule','retention_scope_of_appointment_years','retention_service_call_years','retention_text_consent_years') OR jsonb_typeof(value) NOT IN ('number','boolean')) THEN RAISE EXCEPTION 'Invalid operational profile'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n SELECT summary INTO previous FROM public.operational_configuration WHERE tenant_id=tenant FOR UPDATE;\n IF previous IS NOT DISTINCT FROM p_summary THEN RETURN; END IF;\n INSERT INTO public.operational_configuration VALUES(tenant,p_summary) ON CONFLICT(tenant_id) DO UPDATE SET summary=excluded.summary;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(gen_random_uuid(),'service:deployment_operator',tenant,'operator_operational_profile','operational_configuration',tenant::text,'succeeded',coalesce(previous,'{}'),p_summary);\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.configure_operational_profile(p_summary jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE tenant uuid; previous jsonb;\nBEGIN\n IF current_setting('role',true)<>'service_role' THEN RAISE EXCEPTION 'Operator required' USING ERRCODE='42501'; END IF;\n IF jsonb_typeof(p_summary)<>'object' OR EXISTS(SELECT 1 FROM jsonb_each(p_summary) WHERE key NOT IN ('alert_audit_failures','alert_delivery_retry_seconds','alert_evaluation_seconds','alert_exhausted_jobs','alert_lease_conflicts','alert_paid_budget_percent','alert_provider_error_percent','alert_provider_minimum_requests','alert_purge_failures','alert_queue_age_seconds','alert_queue_depth','alert_rate_rejections','alert_routing_anomalies','alert_secret_review_days','alert_subject_denials','alert_window_seconds','approved_retention_overrides','feature_consumer_lifecycle_enabled','feature_post_call_coaching_enabled','feature_client_recap_enabled','feature_supervisor_whisper_enabled','feature_supervisor_floor_enabled','feature_supervisor_listen_enabled','feature_reshop_list_enabled','feature_ping_platform_enabled','feature_ping_shadow_enabled','feature_ping_retention_alerts_enabled','feature_ping_scorecard_enabled','feature_ping_screener_enabled','feature_ping_exchange_enabled','feature_conference_calling_enabled','feature_conversely_upload_enabled','feature_daily_verse_enabled','feature_ghl_enabled','feature_ix_report_enabled','feature_ix_upload_enabled','feature_operational_email_enabled','feature_paragon_enabled','feature_paragon_state_routing_enabled','feature_retention_purge_enabled','feature_scoring_enabled','feature_stripe_billing_enabled','feature_transcript_auto_recovery_enabled','feature_transcript_gap_fill_enabled','retention_contact_review_years','retention_enrollment_recording_years','retention_enrollment_transcript_years','retention_enrollment_years','retention_evidence_audit_years','retention_marketing_recording_years','retention_marketing_transcript_years','retention_operational_days','retention_reduced_marketing_rule','retention_scope_of_appointment_years','retention_service_call_years','retention_text_consent_years') OR jsonb_typeof(value) NOT IN ('number','boolean')) THEN RAISE EXCEPTION 'Invalid operational profile'; END IF;\n SELECT tenant_id INTO tenant FROM public.deployment_settings WHERE singleton;\n SELECT summary INTO previous FROM public.operational_configuration WHERE tenant_id=tenant FOR UPDATE;\n IF previous IS NOT DISTINCT FROM p_summary THEN RETURN; END IF;\n INSERT INTO public.operational_configuration VALUES(tenant,p_summary) ON CONFLICT(tenant_id) DO UPDATE SET summary=excluded.summary;\n BEGIN\n INSERT INTO public.admin_action_log(request_id,actor_id,tenant_id,action,target_type,target_id,result,before_summary,after_summary)\n VALUES(gen_random_uuid(),'service:deployment_operator',tenant,'operator_operational_profile','operational_configuration',tenant::text,'succeeded',coalesce(previous,'{}'),p_summary);\n EXCEPTION WHEN others THEN RAISE EXCEPTION 'Administrator audit unavailable' USING ERRCODE='P1611'; END;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -57049,6 +58226,45 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.pii_blind_index(p_value text)\n RETURNS text\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\n  SELECT CASE\n    WHEN p_value IS NULL OR btrim(p_value) = '' THEN NULL\n    ELSE encode(extensions.hmac(convert_to(lower(btrim(p_value)), 'UTF8'), pii_vault.blind_index_key(), 'sha256'), 'hex')\n  END;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_agent_tier",
+      "arguments": "p_agent_id text, p_state text, p_campaign_id uuid",
+      "result": "text",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_agent_tier(p_agent_id text, p_state text, p_campaign_id uuid)\n RETURNS text\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  WITH cfg AS (SELECT * FROM ping_campaigns WHERE id=p_campaign_id),\n  matrix AS (SELECT e.carrier,e.enabled FROM agent_campaign_carriers e\n    JOIN tenant_agents a ON a.id=e.agent_id\n    JOIN cfg ON cfg.id=e.campaign_id AND cfg.plan_year=e.plan_year AND cfg.tenant_id=e.tenant_id\n    WHERE e.state=p_state AND a.agent_slug=p_agent_id AND a.is_active AND a.tenant_id=cfg.tenant_id),\n  missing AS (SELECT c.carrier FROM cfg CROSS JOIN LATERAL unnest(cfg.required_carriers) c(carrier)\n    WHERE NOT EXISTS (SELECT 1 FROM matrix m WHERE m.enabled AND m.carrier=c.carrier))\n  SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM cfg) OR NOT EXISTS(SELECT 1 FROM matrix) THEN 'ineligible'\n    WHEN EXISTS(SELECT 1 FROM missing m CROSS JOIN cfg WHERE m.carrier=ANY(cfg.critical_carriers)) THEN 'ineligible'\n    WHEN EXISTS(SELECT 1 FROM missing) THEN 'partial' ELSE 'full' END;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_decide",
+      "arguments": "p_key_hash text, p_campaign text, p_payload jsonb, p_engine text",
+      "result": "jsonb",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide(p_key_hash text, p_campaign text, p_payload jsonb, p_engine text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; camp ping_campaigns; ctl vendor_controls;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); shadow boolean:=p_engine='shadow';\n  phone text; state_code text:=''; call_id text; zip text; sub_id text; consent text; t65 boolean;\n  routing boolean; valid boolean:=true; key text; campaign_ref text:=nullif(trim(p_campaign),'');\n  existing ping_reservations; selected record; eligible_count integer:=0; committed ping_decisions;\n  decision text; accepted boolean:=false; trace jsonb:='[]'::jsonb; gate_at timestamptz;\n  price numeric; decision_id uuid; rule text;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_engine IS NULL OR p_engine NOT IN ('generic','shadow') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n\n  BEGIN\n    IF jsonb_typeof(payload)='object' THEN\n      phone:=nullif(trim(payload->>'phone'),'');\n      state_code:=upper(trim(coalesce(payload->>'state','')));\n      call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n      zip:=nullif(trim(payload->>'zip'),'');\n      sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n      consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n      valid:=(phone IS NULL OR phone ~ '^\\+[1-9][0-9]{7,14}$')\n        AND (zip IS NULL OR zip ~ '^[0-9]{5}$')\n        AND (payload->'t65' IS NULL OR jsonb_typeof(payload->'t65') IN ('boolean','null'));\n      IF jsonb_typeof(payload->'t65')='boolean' THEN t65:=(payload->>'t65')::boolean; END IF;\n    ELSE valid:=false; END IF;\n    routing:=coalesce(payload->'routing_enabled'='true'::jsonb,false);\n    key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id\n      WHEN phone IS NOT NULL THEN 'phone:'||left(phone,32) ELSE NULL END;\n\n    -- Campaign: explicit id or name, else the source's single active campaign.\n    IF campaign_ref IS NOT NULL THEN\n      SELECT * INTO camp FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id\n        AND (id::text=campaign_ref OR name=campaign_ref) ORDER BY (id::text=campaign_ref) DESC LIMIT 1;\n    ELSIF (SELECT count(*) FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active)=1 THEN\n      SELECT * INTO camp FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active;\n    END IF;\n    routing:=routing AND (camp.id IS NULL OR camp.engine_mode=p_engine);\n    SELECT * INTO ctl FROM vendor_controls WHERE tenant_id=src.tenant_id;\n\n    -- Serialize a source's decisions, as paragon_ping does.\n    PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||src.id::text,0));\n    gate_at:=clock_timestamp();\n    IF NOT shadow THEN DELETE FROM ping_reservations WHERE expires_at<clock_timestamp()-interval '1 day'; END IF;\n\n    IF NOT routing THEN decision:='routing_disabled';\n    ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','routing_disabled','result','pass'));\n      IF NOT valid THEN decision:='invalid_payload';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','invalid_payload','result','pass'));\n        IF ctl.tenant_id IS NULL OR ctl.vendor_pause THEN decision:='source_paused';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','source_paused','result','pass')); END IF;\n      END IF;\n    END IF;\n\n    -- The 30 second accepted commitment: a re-ping for the same identity and\n    -- state replays the committed decision without re-checking hours.\n    IF decision IS NULL AND camp.id IS NOT NULL THEN\n      SELECT * INTO committed FROM ping_decisions d WHERE d.source_id=src.id AND d.campaign_id=camp.id\n        AND d.engine=p_engine AND d.available AND d.matched_call_sid IS NULL\n        AND d.received_at+interval '30 seconds'>=gate_at AND d.caller_state=state_code\n        AND ((call_id IS NOT NULL AND d.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND d.caller_phone=phone))\n        AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n        ORDER BY d.received_at DESC LIMIT 1;\n      IF committed.id IS NOT NULL THEN\n        decision:=committed.reason; accepted:=true;\n        SELECT committed.agent_id AS agent_id,NULL::text AS tier INTO selected;\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','commitment_replay','result','hit','decision_id',committed.id));\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF NOT ping_hours_open(coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at) THEN decision:='outside_staffed_hours';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','outside_staffed_hours','result','pass'));\n        IF camp.id IS NULL OR NOT camp.active THEN decision:='campaign_inactive';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','campaign_inactive','result','pass'));\n          IF state_code='' OR NOT state_code=ANY(camp.allowed_states) THEN decision:='state_not_allowed';\n          ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','state_not_allowed','result','pass'));\n            IF key IS NULL THEN decision:='missing_call_identity';\n            ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','missing_call_identity','result','pass')); END IF;\n          END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      -- Rules 8 to 12 are S3 filter rules; evaluated in order as no-ops.\n      FOREACH rule IN ARRAY ARRAY['existing_client_retention','cooldown_same_source','cooldown_any_source','repeat_shopper','daily_budget_reached'] LOOP\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule',rule,'result','skipped'));\n      END LOOP;\n\n      PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||camp.id::text||key,0));\n      IF shadow THEN SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key;\n      ELSE SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key FOR UPDATE; END IF;\n      IF existing.id IS NOT NULL AND existing.expires_at>clock_timestamp()\n        AND existing.consumed_call_sid IS NULL AND existing.caller_state=state_code\n        AND EXISTS(SELECT 1 FROM agent_availability a WHERE a.agent_id=existing.agent_id\n          AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)) THEN\n        SELECT existing.agent_id AS agent_id,public.ping_agent_tier(existing.agent_id,state_code,camp.id) AS tier INTO selected;\n        IF selected.tier NOT IN ('full','partial') THEN SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','reservation_reuse','result','hit')); END IF;\n      END IF;\n      IF selected.agent_id IS NULL THEN\n        IF NOT shadow THEN DELETE FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key; END IF;\n        SELECT count(*) INTO eligible_count FROM agent_availability a\n          WHERE public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial');\n        -- Agents are shared across engines: a live legacy reservation also holds the agent.\n        IF shadow THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            LIMIT 1;\n        ELSE\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            FOR UPDATE OF a SKIP LOCKED LIMIT 1;\n          IF selected.agent_id IS NOT NULL THEN\n            INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)\n              VALUES(src.tenant_id,camp.id,key,state_code,selected.agent_id,\n                clock_timestamp()+make_interval(secs=>camp.reservation_ttl_seconds));\n          END IF;\n        END IF;\n      END IF;\n      IF selected.agent_id IS NOT NULL THEN\n        accepted:=true;\n        decision:=CASE selected.tier WHEN 'full' THEN 'accepted_full' ELSE 'accepted_partial' END;\n      ELSE\n        decision:=CASE WHEN eligible_count>0 THEN 'all_eligible_busy' ELSE 'no_eligible_agent' END;\n      END IF;\n    END IF;\n    IF accepted THEN price:=CASE camp.pricing_model WHEN 'free' THEN 0 ELSE camp.rate END; END IF;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule',decision,'result',CASE WHEN accepted THEN 'accept' ELSE 'reject' END));\n  EXCEPTION WHEN OTHERS THEN\n    -- Publisher pings fail closed. The subtransaction rolled back any reservation.\n    decision:='error_rejected'; accepted:=false; price:=NULL;\n    SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule','error_rejected','result','reject','sqlstate',SQLSTATE));\n  END;\n\n  INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n    vendor_call_id,publisher_sub_id,consent_cert_id,t65_flag,available,reason,agent_id,price,rule_trace,engine)\n  VALUES(src.tenant_id,src.id,camp.id,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,\n    left(phone,32),nullif(left(state_code,8),''),CASE WHEN zip ~ '^[0-9]{5}$' THEN zip END,\n    call_id,sub_id,consent,t65,accepted,decision,selected.agent_id,price,trace,p_engine)\n  RETURNING id INTO decision_id;\n  RETURN jsonb_build_object('authorized',true,'decision_id',decision_id,'available',accepted,'reason',decision,\n    'agent_id',selected.agent_id,'price',price,\n    'ttl_seconds',CASE WHEN accepted THEN camp.reservation_ttl_seconds END);\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_hours_open",
+      "arguments": "p_hours jsonb, p_at timestamp with time zone",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_hours_open(p_hours jsonb, p_at timestamp with time zone)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'public'\nAS $function$\nDECLARE local_at timestamp; day_config jsonb; opens time; closes time;\nBEGIN\n IF p_hours IS NULL OR p_at IS NULL OR p_hours->>'timezone' IS DISTINCT FROM 'America/New_York' THEN RETURN false; END IF;\n local_at:=p_at AT TIME ZONE 'America/New_York';\n day_config:=p_hours->'days'->((ARRAY['sun','mon','tue','wed','thu','fri','sat'])[extract(dow FROM local_at)::integer+1]);\n IF day_config->>'enabled' IS DISTINCT FROM 'true' THEN RETURN false; END IF;\n IF coalesce(day_config->>'start','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'\n OR coalesce(day_config->>'end','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$' THEN RETURN false; END IF;\n opens:=(day_config->>'start')::time; closes:=(day_config->>'end')::time;\n RETURN opens<closes AND local_at::time>=opens AND local_at::time<closes;\nEXCEPTION WHEN OTHERS THEN RETURN false;\nEND; $function$\n"
     },
     {
       "schema": "public",
@@ -59314,6 +60530,19 @@
     },
     {
       "schema": "public",
+      "name": "touch_ping_updated_at",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.touch_ping_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$ BEGIN NEW.updated_at=clock_timestamp(); RETURN NEW; END $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "touch_vendor_eligibility",
       "arguments": "",
       "result": "trigger",
@@ -59862,6 +61091,42 @@
       "relation": "agent_availability_log",
       "name": "agent_availability_log_pkey",
       "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_agent_id_fkey",
+      "definition": "FOREIGN KEY (agent_id) REFERENCES tenant_agents(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_carrier_check",
+      "definition": "CHECK ((carrier ~ '^[a-z0-9_]{1,64}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_pkey",
+      "definition": "PRIMARY KEY (campaign_id, plan_year, agent_id, state, carrier)"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_state_check",
+      "definition": "CHECK ((state ~ '^[A-Z]{2}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
     },
     {
       "schema": "public",
@@ -62697,6 +63962,204 @@
     },
     {
       "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_billable_seconds_check",
+      "definition": "CHECK ((billable_seconds >= 0))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_cooldown_any_source_days_check",
+      "definition": "CHECK (((cooldown_any_source_days IS NULL) OR (cooldown_any_source_days >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_cooldown_same_source_days_check",
+      "definition": "CHECK (((cooldown_same_source_days IS NULL) OR (cooldown_same_source_days >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_daily_budget_calls_check",
+      "definition": "CHECK (((daily_budget_calls IS NULL) OR (daily_budget_calls >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_engine_mode_check",
+      "definition": "CHECK ((engine_mode = ANY (ARRAY['legacy'::text, 'shadow'::text, 'generic'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_name_check",
+      "definition": "CHECK (((length(name) >= 1) AND (length(name) <= 128)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_pricing_model_check",
+      "definition": "CHECK ((pricing_model = ANY (ARRAY['per_call'::text, 'per_app'::text, 'free'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_product_line_check",
+      "definition": "CHECK ((product_line = ANY (ARRAY['ma'::text, 'medsupp'::text, 'u65'::text, 'aca'::text, 'annuity'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_rate_check",
+      "definition": "CHECK (((rate IS NULL) OR (rate >= (0)::numeric)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_repeat_shopper_threshold_check",
+      "definition": "CHECK (((repeat_shopper_threshold IS NULL) OR (repeat_shopper_threshold >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_repeat_shopper_window_days_check",
+      "definition": "CHECK (((repeat_shopper_window_days IS NULL) OR (repeat_shopper_window_days >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_reservation_ttl_seconds_check",
+      "definition": "CHECK (((reservation_ttl_seconds >= 5) AND (reservation_ttl_seconds <= 120)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_retention_mode_check",
+      "definition": "CHECK ((retention_mode = ANY (ARRAY['route_owner'::text, 'reject_and_alert'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_screener_mode_check",
+      "definition": "CHECK ((screener_mode = ANY (ARRAY['off'::text, 'inbound_only'::text, 'always'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_staffed_hours_override_check",
+      "definition": "CHECK (((staffed_hours_override IS NULL) OR (jsonb_typeof(staffed_hours_override) = 'object'::text)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_tenant_id_source_id_name_key",
+      "definition": "UNIQUE (tenant_id, source_id, name)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_caller_zip_check",
+      "definition": "CHECK (((caller_zip IS NULL) OR (caller_zip ~ '^[0-9]{5}$'::text)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_check",
+      "definition": "CHECK (((NOT available) OR (reason = ANY (ARRAY['accepted_full'::text, 'accepted_partial'::text, 'accepted_retention_owner'::text, 'existing_client_retention'::text]))))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_engine_check",
+      "definition": "CHECK ((engine = ANY (ARRAY['generic'::text, 'shadow'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_latency_ms_check",
+      "definition": "CHECK (((latency_ms IS NULL) OR (latency_ms >= 0)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_reason_check",
+      "definition": "CHECK ((reason = ANY (ARRAY['routing_disabled'::text, 'invalid_payload'::text, 'source_paused'::text, 'campaign_inactive'::text, 'outside_staffed_hours'::text, 'state_not_allowed'::text, 'missing_call_identity'::text, 'existing_client_retention'::text, 'cooldown_same_source'::text, 'cooldown_any_source'::text, 'repeat_shopper'::text, 'daily_budget_reached'::text, 'no_eligible_agent'::text, 'all_eligible_busy'::text, 'accepted_full'::text, 'accepted_partial'::text, 'accepted_retention_owner'::text, 'error_rejected'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_rule_trace_check",
+      "definition": "CHECK ((jsonb_typeof(rule_trace) = 'array'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "ping_reservations_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "ping_reservations_campaign_id_reservation_key_key",
+      "definition": "UNIQUE (campaign_id, reservation_key)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "ping_reservations_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "ping_reservations_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
       "relation": "pipeline_stages",
       "name": "pipeline_stages_check",
       "definition": "CHECK ((NOT (is_won AND is_lost)))"
@@ -64502,6 +65965,18 @@
       "relation": "agent_availability_log",
       "name": "agent_availability_log_time_idx",
       "definition": "CREATE INDEX agent_availability_log_time_idx ON public.agent_availability_log USING btree (changed_at DESC, id DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_pkey",
+      "definition": "CREATE UNIQUE INDEX agent_campaign_carriers_pkey ON public.agent_campaign_carriers USING btree (campaign_id, plan_year, agent_id, state, carrier)"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_state",
+      "definition": "CREATE INDEX agent_campaign_carriers_state ON public.agent_campaign_carriers USING btree (campaign_id, plan_year, state)"
     },
     {
       "schema": "public",
@@ -66383,6 +67858,72 @@
     },
     {
       "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_pkey",
+      "definition": "CREATE UNIQUE INDEX ping_campaigns_pkey ON public.ping_campaigns USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_source_active",
+      "definition": "CREATE INDEX ping_campaigns_source_active ON public.ping_campaigns USING btree (source_id) WHERE active"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "ping_campaigns_tenant_id_source_id_name_key",
+      "definition": "CREATE UNIQUE INDEX ping_campaigns_tenant_id_source_id_name_key ON public.ping_campaigns USING btree (tenant_id, source_id, name)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decision_call_match",
+      "definition": "CREATE INDEX ping_decision_call_match ON public.ping_decisions USING btree (source_id, vendor_call_id, received_at DESC) WHERE ((vendor_call_id IS NOT NULL) AND (matched_call_sid IS NULL) AND (engine = 'generic'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decision_campaign_time",
+      "definition": "CREATE INDEX ping_decision_campaign_time ON public.ping_decisions USING btree (campaign_id, received_at DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decision_phone_match",
+      "definition": "CREATE INDEX ping_decision_phone_match ON public.ping_decisions USING btree (source_id, caller_phone, received_at DESC) WHERE ((caller_phone IS NOT NULL) AND (matched_call_sid IS NULL) AND (engine = 'generic'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_decisions",
+      "name": "ping_decisions_pkey",
+      "definition": "CREATE UNIQUE INDEX ping_decisions_pkey ON public.ping_decisions USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "ping_reservation_agent_expiry",
+      "definition": "CREATE INDEX ping_reservation_agent_expiry ON public.ping_reservations USING btree (agent_id, expires_at) WHERE (consumed_call_sid IS NULL)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "ping_reservation_expiry",
+      "definition": "CREATE INDEX ping_reservation_expiry ON public.ping_reservations USING btree (expires_at)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "ping_reservations_campaign_id_reservation_key_key",
+      "definition": "CREATE UNIQUE INDEX ping_reservations_campaign_id_reservation_key_key ON public.ping_reservations USING btree (campaign_id, reservation_key)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_reservations",
+      "name": "ping_reservations_pkey",
+      "definition": "CREATE UNIQUE INDEX ping_reservations_pkey ON public.ping_reservations USING btree (id)"
+    },
+    {
+      "schema": "public",
       "relation": "pipeline_stages",
       "name": "pipeline_stages_pkey",
       "definition": "CREATE UNIQUE INDEX pipeline_stages_pkey ON public.pipeline_stages USING btree (id)"
@@ -67431,6 +68972,13 @@
       "name": "retention_anchor_insert",
       "enabled": "O",
       "definition": "CREATE TRIGGER retention_anchor_insert BEFORE INSERT ON public.agent_availability_log FOR EACH ROW EXECUTE FUNCTION retention_anchor_insert('changed_at')"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "touch_agent_campaign_carriers",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER touch_agent_campaign_carriers BEFORE UPDATE ON public.agent_campaign_carriers FOR EACH ROW EXECUTE FUNCTION touch_ping_updated_at()"
     },
     {
       "schema": "public",
@@ -69552,6 +71100,13 @@
       "name": "retention_anchor_insert",
       "enabled": "O",
       "definition": "CREATE TRIGGER retention_anchor_insert BEFORE INSERT ON public.pii_access_log FOR EACH ROW EXECUTE FUNCTION retention_anchor_insert('timestamp')"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "touch_ping_campaigns",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER touch_ping_campaigns BEFORE UPDATE ON public.ping_campaigns FOR EACH ROW EXECUTE FUNCTION touch_ping_updated_at()"
     },
     {
       "schema": "public",

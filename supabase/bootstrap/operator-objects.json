@@ -1042,6 +1042,21 @@
     },
     {
       "schema": "public",
+      "name": "ping_agent_tier",
+      "arguments": "p_agent_id text, p_state text, p_campaign_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "ping_decide",
+      "arguments": "p_key_hash text, p_campaign text, p_payload jsonb, p_engine text"
+    },
+    {
+      "schema": "public",
+      "name": "ping_hours_open",
+      "arguments": "p_hours jsonb, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
       "name": "practice_identity",
       "arguments": "p_actor text, p_org text"
     },
@@ -1908,6 +1923,11 @@
     {
       "schema": "public",
       "name": "touch_agent_availability",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "touch_ping_updated_at",
       "arguments": ""
     },
     {
