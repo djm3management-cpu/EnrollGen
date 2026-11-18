@@ -30,6 +30,7 @@ import { voiceTokenRouter } from "./routes/voiceToken.js";
 import { voiceEventsRouter } from "./routes/voiceEvents.js";
 import { voiceOutboundRouter } from "./routes/voiceOutbound.js";
 import { vendorPingRouter } from "./routes/vendorPing.js";
+import { pingV1Router } from "./routes/pingV1.js";
 import { smsRouter } from "./routes/sms.js";
 import { handleMediaUpgrade } from "./media/mediaStream.js";
 import { handleAgentUpgrade } from "./media/agentSocket.js";
@@ -88,6 +89,8 @@ app.use(twilioVoiceRouter);
 app.use(twilioStatusRouter);
 app.use(leadsRouter);
 app.use(vendorPingRouter);
+// Generic ping platform; answers 503 unless PING_PLATFORM_ENABLED.
+app.use(await pingV1Router());
 app.use(voiceTokenRouter);
 app.use(voiceEventsRouter);
 // Keep removal/recovery for durable coach legs after disabling new admission.
