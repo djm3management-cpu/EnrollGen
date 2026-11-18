@@ -88,5 +88,5 @@ test('the spec is OpenAPI 3.1 with x-api-key auth and the documented rate limits
   assert.match(spec, /name: x-api-key/);
   assert.match(spec, /600 requests for a publisher/);
   assert.match(spec, /120 for a buyer key/);
-  assert.ok(!spec.includes('—'), 'no em dashes');
+  assert.ok(!spec.includes('\u2014'), 'no em dashes');
 });
