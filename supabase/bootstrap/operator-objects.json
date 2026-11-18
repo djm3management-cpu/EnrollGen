@@ -662,8 +662,18 @@
     },
     {
       "schema": "public",
+      "name": "exchange_lead_ping",
+      "arguments": "p_key_hash text, p_payload jsonb, p_signals jsonb"
+    },
+    {
+      "schema": "public",
       "name": "exchange_ping",
       "arguments": "p_key_hash text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "exchange_ping_signals",
+      "arguments": "p_key_hash text, p_payload jsonb, p_signals jsonb"
     },
     {
       "schema": "public",
@@ -914,6 +924,61 @@
       "schema": "public",
       "name": "is_uhc_carrier",
       "arguments": "value text"
+    },
+    {
+      "schema": "public",
+      "name": "lead_billing_immutable",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "lead_campaign_eval",
+      "arguments": "p_campaign uuid, p_fields jsonb, p_at timestamp with time zone, p_signals jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "lead_campaign_used_today",
+      "arguments": "p_campaign uuid, p_hours jsonb, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "lead_cap_scope",
+      "arguments": "p_campaign uuid, p_daily integer, p_hourly integer, p_hours jsonb, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "lead_consent_kind",
+      "arguments": "p_cert text"
+    },
+    {
+      "schema": "public",
+      "name": "lead_ping_decide",
+      "arguments": "p_key_hash text, p_campaign text, p_payload jsonb, p_signals jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "lead_ping_fields",
+      "arguments": "p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "lead_post_accept",
+      "arguments": "p_key_hash text, p_lead_ping_id uuid, p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "lead_post_fields",
+      "arguments": "p_payload jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "lead_recent_post",
+      "arguments": "p_tenant uuid, p_phone text, p_source uuid, p_since timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "lead_source_for_key",
+      "arguments": "p_key_hash text"
     },
     {
       "schema": "public",
@@ -1237,6 +1302,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_decide_signals",
+      "arguments": "p_key_hash text, p_campaign text, p_payload jsonb, p_engine text, p_signals jsonb"
+    },
+    {
+      "schema": "public",
       "name": "ping_existing_client",
       "arguments": "p_tenant uuid, p_phone text"
     },
@@ -1299,6 +1369,16 @@
       "schema": "public",
       "name": "ping_tenant_zone",
       "arguments": "p_tenant uuid"
+    },
+    {
+      "schema": "public",
+      "name": "ping_vendor_gate",
+      "arguments": "p_tenant uuid, p_signals jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "ping_vendor_signals",
+      "arguments": ""
     },
     {
       "schema": "public",

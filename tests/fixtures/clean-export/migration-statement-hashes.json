@@ -31,5 +31,8 @@
   "181_ping_eligibility_sources.sql": "08afde6adeaf1f09554fce111310666facd5a3aff905e109ef01f4aa41886a7c",
   "182_ping_rts_county_eligibility.sql": "ea5c977350a8157f53916c11f0858e446eea9b42f9bd3cabdb5c58caa7065fa3",
   "183_ping_screener.sql": "0c6806df50812d3468020f2811ee8da1733ab6642f8aee36cac09ff59e6861f8",
-  "184_ping_buyer_api_sandbox_locks.sql": "da9810c7219afb06a501cd9368779e5864a14461e59f57527f433d3398c9b815"
+  "184_ping_buyer_api_sandbox_locks.sql": "da9810c7219afb06a501cd9368779e5864a14461e59f57527f433d3398c9b815",
+  "185_ping_lead_schema.sql": "fac297e66d3fd10cd06a45b4a44ef83129e00de3636528c1f8bdc03c5c51c465",
+  "186_ping_lead_ping_post.sql": "a73bda07b60144b44d663b94e403d7263e52f028e142d513ca736e73f7c6fa45",
+  "187_ping_call_channel_vendor_signals.sql": "f4f9b0973ff6dbc49c96b16b5634adb3fc7fffabd8f7945efaf08f7375612aca"
 }
