@@ -87,6 +87,11 @@
     },
     {
       "schema": "public",
+      "name": "audit_ping_source_control",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "authorize_paragon_report",
       "arguments": "p_hash text, p_ip text"
     },
@@ -129,6 +134,11 @@
       "schema": "public",
       "name": "capture_lifecycle_purge_marker",
       "arguments": "p_table text, p_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "check_ping_source_control",
+      "arguments": ""
     },
     {
       "schema": "public",
@@ -1047,6 +1057,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_audit_append_only",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
       "name": "ping_decide",
       "arguments": "p_key_hash text, p_campaign text, p_payload jsonb, p_engine text"
     },
@@ -1809,6 +1824,11 @@
       "schema": "public",
       "name": "set_paragon_controls",
       "arguments": "p_tenant uuid, p_hours jsonb, p_cap integer, p_mode text, p_rate numeric, p_actor text"
+    },
+    {
+      "schema": "public",
+      "name": "set_ping_source_control",
+      "arguments": "p_tenant uuid, p_source uuid, p_campaign uuid, p_paused boolean, p_actor text"
     },
     {
       "schema": "public",

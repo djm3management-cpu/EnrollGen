@@ -1,4 +1,4 @@
-// Pure mirror of SQL ping_decide (migration 172). No I/O. Same rule order and
+// Pure mirror of SQL ping_decide (migrations 172 and 173). No I/O. Same rule order and
 // closed reason list as spec section 6; the paragon_ping order is kept for
 // staffed hours before campaign_inactive.
 
@@ -26,12 +26,15 @@ export const mapLegacyReason = reason => LEGACY_REASON_MAP[reason] || reason;
 const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const HHMM = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
-/** Mirror of ping_hours_open: America/New_York only, closed on any doubt. */
+// Region based IANA zone names (Area/Location), as ping_hours_open accepts from 173.
+export const IANA_ZONE = /^[A-Z][A-Za-z_]+(\/[A-Za-z0-9_+-]+){1,2}$/;
+
+/** Mirror of ping_hours_open: the hours' own IANA zone, closed on any doubt. */
 export function hoursOpen(hours, now) {
   try {
-    if (!hours || !now || hours.timezone !== 'America/New_York') return false;
+    if (!hours || !now || typeof hours.timezone !== 'string' || !IANA_ZONE.test(hours.timezone)) return false;
     const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/New_York', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      timeZone: hours.timezone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
     }).formatToParts(new Date(now)).map(part => [part.type, part.value]));
     const day = hours.days?.[DAYS[['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(parts.weekday)]];
     if (day?.enabled !== true || !HHMM.test(day.start || '') || !HHMM.test(day.end || '')) return false;

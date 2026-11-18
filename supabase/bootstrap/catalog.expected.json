@@ -1321,6 +1321,24 @@
     },
     {
       "schema": "public",
+      "name": "ping_source_control_audit",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "ping_source_controls",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "pipeline_stages",
       "kind": "r",
       "owner": "postgres",
@@ -19455,6 +19473,182 @@
       "identity": "",
       "generated": "",
       "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "control_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "tenant_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "source_id",
+      "position": 4,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "campaign_id",
+      "position": 5,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "paused",
+      "position": 6,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "operation",
+      "position": 7,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "changed_by",
+      "position": 8,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "changed_at",
+      "position": 9,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "source_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "campaign_id",
+      "position": 4,
+      "type": "uuid",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "paused",
+      "position": 5,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "false"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "changed_by",
+      "position": 6,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "changed_at",
+      "position": 7,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
     },
     {
       "schema": "public",
@@ -45696,6 +45890,230 @@
     },
     {
       "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "pipeline_stages",
       "grantor": "postgres",
       "grantee": "authenticated",
@@ -55612,7 +56030,7 @@
         "search_path=public, pg_temp"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.admit_vendor(p_key_hash text, p_route text, p_limit integer DEFAULT 600)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE result jsonb;\nBEGIN\n IF p_route NOT IN ('vendorPing','availability') THEN RAISE EXCEPTION 'Invalid vendor route'; END IF;\n IF NOT EXISTS(SELECT 1 FROM availability_consumers WHERE key_hash=p_key_hash AND active)\n AND NOT (p_route='vendorPing' AND EXISTS(SELECT 1 FROM lead_sources WHERE ping_key_hash=p_key_hash AND active AND name=deployment_vendor_name() AND type='publisher'))\n THEN RETURN jsonb_build_object('authorized',false); END IF;\n result:=consume_admission(jsonb_build_array(jsonb_build_object('key','vendor:'||p_route||':'||p_key_hash,'seconds',60,'limit',p_limit)));\n RETURN result||jsonb_build_object('authorized',true);\nEND $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.admit_vendor(p_key_hash text, p_route text, p_limit integer DEFAULT 600)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE result jsonb;\nBEGIN\n IF p_route NOT IN ('vendorPing','availability') THEN RAISE EXCEPTION 'Invalid vendor route'; END IF;\n IF NOT EXISTS(SELECT 1 FROM availability_consumers WHERE key_hash=p_key_hash AND active)\n AND NOT (p_route='vendorPing' AND EXISTS(SELECT 1 FROM lead_sources WHERE ping_key_hash=p_key_hash AND active AND name=deployment_vendor_name() AND type='publisher'))\n AND NOT (p_route='vendorPing' AND public.deployment_feature_enabled('PING_PLATFORM_ENABLED')\n   AND EXISTS(SELECT 1 FROM lead_sources WHERE ping_key_hash=p_key_hash AND active AND type IN ('publisher','aggregator')))\n THEN RETURN jsonb_build_object('authorized',false); END IF;\n result:=consume_admission(jsonb_build_array(jsonb_build_object('key','vendor:'||p_route||':'||p_key_hash,'seconds',60,'limit',p_limit)));\n RETURN result||jsonb_build_object('authorized',true);\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -55746,6 +56164,19 @@
     },
     {
       "schema": "public",
+      "name": "audit_ping_source_control",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.audit_ping_source_control()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE r ping_source_controls;\nBEGIN\n r:=CASE WHEN TG_OP='DELETE' THEN OLD ELSE NEW END;\n INSERT INTO ping_source_control_audit(control_id,tenant_id,source_id,campaign_id,paused,operation,changed_by)\n VALUES(r.id,r.tenant_id,r.source_id,r.campaign_id,r.paused,TG_OP,r.changed_by);\n RETURN NULL;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "authorize_paragon_report",
       "arguments": "p_hash text, p_ip text",
       "result": "uuid",
@@ -55860,6 +56291,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.capture_lifecycle_purge_marker(p_table text, p_id uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE r jsonb; consumer uuid; call uuid; tenant uuid;\nBEGIN\n IF current_setting('role',true)<>'service_role' OR NOT public.deployment_feature_enabled('RETENTION_PURGE_ENABLED') THEN RETURN; END IF;\n IF p_table<>ALL(ARRAY['reshop_reviews','client_recaps','call_records','inbound_calls','telephony_call_attempts','sessions','messages','message_media','call_transcripts','enrollment_intakes','policies','compliance_scorecards','compliance_scores','recording_ingestion','ghl_enrollment_deliveries','ix_uploads','conversely_submissions','transcript_chunks','intent_detections','scorecard_items','section_scores','compliance_flags','manual_transcript_gap_fills']) THEN RETURN; END IF;\n EXECUTE format('SELECT to_jsonb(t) FROM public.%I t WHERE id=$1',p_table) INTO r USING p_id;\n IF r IS NULL THEN RETURN; END IF;\n tenant:=nullif(r->>'tenant_id','')::uuid;\n consumer:=nullif(r->>'contact_id','')::uuid;\n call:=nullif(coalesce(r->>'call_record_id',r->>'call_id'),'')::uuid;\n IF p_table='call_records' THEN call:=p_id; END IF;\n IF call IS NOT NULL AND consumer IS NULL THEN SELECT contact_id,tenant_id INTO consumer,tenant FROM public.call_records WHERE id=call; END IF;\n IF p_table='message_media' THEN SELECT contact_id,tenant_id INTO consumer,tenant FROM public.messages WHERE id=(r->>'message_id')::uuid; END IF;\n IF consumer IS NULL AND nullif(r->>'session_id','') IS NOT NULL THEN SELECT contact_id,tenant_id,coalesce(call,call_record_id) INTO consumer,tenant,call FROM public.sessions WHERE id=(r->>'session_id')::uuid; END IF;\n IF consumer IS NULL AND nullif(r->>'scorecard_id','') IS NOT NULL THEN SELECT c.contact_id,c.tenant_id,c.id INTO consumer,tenant,call FROM public.compliance_scorecards s JOIN public.call_records c ON c.id=s.call_id WHERE s.id=(r->>'scorecard_id')::uuid; END IF;\n IF consumer IS NULL AND nullif(r->>'transcript_id','') IS NOT NULL THEN SELECT coalesce(c.contact_id,s.contact_id),t.tenant_id,coalesce(c.id,s.call_record_id) INTO consumer,tenant,call FROM public.call_transcripts t LEFT JOIN public.call_records c ON c.id=t.call_record_id LEFT JOIN public.sessions s ON s.id=t.session_id WHERE t.id=(r->>'transcript_id')::uuid; END IF;\n IF p_table='recording_ingestion' THEN\n  SELECT coalesce(consumer,i.contact_id,c.contact_id),coalesce(call,i.call_record_id,c.id) INTO consumer,call\n  FROM (SELECT 1) x LEFT JOIN public.inbound_calls i ON i.id=nullif(r->>'inbound_call_id','')::uuid\n  LEFT JOIN public.telephony_call_attempts a ON a.id=nullif(r->>'attempt_id','')::uuid\n  LEFT JOIN public.call_records c ON c.id=coalesce(nullif(r->>'call_record_id','')::uuid,a.call_record_id);\n  UPDATE public.retention_recording_purges SET contact_id=consumer,call_id=call,sha256=r->>'sha256' WHERE recording_id=p_id;\n END IF;\n IF consumer IS NOT NULL AND tenant IS NOT NULL THEN\n INSERT INTO public.retention_purge_items(tenant_id,contact_id,source_table,resource_id,call_id) VALUES(tenant,consumer,p_table,p_id,call) ON CONFLICT DO NOTHING;\n END IF;\n RETURN;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "check_ping_source_control",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.check_ping_source_control()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n IF NOT EXISTS(SELECT 1 FROM lead_sources WHERE id=NEW.source_id AND tenant_id=NEW.tenant_id)\n OR (NEW.campaign_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM ping_campaigns\n   WHERE id=NEW.campaign_id AND source_id=NEW.source_id AND tenant_id=NEW.tenant_id))\n THEN RAISE EXCEPTION 'Ping source control scope mismatch'; END IF;\n IF TG_OP='UPDATE' AND (NEW.tenant_id,NEW.source_id,NEW.campaign_id) IS DISTINCT FROM (OLD.tenant_id,OLD.source_id,OLD.campaign_id)\n THEN RAISE EXCEPTION 'Ping source control scope is immutable'; END IF;\n NEW.changed_at:=clock_timestamp();\n RETURN NEW;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -58242,6 +58686,19 @@
     },
     {
       "schema": "public",
+      "name": "ping_audit_append_only",
+      "arguments": "",
+      "result": "trigger",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_audit_append_only()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\nBEGIN RAISE EXCEPTION 'Ping audit is append only'; END $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "ping_decide",
       "arguments": "p_key_hash text, p_campaign text, p_payload jsonb, p_engine text",
       "result": "jsonb",
@@ -58251,7 +58708,7 @@
         "search_path=public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide(p_key_hash text, p_campaign text, p_payload jsonb, p_engine text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; camp ping_campaigns; ctl vendor_controls;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); shadow boolean:=p_engine='shadow';\n  phone text; state_code text:=''; call_id text; zip text; sub_id text; consent text; t65 boolean;\n  routing boolean; valid boolean:=true; key text; campaign_ref text:=nullif(trim(p_campaign),'');\n  existing ping_reservations; selected record; eligible_count integer:=0; committed ping_decisions;\n  decision text; accepted boolean:=false; trace jsonb:='[]'::jsonb; gate_at timestamptz;\n  price numeric; decision_id uuid; rule text;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_engine IS NULL OR p_engine NOT IN ('generic','shadow') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n\n  BEGIN\n    IF jsonb_typeof(payload)='object' THEN\n      phone:=nullif(trim(payload->>'phone'),'');\n      state_code:=upper(trim(coalesce(payload->>'state','')));\n      call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n      zip:=nullif(trim(payload->>'zip'),'');\n      sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n      consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n      valid:=(phone IS NULL OR phone ~ '^\\+[1-9][0-9]{7,14}$')\n        AND (zip IS NULL OR zip ~ '^[0-9]{5}$')\n        AND (payload->'t65' IS NULL OR jsonb_typeof(payload->'t65') IN ('boolean','null'));\n      IF jsonb_typeof(payload->'t65')='boolean' THEN t65:=(payload->>'t65')::boolean; END IF;\n    ELSE valid:=false; END IF;\n    routing:=coalesce(payload->'routing_enabled'='true'::jsonb,false);\n    key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id\n      WHEN phone IS NOT NULL THEN 'phone:'||left(phone,32) ELSE NULL END;\n\n    -- Campaign: explicit id or name, else the source's single active campaign.\n    IF campaign_ref IS NOT NULL THEN\n      SELECT * INTO camp FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id\n        AND (id::text=campaign_ref OR name=campaign_ref) ORDER BY (id::text=campaign_ref) DESC LIMIT 1;\n    ELSIF (SELECT count(*) FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active)=1 THEN\n      SELECT * INTO camp FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active;\n    END IF;\n    routing:=routing AND (camp.id IS NULL OR camp.engine_mode=p_engine);\n    SELECT * INTO ctl FROM vendor_controls WHERE tenant_id=src.tenant_id;\n\n    -- Serialize a source's decisions, as paragon_ping does.\n    PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||src.id::text,0));\n    gate_at:=clock_timestamp();\n    IF NOT shadow THEN DELETE FROM ping_reservations WHERE expires_at<clock_timestamp()-interval '1 day'; END IF;\n\n    IF NOT routing THEN decision:='routing_disabled';\n    ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','routing_disabled','result','pass'));\n      IF NOT valid THEN decision:='invalid_payload';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','invalid_payload','result','pass'));\n        IF ctl.tenant_id IS NULL OR ctl.vendor_pause THEN decision:='source_paused';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','source_paused','result','pass')); END IF;\n      END IF;\n    END IF;\n\n    -- The 30 second accepted commitment: a re-ping for the same identity and\n    -- state replays the committed decision without re-checking hours.\n    IF decision IS NULL AND camp.id IS NOT NULL THEN\n      SELECT * INTO committed FROM ping_decisions d WHERE d.source_id=src.id AND d.campaign_id=camp.id\n        AND d.engine=p_engine AND d.available AND d.matched_call_sid IS NULL\n        AND d.received_at+interval '30 seconds'>=gate_at AND d.caller_state=state_code\n        AND ((call_id IS NOT NULL AND d.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND d.caller_phone=phone))\n        AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n        ORDER BY d.received_at DESC LIMIT 1;\n      IF committed.id IS NOT NULL THEN\n        decision:=committed.reason; accepted:=true;\n        SELECT committed.agent_id AS agent_id,NULL::text AS tier INTO selected;\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','commitment_replay','result','hit','decision_id',committed.id));\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF NOT ping_hours_open(coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at) THEN decision:='outside_staffed_hours';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','outside_staffed_hours','result','pass'));\n        IF camp.id IS NULL OR NOT camp.active THEN decision:='campaign_inactive';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','campaign_inactive','result','pass'));\n          IF state_code='' OR NOT state_code=ANY(camp.allowed_states) THEN decision:='state_not_allowed';\n          ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','state_not_allowed','result','pass'));\n            IF key IS NULL THEN decision:='missing_call_identity';\n            ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','missing_call_identity','result','pass')); END IF;\n          END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      -- Rules 8 to 12 are S3 filter rules; evaluated in order as no-ops.\n      FOREACH rule IN ARRAY ARRAY['existing_client_retention','cooldown_same_source','cooldown_any_source','repeat_shopper','daily_budget_reached'] LOOP\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule',rule,'result','skipped'));\n      END LOOP;\n\n      PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||camp.id::text||key,0));\n      IF shadow THEN SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key;\n      ELSE SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key FOR UPDATE; END IF;\n      IF existing.id IS NOT NULL AND existing.expires_at>clock_timestamp()\n        AND existing.consumed_call_sid IS NULL AND existing.caller_state=state_code\n        AND EXISTS(SELECT 1 FROM agent_availability a WHERE a.agent_id=existing.agent_id\n          AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)) THEN\n        SELECT existing.agent_id AS agent_id,public.ping_agent_tier(existing.agent_id,state_code,camp.id) AS tier INTO selected;\n        IF selected.tier NOT IN ('full','partial') THEN SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','reservation_reuse','result','hit')); END IF;\n      END IF;\n      IF selected.agent_id IS NULL THEN\n        IF NOT shadow THEN DELETE FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key; END IF;\n        SELECT count(*) INTO eligible_count FROM agent_availability a\n          WHERE public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial');\n        -- Agents are shared across engines: a live legacy reservation also holds the agent.\n        IF shadow THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            LIMIT 1;\n        ELSE\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            FOR UPDATE OF a SKIP LOCKED LIMIT 1;\n          IF selected.agent_id IS NOT NULL THEN\n            INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)\n              VALUES(src.tenant_id,camp.id,key,state_code,selected.agent_id,\n                clock_timestamp()+make_interval(secs=>camp.reservation_ttl_seconds));\n          END IF;\n        END IF;\n      END IF;\n      IF selected.agent_id IS NOT NULL THEN\n        accepted:=true;\n        decision:=CASE selected.tier WHEN 'full' THEN 'accepted_full' ELSE 'accepted_partial' END;\n      ELSE\n        decision:=CASE WHEN eligible_count>0 THEN 'all_eligible_busy' ELSE 'no_eligible_agent' END;\n      END IF;\n    END IF;\n    IF accepted THEN price:=CASE camp.pricing_model WHEN 'free' THEN 0 ELSE camp.rate END; END IF;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule',decision,'result',CASE WHEN accepted THEN 'accept' ELSE 'reject' END));\n  EXCEPTION WHEN OTHERS THEN\n    -- Publisher pings fail closed. The subtransaction rolled back any reservation.\n    decision:='error_rejected'; accepted:=false; price:=NULL;\n    SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule','error_rejected','result','reject','sqlstate',SQLSTATE));\n  END;\n\n  INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n    vendor_call_id,publisher_sub_id,consent_cert_id,t65_flag,available,reason,agent_id,price,rule_trace,engine)\n  VALUES(src.tenant_id,src.id,camp.id,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,\n    left(phone,32),nullif(left(state_code,8),''),CASE WHEN zip ~ '^[0-9]{5}$' THEN zip END,\n    call_id,sub_id,consent,t65,accepted,decision,selected.agent_id,price,trace,p_engine)\n  RETURNING id INTO decision_id;\n  RETURN jsonb_build_object('authorized',true,'decision_id',decision_id,'available',accepted,'reason',decision,\n    'agent_id',selected.agent_id,'price',price,\n    'ttl_seconds',CASE WHEN accepted THEN camp.reservation_ttl_seconds END);\nEND;\n$function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_decide(p_key_hash text, p_campaign text, p_payload jsonb, p_engine text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; camp ping_campaigns; ctl vendor_controls;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); shadow boolean:=p_engine='shadow';\n  phone text; state_code text:=''; call_id text; zip text; sub_id text; consent text; t65 boolean;\n  routing boolean; valid boolean:=true; key text; campaign_ref text:=nullif(trim(p_campaign),'');\n  existing ping_reservations; selected record; eligible_count integer:=0; committed ping_decisions;\n  decision text; accepted boolean:=false; trace jsonb:='[]'::jsonb; gate_at timestamptz;\n  price numeric; decision_id uuid; rule text;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_engine IS NULL OR p_engine NOT IN ('generic','shadow') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.active AND s.type IN ('publisher','aggregator')\n    AND (s.ping_key_hash=p_key_hash OR EXISTS(SELECT 1 FROM availability_consumers c\n      WHERE c.name=s.name AND c.active AND c.key_hash=p_key_hash))\n    ORDER BY (s.ping_key_hash=p_key_hash) DESC NULLS LAST LIMIT 1;\n  IF src.id IS NULL THEN RETURN jsonb_build_object('authorized',false); END IF;\n  SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n\n  BEGIN\n    IF jsonb_typeof(payload)='object' THEN\n      phone:=nullif(trim(payload->>'phone'),'');\n      state_code:=upper(trim(coalesce(payload->>'state','')));\n      call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n      zip:=nullif(trim(payload->>'zip'),'');\n      sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n      consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n      valid:=(phone IS NULL OR phone ~ '^\\+[1-9][0-9]{7,14}$')\n        AND (zip IS NULL OR zip ~ '^[0-9]{5}$')\n        AND (payload->'t65' IS NULL OR jsonb_typeof(payload->'t65') IN ('boolean','null'));\n      IF jsonb_typeof(payload->'t65')='boolean' THEN t65:=(payload->>'t65')::boolean; END IF;\n    ELSE valid:=false; END IF;\n    routing:=coalesce(payload->'routing_enabled'='true'::jsonb,false);\n    key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id\n      WHEN phone IS NOT NULL THEN 'phone:'||left(phone,32) ELSE NULL END;\n\n    -- Campaign: explicit id or name, else the source's single active campaign.\n    IF campaign_ref IS NOT NULL THEN\n      SELECT * INTO camp FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id\n        AND (id::text=campaign_ref OR name=campaign_ref) ORDER BY (id::text=campaign_ref) DESC LIMIT 1;\n    ELSIF (SELECT count(*) FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active)=1 THEN\n      SELECT * INTO camp FROM ping_campaigns WHERE source_id=src.id AND tenant_id=src.tenant_id AND active;\n    END IF;\n    routing:=routing AND (camp.id IS NULL OR camp.engine_mode=p_engine);\n    SELECT * INTO ctl FROM vendor_controls WHERE tenant_id=src.tenant_id;\n\n    -- Serialize a source's decisions, as paragon_ping does.\n    PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||src.id::text,0));\n    gate_at:=clock_timestamp();\n    IF NOT shadow THEN DELETE FROM ping_reservations WHERE expires_at<clock_timestamp()-interval '1 day'; END IF;\n\n    IF NOT routing THEN decision:='routing_disabled';\n    ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','routing_disabled','result','pass'));\n      IF NOT valid THEN decision:='invalid_payload';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','invalid_payload','result','pass'));\n        -- Tenant-wide pause, or a source-level or campaign-level row (173).\n        IF ctl.tenant_id IS NULL OR ctl.vendor_pause OR EXISTS(SELECT 1 FROM ping_source_controls p\n          WHERE p.tenant_id=src.tenant_id AND p.source_id=src.id AND p.paused\n            AND (p.campaign_id IS NULL OR p.campaign_id=camp.id)) THEN decision:='source_paused';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','source_paused','result','pass')); END IF;\n      END IF;\n    END IF;\n\n    -- The 30 second accepted commitment: a re-ping for the same identity and\n    -- state replays the committed decision without re-checking hours.\n    IF decision IS NULL AND camp.id IS NOT NULL THEN\n      SELECT * INTO committed FROM ping_decisions d WHERE d.source_id=src.id AND d.campaign_id=camp.id\n        AND d.engine=p_engine AND d.available AND d.matched_call_sid IS NULL\n        AND d.received_at+interval '30 seconds'>=gate_at AND d.caller_state=state_code\n        AND ((call_id IS NOT NULL AND d.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND d.caller_phone=phone))\n        AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n        ORDER BY d.received_at DESC LIMIT 1;\n      IF committed.id IS NOT NULL THEN\n        decision:=committed.reason; accepted:=true;\n        SELECT committed.agent_id AS agent_id,NULL::text AS tier INTO selected;\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','commitment_replay','result','hit','decision_id',committed.id));\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF NOT ping_hours_open(coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at) THEN decision:='outside_staffed_hours';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','outside_staffed_hours','result','pass'));\n        IF camp.id IS NULL OR NOT camp.active THEN decision:='campaign_inactive';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','campaign_inactive','result','pass'));\n          IF state_code='' OR NOT state_code=ANY(camp.allowed_states) THEN decision:='state_not_allowed';\n          ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','state_not_allowed','result','pass'));\n            IF key IS NULL THEN decision:='missing_call_identity';\n            ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','missing_call_identity','result','pass')); END IF;\n          END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      -- Rules 8 to 12 are S3 filter rules; evaluated in order as no-ops.\n      FOREACH rule IN ARRAY ARRAY['existing_client_retention','cooldown_same_source','cooldown_any_source','repeat_shopper','daily_budget_reached'] LOOP\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule',rule,'result','skipped'));\n      END LOOP;\n\n      PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||camp.id::text||key,0));\n      IF shadow THEN SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key;\n      ELSE SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key FOR UPDATE; END IF;\n      IF existing.id IS NOT NULL AND existing.expires_at>clock_timestamp()\n        AND existing.consumed_call_sid IS NULL AND existing.caller_state=state_code\n        AND EXISTS(SELECT 1 FROM agent_availability a WHERE a.agent_id=existing.agent_id\n          AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)) THEN\n        SELECT existing.agent_id AS agent_id,public.ping_agent_tier(existing.agent_id,state_code,camp.id) AS tier INTO selected;\n        IF selected.tier NOT IN ('full','partial') THEN SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','reservation_reuse','result','hit')); END IF;\n      END IF;\n      IF selected.agent_id IS NULL THEN\n        IF NOT shadow THEN DELETE FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key; END IF;\n        SELECT count(*) INTO eligible_count FROM agent_availability a\n          WHERE public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial');\n        -- Agents are shared across engines: a live legacy reservation also holds the agent.\n        IF shadow THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            LIMIT 1;\n        ELSE\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            FOR UPDATE OF a SKIP LOCKED LIMIT 1;\n          IF selected.agent_id IS NOT NULL THEN\n            INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)\n              VALUES(src.tenant_id,camp.id,key,state_code,selected.agent_id,\n                clock_timestamp()+make_interval(secs=>camp.reservation_ttl_seconds));\n          END IF;\n        END IF;\n      END IF;\n      IF selected.agent_id IS NOT NULL THEN\n        accepted:=true;\n        decision:=CASE selected.tier WHEN 'full' THEN 'accepted_full' ELSE 'accepted_partial' END;\n      ELSE\n        decision:=CASE WHEN eligible_count>0 THEN 'all_eligible_busy' ELSE 'no_eligible_agent' END;\n      END IF;\n    END IF;\n    IF accepted THEN price:=CASE camp.pricing_model WHEN 'free' THEN 0 ELSE camp.rate END; END IF;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule',decision,'result',CASE WHEN accepted THEN 'accept' ELSE 'reject' END));\n  EXCEPTION WHEN OTHERS THEN\n    -- Publisher pings fail closed. The subtransaction rolled back any reservation.\n    decision:='error_rejected'; accepted:=false; price:=NULL;\n    SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule','error_rejected','result','reject','sqlstate',SQLSTATE));\n  END;\n\n  INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n    vendor_call_id,publisher_sub_id,consent_cert_id,t65_flag,available,reason,agent_id,price,rule_trace,engine)\n  VALUES(src.tenant_id,src.id,camp.id,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,\n    left(phone,32),nullif(left(state_code,8),''),CASE WHEN zip ~ '^[0-9]{5}$' THEN zip END,\n    call_id,sub_id,consent,t65,accepted,decision,selected.agent_id,price,trace,p_engine)\n  RETURNING id INTO decision_id;\n  RETURN jsonb_build_object('authorized',true,'decision_id',decision_id,'available',accepted,'reason',decision,\n    'agent_id',selected.agent_id,'price',price,\n    'ttl_seconds',CASE WHEN accepted THEN camp.reservation_ttl_seconds END);\nEND;\n$function$\n"
     },
     {
       "schema": "public",
@@ -58264,7 +58721,7 @@
         "search_path=public"
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
-      "definition": "CREATE OR REPLACE FUNCTION public.ping_hours_open(p_hours jsonb, p_at timestamp with time zone)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'public'\nAS $function$\nDECLARE local_at timestamp; day_config jsonb; opens time; closes time;\nBEGIN\n IF p_hours IS NULL OR p_at IS NULL OR p_hours->>'timezone' IS DISTINCT FROM 'America/New_York' THEN RETURN false; END IF;\n local_at:=p_at AT TIME ZONE 'America/New_York';\n day_config:=p_hours->'days'->((ARRAY['sun','mon','tue','wed','thu','fri','sat'])[extract(dow FROM local_at)::integer+1]);\n IF day_config->>'enabled' IS DISTINCT FROM 'true' THEN RETURN false; END IF;\n IF coalesce(day_config->>'start','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'\n OR coalesce(day_config->>'end','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$' THEN RETURN false; END IF;\n opens:=(day_config->>'start')::time; closes:=(day_config->>'end')::time;\n RETURN opens<closes AND local_at::time>=opens AND local_at::time<closes;\nEXCEPTION WHEN OTHERS THEN RETURN false;\nEND; $function$\n"
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_hours_open(p_hours jsonb, p_at timestamp with time zone)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'public'\nAS $function$\nDECLARE zone text; local_at timestamp; day_config jsonb; opens time; closes time;\nBEGIN\n zone:=p_hours->>'timezone';\n IF p_hours IS NULL OR p_at IS NULL OR zone IS NULL\n OR zone !~ '^[A-Z][A-Za-z_]+(/[A-Za-z0-9_+-]+){1,2}$' THEN RETURN false; END IF;\n -- An unknown zone raises here and the handler below closes.\n local_at:=p_at AT TIME ZONE zone;\n day_config:=p_hours->'days'->((ARRAY['sun','mon','tue','wed','thu','fri','sat'])[extract(dow FROM local_at)::integer+1]);\n IF day_config->>'enabled' IS DISTINCT FROM 'true' THEN RETURN false; END IF;\n IF coalesce(day_config->>'start','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'\n OR coalesce(day_config->>'end','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$' THEN RETURN false; END IF;\n opens:=(day_config->>'start')::time; closes:=(day_config->>'end')::time;\n RETURN opens<closes AND local_at::time>=opens AND local_at::time<closes;\nEXCEPTION WHEN OTHERS THEN RETURN false;\nEND; $function$\n"
     },
     {
       "schema": "public",
@@ -60228,6 +60685,19 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.set_paragon_controls(p_tenant uuid, p_hours jsonb, p_cap integer, p_mode text, p_rate numeric, p_actor text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nDECLARE day text; cfg jsonb;\nBEGIN\n IF p_hours->>'timezone' IS DISTINCT FROM public.deployment_timezone() OR p_mode NOT IN ('soft','hard')\n OR p_mode IS NULL OR p_rate IS NULL OR p_rate<=0 OR p_rate>99999999.99\n OR (p_cap IS NOT NULL AND p_cap<=0) OR nullif(p_actor,'') IS NULL THEN RAISE EXCEPTION 'Invalid Paragon controls'; END IF;\n FOREACH day IN ARRAY ARRAY['mon','tue','wed','thu','fri','sat','sun'] LOOP\n cfg:=p_hours->'days'->day;\n IF cfg IS NULL OR jsonb_typeof(cfg->'enabled') IS DISTINCT FROM 'boolean' THEN RAISE EXCEPTION 'Invalid staffed day'; END IF;\n IF cfg->>'enabled'='true' AND (coalesce(cfg->>'start','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'\n  OR coalesce(cfg->>'end','') !~ '^([01][0-9]|2[0-3]):[0-5][0-9]$') THEN RAISE EXCEPTION 'Invalid staffed time'; END IF;\n IF cfg->>'enabled'='true' AND (cfg->>'start')::time>=(cfg->>'end')::time THEN RAISE EXCEPTION 'Invalid staffed window'; END IF;\n END LOOP;\n UPDATE vendor_controls SET staffed_hours=p_hours,paragon_daily_cap=p_cap,paragon_cap_mode=p_mode,\n paragon_rate=p_rate,updated_by=p_actor,updated_at=clock_timestamp() WHERE tenant_id=p_tenant;\n IF NOT FOUND THEN RAISE EXCEPTION 'Controls missing'; END IF;\n INSERT INTO paragon_control_changes(tenant_id,settings,changed_by)\n VALUES(p_tenant,jsonb_build_object('staffed_hours',p_hours,'daily_cap',p_cap,'cap_mode',p_mode,'rate',p_rate),p_actor);\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "set_ping_source_control",
+      "arguments": "p_tenant uuid, p_source uuid, p_campaign uuid, p_paused boolean, p_actor text",
+      "result": "uuid",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.set_ping_source_control(p_tenant uuid, p_source uuid, p_campaign uuid, p_paused boolean, p_actor text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE control_id uuid;\nBEGIN\n IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RAISE EXCEPTION 'Ping platform disabled'; END IF;\n IF p_tenant IS NULL OR p_source IS NULL OR p_paused IS NULL OR nullif(trim(p_actor),'') IS NULL\n THEN RAISE EXCEPTION 'Invalid ping source control'; END IF;\n UPDATE ping_source_controls SET paused=p_paused,changed_by=left(trim(p_actor),128)\n  WHERE tenant_id=p_tenant AND source_id=p_source AND campaign_id IS NOT DISTINCT FROM p_campaign\n  RETURNING id INTO control_id;\n IF control_id IS NULL THEN\n  INSERT INTO ping_source_controls(tenant_id,source_id,campaign_id,paused,changed_by)\n  VALUES(p_tenant,p_source,p_campaign,p_paused,left(trim(p_actor),128)) RETURNING id INTO control_id;\n END IF;\n RETURN control_id;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -64160,6 +64630,54 @@
     },
     {
       "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "ping_source_control_audit_operation_check",
+      "definition": "CHECK ((operation = ANY (ARRAY['INSERT'::text, 'UPDATE'::text, 'DELETE'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "ping_source_control_audit_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "ping_source_control_audit_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "ping_source_controls_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "ping_source_controls_changed_by_check",
+      "definition": "CHECK (((length(changed_by) >= 1) AND (length(changed_by) <= 128)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "ping_source_controls_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "ping_source_controls_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "ping_source_controls_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
       "relation": "pipeline_stages",
       "name": "pipeline_stages_check",
       "definition": "CHECK ((NOT (is_won AND is_lost)))"
@@ -67924,6 +68442,30 @@
     },
     {
       "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "ping_source_control_audit_pkey",
+      "definition": "CREATE UNIQUE INDEX ping_source_control_audit_pkey ON public.ping_source_control_audit USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "ping_source_control_audit_scope",
+      "definition": "CREATE INDEX ping_source_control_audit_scope ON public.ping_source_control_audit USING btree (tenant_id, source_id, changed_at DESC)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "ping_source_controls_pkey",
+      "definition": "CREATE UNIQUE INDEX ping_source_controls_pkey ON public.ping_source_controls USING btree (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "ping_source_controls_scope",
+      "definition": "CREATE UNIQUE INDEX ping_source_controls_scope ON public.ping_source_controls USING btree (tenant_id, source_id, COALESCE(campaign_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+    },
+    {
+      "schema": "public",
       "relation": "pipeline_stages",
       "name": "pipeline_stages_pkey",
       "definition": "CREATE UNIQUE INDEX pipeline_stages_pkey ON public.pipeline_stages USING btree (id)"
@@ -71107,6 +71649,34 @@
       "name": "touch_ping_campaigns",
       "enabled": "O",
       "definition": "CREATE TRIGGER touch_ping_campaigns BEFORE UPDATE ON public.ping_campaigns FOR EACH ROW EXECUTE FUNCTION touch_ping_updated_at()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "ping_source_control_audit_append_only",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER ping_source_control_audit_append_only BEFORE DELETE OR UPDATE ON public.ping_source_control_audit FOR EACH ROW EXECUTE FUNCTION ping_audit_append_only()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_control_audit",
+      "name": "ping_source_control_audit_no_truncate",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER ping_source_control_audit_no_truncate BEFORE TRUNCATE ON public.ping_source_control_audit FOR EACH STATEMENT EXECUTE FUNCTION ping_audit_append_only()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "audit_ping_source_control",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER audit_ping_source_control AFTER INSERT OR DELETE OR UPDATE ON public.ping_source_controls FOR EACH ROW EXECUTE FUNCTION audit_ping_source_control()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_source_controls",
+      "name": "check_ping_source_control",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER check_ping_source_control BEFORE INSERT OR UPDATE ON public.ping_source_controls FOR EACH ROW EXECUTE FUNCTION check_ping_source_control()"
     },
     {
       "schema": "public",
