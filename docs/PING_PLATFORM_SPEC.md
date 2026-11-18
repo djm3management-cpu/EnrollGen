@@ -1,6 +1,6 @@
 # EnrollGen Ping Platform Spec
 
-Status: v3, 2026-11-18. Owner: Michael Shiomos.
+Status: v4, 2026-11-18 (S9 reason codes and lead post path). Owner: Michael Shiomos.
 Branch: `feature/ping-platform`, cut from tag `pilot-wave1-complete` on `pilot/release`.
 Every session on this work reads this file first and treats it as the source of truth. If code and this spec disagree, stop and ask; do not improvise.
 
@@ -64,10 +64,11 @@ Added in later sessions:
 10. `agent_performance` (S5): rolling conversion by agent, campaign, product line.
 11. `ping_shadow_diffs` (S8b optional).
 12. `buyer_api_keys` and `buyer_api_audit` (S8a): per-tenant hashed buyer keys with scopes, and an append only audit of key creation, revocation and every buyer write call.
+13. Web leads (S9): lead columns on `ping_campaigns` (`channel` `call` or `lead`, `lead_price`, `lead_hours`, `lead_daily_budget`, `consent_required`, `lead_assignment`), `lead_pings` (no direct identifiers), `lead_auctions` (operator only), `lead_posts` (one per ping), immutable `lead_billing`, usage kinds `lead_ping` and `lead_accepted`, and `data_vendor_settings` (per tenant consumer data vendor and optional `min_intent_score`).
 
 ## 6. Reason codes
 
-As built in S1 (order follows live `paragon_ping`: hours before campaign). S3 adds `exchange_no_buyer` and `buyer_cap_reached`. S4 activates rules 8 to 12. S6 adds `county_not_served`, evaluated right after `state_not_allowed` and before `missing_call_identity`, only for campaigns with `county_filter` on whose ping ZIP resolves to a county where none of the required carriers has a plan. No other codes without a spec change.
+As built in S1 (order follows live `paragon_ping`: hours before campaign). S3 adds `exchange_no_buyer` and `buyer_cap_reached`. S4 activates rules 8 to 12. S6 adds `county_not_served`, evaluated right after `state_not_allowed` and before `missing_call_identity`, only for campaigns with `county_filter` on whose ping ZIP resolves to a county where none of the required carriers has a plan. S9 adds `low_intent` (call pings: after `daily_budget_reached` and before agent selection, only when the server passed consumer data vendor signals and the campaign tenant set a `min_intent_score`; lead pings: after `consent_missing`), and for web leads `consent_missing`, `lead_window_expired` and `duplicate_lead`. No other codes without a spec change.
 
 Evaluation order: `routing_disabled`, `invalid_payload`, `source_paused`, `outside_staffed_hours`, `campaign_inactive`, `state_not_allowed`, `county_not_served`, `missing_call_identity`, `existing_client_retention`, `cooldown_same_source`, `cooldown_any_source`, `repeat_shopper`, `daily_budget_reached`, then `no_eligible_agent` or `all_eligible_busy`, or `accepted_full`, `accepted_partial` or `accepted_retention_owner`. `error_rejected` can end any evaluation; `exchange_no_buyer` and `buyer_cap_reached` are exchange outcomes.
 
@@ -81,7 +82,7 @@ Evaluation order: `routing_disabled`, `invalid_payload`, `source_paused`, `outsi
 
 1. `POST /api/ping/v1`: publisher-facing. Any active publisher with a ping key can authenticate (S2 generalizes `admit_vendor` for route `vendorPing` to any active `lead_sources` row with a matching `ping_key_hash`; the Paragon path is unchanged).
 2. Response: `{decision_id, available, reason, ttl_seconds, transfer_number}`; `price` only when the route allows disclosure.
-3. Web lead ping-post (S9): `POST /api/ping/v1/lead` with the same decision flow, then `POST /api/post/v1` to deliver the accepted lead with consent certificate.
+3. Web lead ping-post (S9): `POST /api/ping/v1/lead` with the same decision flow, then `POST /api/post/v1/lead` to deliver the accepted lead with consent certificate within the 60 second post window.
 4. Buyer API (S8a): campaign reads and allowlisted edits, caps, pause and resume, reports, retention alert acknowledgement and screener script drafts, scoped to the buyer tenant by per-tenant API keys. Script approval stays operator only.
 5. Publisher sandbox (S8a): a `lead_sources` row with `sandbox` true is evaluated on `/api/ping/v1` and `/api/exchange/v1/ping` with no reservation, claim, usage event, shopper history, auction row or rotation change. Its decisions carry engine `sandbox`, responses carry `"sandbox": true`, and arrivals never match them.
 

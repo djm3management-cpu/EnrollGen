@@ -110,6 +110,7 @@ after the window starts a new decision.
 | `cooldown_same_source`, `cooldown_any_source` | Direct | The caller came through recently and the campaign has a cooldown. |
 | `repeat_shopper` | Direct | The caller has pinged many times recently across the network. |
 | `daily_budget_reached` | Direct | The campaign's daily budget is used up. |
+| `low_intent` | Direct | The buyer uses a consumer data vendor and this ping scored below its minimum. |
 | `no_eligible_agent` | Direct | No licensed, appointed agent for this state. |
 | `all_eligible_busy` | Direct | Eligible agents exist but all are busy. Retry later. |
 | `exchange_no_buyer` | Exchange | No routed buyer accepted. Covers every buyer decline reason. |
@@ -117,6 +118,86 @@ after the window starts a new decision.
 
 Do not transfer unless `available` is `true`. New reasons are added only through
 a contract change.
+
+## Web leads: ping and post
+
+Web leads use a two step flow. First a **lead ping** with no direct
+identifier asks whether a buyer wants the lead and at what point it must be
+delivered; then, only if it was accepted, a **post** delivers the lead.
+
+### Lead ping: `POST /api/ping/v1/lead`
+
+Same `x-api-key` header, admission limit and sandbox key as `/api/ping/v1`.
+Send JSON with only these fields:
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `state` | Yes | Two letters. |
+| `zip` | No | Five digits. Checked against the buyer's county coverage when it applies. |
+| `t65` or `age_band` | No | `t65` true or false, or `age_band` one of `under_65`, `turning_65`, `65_plus`. |
+| `product_line` | No | `ma`, `medsupp`, `u65`, `aca` or `annuity`. |
+| `sub_id` | No | Up to 128 characters. |
+| `consent_cert_id` | No | TrustedForm certificate or Jornaya LeadiD token, if you have it now. |
+| `campaign` | No | Direct only: your lead campaign id or name. |
+| `exchange` | No | `true` sends the ping to every buyer routed from your source. |
+
+A lead ping never carries a phone, name, email or street address. Any field not
+in this table is a 400 `{"available":false,"reason":"invalid_payload"}` and
+nothing is stored. The answer is:
+
+```json
+{"lead_ping_id":"7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f","available":true,"reason":"accepted_full","post_expires_at":"2026-11-18T16:01:00Z"}
+```
+
+`post_expires_at` is 60 seconds after the ping. A rejection is 200 with
+`available: false` and one of `invalid_payload`, `source_paused`,
+`outside_staffed_hours` (outside the campaign's lead hours; a campaign without
+lead hours takes leads around the clock), `campaign_inactive`,
+`state_not_allowed`, `county_not_served`, `consent_missing` (the certificate you
+sent is not of the kind the campaign requires), `low_intent`,
+`daily_budget_reached` or `error_rejected`. On the exchange a rejection is always
+`exchange_no_buyer`; you never learn which buyer won or why another declined.
+
+### Post: `POST /api/post/v1/lead`
+
+Before `post_expires_at`, send the lead for an accepted ping:
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `lead_ping_id` | Yes | From the lead ping. |
+| `first_name`, `last_name` | Yes | Letters, spaces, apostrophes, periods and hyphens; up to 64 characters. |
+| `phone` | Yes | A US number; we normalize it to E.164. |
+| `zip`, `state` | Yes | Must match the ping. |
+| `email` | No | |
+| `address` | No | Street address, up to 200 characters. |
+| `consent_cert_id` | See below | Required here unless you sent it on the ping; must match the ping when both are sent. |
+
+**Never send** an MBI, SSN, date of birth, health conditions, medications or any
+other field. Any field not in this table, or a malformed value, is a 400
+`{"accepted":false,"reason":"invalid_payload"}` and nothing is stored; you may
+correct the post and send it again inside the window.
+
+Consent: every lead needs a consent certificate. A TrustedForm certificate is its
+40 character hex id or its `https://cert.trustedform.com/...` URL; a Jornaya
+LeadiD token is a UUID. Each buyer campaign requires `any` of the two,
+`trustedform` or `jornaya`; a missing or wrong kind is `consent_missing`.
+
+The answer is `{"accepted":true,"reason":"accepted"}` or `accepted: false` with:
+
+| Reason | Meaning |
+| --- | --- |
+| `duplicate_lead` | This ping was already posted. Only the first post counts; nothing changed. |
+| `lead_window_expired` | The 60 second window passed, or the ping was not accepted. |
+| `consent_missing` | No certificate, or not the kind the buyer requires. |
+| `existing_client_retention` | The consumer is already the buyer's client. The lead is not sold or billed. |
+| `cooldown_same_source`, `cooldown_any_source` | The consumer came through recently and the buyer has a cooldown. |
+| `repeat_shopper` | The consumer has been shopped many times recently across the network. |
+| `error_rejected` | We could not take the lead safely. Nothing was stored; you may retry inside the window. |
+
+An accepted lead is billed at the price set when the ping was accepted. Each
+response carries only these fields; we never echo the lead back. In the
+sandbox both calls answer with `"sandbox": true`, and a sandbox post is checked
+but never stored, billed or delivered to a buyer.
 
 ## Sandbox
 

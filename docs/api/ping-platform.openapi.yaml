@@ -1,12 +1,14 @@
 openapi: 3.1.0
 info:
   title: EnrollGen ping platform API
-  version: 1.0.0-s8a
-  summary: Publisher ping, exchange ping and buyer API.
+  version: 1.0.0-s9
+  summary: Publisher ping, exchange ping, web lead ping-post and buyer API.
   description: |
     Server to server API for the EnrollGen ping platform (docs/PING_PLATFORM_SPEC.md).
     Publishers send pings to `/api/ping/v1` (one buyer, their own campaigns) or
-    `/api/exchange/v1/ping` (every routed buyer campaign, one winner). Buyers manage
+    `/api/exchange/v1/ping` (every routed buyer campaign, one winner). Web lead
+    publishers ping `/api/ping/v1/lead` with no direct identifier and, when
+    accepted, post the lead to `/api/post/v1/lead` within 60 seconds. Buyers manage
     their own campaigns and read their own reports under `/api/buyer/v1`.
 
     Every endpoint answers 503 with `{"status":"disabled","feature":...}` until the
@@ -90,6 +92,98 @@ paths:
                 accepted: { value: { auction_id: 0c4d5e6f-1a2b-4c3d-8e9f-0a1b2c3d4e5f, available: true, reason: accepted_full, ttl_seconds: 30, transfer_number: '+15005550201' } }
                 none: { value: { auction_id: 0c4d5e6f-1a2b-4c3d-8e9f-0a1b2c3d4e60, available: false, reason: exchange_no_buyer, ttl_seconds: null, transfer_number: null } }
                 sandbox: { value: { auction_id: null, available: true, reason: accepted_full, ttl_seconds: 30, transfer_number: '+15005550201', sandbox: true } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/ping/v1/lead:
+    post:
+      tags: [publisher]
+      operationId: leadPingV1
+      summary: Ping for one web lead, without any direct identifier.
+      description: |
+        Send only the allowlisted LeadPingRequest fields: state, ZIP, the t65 flag
+        or age band, product line, sub_id and the consent certificate id. A phone,
+        name, email, street address or any other field is 400 and nothing is
+        stored. Without `exchange` the ping reaches your own lead campaign (by
+        `campaign` id or name, else your single active lead campaign); with
+        `"exchange": true` every buyer lead campaign routed from your source is
+        evaluated and one wins (needs `PING_EXCHANGE_ENABLED`). An accepted ping
+        opens a 60 second post window: post the lead to `/api/post/v1/lead`
+        before `post_expires_at`. Nothing reserves an agent. Rules, in order:
+        invalid_payload, source_paused, outside_staffed_hours (the campaign's
+        lead hours; none means 24/7), campaign_inactive, state_not_allowed,
+        county_not_served, consent_missing (a certificate sent on the ping must
+        already be of the campaign's required kind), low_intent, daily_budget_reached,
+        then accepted_full; the exchange adds buyer_cap_reached and
+        exchange_no_buyer. A buyer never sees another buyer's bid or outcome, and
+        the response never names the winner.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LeadPingRequest' }
+      responses:
+        '200':
+          description: A decision. Rejections are 200 with available false.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeadPingResponse' }
+              examples:
+                accepted: { value: { lead_ping_id: 7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f, available: true, reason: accepted_full, post_expires_at: '2026-11-18T16:01:00Z' } }
+                rejected: { value: { lead_ping_id: 7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e50, available: false, reason: state_not_allowed, post_expires_at: null } }
+                sandbox: { value: { lead_ping_id: 7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e51, available: true, reason: accepted_full, post_expires_at: '2026-11-18T16:01:00Z', sandbox: true } }
+        '400':
+          description: An unknown field (a phone, name, email or address included). Nothing is stored.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeadPingResponse' }
+              examples:
+                invalid: { value: { available: false, reason: invalid_payload } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/AdmissionLimited' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/post/v1/lead:
+    post:
+      tags: [publisher]
+      operationId: leadPostV1
+      summary: Deliver the lead for an accepted lead ping.
+      description: |
+        Send `lead_ping_id` and only the allowlisted LeadPostRequest fields. State
+        and ZIP must match the ping. An MBI, SSN, date of birth, health condition,
+        medication or any other field is 400 and nothing is stored; you may correct
+        the post and send it again inside the window. The lead must carry a
+        consent certificate (here or on the ping): a TrustedForm certificate (its
+        40 hex id or the cert.trustedform.com URL) or a Jornaya LeadiD token, of
+        the kind the buyer's campaign requires (`any`, `trustedform` or
+        `jornaya`). One post per ping: a second post is `duplicate_lead` with no
+        effect. Inside the winning buyer's own workspace the lead is then checked
+        against the buyer's existing clients (never sold back to them), cooldowns
+        and repeat shopper rules; an accepted lead becomes a contact and a New
+        Lead opportunity assigned by the buyer's rules, and is billed at the price
+        set when the ping was accepted. The response never echoes the lead.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LeadPostRequest' }
+      responses:
+        '200':
+          description: Accepted, or rejected with a reason. Rejections are 200 with accepted false.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeadPostResponse' }
+              examples:
+                accepted: { value: { accepted: true, reason: accepted } }
+                expired: { value: { accepted: false, reason: lead_window_expired } }
+                duplicate: { value: { accepted: false, reason: duplicate_lead } }
+                sandbox: { value: { accepted: true, reason: accepted, sandbox: true } }
+        '400':
+          description: An unknown field, a malformed value, a state or ZIP that differs from the ping, or an unknown lead_ping_id. Nothing is stored.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeadPostResponse' }
+              examples:
+                invalid: { value: { accepted: false, reason: invalid_payload } }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/AdmissionLimited' }
         '503': { $ref: '#/components/responses/Unavailable' }
@@ -473,8 +567,9 @@ components:
       type: string
       enum: [routing_disabled, invalid_payload, source_paused, outside_staffed_hours, campaign_inactive, state_not_allowed,
         county_not_served, missing_call_identity, existing_client_retention, cooldown_same_source, cooldown_any_source,
-        repeat_shopper, daily_budget_reached, no_eligible_agent, all_eligible_busy, accepted_full, accepted_partial,
-        accepted_retention_owner, error_rejected]
+        repeat_shopper, daily_budget_reached, low_intent, no_eligible_agent, all_eligible_busy, accepted_full,
+        accepted_partial, accepted_retention_owner, error_rejected]
+      description: 'low_intent appears only when the buyer enabled a consumer data vendor with a minimum intent score.'
     PingResponse:
       type: object
       additionalProperties: false
@@ -499,6 +594,65 @@ components:
         ttl_seconds: { type: [integer, 'null'] }
         transfer_number: { type: [string, 'null'], pattern: '^\+[1-9][0-9]{7,14}$' }
         sandbox: { type: boolean, const: true, description: 'Present only for a sandbox source.' }
+    LeadPingRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Coarse fields only. Never a phone, name, email, street address, MBI, date of
+        birth or health detail; any field not listed here is 400.
+      properties:
+        state: { type: string, pattern: '^[A-Za-z]{2}$', description: 'Consumer state, two letters. Required.' }
+        zip: { type: string, pattern: '^[0-9]{5}$' }
+        t65: { type: [boolean, string, integer], description: 'Turning 65 flag: true/false, "true"/"false", 1/0.' }
+        age_band: { type: string, enum: [under_65, turning_65, 65_plus], description: 'Alternative to t65; must agree with it when both are sent.' }
+        product_line: { type: string, enum: [ma, medsupp, u65, aca, annuity] }
+        sub_id: { type: string, maxLength: 128 }
+        consent_cert_id: { type: string, maxLength: 128, description: 'TrustedForm certificate or Jornaya LeadiD token, when known at ping time.' }
+        campaign: { type: string, maxLength: 128, description: 'Direct pings only: your lead campaign id or name.' }
+        exchange: { type: boolean, description: 'true routes the ping through the exchange.' }
+    LeadPingReason:
+      type: string
+      enum: [invalid_payload, source_paused, outside_staffed_hours, campaign_inactive, state_not_allowed, county_not_served,
+        consent_missing, low_intent, daily_budget_reached, exchange_no_buyer, accepted_full, error_rejected]
+      description: 'An exchange ping answers accepted_full, exchange_no_buyer, invalid_payload or error_rejected only.'
+    LeadPingResponse:
+      type: object
+      additionalProperties: false
+      required: [available, reason]
+      properties:
+        lead_ping_id: { type: [string, 'null'], format: uuid }
+        available: { type: boolean }
+        reason: { $ref: '#/components/schemas/LeadPingReason' }
+        post_expires_at: { type: [string, 'null'], format: date-time, description: 'Post the lead before this time (60 seconds).' }
+        price: { type: number, description: 'Only when the operator enabled price disclosure for you. Off by default.' }
+        sandbox: { type: boolean, const: true, description: 'Present only for a sandbox source.' }
+    LeadPostRequest:
+      type: object
+      additionalProperties: false
+      required: [lead_ping_id, first_name, last_name, phone, zip, state]
+      description: The only fields a post may carry. Anything else is 400 and nothing is stored.
+      properties:
+        lead_ping_id: { type: string, format: uuid }
+        first_name: { type: string, maxLength: 64 }
+        last_name: { type: string, maxLength: 64 }
+        phone: { type: string, description: 'US number; normalized to E.164 (+1NXXNXXXXXX).' }
+        email: { type: string, maxLength: 254 }
+        zip: { type: string, pattern: '^[0-9]{5}$', description: 'Must match the ping when the ping carried one.' }
+        state: { type: string, pattern: '^[A-Za-z]{2}$', description: 'Must match the ping.' }
+        address: { type: string, maxLength: 200, description: 'Optional street address.' }
+        consent_cert_id: { type: string, maxLength: 128, description: 'Required here unless sent on the ping; must equal the ping value when both are sent.' }
+    LeadPostResponse:
+      type: object
+      additionalProperties: false
+      required: [accepted, reason]
+      properties:
+        accepted: { type: boolean }
+        reason:
+          type: string
+          enum: [accepted, invalid_payload, duplicate_lead, lead_window_expired, consent_missing, existing_client_retention,
+            cooldown_same_source, cooldown_any_source, repeat_shopper, error_rejected]
+          description: 'error_rejected wrote nothing; the post may be retried inside the window.'
+        sandbox: { type: boolean, const: true, description: 'Present only for a sandbox source; nothing was stored.' }
     HoursOverride:
       type: object
       additionalProperties: false
