@@ -12,26 +12,16 @@ import { createHash } from 'node:crypto';
 import { createLogger } from '../lib/logger.js';
 import { limitsFor } from '../lib/admission.js';
 import { featureEnabled } from '../lib/deploymentFeatures.js';
+import {
+  Invalid, fail, isObject, keyStore, scorecardQuery, monthQuery, listCampaigns, updateCampaign, setCampaignPaused, scorecard, usage, invoiceLines,
+  retentionAlerts, ackAlert, screenerScripts, createScreenerDraft,
+} from '../ping/buyerOps.js';
+
+export {
+  BUYER_SCOPES, CAMPAIGN_PATCH_FIELDS, SCORECARD_GROUPS, campaignPatch, scriptDraft, scorecardQuery, monthQuery,
+} from '../ping/buyerOps.js';
 
 const defaultLogger = createLogger('telephony', 'buyerv1');
-
-export const BUYER_SCOPES = Object.freeze(['campaigns:read', 'campaigns:write', 'reports:read', 'alerts:write',
-  'screener:write']);
-export const CAMPAIGN_PATCH_FIELDS = Object.freeze(['active', 'staffed_hours_override', 'daily_budget_calls',
-  'exchange_daily_cap', 'exchange_hourly_cap', 'retention_mode', 'screener_mode', 'performance_routing']);
-export const SCORECARD_GROUPS = Object.freeze(['source', 'sub_id', 'campaign', 'state', 'day']);
-const SCRIPT_REQUIRED = Object.freeze(['opening', 'q_medicare', 'q_zip', 'q_reason', 'q_connect', 'pass_line', 'fail_line']);
-const DAYS = Object.freeze(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']);
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ZONE = /^[A-Z][A-Za-z_]+(\/[A-Za-z0-9_+-]+){1,2}$/;
-const HHMM = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
-const MAX_SCORECARD_DAYS = 92;
-
-class Invalid extends Error {}
-const fail = message => { throw new Invalid(message); };
-const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-const own = (value, key) => Object.hasOwn(value, key);
-const uuidOrNull = value => (typeof value === 'string' && UUID.test(value) ? value.toLowerCase() : null);
 
 /** Only the listed query parameters, each at most once. */
 function query(req, allowed) {
@@ -48,162 +38,38 @@ function noBody(req) {
   if (req.body !== undefined && !(isObject(req.body) && Object.keys(req.body).length === 0)) fail('no body expected');
 }
 
-function validHours(value) {
-  if (!isObject(value) || Object.keys(value).some(key => !['timezone', 'days'].includes(key))) return false;
-  if (typeof value.timezone !== 'string' || !ZONE.test(value.timezone) || !isObject(value.days)) return false;
-  return Object.entries(value.days).every(([day, config]) => DAYS.includes(day) && isObject(config)
-    && Object.keys(config).every(key => ['enabled', 'start', 'end'].includes(key)) && typeof config.enabled === 'boolean'
-    && (!config.enabled || (HHMM.test(config.start ?? '') && HHMM.test(config.end ?? '') && config.start < config.end)));
-}
-
-const count = value => value === null || (Number.isInteger(value) && value >= 0 && value <= 1000000);
-const PATCH_RULES = Object.freeze({
-  active: value => typeof value === 'boolean',
-  performance_routing: value => typeof value === 'boolean',
-  staffed_hours_override: value => value === null || validHours(value),
-  daily_budget_calls: count,
-  exchange_daily_cap: count,
-  exchange_hourly_cap: count,
-  retention_mode: value => ['route_owner', 'reject_and_alert'].includes(value),
-  screener_mode: value => ['off', 'inbound_only', 'always'].includes(value),
-});
-
-/** The campaign patch, or Invalid. */
-export function campaignPatch(body) {
-  if (!isObject(body) || Object.keys(body).length === 0) fail('body must be a non-empty object');
-  for (const [key, value] of Object.entries(body)) {
-    if (!CAMPAIGN_PATCH_FIELDS.includes(key)) fail(`unknown field ${key.slice(0, 64)}`);
-    if (!PATCH_RULES[key](value)) fail(`invalid ${key}`);
-  }
-  return body;
-}
-
-/** The draft script body: campaign_id plus the script fields, or Invalid. */
-export function scriptDraft(body) {
-  if (!isObject(body)) fail('body must be an object');
-  for (const [key, value] of Object.entries(body)) {
-    if (key === 'campaign_id') { if (!uuidOrNull(value)) fail('invalid campaign_id'); continue; }
-    if (SCRIPT_REQUIRED.includes(key)) {
-      if (typeof value !== 'string' || value.length < 1 || value.length > 600) fail(`invalid ${key}`);
-    } else if (key === 'disclaimer') {
-      if (value !== null && (typeof value !== 'string' || value.length < 1 || value.length > 1000)) fail('invalid disclaimer');
-    } else if (key === 'voice') {
-      if (typeof value !== 'string' || !/^Polly\.[A-Za-z]+(-[A-Za-z]+)?$/.test(value)) fail('invalid voice');
-    } else fail(`unknown field ${key.slice(0, 64)}`);
-  }
-  for (const key of ['campaign_id', ...SCRIPT_REQUIRED]) if (!own(body, key)) fail(`missing ${key}`);
-  const { campaign_id: campaignId, ...script } = body;
-  return { campaignId: campaignId.toLowerCase(), script };
-}
-
-const timestamp = (value, name) => {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}(T[\d:.]+(Z|[+-]\d{2}:\d{2}))?$/.test(value)
-    || Number.isNaN(Date.parse(value))) fail(`invalid ${name}`);
-  return new Date(value);
-};
-
-export function scorecardQuery(raw) {
-  if (raw.from === undefined || raw.to === undefined) fail('from and to are required');
-  const from = timestamp(raw.from, 'from'); const to = timestamp(raw.to, 'to');
-  if (from >= to) fail('from must be before to');
-  if (to - from > MAX_SCORECARD_DAYS * 86400000) fail(`window is at most ${MAX_SCORECARD_DAYS} days`);
-  const group = raw.group === undefined || raw.group === '' ? [] : raw.group.split(',');
-  if (group.some(item => !SCORECARD_GROUPS.includes(item)) || new Set(group).size !== group.length) fail('invalid group');
-  return { from: from.toISOString(), to: to.toISOString(), group };
-}
-
-export function monthQuery(raw) {
-  if (typeof raw.month !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(raw.month)) fail('month must be YYYY-MM');
-  return `${raw.month}-01`;
+/** The request-level rejection of a write call, or null. */
+function precheck(work) {
+  try { work(); return null; } catch (error) { if (!(error instanceof Invalid)) throw error; return error.message; }
 }
 
 // Endpoint table: method, path, scope, extra feature flag, handler. The
-// handler returns [status, body]. Write handlers always reach the database so
-// the attempt is audited; a body the allowlist rejects is replaced by one the
-// database also rejects, so a 400 can never change data.
+// handler returns [status, body]. The operations live in ping/buyerOps.js and
+// run against keyStore, whose routines derive the tenant from the key id.
 const ENDPOINTS = [
   { method: 'get', path: '/api/buyer/v1/campaigns', scope: 'campaigns:read',
-    async run({ req, rpc }) { query(req, []); noBody(req); return [200, { campaigns: await rpc('buyer_campaigns', {}) }]; } },
+    async run({ req, store }) { query(req, []); noBody(req); return listCampaigns(store); } },
   { method: 'patch', path: '/api/buyer/v1/campaigns/:id', scope: 'campaigns:write',
-    async run({ req, rpc }) {
-      let patch; let invalid = null;
-      try { query(req, []); patch = campaignPatch(req.body); } catch (error) {
-        if (!(error instanceof Invalid)) throw error;
-        invalid = error.message;
-        patch = isObject(req.body) ? Object.fromEntries(Object.keys(req.body).map(key => [key, '__rejected__'])) : {};
-      }
-      const result = await rpc('buyer_update_campaign', { p_campaign: uuidOrNull(req.params.id), p_patch: patch });
-      return outcome(result, invalid, data => ({ campaign: data.campaign }));
-    } },
+    run: ({ req, store }) => updateCampaign(store, req.params.id, req.body, precheck(() => query(req, []))) },
   ...[['pause', true], ['resume', false]].map(([action, paused]) => ({
     method: 'post', path: `/api/buyer/v1/campaigns/:id/${action}`, scope: 'campaigns:write',
-    async run({ req, rpc }) {
-      let invalid = null;
-      try { query(req, []); noBody(req); } catch (error) { if (!(error instanceof Invalid)) throw error; invalid = error.message; }
-      // An invalid request is audited as not found against no campaign and changes nothing.
-      const result = await rpc('buyer_set_campaign_paused',
-        { p_campaign: invalid ? null : uuidOrNull(req.params.id), p_paused: paused });
-      return outcome(result, invalid, data => ({ campaign: data.campaign }));
-    },
+    run: ({ req, store }) => setCampaignPaused(store, req.params.id, paused, precheck(() => { query(req, []); noBody(req); })),
   })),
   { method: 'get', path: '/api/buyer/v1/scorecard', scope: 'reports:read', feature: 'PING_SCORECARD_ENABLED',
-    async run({ req, rpc }) {
-      const { from, to, group } = scorecardQuery(query(req, ['from', 'to', 'group'])); noBody(req);
-      return [200, { from, to, group, rows: await rpc('buyer_scorecard', { p_from: from, p_to: to, p_group: group }) }];
-    } },
+    async run({ req, store }) { const raw = query(req, ['from', 'to', 'group']); scorecardQuery(raw); noBody(req); return scorecard(store, raw); } },
   { method: 'get', path: '/api/buyer/v1/usage', scope: 'reports:read', feature: 'PING_SCORECARD_ENABLED',
-    async run({ req, rpc }) {
-      const month = monthQuery(query(req, ['month'])); noBody(req);
-      return [200, { usage: await rpc('buyer_usage', { p_month: month }) }];
-    } },
+    async run({ req, store }) { const raw = query(req, ['month']); monthQuery(raw); noBody(req); return usage(store, raw); } },
   { method: 'get', path: '/api/buyer/v1/invoice-lines', scope: 'reports:read', feature: 'PING_SCORECARD_ENABLED',
-    async run({ req, rpc }) {
-      const month = monthQuery(query(req, ['month'])); noBody(req);
-      return [200, { month, lines: await rpc('buyer_invoice_lines', { p_month: month }) }];
-    } },
+    async run({ req, store }) { const raw = query(req, ['month']); monthQuery(raw); noBody(req); return invoiceLines(store, raw); } },
   { method: 'get', path: '/api/buyer/v1/retention-alerts', scope: 'reports:read',
-    async run({ req, rpc }) {
-      const raw = query(req, ['status', 'limit']); noBody(req);
-      if (raw.status !== undefined && !['open', 'all'].includes(raw.status)) fail('status must be open or all');
-      if (raw.limit !== undefined && !/^[1-9][0-9]{0,2}$/.test(raw.limit)) fail('limit must be 1 to 500');
-      const limit = raw.limit === undefined ? 100 : Number(raw.limit);
-      if (limit > 500) fail('limit must be 1 to 500');
-      return [200, { alerts: await rpc('buyer_retention_alerts', { p_open_only: raw.status !== 'all', p_limit: limit }) }];
-    } },
+    async run({ req, store }) { const raw = query(req, ['status', 'limit']); noBody(req); return retentionAlerts(store, raw); } },
   { method: 'post', path: '/api/buyer/v1/retention-alerts/:id/ack', scope: 'alerts:write',
-    async run({ req, rpc }) {
-      let invalid = null;
-      try { query(req, []); noBody(req); } catch (error) { if (!(error instanceof Invalid)) throw error; invalid = error.message; }
-      const result = await rpc('buyer_ack_retention_alert', { p_alert: invalid ? null : uuidOrNull(req.params.id) });
-      return outcome(result, invalid, data => ({ alert: data.alert }));
-    } },
+    run: ({ req, store }) => ackAlert(store, req.params.id, precheck(() => { query(req, []); noBody(req); })) },
   { method: 'get', path: '/api/buyer/v1/screener-scripts', scope: 'campaigns:read', feature: 'PING_SCREENER_ENABLED',
-    async run({ req, rpc }) {
-      const raw = query(req, ['campaign_id']); noBody(req);
-      if (raw.campaign_id !== undefined && !uuidOrNull(raw.campaign_id)) fail('invalid campaign_id');
-      return [200, { scripts: await rpc('buyer_screener_scripts', { p_campaign: uuidOrNull(raw.campaign_id) }) }];
-    } },
+    async run({ req, store }) { const raw = query(req, ['campaign_id']); noBody(req); return screenerScripts(store, raw); } },
   { method: 'post', path: '/api/buyer/v1/screener-scripts', scope: 'screener:write', feature: 'PING_SCREENER_ENABLED',
-    async run({ req, rpc }) {
-      let draft; let invalid = null;
-      try { query(req, []); draft = scriptDraft(req.body); } catch (error) {
-        if (!(error instanceof Invalid)) throw error;
-        invalid = error.message;
-        draft = { campaignId: isObject(req.body) ? uuidOrNull(req.body.campaign_id) : null, script: {} };
-      }
-      const result = await rpc('buyer_create_screener_draft', { p_campaign: draft.campaignId, p_script: draft.script });
-      const [status, body] = outcome(result, invalid, data => ({ script: data.script }));
-      return [status === 200 ? 201 : status, body];
-    } },
+    run: ({ req, store }) => createScreenerDraft(store, req.body, precheck(() => query(req, []))) },
 ];
-
-/** Maps a write routine's status to HTTP. A local rejection always wins. */
-function outcome(result, invalid, ok) {
-  if (invalid || result?.status === 'invalid') return [400, { error: 'invalid_request', detail: invalid ?? 'rejected' }];
-  if (result?.status === 'not_found') return [404, { error: 'not_found' }];
-  if (result?.status === 'ok') return [200, ok(result)];
-  throw new Error('unexpected buyer routine result');
-}
 
 export const BUYER_ROUTES = Object.freeze(ENDPOINTS.map(({ method, path, scope, feature }) =>
   Object.freeze({ method, path, scope, feature: feature ?? null })));
@@ -249,7 +115,7 @@ export function createBuyerV1Router({
           if (error) throw new Error('buyer_routine_failed');
           return data;
         };
-        const [status, body] = await endpoint.run({ req, rpc });
+        const [status, body] = await endpoint.run({ req, store: keyStore(rpc) });
         return reply(status, body);
       } catch (error) {
         if (error instanceof Invalid) return reply(400, { error: 'invalid_request', detail: error.message });
