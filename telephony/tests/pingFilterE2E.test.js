@@ -35,7 +35,7 @@ test('177 and 178 carry the UNAPPLIED header, a transaction, no em dashes and no
     assert.equal(sql.split('\n')[0], '-- UNAPPLIED: isolated pilot only', name);
     assert.match(sql, /^BEGIN;$/m);
     assert.match(sql, /^COMMIT;\s*$/m);
-    assert.doesNotMatch(sql, /—/, name);
+    assert.doesNotMatch(sql, /\u2014/, name);
     assert.doesNotMatch(sql, /(ALTER|DROP|CREATE OR REPLACE)\s+(TABLE|FUNCTION|VIEW|TRIGGER)\s+(public\.)?paragon_/i, name);
     assert.doesNotMatch(sql, /(INSERT INTO|UPDATE|DELETE FROM)\s+(public\.)?paragon_/i, name);
   }
