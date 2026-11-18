@@ -13,6 +13,7 @@ import { startEgressMetrics } from './egressMetrics.js';
 import {startParagonResidenceWorker} from './paragonResidenceWorker.js';
 import {createPostCallStatusHandler} from './postCallStatus.js';
 import { startParagonBillingWorker } from "./paragonBilling.js";
+import { startPingBillingWorker } from "./ping/billing.js";
 import { startCallStatusRecoveryWorker } from "./callStatusRecovery.js";
 import { startRecordingWorker } from "./recordings.js";
 import { recordingMediaRouter } from "./routes/recordingMedia.js";
@@ -104,6 +105,7 @@ app.use(recordingMediaRouter);
 if (featureEnabled('PARAGON_ENABLED')) startParagonResidenceWorker({db:createRecordingServiceClient(),recordSuccess:()=>scheduledSuccess(supabase,'paragon_residence')});
 startRecordingWorker({ db: createRecordingServiceClient(), config,recordSuccess:()=>scheduledSuccess(supabase,'recording_worker') });
 if (featureEnabled('PARAGON_ENABLED')) startParagonBillingWorker({ db: createRecordingServiceClient(), config,recordSuccess:()=>scheduledSuccess(supabase,'paragon_billing') });
+if (featureEnabled('PING_PLATFORM_ENABLED')) startPingBillingWorker({ db: createRecordingServiceClient(), config });
 startCallStatusRecoveryWorker({ db: createRecordingServiceClient(), config,recordSuccess:()=>scheduledSuccess(supabase,'call_status_recovery') });
 
 startTranscriptWorker({ db: createRecordingServiceClient(),recordSuccess:()=>scheduledSuccess(supabase,'transcript_worker'),
