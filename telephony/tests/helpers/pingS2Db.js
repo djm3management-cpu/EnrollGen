@@ -67,3 +67,63 @@ export async function seedPublisherB(db) {
   }
   return campaigns;
 }
+
+/** Valid Twilio call SID for test number n. */
+export const callSid = n => `CA${n.toString(16).padStart(32, '0')}`;
+
+/**
+ * Minimal Supabase-shaped client over PGlite for the calls billing.js and
+ * arrival.js make: rpc with named arguments, and from().select/insert/update
+ * with eq, in, order, limit, single and maybeSingle.
+ */
+export function supabaseLike(db) {
+  const wrap = async work => { try { return { data: await work(), error: null }; } catch (error) { return { data: null, error: { message: error.message, code: error.code } }; } };
+  const ident = name => { if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new Error(`bad identifier ${name}`); return name; };
+  return {
+    rpc: (name, args = {}) => wrap(async () => {
+      const keys = Object.keys(args);
+      const sql = `SELECT * FROM ${ident(name)}(${keys.map((key, i) => `${ident(key)}=>$${i + 1}`).join(',')})`;
+      const { rows, fields } = await db.query(sql, keys.map(key => args[key]));
+      return fields.length === 1 && fields[0].name === name ? rows[0]?.[name] ?? null : rows;
+    }),
+    from(table) {
+      let action = 'select'; let values = null; let columns = '*'; let single = false; let limit = null; let order = null;
+      const filters = [];
+      const query = {
+        select(cols = '*') { if (action === 'select') columns = cols; return query; },
+        insert(row) { action = 'insert'; values = row; return query; },
+        update(row) { action = 'update'; values = row; return query; },
+        eq(column, value) { filters.push([ident(column), '=', value]); return query; },
+        in(column, list) { filters.push([ident(column), 'in', list]); return query; },
+        order(column, { ascending = true } = {}) { order = `${ident(column)} ${ascending ? 'ASC' : 'DESC'}`; return query; },
+        limit(n) { limit = Number(n); return query; },
+        single() { single = true; return query; },
+        maybeSingle() { single = 'maybe'; return query; },
+        then(resolve, reject) { return run().then(resolve, reject); },
+      };
+      const where = args => filters.length ? ` WHERE ${filters.map(([column, op, value]) => {
+        args.push(value);
+        return op === 'in' ? `${column}=ANY($${args.length})` : `${column}=$${args.length}`;
+      }).join(' AND ')}` : '';
+      const run = () => wrap(async () => {
+        const args = []; let sql;
+        if (action === 'insert') {
+          const keys = Object.keys(values).filter(key => values[key] !== undefined);
+          args.push(...keys.map(key => values[key]));
+          sql = `INSERT INTO ${ident(table)}(${keys.map(ident).join(',')}) VALUES(${keys.map((_, i) => `$${i + 1}`).join(',')}) RETURNING *`;
+        } else if (action === 'update') {
+          const keys = Object.keys(values);
+          args.push(...keys.map(key => values[key]));
+          sql = `UPDATE ${ident(table)} SET ${keys.map((key, i) => `${ident(key)}=$${i + 1}`).join(',')}${where(args)} RETURNING *`;
+        } else {
+          const cols = columns === '*' ? '*' : columns.split(',').map(c => ident(c.trim())).join(',');
+          sql = `SELECT ${cols} FROM ${ident(table)}${where(args)}${order ? ` ORDER BY ${order}` : ''}${limit ? ` LIMIT ${limit}` : ''}`;
+        }
+        const { rows } = await db.query(sql, args);
+        if (single === true && rows.length !== 1) throw Object.assign(new Error('expected one row'), { code: 'PGRST116' });
+        return single ? rows[0] ?? null : rows;
+      });
+      return query;
+    },
+  };
+}
