@@ -1,149 +1,148 @@
 # EnrollGen Ping Platform Spec
 
-Status: draft v1, 2026-11-17. Owner: Michael Shiomos.
+Status: v2, 2026-11-17. Owner: Michael Shiomos.
 Branch: `feature/ping-platform`, cut from tag `pilot-wave1-complete` on `pilot/release`.
-Every Codex session on this work reads this file first and treats it as the source of truth. If code and this spec disagree, stop and report; do not improvise.
+Every session on this work reads this file first and treats it as the source of truth. If code and this spec disagree, stop and ask; do not improvise.
 
 ## 1. Purpose
 
-Turn the Paragon-only ping, reservation, claim and billing system into a publisher-agnostic ping platform that any number of call sources can use, with a richer Filter, an optional scripted Screener, retention protection for existing clients, and a per-source scorecard. NGHS is buyer number one. Multi-buyer exchange mode is designed for but built last.
+Build a platform-grade, multi-tenant call and lead ping exchange inside EnrollGen that a major buyer (an FMO, a large agency network, or a carrier) can license and run for many downline agencies. It competes with UnifiedYield (Filter, Screen, source measurement, member monitoring) and AmeriLife LeadStar. Publishers send one ping to the platform; the platform evaluates every eligible buyer campaign across tenants, picks a winner, holds an agent, routes the call, bills it, meters platform usage, and measures every source.
 
-## 2. What already exists (ground truth, read before changing anything)
+NGHS's Paragon integration is the proving ground: it becomes campaign number one on the generic engine and supplies parity evidence on real traffic. It is not the product.
 
-1. `telephony/src/routes/vendorPing.js`: POST `/api/leads/ping`, Paragon only, admission via `admit_vendor`, calls SQL `paragon_ping`.
-2. `supabase/functions/get-availability` plus `supabase/functions/_shared/paragonPingAdapter.js`: second ping entry point (availability pull with ping params).
-3. `supabase/migrations/052_paragon_ping_and_claim.sql`: `paragon_ping` (staffed hours, pause, allowed states, call identity key, advisory lock, agent reservation with TTL, tiered full/partial eligibility, round robin by `last_assigned_at`) and `claim_paragon_call` (arrival match within 5 minutes by vendor call id or phone, reserved agent reuse, sticky preference, atomic agent claim).
-4. `051_paragon_vendor_matrix.sql`: `vendor_routing_config`, `vendor_agent_state_eligibility` (six hardcoded carrier boolean columns), `paragon_ping_decisions`, `paragon_agent_reservations`, `paragon_agent_tier`. The matrix intentionally never reads RTS.
-5. `048_vendor_integrations.sql`: `lead_sources` (aggregator/publisher/direct, parent/child, per-source number, ping key hash, postback config, report emails), `lead_source_pings` (aggregator pre-transfer pings), source attribution trigger, availability push, disposition postbacks, daily CSV reports, delivery queue.
-6. `067`, `076`, `111`, `126`, `131`: Paragon billing (`paragon_call_billing`, immutable once finalized), duplicate caller detection (90 days, same source, Paragon only), daily cap removal, out-of-state callback tasks, residence/ZIP capture.
-7. `telephony/src/routes/twilioVoice.js` `/twilio/voice` and `/twilio/dial-result`: arrival resolution, billing callback enqueue, claim, fast reject (busy) for matched publisher calls, voicemail for known callers, sticky routing.
-8. `telephony/src/paragonEligibility.js`, `paragonRouting.js`: pure JS mirrors of the decision logic used by tests.
-9. Deployment profile (`telephony/src/lib/deploymentProfile.js`) has a single `paragon` section; feature flags live in `featureFlags.js` `FEATURE_NAMES`; SQL fences use `deployment_feature_enabled(flag)` (migration 150).
-10. Data available for later phases: `cms_plans_py2027` (state, county_fips, carrier, plan), `cms_county_penetration`, `carrier_rts` (free-text states), `enrolled_agents.licensed_states`.
+## 2. What exists (ground truth)
 
-The problem: every SQL function above is hardcoded to `name='Paragon Media'`, carriers are fixed columns, and config is a single profile section. Adding a second publisher today means copying the whole stack.
+1. `telephony/src/routes/vendorPing.js` and `supabase/functions/get-availability`: Paragon-only ping entry points.
+2. Migration 067 holds the live `paragon_ping` (supersedes 052): staffed hours, pause, 30 second commitment replay, allowed states, identity key, reservations with TTL, full and partial carrier tiers, round robin by `last_assigned_at`. `claim_paragon_call_at` claims on arrival.
+3. `051`: `vendor_routing_config`, `vendor_agent_state_eligibility` (six carrier columns), `paragon_ping_decisions`, `paragon_agent_reservations`.
+4. `048`: `lead_sources`, `lead_source_pings`, attribution trigger, availability push, disposition postbacks, daily CSV reports, delivery queue.
+5. `067`, `076`, `111`, `126`, `131`: Paragon billing (`telephony/src/paragonBilling.js`, Twilio-verified arrival and billable seconds, immutable once finalized), duplicates, cap removal, out-of-state tasks, residence capture.
+6. `158`: `admit_vendor` authorizes only `deployment_vendor_name()` for `vendorPing`.
+7. `telephony/src/routes/twilioVoice.js`: arrival, claim, fast reject, voicemail, sticky routing.
+8. Data for eligibility: `cms_plans_py2027` (county_fips, carrier, plan), `cms_county_penetration`, `carrier_rts`, `enrolled_agents.licensed_states`.
+9. S1 (done, commits 9a3f706 to 2fe0f23): migrations 171 and 172 (`ping_campaigns`, `agent_campaign_carriers`, `ping_decisions`, `ping_reservations`, `ping_hours_open`, `ping_agent_tier`, `ping_decide`), `telephony/src/ping/decide.js`, `telephony/src/ping/adapter.js`, `POST /api/ping/v1`, six default-off PING flags, 34 golden parity cases against 067.
 
 ## 3. Non-negotiable principles
 
-1. Generalize, do not fork. One engine. Paragon becomes campaign number one on it. The legacy Paragon path stays untouched and live until a per-campaign cutover, then is removed in a later, separate change.
-2. Paragon behavior is preserved exactly. Every existing Paragon test passes unchanged. Parity tests prove the generic engine returns the same decision as `paragon_ping` for the same inputs.
-3. Default off. Every new behavior sits behind a new flag in `FEATURE_NAMES`, fenced in SQL with `deployment_feature_enabled`, absent flag means off.
-4. Publisher pings fail closed (reject on any error). Direct and known callers fail open (route or voicemail), exactly as today.
-5. Every decision is logged with a fixed reason code and a rule trace. No silent paths.
-6. Data minimization holds: pings carry identifiers, state, ZIP and coarse eligibility flags only. No MBI, DOB, health details, or names. Phone numbers are stored as today; any cross-tenant phone comparison uses a peppered SHA-256 hash, never the raw number.
-7. Migrations start at 171, are forward only, carry the header `-- UNAPPLIED: isolated pilot only`, never backfill or modify production data, and never alter `paragon_*` tables or functions.
-8. No deploys, no live migrations, nothing pushed to `main`. Work stays on `feature/ping-platform`.
-9. The AI screener never generates speech. It plays owner-approved fixed prompts and uses a model only to classify the caller's answers.
+1. One engine. Generalize, never fork. Legacy Paragon code stays untouched until per-campaign cutover, then is removed in a separate change.
+2. Multi-tenant from the ground up. Every table carries tenant_id. No tenant can read another tenant's calls, contacts, decisions, prices, or agents. The only cross-tenant data is the pooled shopper history in section 10, keyed by peppered hash.
+3. Paragon parity holds: every existing Paragon test passes unchanged and the parity suite stays green.
+4. Default off. New behavior sits behind PING flags, fenced in SQL with `deployment_feature_enabled`.
+5. Publisher pings fail closed. Direct and known callers fail open, as today.
+6. Every decision is logged with a closed reason code and a rule trace.
+7. Data minimization: pings carry identifiers, state, ZIP and coarse flags. No MBI, DOB, names, or health details.
+8. Migrations: next number, forward only, header `-- UNAPPLIED: isolated pilot only`, added to the fresh-install bootstrap with the repo rebuild script (as S1 did), never alter `paragon_*` objects, never touch production data.
+9. No pushes, deploys, live migrations, or changes to main or pilot/release.
+10. The screener never generates caller-facing speech in scripted mode. Conversational mode is a pluggable provider slot, off by default.
+11. Platform scale is a requirement: sub-second p95 decisions at 50 pings per second sustained across tenants, proven by load test in S8.
 
-## 4. Concepts
+## 4. Roles and concepts
 
-1. Source: a row in `lead_sources` (aggregator or publisher). Unchanged.
-2. Campaign: new. One source can have several campaigns (for example Paragon MA grocery creative vs Paragon MA general). A campaign holds the rules: product line, allowed states, carriers required and critical, pricing model and rate, billable seconds, reservation TTL, cooldown windows, daily budget, screener mode, retention mode, routing engine mode, active flag.
-3. Ping: an inbound decision request from a source. Produces exactly one Decision.
-4. Decision: accept or reject with a reason code, the chosen agent, the price, the rule trace.
-5. Reservation: an agent slot held for TTL seconds after an accept.
-6. Arrival: the actual Twilio call, matched back to a Decision.
-7. Billing record: per arrived call, pricing model aware, immutable once finalized.
-8. Return: a dispute record for a billed call (short duration, wrong state, duplicate, non-Medicare, existing client).
+1. Platform operator: the licensee running the exchange (for example an FMO).
+2. Buyer tenant: an agency on the platform with agents, campaigns, caps and budgets.
+3. Publisher: a lead or call source (row in `lead_sources`), connected to the platform once.
+4. Campaign: a buyer tenant's rules for a product line (section 5).
+5. Exchange route: which buyer campaigns a publisher's pings may reach, with priority and weight.
+6. Ping, Decision, Reservation, Arrival, Billing record, Return: as built in S1 and S2.
+7. Usage event: a metered platform action (ping evaluated, call routed, screener minute) billed by the operator to buyers.
 
-## 5. Data model (new tables, all tenant scoped, RLS on, service role only)
+## 5. Data model
 
-1. `ping_campaigns`: id, tenant_id, source_id, name, product_line (`ma`, `medsupp`, `u65`, `aca`, `annuity`), active, engine_mode (`legacy`, `shadow`, `generic`), allowed_states text[], required_carriers text[], critical_carriers text[], plan_year, pricing_model (`per_call`, `per_app`, `free`), rate numeric, billable_seconds int, reservation_ttl_seconds int (5 to 120), cooldown_same_source_days int, cooldown_any_source_days int, repeat_shopper_threshold int, repeat_shopper_window_days int, daily_budget_calls int null, screener_mode (`off`, `inbound_only`, `always`), retention_mode (`route_owner`, `reject_and_alert`), staffed_hours_override jsonb null, created_at, updated_at. Unique (tenant_id, source_id, name).
-2. `agent_campaign_carriers`: tenant_id, campaign_id, plan_year, agent_id (tenant_agents.id), state, carrier (normalized key), enabled, updated_at, updated_by. Primary key (campaign_id, plan_year, agent_id, state, carrier). Replaces the six boolean columns with rows so carriers are open ended. Existence of any row for (agent, state) is the license assertion, same semantics as today.
-3. `ping_decisions`: id, tenant_id, source_id, campaign_id, received_at, latency_ms, caller_phone, caller_state, caller_zip null, vendor_call_id, publisher_sub_id, consent_cert_id null, t65_flag null, available, reason (enum below), agent_id, price, rule_trace jsonb, engine (`generic` or `shadow`), matched_call_sid.
-4. `ping_reservations`: generic copy of `paragon_agent_reservations` keyed by campaign_id.
-5. `ping_call_billing`: generic copy of `paragon_call_billing` with campaign_id, pricing_model and rate snapshot; same immutability trigger semantics.
-6. `ping_returns`: id, tenant_id, billing_parent_call_sid, campaign_id, reason (`short_duration`, `wrong_state`, `duplicate`, `not_medicare`, `existing_client`, `other`), auto_flagged bool, status (`open`, `submitted`, `credited`, `denied`), notes, created_at.
-7. `ping_retention_alerts`: id, tenant_id, contact_id, owner_agent_id, source_id, campaign_id, decision_id, created_at, acknowledged_at.
-8. `ping_shadow_diffs`: id, decision_id_legacy, decision_id_generic, field, legacy_value, generic_value, created_at.
+Built in S1: `ping_campaigns`, `agent_campaign_carriers`, `ping_decisions`, `ping_reservations`.
 
-## 6. Reason codes (closed list, order is evaluation order)
+Added in later sessions:
 
-1. `routing_disabled`
-2. `invalid_payload`
-3. `source_paused`
-4. `campaign_inactive`
-5. `outside_staffed_hours`
-6. `state_not_allowed`
-7. `missing_call_identity`
-8. `existing_client_retention` (accept with owner routing, or reject, per retention_mode)
-9. `cooldown_same_source`
-10. `cooldown_any_source`
-11. `repeat_shopper`
-12. `daily_budget_reached`
-13. `no_eligible_agent`
-14. `all_eligible_busy`
-15. `accepted_full`
-16. `accepted_partial`
-17. `accepted_retention_owner`
-18. `error_rejected`
+1. `ping_call_billing` (S2): generic copy of `paragon_call_billing` with tenant_id, campaign_id, pricing_model and rate snapshot, immutable once finalized.
+2. `ping_returns` (S2): tenant_id, billing_parent_call_sid, campaign_id, reason (`short_duration`, `wrong_state`, `duplicate`, `not_medicare`, `existing_client`, `other`), auto_flagged, status (`open`, `submitted`, `credited`, `denied`), notes, created_at.
+3. `ping_source_controls` (S2): per source and per campaign pause with audit, replacing the tenant-wide `vendor_controls.vendor_pause` for generic campaigns.
+4. `exchange_routes` (S3): publisher source_id, buyer campaign_id, priority, weight, active, price override.
+5. `exchange_auctions` (S3): one row per exchange ping with every buyer campaign evaluated, each decision id, the winner, and the selection strategy used.
+6. `platform_usage_events` (S3): tenant_id, kind (`ping`, `routed_call`, `screener_minute`, `screened_qualified`), quantity, unit_price snapshot, source_id, campaign_id, occurred_at. Append only.
+7. `platform_price_plans` (S3): operator-defined per-tenant plan: included pings, overage per ping, per routed call, per screener minute.
+8. `ping_retention_alerts` (S4).
+9. `shopper_history` (S4): peppered phone hash, tenant_id, source_id, seen_at. Pooled reads only through a SECURITY DEFINER count function.
+10. `agent_performance` (S5): rolling conversion by agent, campaign, product line.
+11. `ping_shadow_diffs` (S8 optional).
 
-Codes 1 to 7 and 13 to 16 must match `paragon_ping` semantics exactly (Paragon uses `vendor_paused` and `routing_unconfigured`; map them and document the mapping in a test). Rules 8 to 12 are new and each is individually disableable per campaign (null or zero means off).
+## 6. Reason codes
+
+As built in S1 (order follows live `paragon_ping`: hours before campaign). S3 adds `exchange_no_buyer` and `buyer_cap_reached`. S4 activates rules 8 to 12. No other codes without a spec change.
 
 ## 7. Engine
 
-1. SQL function `ping_decide(p_key_hash, p_campaign, p_payload jsonb, p_engine text)` returns jsonb `{authorized, decision_id, available, reason, agent_id, price, ttl_seconds}`. Same locking pattern as `paragon_ping` (advisory lock on source plus call identity, `FOR UPDATE SKIP LOCKED` agent pick, reservation insert).
-2. SQL function `ping_agent_tier(agent_slug, state, campaign_id)` reads `agent_campaign_carriers`.
-3. SQL function `ping_claim_arrival(...)`: generic `claim_paragon_call` keyed by campaign.
-4. Pure JS mirror in `telephony/src/ping/decide.js` with the same rule order, used by unit tests and by the shadow comparator.
-5. Engine mode per campaign: `legacy` (only the old Paragon path runs), `shadow` (old path decides; generic engine also decides with `p_engine='shadow'`, no reservation side effects, diffs logged), `generic` (generic engine decides and claims; old path skipped).
+1. `ping_decide` is the single-buyer decision unit. The exchange calls it once per candidate buyer campaign with `p_engine='shadow'` semantics for evaluation, then once for the winner with reservation side effects.
+2. Staffed hours must use each tenant's own IANA timezone (S2 fixes `ping_hours_open`, which today accepts only America/New_York). Parity for Paragon is unaffected because NGHS is Eastern.
+3. Serialization: the per-source advisory lock in S1 matches Paragon. S3 narrows it to per-campaign plus identity key so one large publisher does not serialize the whole exchange; parity tests must stay green.
 
 ## 8. API
 
-1. New endpoint POST `/api/ping/v1` on telephony. Auth: `x-api-key` hashed and matched to `lead_sources.ping_key_hash`, admission via `admit_vendor` route `vendorPing`. Body (field names mappable per source, like `paragonPingAdapter`): `phone` (E.164), `state`, `zip` optional, `call_id`, `sub_id` optional, `campaign` optional (defaults to the source's single active campaign), `consent_cert_id` optional, `t65` optional bool.
-2. Response 200: `{decision_id, available, reason, ttl_seconds}`; `price` only when the source config allows price disclosure. 401 unauthorized, 429 admission limited with Retry-After, 503 when the flag is off.
-3. Existing `/api/leads/ping` and the get-availability ping path keep working unchanged. When a Paragon campaign is in `shadow` or `generic` mode they additionally or instead call `ping_decide`.
+1. `POST /api/ping/v1`: publisher-facing. Any active publisher with a ping key can authenticate (S2 generalizes `admit_vendor` for route `vendorPing` to any active `lead_sources` row with a matching `ping_key_hash`; the Paragon path is unchanged).
+2. Response: `{decision_id, available, reason, ttl_seconds, transfer_number}`; `price` only when the route allows disclosure.
+3. Web lead ping-post (S9): `POST /api/ping/v1/lead` with the same decision flow, then `POST /api/post/v1` to deliver the accepted lead with consent certificate.
+4. Buyer API (S8): campaign CRUD, caps, pause, reports, scoped to the buyer tenant.
 
-## 9. Screener (phase 6, spec only until then)
+## 9. Exchange orchestrator (S3)
 
-1. Scripted, not generative. TwiML `<Gather input="speech dtmf">` with fixed owner-approved prompts. A small OpenAI model classifies the transcribed answer into a fixed label set; it never produces caller-facing text.
-2. Opening line discloses an automated assistant. Disclaimer text is owner-approved config, not model output.
-3. Questions (max four): on Medicare or turning 65 soon; ZIP code; reason for calling; okay to connect to a licensed agent. Press 1 is always accepted as yes.
-4. Hard limits: 90 seconds total, two retries per question, any uncertainty or error fails open to a live agent. Never hangs up on a caller who said yes.
-5. Bypass for warm transfers (campaign screener_mode `inbound_only`).
-6. The screener segment is recorded and linked to the inbound call under the existing retention schedule. Agent receives the screener answers as call parameters.
-7. Metrics per campaign: screened, passed, disqualified by label, abandoned during screen, average screen seconds.
+1. Publisher ping arrives once. Candidate buyer campaigns come from `exchange_routes` for that source.
+2. Each candidate is evaluated with the S1 rules (hours in its tenant timezone, state, eligibility, capacity) without side effects.
+3. Selection strategies, configurable per route group: `priority_waterfall` (lowest priority number with an accept wins), `weighted_rotation`, `highest_price`. Ties break on least recently won.
+4. The winner gets a real reservation and its tenant's transfer number. The auction row records every candidate.
+5. Per-buyer daily and hourly caps and budgets; `buyer_cap_reached` when hit.
+6. Usage events are written for every evaluated ping and every routed call.
+7. A buyer never sees other buyers' bids, decisions, or that they lost.
 
-## 10. Retention protection
+## 10. Filter rules (S4)
 
-1. If the pinging phone matches an existing contact with a sale disposition or active policy, the decision is `existing_client_retention`.
-2. `route_owner` (default): accept, reserve the owning agent if routable, otherwise the normal pool; create a retention alert. Reason: rejecting sends the client to a competing buyer.
-3. `reject_and_alert`: reject and create a retention alert for an outbound call.
+1. Cooldown same source and any source, per campaign.
+2. Repeat shopper: pooled across tenants through `shopper_history` hash counts only. No phone numbers, tenant names, or outcomes cross tenants. Requires PING_EXCHANGE_ENABLED plus operator opt-in.
+3. Retention: a ping matching an existing client of the buyer tenant follows retention_mode (`route_owner` default, or `reject_and_alert`) and creates an alert.
+4. Daily budget per campaign.
 
-## 11. Scorecard (phase 5)
+## 11. Scorecards and performance routing (S5)
 
-RPC `ping_scorecard(p_tenant, p_from, p_to, p_group text[])` grouping by any of source, campaign, sub_id, state, day. Columns: pings, accepts, accept rate, rejects by reason, arrivals, connects, billable calls, cost, apps written, enrollments, cost per app, cost per enrollment, returns open and credited, screener pass rate. Cost uses the billing snapshot, never live config. UI lives with `VendorRoutingSettings.jsx`.
+1. `ping_scorecard` for buyers (their own data) and for the operator (all tenants), grouped by source, sub_id, campaign, state, day. Pings, accepts, rejects by reason, arrivals, connects, billable, cost, apps, enrollments, cost per app, cost per enrollment, returns, screener pass rate.
+2. Operator usage and invoice preview from `platform_usage_events`.
+3. Performance routing: optional per campaign, ranks eligible free agents by rolling conversion before `last_assigned_at`, with a floor so new agents still get calls.
 
-## 12. Exchange mode (phase 8, design constraints only)
+## 12. Eligibility from RTS (S6)
 
-Every table carries tenant_id now. Cross-tenant data is limited to a pooled phone history keyed by peppered hash, behind `PING_EXCHANGE_ENABLED`, and requires owner and counsel sign-off before any build.
+Generate `agent_campaign_carriers` from RTS and license data per state and county using `cms_plans_py2027` carrier presence by county_fips, instead of a hand-kept matrix. ZIP to county via a crosswalk table. Hand overrides remain and win.
 
-## 13. Flags
+## 13. Screener (S7)
 
-`PING_PLATFORM_ENABLED`, `PING_SHADOW_ENABLED`, `PING_RETENTION_ALERTS_ENABLED`, `PING_SCORECARD_ENABLED`, `PING_SCREENER_ENABLED`, `PING_EXCHANGE_ENABLED`. All default off, added to `FEATURE_NAMES`, test fixture `tests/fixtures/deployment-env.js` updated, SQL entry points fenced.
+1. Two modes per campaign: `scripted` (TwiML Gather, fixed owner-approved prompts, small OpenAI model classifies answers into fixed labels) and `conversational` (provider slot, off, not built beyond the interface).
+2. Disclosure of an automated assistant first. Disclaimer text is operator config.
+3. Max 90 seconds, two retries per question, uncertainty fails open to an agent, warm transfers bypass.
+4. Screener audio recorded and linked to the call under existing retention.
+5. Usage events for screener minutes and qualified results.
 
-## 14. Sessions
+## 14. Flags
 
-1. S1 Foundation: schema 171+, `ping_decide`, `ping_agent_tier`, JS mirror, `/api/ping/v1`, Paragon campaign seed (pilot only, engine_mode legacy), parity tests.
-2. S2 Arrival and billing: `ping_claim_arrival`, generic billing and returns, `twilioVoice.js` integration for `generic` campaigns only.
-3. S3 Filter rules: cooldowns, repeat shopper, daily budget, retention path and alerts.
-4. S4 Shadow and cutover: shadow mode for Paragon, diff log, admin diff view, per-campaign engine switch.
-5. S5 Scorecard.
-6. S6 Screener.
-7. S7 County and RTS aware eligibility (needs ZIP to county and RTS ingestion).
-8. S8 Exchange mode.
+`PING_PLATFORM_ENABLED`, `PING_SHADOW_ENABLED`, `PING_RETENTION_ALERTS_ENABLED`, `PING_SCORECARD_ENABLED`, `PING_SCREENER_ENABLED`, `PING_EXCHANGE_ENABLED`. All default off.
 
-Each session ends with: new tests, `npm test` in root and `telephony`, `npm run build`, `npm run lint` all passing, and a short report listing files changed, migrations added, flags added, and anything deferred.
+## 15. Sessions
 
-## 15. Owner decisions (defaults used until Mike says otherwise)
+1. S1 Foundation: done.
+2. S2 Generic publisher end to end: generic `admit_vendor`, per-tenant timezone hours, per-source and per-campaign pause, `ping_claim_arrival`, generic billing and returns, `twilioVoice.js` integration for `generic` campaigns, end-to-end test with a second publisher.
+3. S3 Exchange orchestrator and platform metering.
+4. S4 Filter rules: cooldowns, pooled repeat shopper, retention, budgets.
+5. S5 Scorecards, usage reporting, performance routing.
+6. S6 RTS and county eligibility.
+7. S7 Screener.
+8. S8 Buyer and publisher portals, buyer API, API docs and sandbox, load test, optional Paragon shadow.
+9. S9 Web lead ping-post and consumer data vendor adapters.
 
-1. D1 Retention mode default: `route_owner`.
-2. D2 Cooldowns default off for Paragon (parity), suggested 30 days same source and 7 days any source for new campaigns.
-3. D3 Repeat shopper default off; suggested 3 pings from any source within 30 days.
-4. D4 Screener disclaimer and prompt text: Mike supplies before S6.
-5. D5 Second publisher to model: SmartCare, per-call, details TBD.
-6. D6 Price disclosure in ping responses: off.
+Each session ends with new tests, `npm test` in root and telephony, `npm run lint`, and a short report. `npm run build` requires the real deployment profile and is checked by the owner.
 
-## 16. Out of scope
+## 16. Owner decisions
 
-Live auctions and dynamic bidding, generative voice agents, outbound dialing, commission tracking, reselling calls to other agencies before exchange sign-off, any change to `main`.
+1. D1 Retention default `route_owner`.
+2. D2 Cooldowns off for Paragon; suggested 30 days same source, 7 days any source for new campaigns.
+3. D3 Pooled repeat shopper: 3 pings across the network within 30 days, off until counsel signs off on cross-agency sharing.
+4. D4 Screener prompts and disclaimer: owner supplies before S7.
+5. D5 Default exchange strategy: `priority_waterfall`.
+6. D6 Price disclosure off.
+
+## 17. Out of scope
+
+Dynamic real-time bidding beyond the three strategies, outbound dialing, commission tracking, any change to main.
