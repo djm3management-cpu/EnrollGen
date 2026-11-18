@@ -21,7 +21,6 @@ export const CAMPAIGN_PATCH_FIELDS = Object.freeze(['active', 'staffed_hours_ove
   'exchange_daily_cap', 'exchange_hourly_cap', 'retention_mode', 'screener_mode', 'performance_routing']);
 export const SCORECARD_GROUPS = Object.freeze(['source', 'sub_id', 'campaign', 'state', 'day']);
 const SCRIPT_REQUIRED = Object.freeze(['opening', 'q_medicare', 'q_zip', 'q_reason', 'q_connect', 'pass_line', 'fail_line']);
-const SCRIPT_OPTIONAL = Object.freeze(['disclaimer', 'voice']);
 const DAYS = Object.freeze(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ZONE = /^[A-Z][A-Za-z_]+(\/[A-Za-z0-9_+-]+){1,2}$/;
