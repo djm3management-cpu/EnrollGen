@@ -23,5 +23,6 @@
   "173_ping_publisher_controls.sql": "3c81fe21b31c6a835a540b932225dc54210499b2185b93334e18f06455045fb6",
   "174_ping_arrival_billing.sql": "e009a7b67caf5b983923b00df6502ebff53c05106e1a2804a3b0513ec7d11c6d",
   "175_ping_exchange_foundation.sql": "94be54a383e0a086d3bd1a862cec8540417e854cfa1a14cdedc3784c5e9c1454",
-  "176_exchange_ping.sql": "8d133fd6d7a9c92795854cae40e5537b02060a7de15b6bc0cd740823d141e7de"
+  "176_exchange_ping.sql": "8d133fd6d7a9c92795854cae40e5537b02060a7de15b6bc0cd740823d141e7de",
+  "177_ping_filter_rules.sql": "4ae3d621cb487e3653c81fd09352ba93cee423c7de0c4badee2d66f10677904e"
 }

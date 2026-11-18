@@ -1375,6 +1375,15 @@
     },
     {
       "schema": "public",
+      "name": "ping_retention_alerts",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "ping_returns",
       "kind": "r",
       "owner": "postgres",
@@ -1439,6 +1448,15 @@
     {
       "schema": "public",
       "name": "platform_price_plans",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "platform_settings",
       "kind": "r",
       "owner": "postgres",
       "rls": true,
@@ -1835,6 +1853,15 @@
     {
       "schema": "public",
       "name": "sessions",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "shopper_history",
       "kind": "r",
       "owner": "postgres",
       "rls": true,
@@ -19854,6 +19881,17 @@
     },
     {
       "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "retention_enabled",
+      "position": 29,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "false"
+    },
+    {
+      "schema": "public",
       "relation": "ping_decisions",
       "name": "id",
       "position": 1,
@@ -20199,6 +20237,105 @@
       "name": "consumed_call_sid",
       "position": 9,
       "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "id",
+      "position": 1,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "gen_random_uuid()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "contact_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "owner_agent_id",
+      "position": 4,
+      "type": "text",
+      "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "source_id",
+      "position": 5,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "campaign_id",
+      "position": 6,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "decision_id",
+      "position": 7,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "created_at",
+      "position": 8,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "acknowledged_at",
+      "position": 9,
+      "type": "timestamp with time zone",
       "not_null": false,
       "identity": "",
       "generated": "",
@@ -20891,6 +21028,39 @@
       "relation": "platform_price_plans",
       "name": "effective_at",
       "position": 6,
+      "type": "timestamp with time zone",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "now()"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "name": "id",
+      "position": 1,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "true"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "name": "pooled_shopper_enabled",
+      "position": 2,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "false"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "name": "updated_at",
+      "position": 3,
       "type": "timestamp with time zone",
       "not_null": true,
       "identity": "",
@@ -25527,6 +25697,50 @@
       "identity": "",
       "generated": "",
       "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "phone_hash",
+      "position": 1,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "tenant_id",
+      "position": 2,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "source_id",
+      "position": 3,
+      "type": "uuid",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "seen_on",
+      "position": 4,
+      "type": "date",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
     },
     {
       "schema": "public",
@@ -47556,6 +47770,118 @@
     },
     {
       "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "ping_returns",
       "grantor": "postgres",
       "grantee": "postgres",
@@ -48372,6 +48698,118 @@
     },
     {
       "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "platform_usage_events",
       "grantor": "postgres",
       "grantee": "postgres",
@@ -52429,6 +52867,118 @@
     {
       "schema": "public",
       "relation": "sessions",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
@@ -60766,6 +61316,19 @@
     },
     {
       "schema": "public",
+      "name": "ping_campaign_accepted_today",
+      "arguments": "p_campaign uuid, p_hours jsonb, p_at timestamp with time zone",
+      "result": "integer",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_campaign_accepted_today(p_campaign uuid, p_hours jsonb, p_at timestamp with time zone)\n RETURNS integer\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE n integer;\nBEGIN\n SELECT count(*)::integer INTO n FROM ping_decisions d\n  WHERE d.campaign_id=p_campaign AND d.available AND d.engine IN ('generic','exchange')\n    AND d.received_at>=public.exchange_cap_window(p_hours,'day',p_at) AND d.received_at<=p_at\n    AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb;\n RETURN n;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
       "name": "ping_claim_arrival",
       "arguments": "p_call_sid text, p_phone text, p_call_id text, p_to_number text, p_exclude text[], p_preferred_agent_id text, p_arrived_at timestamp with time zone",
       "result": "TABLE(agent_id text, agent_name text, caller_state text, claim_path text, vendor_call_id text, decision_id uuid, campaign_id uuid, tenant_id uuid, source_id uuid)",
@@ -60802,6 +61365,19 @@
       ],
       "acl": "{postgres=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.ping_decide_campaign(p_campaign_id uuid, p_source_id uuid, p_payload jsonb, p_mode text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE started timestamptz:=clock_timestamp(); src lead_sources; camp ping_campaigns; ctl vendor_controls;\n  payload jsonb:=coalesce(p_payload,'{}'::jsonb); shadow boolean:=p_mode IN ('shadow','exchange_eval');\n  exchange boolean:=p_mode IN ('exchange_eval','exchange');\n  match_mode text:=CASE WHEN p_mode IN ('exchange_eval','exchange') THEN 'generic' ELSE p_mode END;\n  owner_tenant uuid; pause_source uuid;\n  phone text; state_code text:=''; call_id text; zip text; sub_id text; consent text; t65 boolean;\n  routing boolean; valid boolean:=true; key text;\n  existing ping_reservations; selected record; eligible_count integer:=0; committed ping_decisions;\n  decision text; accepted boolean:=false; trace jsonb:='[]'::jsonb; gate_at timestamptz;\n  price numeric; decision_id uuid; rule text; phone_hash text;\nBEGIN\n  IF NOT public.deployment_feature_enabled('PING_PLATFORM_ENABLED') THEN RETURN jsonb_build_object('status','disabled'); END IF;\n  IF p_mode IS NULL OR p_mode NOT IN ('generic','shadow','exchange_eval','exchange') THEN RAISE EXCEPTION 'Invalid ping engine'; END IF;\n  SELECT s.* INTO src FROM lead_sources s WHERE s.id=p_source_id AND s.active AND s.type IN ('publisher','aggregator');\n  IF src.id IS NULL THEN RAISE EXCEPTION 'Unknown ping source'; END IF;\n  SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n\n  BEGIN\n    IF jsonb_typeof(payload)='object' THEN\n      phone:=nullif(trim(payload->>'phone'),'');\n      state_code:=upper(trim(coalesce(payload->>'state','')));\n      call_id:=left(nullif(trim(payload->>'call_id'),''),128);\n      zip:=nullif(trim(payload->>'zip'),'');\n      sub_id:=left(nullif(trim(payload->>'sub_id'),''),128);\n      consent:=left(nullif(trim(payload->>'consent_cert_id'),''),128);\n      valid:=(phone IS NULL OR phone ~ '^\\+[1-9][0-9]{7,14}$')\n        AND (zip IS NULL OR zip ~ '^[0-9]{5}$')\n        AND (payload->'t65' IS NULL OR jsonb_typeof(payload->'t65') IN ('boolean','null'));\n      IF jsonb_typeof(payload->'t65')='boolean' THEN t65:=(payload->>'t65')::boolean; END IF;\n    ELSE valid:=false; END IF;\n    routing:=coalesce(payload->'routing_enabled'='true'::jsonb,false);\n    key:=CASE WHEN call_id IS NOT NULL THEN 'id:'||call_id\n      WHEN phone IS NOT NULL THEN 'phone:'||left(phone,32) ELSE NULL END;\n\n    -- Direct pings reach only the source's own campaigns in its own tenant.\n    -- The exchange reaches a buyer campaign only through an active route.\n    IF p_campaign_id IS NOT NULL THEN\n      IF exchange THEN\n        SELECT c.* INTO camp FROM ping_campaigns c WHERE c.id=p_campaign_id\n          AND EXISTS(SELECT 1 FROM exchange_routes r WHERE r.source_id=src.id AND r.campaign_id=c.id AND r.active);\n      ELSE\n        SELECT c.* INTO camp FROM ping_campaigns c WHERE c.id=p_campaign_id AND c.source_id=src.id AND c.tenant_id=src.tenant_id;\n      END IF;\n    END IF;\n    owner_tenant:=coalesce(camp.tenant_id,src.tenant_id);\n    pause_source:=coalesce(camp.source_id,src.id);\n    routing:=routing AND (camp.id IS NULL OR camp.engine_mode=match_mode);\n    SELECT * INTO ctl FROM vendor_controls WHERE tenant_id=owner_tenant;\n\n    -- Serialize a source's decisions, as paragon_ping does.\n    PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||src.id::text,0));\n    gate_at:=clock_timestamp();\n    IF NOT shadow THEN DELETE FROM ping_reservations WHERE expires_at<clock_timestamp()-interval '1 day'; END IF;\n\n    IF NOT routing THEN decision:='routing_disabled';\n    ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','routing_disabled','result','pass'));\n      IF NOT valid THEN decision:='invalid_payload';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','invalid_payload','result','pass'));\n        -- Tenant-wide pause, or a source-level or campaign-level row (173), of\n        -- the campaign's own tenant and source.\n        IF ctl.tenant_id IS NULL OR ctl.vendor_pause OR EXISTS(SELECT 1 FROM ping_source_controls p\n          WHERE p.tenant_id=owner_tenant AND p.source_id=pause_source AND p.paused\n            AND (p.campaign_id IS NULL OR p.campaign_id=camp.id)) THEN decision:='source_paused';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','source_paused','result','pass')); END IF;\n      END IF;\n    END IF;\n\n    -- The 30 second accepted commitment: a re-ping for the same identity and\n    -- state replays the committed decision without re-checking hours. An\n    -- exchange evaluation never replays; it reports the current state.\n    IF decision IS NULL AND camp.id IS NOT NULL AND p_mode<>'exchange_eval' THEN\n      SELECT * INTO committed FROM ping_decisions d WHERE d.source_id=src.id AND d.campaign_id=camp.id\n        AND d.engine=p_mode AND d.available AND d.matched_call_sid IS NULL\n        AND d.received_at+interval '30 seconds'>=gate_at AND d.caller_state=state_code\n        AND ((call_id IS NOT NULL AND d.vendor_call_id=call_id)\n          OR (call_id IS NULL AND phone IS NOT NULL AND d.caller_phone=phone))\n        AND NOT d.rule_trace @> '[{\"rule\":\"commitment_replay\"}]'::jsonb\n        ORDER BY d.received_at DESC LIMIT 1;\n      IF committed.id IS NOT NULL THEN\n        decision:=committed.reason; accepted:=true;\n        SELECT committed.agent_id AS agent_id,NULL::text AS tier INTO selected;\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule','commitment_replay','result','hit','decision_id',committed.id));\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      IF NOT ping_hours_open(coalesce(camp.staffed_hours_override,ctl.staffed_hours),gate_at) THEN decision:='outside_staffed_hours';\n      ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','outside_staffed_hours','result','pass'));\n        IF camp.id IS NULL OR NOT camp.active THEN decision:='campaign_inactive';\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','campaign_inactive','result','pass'));\n          IF state_code='' OR NOT state_code=ANY(camp.allowed_states) THEN decision:='state_not_allowed';\n          ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','state_not_allowed','result','pass'));\n            IF key IS NULL THEN decision:='missing_call_identity';\n            ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','missing_call_identity','result','pass')); END IF;\n          END IF;\n        END IF;\n      END IF;\n    END IF;\n\n    IF decision IS NULL THEN\n      -- Rules 8 to 12 are S4 filter rules; evaluated in order as no-ops.\n      FOREACH rule IN ARRAY ARRAY['existing_client_retention','cooldown_same_source','cooldown_any_source','repeat_shopper','daily_budget_reached'] LOOP\n        trace:=trace||jsonb_build_array(jsonb_build_object('rule',rule,'result','skipped'));\n      END LOOP;\n\n      PERFORM pg_advisory_xact_lock(hashtextextended('ping-decide:'||camp.id::text||key,0));\n      IF shadow THEN SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key;\n      ELSE SELECT * INTO existing FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key FOR UPDATE; END IF;\n      IF existing.id IS NOT NULL AND existing.expires_at>clock_timestamp()\n        AND existing.consumed_call_sid IS NULL AND existing.caller_state=state_code\n        AND EXISTS(SELECT 1 FROM agent_availability a WHERE a.agent_id=existing.agent_id\n          AND public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)) THEN\n        SELECT existing.agent_id AS agent_id,public.ping_agent_tier(existing.agent_id,state_code,camp.id) AS tier INTO selected;\n        IF selected.tier NOT IN ('full','partial') THEN SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n        ELSE trace:=trace||jsonb_build_array(jsonb_build_object('rule','reservation_reuse','result','hit')); END IF;\n      END IF;\n      IF selected.agent_id IS NULL THEN\n        IF NOT shadow THEN DELETE FROM ping_reservations WHERE campaign_id=camp.id AND reservation_key=key; END IF;\n        SELECT count(*) INTO eligible_count FROM agent_availability a\n          WHERE public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial');\n        -- Agents are shared across engines: a live legacy reservation also holds the agent.\n        IF shadow THEN\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL AND r.reservation_key IS DISTINCT FROM key)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            LIMIT 1;\n        ELSE\n          SELECT a.agent_id,public.ping_agent_tier(a.agent_id,state_code,camp.id) AS tier\n            INTO selected FROM agent_availability a\n            WHERE public.agent_inbound_routable(a.agent_id,a.status,a.available,a.active_call_sid)\n              AND public.ping_agent_tier(a.agent_id,state_code,camp.id) IN ('full','partial')\n              AND NOT EXISTS(SELECT 1 FROM ping_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n              AND NOT EXISTS(SELECT 1 FROM paragon_agent_reservations r WHERE r.agent_id=a.agent_id\n                AND r.expires_at>clock_timestamp() AND r.consumed_call_sid IS NULL)\n            ORDER BY CASE public.ping_agent_tier(a.agent_id,state_code,camp.id) WHEN 'full' THEN 0 ELSE 1 END,\n              a.last_assigned_at ASC NULLS FIRST,a.agent_id\n            FOR UPDATE OF a SKIP LOCKED LIMIT 1;\n          IF selected.agent_id IS NOT NULL THEN\n            INSERT INTO ping_reservations(tenant_id,campaign_id,reservation_key,caller_state,agent_id,expires_at)\n              VALUES(owner_tenant,camp.id,key,state_code,selected.agent_id,\n                clock_timestamp()+make_interval(secs=>camp.reservation_ttl_seconds));\n          END IF;\n        END IF;\n      END IF;\n      IF selected.agent_id IS NOT NULL THEN\n        accepted:=true;\n        decision:=CASE selected.tier WHEN 'full' THEN 'accepted_full' ELSE 'accepted_partial' END;\n      ELSE\n        decision:=CASE WHEN eligible_count>0 THEN 'all_eligible_busy' ELSE 'no_eligible_agent' END;\n      END IF;\n    END IF;\n    IF accepted THEN price:=CASE camp.pricing_model WHEN 'free' THEN 0 ELSE camp.rate END; END IF;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule',decision,'result',CASE WHEN accepted THEN 'accept' ELSE 'reject' END));\n  EXCEPTION WHEN OTHERS THEN\n    -- Publisher pings fail closed. The subtransaction rolled back any reservation.\n    decision:='error_rejected'; accepted:=false; price:=NULL;\n    SELECT NULL::text AS agent_id,NULL::text AS tier INTO selected;\n    trace:=trace||jsonb_build_array(jsonb_build_object('rule','error_rejected','result','reject','sqlstate',SQLSTATE));\n  END;\n\n  -- An exchange evaluation never stores the caller's phone or ZIP; only the\n  -- winning tenant's 'exchange' decision does. ping_phone_hash is defined in\n  -- 176 with the exchange entry point, the only caller of this mode.\n  IF p_mode='exchange_eval' THEN\n    phone_hash:=public.ping_phone_hash(left(phone,32));\n    IF phone_hash IS NOT NULL THEN\n      trace:=trace||jsonb_build_array(jsonb_build_object('rule','phone_hash','result','recorded','sha256',phone_hash));\n    END IF;\n  END IF;\n  INSERT INTO ping_decisions(tenant_id,source_id,campaign_id,latency_ms,caller_phone,caller_state,caller_zip,\n    vendor_call_id,publisher_sub_id,consent_cert_id,t65_flag,available,reason,agent_id,price,rule_trace,engine)\n  VALUES(owner_tenant,src.id,camp.id,greatest(0,floor(extract(epoch FROM clock_timestamp()-started)*1000))::integer,\n    CASE WHEN p_mode<>'exchange_eval' THEN left(phone,32) END,nullif(left(state_code,8),''),\n    CASE WHEN p_mode<>'exchange_eval' AND zip ~ '^[0-9]{5}$' THEN zip END,\n    call_id,sub_id,consent,t65,accepted,decision,selected.agent_id,price,trace,p_mode)\n  RETURNING id INTO decision_id;\n  RETURN jsonb_build_object('authorized',true,'decision_id',decision_id,'available',accepted,'reason',decision,\n    'agent_id',selected.agent_id,'price',price,\n    'ttl_seconds',CASE WHEN accepted THEN camp.reservation_ttl_seconds END);\nEND;\n$function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_existing_client",
+      "arguments": "p_tenant uuid, p_phone text",
+      "result": "TABLE(contact_id uuid, owner_agent_id text)",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_existing_client(p_tenant uuid, p_phone text)\n RETURNS TABLE(contact_id uuid, owner_agent_id text)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n#variable_conflict use_column\nDECLARE phone_key text:=public.duplicate_phone_key(p_phone); c record; owner text;\nBEGIN\n IF p_tenant IS NULL OR phone_key IS NULL THEN RETURN; END IF;\n SELECT x.id,x.assigned_agent_id INTO c FROM contacts x\n  WHERE x.tenant_id=p_tenant AND x.phone=phone_key AND public.duplicate_phone_key(x.phone)=phone_key\n    AND (EXISTS(SELECT 1 FROM call_records r WHERE r.tenant_id=p_tenant AND r.contact_id=x.id\n          AND r.call_outcome IN ('enrolled','enrolled_pending_verification') AND r.is_test_enrollment IS NOT TRUE)\n      OR EXISTS(SELECT 1 FROM opportunities o WHERE o.tenant_id=p_tenant AND o.contact_id=x.id\n          AND o.status='won' AND o.deleted_at IS NULL))\n  ORDER BY x.created_at,x.id LIMIT 1;\n IF c.id IS NULL THEN RETURN; END IF;\n SELECT s.slug INTO owner FROM (\n   SELECT ta.agent_slug AS slug,coalesce(r.call_start,r.created_at) AS sold_at FROM call_records r\n    JOIN enrolled_agents e ON e.id=r.agent_id AND e.tenant_id=r.tenant_id\n    JOIN tenant_agents ta ON ta.tenant_id=r.tenant_id AND ta.clerk_user_id=e.clerk_user_id\n    WHERE r.tenant_id=p_tenant AND r.contact_id=c.id\n      AND r.call_outcome IN ('enrolled','enrolled_pending_verification') AND r.is_test_enrollment IS NOT TRUE\n   UNION ALL\n   SELECT ta.agent_slug,o.stage_entered_at FROM opportunities o\n    JOIN tenant_agents ta ON ta.id=o.assigned_agent_id AND ta.tenant_id=o.tenant_id\n    WHERE o.tenant_id=p_tenant AND o.contact_id=c.id AND o.status='won' AND o.deleted_at IS NULL\n ) s WHERE nullif(trim(s.slug),'') IS NOT NULL\n ORDER BY s.sold_at DESC NULLS LAST,s.slug LIMIT 1;\n RETURN QUERY SELECT c.id,coalesce(owner,nullif(trim(c.assigned_agent_id),''));\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -60854,6 +61430,32 @@
       ],
       "acl": "{postgres=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.ping_phone_pepper()\n RETURNS text\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE pepper text;\nBEGIN\n SELECT ds.decrypted_secret INTO pepper FROM ping_platform_secrets s\n  JOIN vault.decrypted_secrets ds ON ds.id=s.vault_secret_id WHERE s.name='phone_pepper';\n RETURN CASE WHEN length(pepper)>=32 THEN pepper END;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_pooled_shopper_on",
+      "arguments": "",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_pooled_shopper_on()\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n RETURN public.deployment_feature_enabled('PING_PLATFORM_ENABLED')\n  AND public.deployment_feature_enabled('PING_EXCHANGE_ENABLED')\n  AND coalesce((SELECT pooled_shopper_enabled FROM platform_settings WHERE id),false);\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "ping_recent_publisher_call",
+      "arguments": "p_tenant uuid, p_phone text, p_source uuid, p_since timestamp with time zone, p_until timestamp with time zone",
+      "result": "boolean",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.ping_recent_publisher_call(p_tenant uuid, p_phone text, p_source uuid, p_since timestamp with time zone, p_until timestamp with time zone)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE phone_key text:=public.duplicate_phone_key(p_phone);\nBEGIN\n IF p_tenant IS NULL OR phone_key IS NULL OR p_since IS NULL OR p_until IS NULL THEN RETURN false; END IF;\n RETURN EXISTS(SELECT 1 FROM inbound_calls i\n  WHERE i.tenant_id=p_tenant AND public.duplicate_phone_key(i.from_number)=phone_key\n    AND i.created_at>p_since AND i.created_at<=p_until\n    AND ((i.source_kind='publisher' AND (p_source IS NULL OR i.lead_source_id=p_source))\n      OR EXISTS(SELECT 1 FROM ping_decisions d WHERE d.matched_call_sid=i.twilio_call_sid\n        AND d.tenant_id=p_tenant AND d.engine IN ('generic','exchange')\n        AND (p_source IS NULL OR d.source_id=p_source))));\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -62960,6 +63562,32 @@
       ],
       "acl": "{postgres=X/postgres,service_role=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.set_vendor_pause(p_tenant_id uuid, p_paused boolean, p_actor text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'extensions', 'pg_temp'\nAS $function$\nBEGIN\n INSERT INTO vendor_controls(tenant_id,vendor_pause,updated_by) VALUES(p_tenant_id,p_paused,p_actor)\n ON CONFLICT(tenant_id) DO UPDATE SET vendor_pause=EXCLUDED.vendor_pause,updated_by=EXCLUDED.updated_by,updated_at=now();\n INSERT INTO vendor_control_audit(tenant_id,vendor_pause,changed_by) VALUES(p_tenant_id,p_paused,p_actor);\nEND; $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "shopper_history_count",
+      "arguments": "p_phone_hash text, p_window_days integer",
+      "result": "integer",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.shopper_history_count(p_phone_hash text, p_window_days integer)\n RETURNS integer\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE n integer;\nBEGIN\n IF p_phone_hash IS NULL OR coalesce(p_window_days,0)<=0 OR NOT public.ping_pooled_shopper_on() THEN RETURN 0; END IF;\n SELECT count(*)::integer INTO n FROM shopper_history\n  WHERE phone_hash=p_phone_hash AND seen_on>(clock_timestamp() AT TIME ZONE 'UTC')::date-p_window_days;\n RETURN n;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "shopper_history_record",
+      "arguments": "p_phone text, p_tenant uuid, p_source uuid",
+      "result": "void",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.shopper_history_record(p_phone text, p_tenant uuid, p_source uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n IF p_phone IS NULL OR p_tenant IS NULL OR p_source IS NULL OR NOT public.ping_pooled_shopper_on()\n OR public.ping_phone_pepper() IS NULL THEN RETURN; END IF;\n INSERT INTO shopper_history(phone_hash,tenant_id,source_id,seen_on)\n VALUES(public.ping_phone_hash(left(p_phone,32)),p_tenant,p_source,(clock_timestamp() AT TIME ZONE 'UTC')::date)\n ON CONFLICT DO NOTHING;\nEND $function$\n"
     },
     {
       "schema": "public",
@@ -65529,7 +66157,7 @@
       "schema": "public",
       "relation": "exchange_auctions",
       "name": "exchange_auctions_reason_check",
-      "definition": "CHECK ((reason = ANY (ARRAY['accepted_full'::text, 'accepted_partial'::text, 'exchange_no_buyer'::text])))"
+      "definition": "CHECK ((reason = ANY (ARRAY['accepted_full'::text, 'accepted_partial'::text, 'accepted_retention_owner'::text, 'exchange_no_buyer'::text])))"
     },
     {
       "schema": "public",
@@ -67117,6 +67745,42 @@
     },
     {
       "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_campaign_id_fkey",
+      "definition": "FOREIGN KEY (campaign_id) REFERENCES ping_campaigns(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_decision_id_fkey",
+      "definition": "FOREIGN KEY (decision_id) REFERENCES ping_decisions(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_decision_id_key",
+      "definition": "UNIQUE (decision_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
       "relation": "ping_returns",
       "name": "ping_returns_billing_parent_call_sid_fkey",
       "definition": "FOREIGN KEY (billing_parent_call_sid) REFERENCES ping_call_billing(parent_call_sid)"
@@ -67342,6 +68006,18 @@
       "relation": "platform_price_plans",
       "name": "platform_price_plans_tenant_id_fkey",
       "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "name": "platform_settings_id_check",
+      "definition": "CHECK (id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "name": "platform_settings_pkey",
+      "definition": "PRIMARY KEY (id)"
     },
     {
       "schema": "public",
@@ -68445,6 +69121,30 @@
       "schema": "public",
       "relation": "sessions",
       "name": "sessions_tenant_id_fkey",
+      "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "shopper_history_phone_hash_check",
+      "definition": "CHECK ((phone_hash ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "shopper_history_pkey",
+      "definition": "PRIMARY KEY (phone_hash, source_id, seen_on)"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "shopper_history_source_id_fkey",
+      "definition": "FOREIGN KEY (source_id) REFERENCES lead_sources(id) ON DELETE CASCADE"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "shopper_history_tenant_id_fkey",
       "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
     },
     {
@@ -71169,6 +71869,24 @@
     },
     {
       "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_decision_id_key",
+      "definition": "CREATE UNIQUE INDEX ping_retention_alerts_decision_id_key ON public.ping_retention_alerts USING btree (decision_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_open",
+      "definition": "CREATE INDEX ping_retention_alerts_open ON public.ping_retention_alerts USING btree (tenant_id, created_at DESC) WHERE (acknowledged_at IS NULL)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_retention_alerts",
+      "name": "ping_retention_alerts_pkey",
+      "definition": "CREATE UNIQUE INDEX ping_retention_alerts_pkey ON public.ping_retention_alerts USING btree (id)"
+    },
+    {
+      "schema": "public",
       "relation": "ping_returns",
       "name": "ping_returns_billing_parent_call_sid_reason_key",
       "definition": "CREATE UNIQUE INDEX ping_returns_billing_parent_call_sid_reason_key ON public.ping_returns USING btree (billing_parent_call_sid, reason)"
@@ -71274,6 +71992,12 @@
       "relation": "platform_price_plans",
       "name": "platform_price_plans_pkey",
       "definition": "CREATE UNIQUE INDEX platform_price_plans_pkey ON public.platform_price_plans USING btree (tenant_id)"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "name": "platform_settings_pkey",
+      "definition": "CREATE UNIQUE INDEX platform_settings_pkey ON public.platform_settings USING btree (id)"
     },
     {
       "schema": "public",
@@ -71766,6 +72490,18 @@
       "relation": "sessions",
       "name": "sessions_telephony_identity",
       "definition": "CREATE UNIQUE INDEX sessions_telephony_identity ON public.sessions USING btree (tenant_id, agent_id, twilio_call_sid) WHERE (twilio_call_sid IS NOT NULL)"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "shopper_history_pkey",
+      "definition": "CREATE UNIQUE INDEX shopper_history_pkey ON public.shopper_history USING btree (phone_hash, source_id, seen_on)"
+    },
+    {
+      "schema": "public",
+      "relation": "shopper_history",
+      "name": "shopper_history_window",
+      "definition": "CREATE INDEX shopper_history_window ON public.shopper_history USING btree (phone_hash, seen_on)"
     },
     {
       "schema": "public",
@@ -74495,6 +75231,13 @@
       "name": "pilot_require_member_write",
       "enabled": "O",
       "definition": "CREATE TRIGGER pilot_require_member_write BEFORE INSERT OR DELETE OR UPDATE ON public.plan_terminations FOR EACH STATEMENT EXECUTE FUNCTION deployment_require_member_write()"
+    },
+    {
+      "schema": "public",
+      "relation": "platform_settings",
+      "name": "touch_platform_settings",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER touch_platform_settings BEFORE UPDATE ON public.platform_settings FOR EACH ROW EXECUTE FUNCTION touch_ping_updated_at()"
     },
     {
       "schema": "public",

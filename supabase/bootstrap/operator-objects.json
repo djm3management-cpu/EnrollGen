@@ -1087,6 +1087,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_campaign_accepted_today",
+      "arguments": "p_campaign uuid, p_hours jsonb, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
       "name": "ping_claim_arrival",
       "arguments": "p_call_sid text, p_phone text, p_call_id text, p_to_number text, p_exclude text[], p_preferred_agent_id text, p_arrived_at timestamp with time zone"
     },
@@ -1099,6 +1104,11 @@
       "schema": "public",
       "name": "ping_decide_campaign",
       "arguments": "p_campaign_id uuid, p_source_id uuid, p_payload jsonb, p_mode text"
+    },
+    {
+      "schema": "public",
+      "name": "ping_existing_client",
+      "arguments": "p_tenant uuid, p_phone text"
     },
     {
       "schema": "public",
@@ -1119,6 +1129,16 @@
       "schema": "public",
       "name": "ping_phone_pepper",
       "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "ping_pooled_shopper_on",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "ping_recent_publisher_call",
+      "arguments": "p_tenant uuid, p_phone text, p_source uuid, p_since timestamp with time zone, p_until timestamp with time zone"
     },
     {
       "schema": "public",
@@ -1929,6 +1949,16 @@
       "schema": "public",
       "name": "set_vendor_pause",
       "arguments": "p_tenant_id uuid, p_paused boolean, p_actor text"
+    },
+    {
+      "schema": "public",
+      "name": "shopper_history_count",
+      "arguments": "p_phone_hash text, p_window_days integer"
+    },
+    {
+      "schema": "public",
+      "name": "shopper_history_record",
+      "arguments": "p_phone text, p_tenant uuid, p_source uuid"
     },
     {
       "schema": "public",
