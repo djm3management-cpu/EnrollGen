@@ -1,0 +1,60 @@
+/* Exchange screens (S8b). Existing tokens only; structure from spacing and alignment. */
+.exchange-workspace { display: flex; flex-direction: column; gap: 12px; color: var(--text-primary); font-weight: 400; }
+.exchange-subtabs { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.exchange-subtabs .exchange-subtab {
+  background: transparent; border: 0; border-radius: 4px; padding: 4px 0; color: var(--text-secondary);
+  font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; box-shadow: none;
+}
+.exchange-subtabs .exchange-subtab:hover { color: var(--text-primary); }
+.exchange-subtabs .exchange-subtab.is-active { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.exchange-panel { display: flex; flex-direction: column; gap: 10px; }
+.exchange-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 14px; font-size: 12px; color: var(--text-secondary); }
+.exchange-form label { display: inline-flex; align-items: center; gap: 6px; }
+.exchange-form label:has(> input[type="checkbox"]), .exchange-hours__day label { flex-direction: row; }
+.exchange-form input[type="number"] { width: 88px; }
+.exchange-form input, .exchange-form select, .exchange-table input, .exchange-script-form textarea, .exchange-reveal input {
+  font: inherit; font-size: 12px; padding: 3px 6px; border-radius: 4px; color: var(--text-primary); background: var(--bg-input);
+}
+.exchange-table input[type="number"] { width: 84px; }
+.exchange-table input.num { text-align: right; }
+.exchange-table input:not([type="checkbox"]) { box-shadow: inset 0 -1px 0 var(--border-default); }
+.exchange-workspace .eg-key { padding: 4px 10px; font-size: 12px; border-radius: 4px; }
+.exchange-table-wrap { overflow-x: auto; display: flex; flex-direction: column; gap: 6px; }
+.exchange-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.exchange-table th { text-align: left; font-weight: 500; color: var(--text-label); white-space: nowrap; padding: 4px 8px; }
+.exchange-table td { padding: 4px 8px; white-space: nowrap; vertical-align: middle; }
+.exchange-table .num { text-align: right; }
+.exchange-table tbody tr:hover td { background: var(--bg-card-hover); }
+.exchange-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.exchange-edit-row td { white-space: normal; padding: 8px; }
+.exchange-hours { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0; font-size: 12px; color: var(--text-secondary); }
+.exchange-hours__day { display: inline-flex; align-items: center; gap: 6px; }
+.exchange-badge {
+  display: inline-block; padding: 0 6px; border: 1px solid currentColor; border-radius: 4px; background: transparent;
+  font-size: 11px; line-height: 16px; font-weight: 500;
+}
+.exchange-badge.is-ok { color: var(--success); }
+.exchange-badge.is-warn { color: var(--warning); }
+.exchange-badge.is-info { color: var(--info); }
+.exchange-badge.is-muted { color: var(--text-muted); }
+.exchange-result { font-size: 12px; color: var(--text-success); }
+.exchange-result.is-error { color: var(--text-danger); }
+.exchange-empty { font-size: 12px; color: var(--text-muted); }
+.exchange-label { font-size: 12px; color: var(--text-label); font-weight: 500; }
+.exchange-summary { display: grid; grid-template-columns: max-content max-content; gap: 2px 24px; margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+.exchange-summary dt { color: var(--text-secondary); }
+.exchange-summary dd { margin: 0; text-align: right; }
+.exchange-script-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px 14px; font-size: 12px; color: var(--text-secondary); }
+.exchange-script-form label { display: flex; flex-direction: column; gap: 4px; }
+.exchange-script-form .exchange-form { grid-column: 1 / -1; }
+.exchange-reveal { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.exchange-reveal input { flex: 1 1 320px; min-width: 0; font-family: var(--font-mono); }
+.exchange-trend { display: flex; flex-direction: column; gap: 4px; max-width: 480px; }
+.exchange-trend svg { width: 100%; height: 64px; }
+.exchange-trend__line { fill: none; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.exchange-trend__line.is-1 { stroke: var(--chart-1); }
+.exchange-trend__line.is-2 { stroke: var(--chart-2); }
+.exchange-trend__legend { display: flex; gap: 12px; font-size: 11px; color: var(--text-secondary); }
+.exchange-trend__key.is-1 { color: var(--chart-1); }
+.exchange-trend__key.is-2 { color: var(--chart-2); }
+@media (max-width: 640px) { .exchange-form input[type="number"] { width: 72px; } }
