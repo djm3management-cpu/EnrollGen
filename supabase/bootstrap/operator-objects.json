@@ -232,6 +232,11 @@
     },
     {
       "schema": "public",
+      "name": "claim_ping_billing_jobs",
+      "arguments": "p_limit integer"
+    },
+    {
+      "schema": "public",
       "name": "claim_post_call_webhook",
       "arguments": "p_call_record_id uuid, p_tenant_id uuid"
     },
@@ -517,6 +522,11 @@
     },
     {
       "schema": "public",
+      "name": "enqueue_ping_billing_event",
+      "arguments": "p_parent_sid text, p_event_key text, p_payload jsonb"
+    },
+    {
+      "schema": "public",
       "name": "enqueue_post_call_coaching",
       "arguments": ""
     },
@@ -694,6 +704,11 @@
       "schema": "public",
       "name": "finish_supervisor_listen",
       "arguments": "p_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "flag_ping_wrong_state",
+      "arguments": ""
     },
     {
       "schema": "public",
@@ -1062,13 +1077,28 @@
     },
     {
       "schema": "public",
+      "name": "ping_claim_arrival",
+      "arguments": "p_call_sid text, p_phone text, p_call_id text, p_to_number text, p_exclude text[], p_preferred_agent_id text, p_arrived_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
       "name": "ping_decide",
       "arguments": "p_key_hash text, p_campaign text, p_payload jsonb, p_engine text"
     },
     {
       "schema": "public",
+      "name": "ping_flag_returns",
+      "arguments": "p_sid text"
+    },
+    {
+      "schema": "public",
       "name": "ping_hours_open",
       "arguments": "p_hours jsonb, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ping_resolve_arrival",
+      "arguments": "p_phone text, p_call_id text, p_call_sid text, p_to_number text, p_arrived_at timestamp with time zone"
     },
     {
       "schema": "public",
@@ -1123,6 +1153,11 @@
     {
       "schema": "public",
       "name": "protect_paragon_billing",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "protect_ping_billing",
       "arguments": ""
     },
     {
@@ -1378,6 +1413,11 @@
     {
       "schema": "public",
       "name": "record_paragon_billing_snapshot",
+      "arguments": "p_sid text, p_lease uuid, p_account text, p_arrived timestamp with time zone, p_ended timestamp with time zone, p_answered timestamp with time zone, p_talk integer, p_evidence jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "record_ping_billing_snapshot",
       "arguments": "p_sid text, p_lease uuid, p_account text, p_arrived timestamp with time zone, p_ended timestamp with time zone, p_answered timestamp with time zone, p_talk integer, p_evidence jsonb"
     },
     {
@@ -1853,6 +1893,11 @@
     {
       "schema": "public",
       "name": "snapshot_billing_duplicate",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "snapshot_ping_billing_duplicate",
       "arguments": ""
     },
     {

@@ -20,5 +20,6 @@
   "170_reshop_list.sql": "83e3571048de975b0e7293b1ea6c8769ab1f8dfb1d9d9382eca21fa1c16921b1",
   "171_ping_platform_foundation.sql": "abc9d6fb151ca434278edf327701e33de78b741a60f612c35f2027c6ba8b5170",
   "172_ping_decide.sql": "62d47752994b11be46f18c7c60a71b1153c9bd4aa9b66c09ea98b93906ba09a6",
-  "173_ping_publisher_controls.sql": "3c81fe21b31c6a835a540b932225dc54210499b2185b93334e18f06455045fb6"
+  "173_ping_publisher_controls.sql": "3c81fe21b31c6a835a540b932225dc54210499b2185b93334e18f06455045fb6",
+  "174_ping_arrival_billing.sql": "e009a7b67caf5b983923b00df6502ebff53c05106e1a2804a3b0513ec7d11c6d"
 }
