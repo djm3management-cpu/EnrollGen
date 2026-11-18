@@ -1,6 +1,6 @@
 # EnrollGen Ping Platform Spec
 
-Status: v2, 2026-11-17. Owner: Michael Shiomos.
+Status: v3, 2026-11-18. Owner: Michael Shiomos.
 Branch: `feature/ping-platform`, cut from tag `pilot-wave1-complete` on `pilot/release`.
 Every session on this work reads this file first and treats it as the source of truth. If code and this spec disagree, stop and ask; do not improvise.
 
@@ -34,7 +34,7 @@ NGHS's Paragon integration is the proving ground: it becomes campaign number one
 8. Migrations: next number, forward only, header `-- UNAPPLIED: isolated pilot only`, added to the fresh-install bootstrap with the repo rebuild script (as S1 did), never alter `paragon_*` objects, never touch production data.
 9. No pushes, deploys, live migrations, or changes to main or pilot/release.
 10. The screener never generates caller-facing speech in scripted mode. Conversational mode is a pluggable provider slot, off by default.
-11. Platform scale is a requirement: sub-second p95 decisions at 50 pings per second sustained across tenants, proven by load test in S8.
+11. Platform scale is a requirement: sub-second p95 decisions at 50 pings per second sustained across tenants, proven by load test (script and local baseline in S8a, staging run by the owner).
 
 ## 4. Roles and concepts
 
@@ -62,7 +62,8 @@ Added in later sessions:
 8. `ping_retention_alerts` (S4).
 9. `shopper_history` (S4): peppered phone hash, tenant_id, source_id, seen_at. Pooled reads only through a SECURITY DEFINER count function.
 10. `agent_performance` (S5): rolling conversion by agent, campaign, product line.
-11. `ping_shadow_diffs` (S8 optional).
+11. `ping_shadow_diffs` (S8b optional).
+12. `buyer_api_keys` and `buyer_api_audit` (S8a): per-tenant hashed buyer keys with scopes, and an append only audit of key creation, revocation and every buyer write call.
 
 ## 6. Reason codes
 
@@ -74,14 +75,15 @@ Evaluation order: `routing_disabled`, `invalid_payload`, `source_paused`, `outsi
 
 1. `ping_decide` is the single-buyer decision unit. The exchange calls it once per candidate buyer campaign with `p_engine='shadow'` semantics for evaluation, then once for the winner with reservation side effects.
 2. Staffed hours must use each tenant's own IANA timezone (S2 fixes `ping_hours_open`, which today accepts only America/New_York). Parity for Paragon is unaffected because NGHS is Eastern.
-3. Serialization: the per-source advisory lock in S1 matches Paragon. S3 narrows it to per-campaign plus identity key so one large publisher does not serialize the whole exchange; parity tests must stay green.
+3. Serialization: the per-source advisory lock in S1 matches Paragon. It was deferred from S3 and narrowed in S8a (migration 184) to per-campaign plus identity key so one large publisher does not serialize the whole exchange; the exchange holds the `exchange_sources` row lock only while reading and updating weighted rotation state. Agent safety comes from `FOR UPDATE SKIP LOCKED` on agent rows and reservation uniqueness. Parity tests stay green.
 
 ## 8. API
 
 1. `POST /api/ping/v1`: publisher-facing. Any active publisher with a ping key can authenticate (S2 generalizes `admit_vendor` for route `vendorPing` to any active `lead_sources` row with a matching `ping_key_hash`; the Paragon path is unchanged).
 2. Response: `{decision_id, available, reason, ttl_seconds, transfer_number}`; `price` only when the route allows disclosure.
 3. Web lead ping-post (S9): `POST /api/ping/v1/lead` with the same decision flow, then `POST /api/post/v1` to deliver the accepted lead with consent certificate.
-4. Buyer API (S8): campaign CRUD, caps, pause, reports, scoped to the buyer tenant.
+4. Buyer API (S8a): campaign reads and allowlisted edits, caps, pause and resume, reports, retention alert acknowledgement and screener script drafts, scoped to the buyer tenant by per-tenant API keys. Script approval stays operator only.
+5. Publisher sandbox (S8a): a `lead_sources` row with `sandbox` true is evaluated on `/api/ping/v1` and `/api/exchange/v1/ping` with no reservation, claim, usage event, shopper history, auction row or rotation change. Its decisions carry engine `sandbox`, responses carry `"sandbox": true`, and arrivals never match them.
 
 ## 9. Exchange orchestrator (S3)
 
@@ -131,8 +133,9 @@ Generate `agent_campaign_carriers` from RTS and license data per state and count
 5. S5 Scorecards, usage reporting, performance routing.
 6. S6 RTS and county eligibility.
 7. S7 Screener.
-8. S8 Buyer and publisher portals, buyer API, API docs and sandbox, load test, optional Paragon shadow.
-9. S9 Web lead ping-post and consumer data vendor adapters.
+8. S8a Buyer API with per-tenant keys and audit, publisher sandbox, OpenAPI and integration docs, load test script and baseline, and lock narrowing (spec 7.3, done in S8a with migration 184).
+9. S8b Buyer and operator portal screens, optional Paragon shadow.
+10. S9 Web lead ping-post and consumer data vendor adapters.
 
 Each session ends with new tests, `npm test` in root and telephony, `npm run lint`, and a short report. `npm run build` requires the real deployment profile and is checked by the owner.
 
