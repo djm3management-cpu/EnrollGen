@@ -10,6 +10,7 @@ import { limitsFor } from '../lib/admission.js';
 import { featureEnabled } from '../lib/deploymentFeatures.js';
 import { deploymentProfile } from '../lib/deploymentProfile.js';
 import { fieldMapFor, parsePingFieldMaps, phoneLast4, pingPayload, readPing } from '../ping/adapter.js';
+import { createDataVendors, NO_DATA_VENDORS, parseVendorList } from '../ping/dataVendors.js';
 
 const defaultLogger = createLogger('telephony', 'exchangev1');
 export const EXCHANGE_FLAGS = Object.freeze(['PING_PLATFORM_ENABLED', 'PING_EXCHANGE_ENABLED']);
@@ -34,6 +35,7 @@ export function createExchangeV1Router({
   fieldMaps = {},
   sourceName = () => null,
   admissionLimit = () => limitsFor('vendorPing').minute,
+  dataVendors = NO_DATA_VENDORS,
   log = event => defaultLogger.info(JSON.stringify(event)),
 } = {}) {
   const router = Router();
@@ -64,9 +66,13 @@ export function createExchangeV1Router({
         return reply({ error: 'admission_limited', retry_after: retryAfter }, 429);
       }
       fields = readPing(req.body, fieldMapFor(fieldMaps, sourceName()));
-      const { data, error } = await db().rpc('exchange_ping', {
-        p_key_hash: hash, p_payload: pingPayload(fields, { routingEnabled: routingEnabled() }),
-      });
+      const args = { p_key_hash: hash, p_payload: pingPayload(fields, { routingEnabled: routingEnabled() }) };
+      // S9: with no consumer data vendor configured the S8a call is unchanged.
+      const signals = dataVendors.enabled
+        ? await dataVendors.enrich({ state: fields.state, zip: fields.invalidZip ? null : fields.zip, t65: fields.t65 }) : null;
+      const { data, error } = signals
+        ? await db().rpc('exchange_ping_signals', { ...args, p_signals: signals })
+        : await db().rpc('exchange_ping', args);
       if (error || !data) return failed();
       if (data.status === 'disabled') {
         const feature = EXCHANGE_FLAGS.includes(data.feature) ? data.feature : 'PING_EXCHANGE_ENABLED';
@@ -92,6 +98,7 @@ export async function exchangeV1Router() {
     routingEnabled: () => config.paragonStateRoutingEnabled,
     fieldMaps: parsePingFieldMaps(config.pingFieldMaps),
     sourceName: () => deploymentProfile().paragon?.sourceName ?? null,
+    dataVendors: createDataVendors({ enabled: parseVendorList(config.pingDataVendors) }),
   });
   return defaultRouter;
 }

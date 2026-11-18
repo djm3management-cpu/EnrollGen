@@ -80,6 +80,8 @@ export const config = {
   paragonPingFieldMap: process.env.PARAGON_PING_FIELD_MAP || null,
   // Ping platform field names per lead source name (JSON object).
   pingFieldMaps: process.env.PING_FIELD_MAPS || null,
+  // Consumer data vendors to call for ping decisions (comma list; only "stub").
+  pingDataVendors: process.env.PING_DATA_VENDORS || null,
   // Invalid lookback is handled by the sticky fail-open path, not a startup failure.
   stickyLookbackDays: Number(process.env.STICKY_LOOKBACK_DAYS || 180),
 };

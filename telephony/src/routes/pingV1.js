@@ -7,6 +7,7 @@ import { limitsFor } from '../lib/admission.js';
 import { featureEnabled } from '../lib/deploymentFeatures.js';
 import { deploymentProfile } from '../lib/deploymentProfile.js';
 import { fieldMapFor, parsePingFieldMaps, phoneLast4, pingPayload, readPing } from '../ping/adapter.js';
+import { createDataVendors, NO_DATA_VENDORS, parseVendorList } from '../ping/dataVendors.js';
 
 const defaultLogger = createLogger('telephony', 'pingv1');
 
@@ -17,6 +18,7 @@ export function createPingV1Router({
   fieldMaps = {},
   sourceName = () => null,
   admissionLimit = () => limitsFor('vendorPing').minute,
+  dataVendors = NO_DATA_VENDORS,
   log = event => defaultLogger.info(JSON.stringify(event)),
 } = {}) {
   const router = Router();
@@ -45,10 +47,16 @@ export function createPingV1Router({
         return reply({ error: 'admission_limited', retry_after: retryAfter }, 429);
       }
       fields = readPing(req.body, fieldMapFor(fieldMaps, sourceName()));
-      const { data, error } = await db().rpc('ping_decide', {
+      const args = {
         p_key_hash: hash, p_campaign: fields.campaign,
         p_payload: pingPayload(fields, { routingEnabled: routingEnabled() }), p_engine: 'generic',
-      });
+      };
+      // S9: with no consumer data vendor configured the S8a call is unchanged.
+      const signals = dataVendors.enabled
+        ? await dataVendors.enrich({ state: fields.state, zip: fields.invalidZip ? null : fields.zip, t65: fields.t65 }) : null;
+      const { data, error } = signals
+        ? await db().rpc('ping_decide_signals', { ...args, p_signals: signals })
+        : await db().rpc('ping_decide', args);
       if (error || !data) return reply({ available: false, reason: 'error_rejected' });
       if (data.status === 'disabled') return reply({ status: 'disabled', feature: 'PING_PLATFORM_ENABLED' }, 503);
       if (!data.authorized) return reply({ error: 'Unauthorized' }, 401);
@@ -80,6 +88,7 @@ export async function pingV1Router() {
     fieldMaps: maps,
     // admit_vendor authorizes only the deployment vendor in S1.
     sourceName: () => deploymentProfile().paragon?.sourceName ?? null,
+    dataVendors: createDataVendors({ enabled: parseVendorList(config.pingDataVendors) }),
   });
   return defaultRouter;
 }
