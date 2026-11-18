@@ -10,6 +10,7 @@ import vm from 'node:vm';
 import { readFileSync, readdirSync } from 'node:fs';
 import { build, transformSync } from 'esbuild';
 import { hookHarness } from './helpers/hookHarness.js';
+import { demoScorecard } from '../src/components/exchange/demoData.js';
 
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const element = (type, props, ...children) => ({ type, props: props || {}, children });
@@ -230,4 +231,31 @@ test('demo data is unreachable in a production build and reachable only in the l
   assert.match(read(`${DIR}demoMain.jsx`), /if \(import\.meta\.env\.DEV && import\.meta\.env\.VITE_PING_DEMO === '1'\)/);
   assert.doesNotMatch(read('vite.config.js'), /ping-demo/);
   assert.ok(!UI_FILES.some(file => /demoData/.test(read(DIR + file))));
+});
+
+test('every demo scorecard row is internally consistent in every grouping', () => {
+  const window = { from: new Date(Date.now() - 31 * 86400000).toISOString(), to: new Date(Date.now() + 86400000).toISOString() };
+  const subsets = keys => keys.reduce((all, key) => all.concat(all.map(set => [...set, key])), [[]]);
+  let checked = 0;
+  for (const [operator, keys] of [[false, ['source', 'sub_id', 'campaign', 'state', 'day']],
+    [true, ['buyer_tenant', 'source', 'sub_id', 'campaign', 'state', 'day']]]) {
+    for (const group of subsets(keys)) {
+      const { rows } = demoScorecard({ ...window, group: group.join(',') }, operator);
+      assert.ok(rows.length > 0, `rows for ${group.join(',') || 'no group'}`);
+      for (const row of rows) {
+        const where = `${operator ? 'network' : 'buyer'} [${group.join(',')}] ${JSON.stringify(row)}`;
+        const funnel = [row.pings, row.accepts, row.exchange_wins, row.arrivals, row.connects, row.billable_calls];
+        assert.ok(funnel.every(Number.isInteger) && funnel.every(n => n >= 0), where);
+        for (let i = 1; i < funnel.length; i += 1) assert.ok(funnel[i - 1] >= funnel[i], `funnel order ${where}`);
+        assert.ok(row.apps <= row.connects, `apps ${where}`);
+        assert.ok(row.enrollments <= row.apps, `enrollments ${where}`);
+        assert.ok(row.returns_open + row.returns_credited <= row.billable_calls, `returns ${where}`);
+        assert.equal(row.cost_per_app, row.apps ? row.cost / row.apps : null, `cost per app ${where}`);
+        assert.equal(row.cost_per_enrollment, row.enrollments ? row.cost / row.enrollments : null, `cost per enrollment ${where}`);
+        assert.equal(row.accept_rate, row.pings ? row.accepts / row.pings : null, `accept rate ${where}`);
+        checked += 1;
+      }
+    }
+  }
+  assert.ok(checked > 1000, `checked ${checked} rows`);
 });

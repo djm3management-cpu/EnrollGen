@@ -75,19 +75,25 @@ for (let day = 29; day >= 0; day -= 1) {
     for (const source of [id(11), id(12)]) {
       for (const st of STATES[campaign.id]) {
         const seed = (day * 7 + campaign.id.charCodeAt(35) * 3 + source.charCodeAt(35) + st.charCodeAt(0)) % 17;
-        const pings = 20 + seed * 3; const accepts = Math.round(pings * (0.35 + (seed % 5) / 20));
-        const arrivals = Math.round(accepts * 0.8); const billable = Math.round(arrivals * 0.7);
+        // Each funnel stage is a share of the stage before it, rounded down, so
+        // every fact (and so every sum of facts) keeps the funnel order.
+        const pings = 20 + seed * 3; const accepts = Math.floor(pings * (0.35 + (seed % 5) / 20));
+        const wins = Math.floor(accepts * 0.85); const arrivals = Math.floor(wins * 0.9);
+        const connects = Math.floor(arrivals * 0.9); const billable = Math.floor(connects * 0.8);
+        const apps = Math.floor(connects * 0.3); const enrollments = Math.floor(apps * 0.75);
+        const returnsOpen = Math.min(billable, seed === 3 ? 1 : 0);
+        const returnsCredited = Math.min(billable - returnsOpen, seed === 7 ? 1 : 0);
         FACTS.push({ buyer_tenant: campaign.tenant_id, campaign: campaign.id, source, state: st, sub_id: seed % 3 ? `sub-${100 + (seed % 4)}` : null,
           day: new Date(Date.now() - day * 86400000).toISOString().slice(0, 10), received: Date.now() - day * 86400000,
-          pings, accepts, exchange_wins: Math.round(accepts * 0.6), arrivals, connects: Math.round(arrivals * 0.9), billable_calls: billable,
-          cost: billable * (campaign.rate || 30), apps: Math.round(billable * 0.3), enrollments: Math.round(billable * 0.22),
-          returns_open: seed === 3 ? 1 : 0, returns_credited: seed === 7 ? 1 : 0, rejects: { outside_staffed_hours: pings - accepts - 2, state_not_allowed: 2 } });
+          pings, accepts, exchange_wins: wins, arrivals, connects, billable_calls: billable,
+          cost: billable * (campaign.rate || 30), apps, enrollments, returns_open: returnsOpen, returns_credited: returnsCredited });
       }
     }
   }
 }
 
-function scorecard(params, operator) {
+/** Scorecard rows for the demo, buyer (one tenant) or operator (every tenant). */
+export function demoScorecard(params, operator) {
   const from = Date.parse(params.from); const to = Date.parse(params.to);
   const group = params.group ? params.group.split(',') : [];
   const rows = new Map();
@@ -136,7 +142,7 @@ export async function demoRequest(fn, action, params = {}) {
         c.paused = action === 'campaign_pause';
         return { campaign: c };
       }
-      case 'scorecard': return scorecard(params, false);
+      case 'scorecard': return demoScorecard(params, false);
       case 'usage': return { usage: { month: `${params.month}-01`, pings: 7421, pings_inside_allowance: 5000, overage_pings: 2421, overage_amount: 48.42,
         routed_calls: 1388, routed_calls_amount: 2082, screener_minutes: 912.5, screener_amount: 310, total: 2440.42 } };
       case 'invoice_lines': return { month: `${params.month}-01`, lines: lines() };
@@ -192,7 +198,7 @@ export async function demoRequest(fn, action, params = {}) {
       Object.assign(plan, values, { effective_at: new Date().toISOString() });
       return { plan };
     }
-    case 'network': return scorecard(params, true);
+    case 'network': return demoScorecard(params, true);
     case 'scripts': return { scripts: state.scripts };
     case 'script_approve': case 'script_retire': {
       const s = state.scripts.find(x => x.id === params.script_id) || fail('unknown script_id');
