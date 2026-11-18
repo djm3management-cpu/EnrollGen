@@ -364,6 +364,15 @@
     },
     {
       "schema": "public",
+      "name": "carrier_aliases",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
       "name": "carrier_profiles",
       "kind": "r",
       "owner": "postgres",
@@ -1412,6 +1421,15 @@
     {
       "schema": "public",
       "name": "ping_source_controls",
+      "kind": "r",
+      "owner": "postgres",
+      "rls": true,
+      "force_rls": false,
+      "options": null
+    },
+    {
+      "schema": "public",
+      "name": "ping_zip_county_crosswalk",
       "kind": "r",
       "owner": "postgres",
       "rls": true,
@@ -3024,6 +3042,17 @@
       "identity": "",
       "generated": "",
       "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
+      "name": "origin",
+      "position": 10,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'manual'::text"
     },
     {
       "schema": "public",
@@ -7058,6 +7087,28 @@
       "position": 12,
       "type": "bigint",
       "not_null": false,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "name": "alias_normalized",
+      "position": 1,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "name": "carrier_key",
+      "position": 2,
+      "type": "text",
+      "not_null": true,
       "identity": "",
       "generated": "",
       "default_expression": null
@@ -20022,6 +20073,39 @@
     },
     {
       "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "eligibility_source",
+      "position": 33,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "'manual'::text"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "county_aware",
+      "position": 34,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "false"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
+      "name": "county_filter",
+      "position": 35,
+      "type": "boolean",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": "false"
+    },
+    {
+      "schema": "public",
       "relation": "ping_decisions",
       "name": "id",
       "position": 1,
@@ -20745,6 +20829,50 @@
       "identity": "",
       "generated": "",
       "default_expression": "clock_timestamp()"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "zip",
+      "position": 1,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "county_fips",
+      "position": 2,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "state_code",
+      "position": 3,
+      "type": "text",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "res_ratio",
+      "position": 4,
+      "type": "numeric",
+      "not_null": true,
+      "identity": "",
+      "generated": "",
+      "default_expression": null
     },
     {
       "schema": "public",
@@ -36532,6 +36660,118 @@
     },
     {
       "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
       "relation": "carrier_profiles",
       "grantor": "postgres",
       "grantee": "anon",
@@ -48453,6 +48693,118 @@
     {
       "schema": "public",
       "relation": "ping_source_controls",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": "YES"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": "NO"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
       "grantor": "postgres",
       "grantee": "service_role",
       "privilege": "UPDATE",
@@ -61207,6 +61559,19 @@
     },
     {
       "schema": "public",
+      "name": "normalize_carrier_key",
+      "arguments": "p_name text",
+      "result": "text",
+      "owner": "postgres",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.normalize_carrier_key(p_name text)\n RETURNS text\n LANGUAGE sql\n STABLE\n SET search_path TO 'public'\nAS $function$\n  SELECT coalesce((SELECT a.carrier_key FROM carrier_aliases a WHERE a.alias_normalized=n.k),nullif(n.k,''))\n  FROM (SELECT regexp_replace(lower(coalesce(p_name,'')),'[^a-z0-9]','','g') AS k) n;\n$function$\n"
+    },
+    {
+      "schema": "public",
       "name": "normalize_phone_e164",
       "arguments": "raw text",
       "result": "text",
@@ -61906,6 +62271,19 @@
       ],
       "acl": "{postgres=X/postgres}",
       "definition": "CREATE OR REPLACE FUNCTION public.preserve_whisper_recording_marker()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n IF OLD.metadata->'supervisor_whisper'='true'::jsonb THEN NEW.metadata:=coalesce(NEW.metadata,'{}')||'{\"supervisor_whisper\":true}'::jsonb; END IF;\n RETURN NEW;\nEND $function$\n"
+    },
+    {
+      "schema": "public",
+      "name": "primary_county_for_zip",
+      "arguments": "p_zip text",
+      "result": "text",
+      "owner": "postgres",
+      "security_definer": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.primary_county_for_zip(p_zip text)\n RETURNS text\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT x.county_fips FROM ping_zip_county_crosswalk x\n  WHERE public.deployment_feature_enabled('PING_PLATFORM_ENABLED') AND x.zip=trim(p_zip)\n  ORDER BY x.res_ratio DESC,x.county_fips LIMIT 1;\n$function$\n"
     },
     {
       "schema": "public",
@@ -64793,6 +65171,12 @@
     {
       "schema": "public",
       "relation": "agent_campaign_carriers",
+      "name": "agent_campaign_carriers_origin_check",
+      "definition": "CHECK ((origin = ANY (ARRAY['manual'::text, 'rts'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "agent_campaign_carriers",
       "name": "agent_campaign_carriers_pkey",
       "definition": "PRIMARY KEY (campaign_id, plan_year, agent_id, state, carrier)"
     },
@@ -65437,6 +65821,24 @@
       "relation": "call_wrap_ups",
       "name": "call_wrap_ups_tenant_id_fkey",
       "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "name": "carrier_aliases_alias_normalized_check",
+      "definition": "CHECK ((alias_normalized ~ '^[a-z0-9]{1,128}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "name": "carrier_aliases_carrier_key_check",
+      "definition": "CHECK ((carrier_key ~ '^[a-z0-9_]{1,64}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "carrier_aliases",
+      "name": "carrier_aliases_pkey",
+      "definition": "PRIMARY KEY (alias_normalized)"
     },
     {
       "schema": "public",
@@ -67943,6 +68345,12 @@
     {
       "schema": "public",
       "relation": "ping_campaigns",
+      "name": "ping_campaigns_eligibility_source_check",
+      "definition": "CHECK ((eligibility_source = ANY (ARRAY['manual'::text, 'rts'::text])))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_campaigns",
       "name": "ping_campaigns_engine_mode_check",
       "definition": "CHECK ((engine_mode = ANY (ARRAY['legacy'::text, 'shadow'::text, 'generic'::text])))"
     },
@@ -68287,6 +68695,36 @@
       "relation": "ping_source_controls",
       "name": "ping_source_controls_tenant_id_fkey",
       "definition": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "ping_zip_county_crosswalk_county_fips_check",
+      "definition": "CHECK ((county_fips ~ '^[0-9]{5}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "ping_zip_county_crosswalk_pkey",
+      "definition": "PRIMARY KEY (zip, county_fips)"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "ping_zip_county_crosswalk_res_ratio_check",
+      "definition": "CHECK (((res_ratio >= (0)::numeric) AND (res_ratio <= (1)::numeric)))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "ping_zip_county_crosswalk_state_code_check",
+      "definition": "CHECK ((state_code ~ '^[A-Z]{2}$'::text))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "ping_zip_county_crosswalk_zip_check",
+      "definition": "CHECK ((zip ~ '^[0-9]{5}$'::text))"
     },
     {
       "schema": "public",
@@ -70722,6 +71160,12 @@
     },
     {
       "schema": "public",
+      "relation": "carrier_aliases",
+      "name": "carrier_aliases_pkey",
+      "definition": "CREATE UNIQUE INDEX carrier_aliases_pkey ON public.carrier_aliases USING btree (alias_normalized)"
+    },
+    {
+      "schema": "public",
       "relation": "carrier_profiles",
       "name": "carrier_profiles_carrier_code_key",
       "definition": "CREATE UNIQUE INDEX carrier_profiles_carrier_code_key ON public.carrier_profiles USING btree (carrier_code)"
@@ -72351,6 +72795,12 @@
       "relation": "ping_source_controls",
       "name": "ping_source_controls_scope",
       "definition": "CREATE UNIQUE INDEX ping_source_controls_scope ON public.ping_source_controls USING btree (tenant_id, source_id, COALESCE(campaign_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+    },
+    {
+      "schema": "public",
+      "relation": "ping_zip_county_crosswalk",
+      "name": "ping_zip_county_crosswalk_pkey",
+      "definition": "CREATE UNIQUE INDEX ping_zip_county_crosswalk_pkey ON public.ping_zip_county_crosswalk USING btree (zip, county_fips)"
     },
     {
       "schema": "public",

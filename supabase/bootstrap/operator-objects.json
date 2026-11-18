@@ -952,6 +952,11 @@
     },
     {
       "schema": "public",
+      "name": "normalize_carrier_key",
+      "arguments": "p_name text"
+    },
+    {
+      "schema": "public",
       "name": "normalize_phone_e164",
       "arguments": "raw text"
     },
@@ -1219,6 +1224,11 @@
       "schema": "public",
       "name": "preserve_whisper_recording_marker",
       "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "primary_county_for_zip",
+      "arguments": "p_zip text"
     },
     {
       "schema": "public",

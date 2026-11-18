@@ -27,5 +27,6 @@
   "177_ping_filter_rules.sql": "4ae3d621cb487e3653c81fd09352ba93cee423c7de0c4badee2d66f10677904e",
   "178_ping_filter_decide.sql": "73baac8adb25997e50f3aed6f525d66653126e1ccdca0bf99e746eab4a3528bb",
   "179_ping_scorecard_usage.sql": "a92dfa3ed1c65c58dde59a05cd51a5f28ca731aeb6f9681d65677f1932be009d",
-  "180_ping_performance_routing.sql": "38b049321577e4c5dafecfc5d814f0ed8b149ca4cb5343127dbbed6f52ef5b90"
+  "180_ping_performance_routing.sql": "38b049321577e4c5dafecfc5d814f0ed8b149ca4cb5343127dbbed6f52ef5b90",
+  "181_ping_eligibility_sources.sql": "08afde6adeaf1f09554fce111310666facd5a3aff905e109ef01f4aa41886a7c"
 }
