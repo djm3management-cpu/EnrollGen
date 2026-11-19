@@ -101,6 +101,7 @@ after the window starts a new decision.
 | `routing_disabled` | Direct | Routing is switched off for this deployment or campaign. |
 | `invalid_payload` | Direct | A field failed validation (phone, ZIP or `t65`). |
 | `source_paused` | Direct | You or the campaign are paused. |
+| `source_attestation_missing` | Direct | The campaign requires publisher quality attestations (onshore operation, no resale, reviewed consent language) and yours are missing or expired. Ask the platform operator to record current attestations. |
 | `outside_staffed_hours` | Direct | Outside the campaign's staffed hours. |
 | `campaign_inactive` | Direct | No active campaign matched. |
 | `state_not_allowed` | Direct | The campaign does not take this state. |
@@ -151,6 +152,7 @@ nothing is stored. The answer is:
 
 `post_expires_at` is 60 seconds after the ping. A rejection is 200 with
 `available: false` and one of `invalid_payload`, `source_paused`,
+`source_attestation_missing`,
 `outside_staffed_hours` (outside the campaign's lead hours; a campaign without
 lead hours takes leads around the clock), `campaign_inactive`,
 `state_not_allowed`, `county_not_served`, `consent_missing` (the certificate you

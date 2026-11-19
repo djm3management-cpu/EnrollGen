@@ -110,7 +110,8 @@ paths:
         evaluated and one wins (needs `PING_EXCHANGE_ENABLED`). An accepted ping
         opens a 60 second post window: post the lead to `/api/post/v1/lead`
         before `post_expires_at`. Nothing reserves an agent. Rules, in order:
-        invalid_payload, source_paused, outside_staffed_hours (the campaign's
+        invalid_payload, source_paused, source_attestation_missing (only when
+        the campaign requires publisher attestations), outside_staffed_hours (the campaign's
         lead hours; none means 24/7), campaign_inactive, state_not_allowed,
         county_not_served, consent_missing (a certificate sent on the ping must
         already be of the campaign's required kind), low_intent, daily_budget_reached,
@@ -565,11 +566,11 @@ components:
         t65: { type: [boolean, string, integer], description: 'Turning 65 flag: true/false, "true"/"false", 1/0.' }
     PingReason:
       type: string
-      enum: [routing_disabled, invalid_payload, source_paused, outside_staffed_hours, campaign_inactive, state_not_allowed,
+      enum: [routing_disabled, invalid_payload, source_paused, source_attestation_missing, outside_staffed_hours, campaign_inactive, state_not_allowed,
         county_not_served, missing_call_identity, existing_client_retention, cooldown_same_source, cooldown_any_source,
         repeat_shopper, daily_budget_reached, low_intent, no_eligible_agent, all_eligible_busy, accepted_full,
         accepted_partial, accepted_retention_owner, error_rejected]
-      description: 'low_intent appears only when the buyer enabled a consumer data vendor with a minimum intent score.'
+      description: 'low_intent appears only when the buyer enabled a consumer data vendor with a minimum intent score. source_attestation_missing appears only with SOURCE_ATTESTATIONS_ENABLED on and a campaign that requires publisher attestations (spec v5).'
     PingResponse:
       type: object
       additionalProperties: false

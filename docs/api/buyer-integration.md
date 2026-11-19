@@ -68,6 +68,13 @@ response is the campaign after the change.
 
 Pause and resume take no body. A paused campaign rejects new pings with
 `source_paused`; a caller already holding one of your agents still arrives.
+
+Publisher attestations (spec v5): when the platform operator requires attestations
+on one of your campaigns and `SOURCE_ATTESTATIONS_ENABLED` is on, a ping from a
+publisher whose onshore, no resale and consent review attestations are missing or
+expired is declined with `source_attestation_missing`, right after
+`source_paused`. The portal's Sources tab shows each publisher's attestation status
+and expiry. Reports count it under `rejects_by_reason` like any other reason.
 Resuming does not lift a source wide pause we set.
 
 ### Reports

@@ -1,6 +1,6 @@
 # EnrollGen Ping Platform Spec
 
-Status: v4, 2026-11-18 (S9 reason codes and lead post path). Owner: Michael Shiomos.
+Status: v5, 2026-11-19 (publisher attestation reason code, feature/gold-standards). Owner: Michael Shiomos.
 Branch: `feature/ping-platform`, cut from tag `pilot-wave1-complete` on `pilot/release`.
 Every session on this work reads this file first and treats it as the source of truth. If code and this spec disagree, stop and ask; do not improvise.
 
@@ -65,12 +65,13 @@ Added in later sessions:
 11. `ping_shadow_diffs` (S8b optional).
 12. `buyer_api_keys` and `buyer_api_audit` (S8a): per-tenant hashed buyer keys with scopes, and an append only audit of key creation, revocation and every buyer write call.
 13. Web leads (S9): lead columns on `ping_campaigns` (`channel` `call` or `lead`, `lead_price`, `lead_hours`, `lead_daily_budget`, `consent_required`, `lead_assignment`), `lead_pings` (no direct identifiers), `lead_auctions` (operator only), `lead_posts` (one per ping), immutable `lead_billing`, usage kinds `lead_ping` and `lead_accepted`, and `data_vendor_settings` (per tenant consumer data vendor and optional `min_intent_score`).
+14. Publisher attestations (v5, migration 190): `lead_sources.onshore_operation`, `no_resale`, `consent_language_reviewed`, `attestation_document_ref`, `attested_by`, `attested_at`, `attestation_expires_at` (operator portal only, audited in `admin_action_log` and by the 161 `lead_sources` operator trigger), and `ping_campaigns.require_source_attestations` (default false, set by the operator). Buyers see attestation status and expiry, never the document reference.
 
 ## 6. Reason codes
 
-As built in S1 (order follows live `paragon_ping`: hours before campaign). S3 adds `exchange_no_buyer` and `buyer_cap_reached`. S4 activates rules 8 to 12. S6 adds `county_not_served`, evaluated right after `state_not_allowed` and before `missing_call_identity`, only for campaigns with `county_filter` on whose ping ZIP resolves to a county where none of the required carriers has a plan. S9 adds `low_intent` (call pings: after `daily_budget_reached` and before agent selection, only when the server passed consumer data vendor signals and the campaign tenant set a `min_intent_score`; lead pings: after `consent_missing`), and for web leads `consent_missing`, `lead_window_expired` and `duplicate_lead`. No other codes without a spec change.
+As built in S1 (order follows live `paragon_ping`: hours before campaign). S3 adds `exchange_no_buyer` and `buyer_cap_reached`. S4 activates rules 8 to 12. S6 adds `county_not_served`, evaluated right after `state_not_allowed` and before `missing_call_identity`, only for campaigns with `county_filter` on whose ping ZIP resolves to a county where none of the required carriers has a plan. S9 adds `low_intent` (call pings: after `daily_budget_reached` and before agent selection, only when the server passed consumer data vendor signals and the campaign tenant set a `min_intent_score`; lead pings: after `consent_missing`), and for web leads `consent_missing`, `lead_window_expired` and `duplicate_lead`. v5 (feature/gold-standards, migration 190) adds `source_attestation_missing`, evaluated immediately after `source_paused` for call and lead pings, only when `SOURCE_ATTESTATIONS_ENABLED` is on and the campaign's `require_source_attestations` is true: the publisher (`lead_sources`) must have `onshore_operation`, `no_resale` and `consent_language_reviewed` all true, an `attestation_document_ref`, an `attested_at` and an `attestation_expires_at` later than the decision time, else the decision is `source_attestation_missing`. With the flag off or the setting false nothing is read or traced and every decision is identical to v4. No other codes without a spec change.
 
-Evaluation order: `routing_disabled`, `invalid_payload`, `source_paused`, `outside_staffed_hours`, `campaign_inactive`, `state_not_allowed`, `county_not_served`, `missing_call_identity`, `existing_client_retention`, `cooldown_same_source`, `cooldown_any_source`, `repeat_shopper`, `daily_budget_reached`, then `no_eligible_agent` or `all_eligible_busy`, or `accepted_full`, `accepted_partial` or `accepted_retention_owner`. `error_rejected` can end any evaluation; `exchange_no_buyer` and `buyer_cap_reached` are exchange outcomes.
+Evaluation order: `routing_disabled`, `invalid_payload`, `source_paused`, `source_attestation_missing` (v5, conditional), `outside_staffed_hours`, `campaign_inactive`, `state_not_allowed`, `county_not_served`, `missing_call_identity`, `existing_client_retention`, `cooldown_same_source`, `cooldown_any_source`, `repeat_shopper`, `daily_budget_reached`, then `no_eligible_agent` or `all_eligible_busy`, or `accepted_full`, `accepted_partial` or `accepted_retention_owner`. `error_rejected` can end any evaluation; `exchange_no_buyer` and `buyer_cap_reached` are exchange outcomes.
 
 ## 7. Engine
 
@@ -123,7 +124,7 @@ Generate `agent_campaign_carriers` from RTS and license data per state and count
 
 ## 14. Flags
 
-`PING_PLATFORM_ENABLED`, `PING_SHADOW_ENABLED`, `PING_RETENTION_ALERTS_ENABLED`, `PING_SCORECARD_ENABLED`, `PING_SCREENER_ENABLED`, `PING_EXCHANGE_ENABLED`. All default off.
+`PING_PLATFORM_ENABLED`, `PING_SHADOW_ENABLED`, `PING_RETENTION_ALERTS_ENABLED`, `PING_SCORECARD_ENABLED`, `PING_SCREENER_ENABLED`, `PING_EXCHANGE_ENABLED`. All default off. v5 adds `SOURCE_ATTESTATIONS_ENABLED` (default off) for the attestation gate; the other Gold Standards switches are documented in `docs/feature-gold-standards.md`.
 
 ## 15. Sessions
 
