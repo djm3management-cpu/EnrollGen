@@ -940,6 +940,18 @@
       "sha256": "cf5c83ebdb8c2136349c8d57ecfcf7c27cd70481ca00305243be397c8c6f8c38"
     },
     {
+      "file": "sql/m188.sql",
+      "sha256": "dc22028470a75df40a4629e0e559885aecc93be7a3219b051c3780f23e5a29fc"
+    },
+    {
+      "file": "sql/m189.sql",
+      "sha256": "a3de24f552760620464dd5cbe7d5158c61906b489600c5318133eaf13fb3b6d8"
+    },
+    {
+      "file": "sql/m190.sql",
+      "sha256": "a204517d10d6eae8653c75907fd2da83f2aae737f72e6c75f3c023cc6d38f23c"
+    },
+    {
       "file": "sql/seal.sql",
       "source": "Fresh-install baseline",
       "sha256": "2e680a3828aeb7af574962e3e57b9c74873837215198d867017d88638f0a4549"

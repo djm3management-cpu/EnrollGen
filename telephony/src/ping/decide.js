@@ -1,9 +1,9 @@
-// Pure mirror of SQL ping_decide (migrations 172, 173, 178, 180 and 182). No I/O. Same rule order and
+// Pure mirror of SQL ping_decide (migrations 172, 173, 178, 180, 182 and 190). No I/O. Same rule order and
 // closed reason list as spec section 6; the paragon_ping order is kept for
 // staffed hours before campaign_inactive.
 
 export const REASONS = Object.freeze([
-  'routing_disabled', 'invalid_payload', 'source_paused', 'campaign_inactive',
+  'routing_disabled', 'invalid_payload', 'source_paused', 'source_attestation_missing', 'campaign_inactive',
   'outside_staffed_hours', 'state_not_allowed', 'county_not_served', 'missing_call_identity',
   'existing_client_retention', 'cooldown_same_source', 'cooldown_any_source',
   'repeat_shopper', 'daily_budget_reached', 'no_eligible_agent', 'all_eligible_busy',
@@ -218,7 +218,7 @@ export function orderPool(agents, performance = null, { preferred = null } = {})
  * county: see applyCountyRules; only used by campaigns with county_aware or county_filter.
  */
 export function decidePing({
-  campaign, now = Date.now(), staffed, paused = false, state, callIdentity, agents = [],
+  campaign, now = Date.now(), staffed, paused = false, attestations = null, state, callIdentity, agents = [],
   routingEnabled = true, engine = 'generic', validPayload = true, hours, rows = [], filters = {}, performance = null,
   county = null,
 }) {
@@ -241,6 +241,11 @@ export function decidePing({
     pass('invalid_payload');
     if (paused) return done('source_paused');
     pass('source_paused');
+    // 190: evaluated only when the flag is on and the campaign requires attestations.
+    if (attestations?.enabled === true && campaign?.require_source_attestations === true) {
+      if (attestations.current !== true) return done('source_attestation_missing');
+      pass('source_attestation_missing');
+    }
     const open = typeof staffed === 'boolean' ? staffed : hoursOpen(campaign?.staffed_hours_override || hours, now);
     if (!open) return done('outside_staffed_hours');
     pass('outside_staffed_hours');

@@ -106,6 +106,8 @@ export function planRetention({tables,primaryKeys,foreignKeys=[],holds=[],roster
     else if (n.group === 'practice') { field='operationalDays'; unit='days'; n.dataClass='practice'; }
     else if (n.group === 'textConsent') { field='textConsentYears'; n.dataClass='textConsent'; }
     else if (n.group === 'enrollment') { field='enrollmentYears'; n.dataClass='enrollment'; }
+    // CTMs keep the 10 year enrollment period under their own complaint class.
+    else if (n.group === 'complaint') { field='enrollmentYears'; n.dataClass='complaint'; }
     else if (n.group === 'contact') { field='contactReviewYears'; n.dataClass='contactReview'; }
     else if (n.group === 'call' || audio) {
       const calls = relatedCalls(n);

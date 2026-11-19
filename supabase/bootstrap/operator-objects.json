@@ -22,6 +22,36 @@
     },
     {
       "schema": "public",
+      "name": "activation_add_benefit",
+      "arguments": "p_actor text, p_org text, p_task uuid, p_label text"
+    },
+    {
+      "schema": "public",
+      "name": "activation_close_task",
+      "arguments": "p_actor text, p_org text, p_task uuid, p_status text"
+    },
+    {
+      "schema": "public",
+      "name": "activation_open_task",
+      "arguments": "p_actor text, p_tenant uuid, p_intake uuid, p_event uuid"
+    },
+    {
+      "schema": "public",
+      "name": "activation_record_item",
+      "arguments": "p_actor text, p_org text, p_item uuid, p_outcome text, p_note text"
+    },
+    {
+      "schema": "public",
+      "name": "activation_set_due_days",
+      "arguments": "p_actor text, p_org text, p_days integer"
+    },
+    {
+      "schema": "public",
+      "name": "activation_task_for",
+      "arguments": "p_actor text, p_org text, p_task uuid"
+    },
+    {
+      "schema": "public",
       "name": "add_contact_tag",
       "arguments": "p_tenant_id uuid, p_contact_id uuid, p_requesting_agent_id uuid, p_name text"
     },
@@ -467,6 +497,11 @@
     },
     {
       "schema": "public",
+      "name": "ctm_link",
+      "arguments": "p_actor text, p_org text, p_tenant uuid, p_ctm uuid, p_intake uuid, p_by text, p_file uuid, p_member text"
+    },
+    {
+      "schema": "public",
       "name": "current_deployment_identity",
       "arguments": ""
     },
@@ -624,6 +659,11 @@
       "schema": "public",
       "name": "enrich_call_display_names",
       "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "enrollment_attribution",
+      "arguments": "p_tenant uuid"
     },
     {
       "schema": "public",
@@ -872,6 +912,106 @@
     },
     {
       "schema": "public",
+      "name": "gold_agent_rts_date",
+      "arguments": "p_tenant uuid, p_agent uuid, p_year integer"
+    },
+    {
+      "schema": "public",
+      "name": "gold_audit",
+      "arguments": "p_actor text, p_tenant uuid, p_action text, p_target_type text, p_target uuid, p_after jsonb"
+    },
+    {
+      "schema": "public",
+      "name": "gold_call_agent",
+      "arguments": "p_tenant uuid, p_slug text"
+    },
+    {
+      "schema": "public",
+      "name": "gold_confirmation",
+      "arguments": "p_value text"
+    },
+    {
+      "schema": "public",
+      "name": "gold_coverage",
+      "arguments": "p_plan_type text, p_contract text, p_category text"
+    },
+    {
+      "schema": "public",
+      "name": "gold_date",
+      "arguments": "p_value text"
+    },
+    {
+      "schema": "public",
+      "name": "gold_enrollments",
+      "arguments": "p_tenant uuid"
+    },
+    {
+      "schema": "public",
+      "name": "gold_facts",
+      "arguments": "p_tenants uuid[], p_from date, p_to date, p_plan_year integer"
+    },
+    {
+      "schema": "public",
+      "name": "gold_landscape_plan",
+      "arguments": "p_year integer, p_contract text, p_plan text, p_segment text"
+    },
+    {
+      "schema": "public",
+      "name": "gold_metric_rows",
+      "arguments": "p_facts jsonb, p_from date, p_to date, p_group text[]"
+    },
+    {
+      "schema": "public",
+      "name": "gold_note_ok",
+      "arguments": "p_note text"
+    },
+    {
+      "schema": "public",
+      "name": "gold_origin_call",
+      "arguments": "p_tenant uuid, p_call uuid"
+    },
+    {
+      "schema": "public",
+      "name": "gold_reject_mutation",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "gold_round",
+      "arguments": "p_value double precision, p_places integer"
+    },
+    {
+      "schema": "public",
+      "name": "gold_snp_label",
+      "arguments": "p_category text, p_snp_type text"
+    },
+    {
+      "schema": "public",
+      "name": "gold_standard_compute",
+      "arguments": "p_facts jsonb, p_from date, p_to date, p_group text[], p_network boolean"
+    },
+    {
+      "schema": "public",
+      "name": "gold_standard_network_scorecard",
+      "arguments": "p_from date, p_to date, p_group_by text[], p_plan_year integer"
+    },
+    {
+      "schema": "public",
+      "name": "gold_standard_scorecard",
+      "arguments": "p_tenant uuid, p_from date, p_to date, p_group_by text[], p_plan_year integer"
+    },
+    {
+      "schema": "public",
+      "name": "gold_subject",
+      "arguments": "p_actor text, p_org text, p_flag text, p_admin boolean"
+    },
+    {
+      "schema": "public",
+      "name": "gold_wilson",
+      "arguments": "p_x numeric, p_num numeric, p_den numeric, p_scale numeric"
+    },
+    {
+      "schema": "public",
       "name": "guard_buyer_api_key",
       "arguments": ""
     },
@@ -1069,6 +1209,51 @@
       "schema": "public",
       "name": "media_attempt_active",
       "arguments": "p_attempt_id uuid, p_call_sid text"
+    },
+    {
+      "schema": "public",
+      "name": "member_backfill_mbi_keys",
+      "arguments": "p_after uuid, p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "member_dismiss_unmatched",
+      "arguments": "p_actor text, p_org text, p_row uuid, p_reason text"
+    },
+    {
+      "schema": "public",
+      "name": "member_link_unmatched",
+      "arguments": "p_actor text, p_org text, p_row uuid, p_intake uuid, p_reason text"
+    },
+    {
+      "schema": "public",
+      "name": "member_match",
+      "arguments": "p_tenant uuid, p_carrier text, p_confirmation text, p_member_id text, p_mbi_key text, p_effective date"
+    },
+    {
+      "schema": "public",
+      "name": "member_mbi_key",
+      "arguments": "p_mbi text"
+    },
+    {
+      "schema": "public",
+      "name": "member_mbi_normalize",
+      "arguments": "p_mbi text"
+    },
+    {
+      "schema": "public",
+      "name": "member_mbi_pepper",
+      "arguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "member_status_apply",
+      "arguments": "p_actor text, p_tenant uuid, p_file uuid, p_carrier text, p_row jsonb, p_intake uuid, p_by text"
+    },
+    {
+      "schema": "public",
+      "name": "member_status_import",
+      "arguments": "p_actor text, p_org text, p_kind text, p_carrier text, p_file_hash text, p_as_of date, p_rows jsonb, p_dropped text[]"
     },
     {
       "schema": "public",
@@ -1367,6 +1552,11 @@
     },
     {
       "schema": "public",
+      "name": "ping_source_attested",
+      "arguments": "p_source uuid, p_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
       "name": "ping_tenant_zone",
       "arguments": "p_tenant uuid"
     },
@@ -1477,6 +1667,11 @@
     },
     {
       "schema": "public",
+      "name": "provision_member_mbi_pepper",
+      "arguments": "p_secret text"
+    },
+    {
+      "schema": "public",
       "name": "provision_ping_phone_pepper",
       "arguments": "p_secret text"
     },
@@ -1492,6 +1687,11 @@
     },
     {
       "schema": "public",
+      "name": "read_activation_tasks",
+      "arguments": "p_actor text, p_org text, p_filters jsonb, p_limit integer, p_offset integer"
+    },
+    {
+      "schema": "public",
       "name": "read_consumer_lifecycle",
       "arguments": "p_actor text, p_org text, p_contact uuid, p_after_time timestamp with time zone, p_after_key text, p_type text, p_limit integer, p_as_of timestamp with time zone, p_export boolean, p_evidence_table text, p_evidence_id uuid, p_access_time timestamp with time zone, p_access_id uuid"
     },
@@ -1504,6 +1704,11 @@
       "schema": "public",
       "name": "read_contact_tags",
       "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_contact_ids uuid[]"
+    },
+    {
+      "schema": "public",
+      "name": "read_ctm_records",
+      "arguments": "p_actor text, p_org text, p_status text, p_limit integer"
     },
     {
       "schema": "public",
@@ -1664,6 +1869,16 @@
       "schema": "public",
       "name": "read_evidence_v_pipeline_status",
       "arguments": "p_resource uuid, p_action text"
+    },
+    {
+      "schema": "public",
+      "name": "read_member_column_maps",
+      "arguments": "p_actor text, p_org text, p_kind text"
+    },
+    {
+      "schema": "public",
+      "name": "read_member_unmatched",
+      "arguments": "p_actor text, p_org text, p_kind text, p_limit integer"
     },
     {
       "schema": "public",
@@ -1967,6 +2182,11 @@
     },
     {
       "schema": "public",
+      "name": "resolve_ctm",
+      "arguments": "p_actor text, p_org text, p_ctm uuid, p_code text, p_reason text"
+    },
+    {
+      "schema": "public",
       "name": "resolve_deployment_subject",
       "arguments": "p_subject text, p_org text"
     },
@@ -2139,6 +2359,11 @@
       "schema": "public",
       "name": "save_follow_up",
       "arguments": "p_tenant_id uuid, p_requesting_agent_id uuid, p_contact_id uuid, p_due_at timestamp with time zone, p_reason text, p_agent_slug text"
+    },
+    {
+      "schema": "public",
+      "name": "save_member_column_map",
+      "arguments": "p_actor text, p_org text, p_kind text, p_carrier text, p_mapping jsonb"
     },
     {
       "schema": "public",
@@ -2476,6 +2701,7 @@
     "_knowledgeUpdate.js",
     "_llmTelemetry.js",
     "_paragonControls.js",
+    "_pingPortal.js",
     "_recordingAccess.js",
     "_recordingCompliance.js",
     "_redaction.js",
@@ -2485,6 +2711,7 @@
     "_telephonyLink.js",
     "_tenantSettings.js",
     "access-review.js",
+    "activation-tasks.js",
     "agent-status-log.js",
     "backfill-analytics.js",
     "backfill-deepgram-intelligence.js",
@@ -2514,12 +2741,15 @@
     "evidence-export.js",
     "evidence-media.js",
     "evidence-session.js",
+    "gold-standards.js",
     "live-bulletins.js",
     "nightly-analytics.js",
     "paragon-daily-email.js",
     "paragon-residence.js",
     "paragon-vendor-report.js",
     "paragon-zip-confirm.js",
+    "ping-buyer.js",
+    "ping-operator.js",
     "pipeline-settings.js",
     "post-call-admin.js",
     "post-call-background.js",

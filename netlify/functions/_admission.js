@@ -38,3 +38,14 @@ export async function admitReshop(db,route,subject,profile){
  }});
  await admit(adapter,'summary',subject,{...profile,admissionLimits:{...profile.admissionLimits,summary:{minute:RESHOP_ADMISSION[route],subjectDay:3000,deploymentDay:30000}}});
 }
+
+// Gold Standards and activation routes reuse the same atomic counters.
+export const GOLD_ADMISSION=Object.freeze({goldRead:30,goldExport:5,goldWrite:20,goldImport:5,activationRead:30,activationWrite:30});
+export async function admitGold(db,route,subject,profile){
+ if(!Object.hasOwn(GOLD_ADMISSION,route))throw new AdmissionError(503);
+ const adapter=new Proxy(db,{get(target,key){
+  if(key==='rpc')return(name,args)=>target.rpc(name,name==='consume_admission'?{p_rules:args.p_rules.map(rule=>({...rule,key:rule.key.replace(':summary:',':'+route+':')}))}:args);
+  const value=target[key];return typeof value==='function'?value.bind(target):value;
+ }});
+ await admit(adapter,'summary',subject,{...profile,admissionLimits:{...profile.admissionLimits,summary:{minute:GOLD_ADMISSION[route],subjectDay:3000,deploymentDay:30000}}});
+}

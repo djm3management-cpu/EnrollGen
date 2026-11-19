@@ -34,5 +34,8 @@
   "184_ping_buyer_api_sandbox_locks.sql": "da9810c7219afb06a501cd9368779e5864a14461e59f57527f433d3398c9b815",
   "185_ping_lead_schema.sql": "fac297e66d3fd10cd06a45b4a44ef83129e00de3636528c1f8bdc03c5c51c465",
   "186_ping_lead_ping_post.sql": "a73bda07b60144b44d663b94e403d7263e52f028e142d513ca736e73f7c6fa45",
-  "187_ping_call_channel_vendor_signals.sql": "f4f9b0973ff6dbc49c96b16b5634adb3fc7fffabd8f7945efaf08f7375612aca"
+  "187_ping_call_channel_vendor_signals.sql": "f4f9b0973ff6dbc49c96b16b5634adb3fc7fffabd8f7945efaf08f7375612aca",
+  "188_gold_standards_member_status.sql": "b9323f84b74d82fd573d03ed65c4c3495af7d61cc2fae565dc26d2313872628a",
+  "189_gold_standards_metrics.sql": "a9f98dba414fe658044166da87318edc4f5f5a8778f6a3f6886a09e7df519b41",
+  "190_ping_source_attestations.sql": "23855352ece006135941df978c421817e9e1a2e3786414d48e811059996c7ad4"
 }

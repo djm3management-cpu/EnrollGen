@@ -4,7 +4,8 @@ export const GROUPS = Object.freeze({
   call: ['post_call_coaching','inbound_calls','call_records','sessions','call_threads','call_transcripts','transcript_chunks','telephony_transcript_segments',
     'compliance_scorecards','compliance_scores','scorecard_items','section_scores','intent_detections','compliance_flags',
     'phi_redactions','corrective_actions','compliance_review_decisions','calibration_overrides','cross_sell_attempts','followup_queue'],
-  enrollment: ['reshop_reviews','client_recaps','enrollment_intakes','policies','sales_log','ghl_enrollment_deliveries','conversely_submissions','ix_uploads'],
+  enrollment: ['member_status_import_files','member_carrier_ids','member_status_events','member_unmatched_rows','member_status_column_maps',
+    'activation_settings','activation_tasks','activation_task_items','activation_item_records','reshop_reviews','client_recaps','enrollment_intakes','policies','sales_log','ghl_enrollment_deliveries','conversely_submissions','ix_uploads'],
   audit: ['supervisor_listen_sessions','admin_action_log','evidence_access_log','pii_access_log','session_lock_events'],
   textConsent: ['messages','message_media'],
   operational: ['supervisor_listen_grants','operational_events','admission_counters','agent_availability_log','agent_phone_sessions','call_conferences','call_logs',
@@ -22,5 +23,7 @@ export const GROUPS = Object.freeze({
     'usage_records','vendor_control_audit'],
   recording: ['recording_ingestion'],
   contact: ['contacts'],
+  // CMS complaints (CTMs): complaint evidence on the 10 year enrollment period.
+  complaint: ['ctm_records'],
 });
 export const TABLE_CLASS = Object.freeze(Object.fromEntries(Object.entries(GROUPS).flatMap(([group,tables])=>tables.map(t=>[t,group]))));

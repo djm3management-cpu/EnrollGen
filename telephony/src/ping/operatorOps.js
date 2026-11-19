@@ -8,6 +8,7 @@
 // are returned once and never stored or logged; hashes are never returned.
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Invalid, fail, isObject, uuidOrNull, scorecardQuery, BUYER_SCOPES, SCORECARD_GROUPS } from './buyerOps.js';
+import { ATTESTATION_COLUMNS, attestationView, checkAttestation } from './attestations.js';
 
 export const STRATEGIES = Object.freeze(['priority_waterfall', 'weighted_rotation', 'highest_price']);
 export const SOURCE_TYPES = Object.freeze(['publisher', 'aggregator']);
@@ -32,6 +33,7 @@ const scopes = value => (Array.isArray(value) && value.length >= 1 && value.leng
   && value.every(scope => BUYER_SCOPES.includes(scope)) && new Set(value).size === value.length ? [...value].sort()
   : fail('invalid scopes'));
 const text = (value, name) => (typeof value === 'string' && value.length <= 64 ? value : fail(`invalid ${name}`));
+const text200 = (value, name) => (typeof value === 'string' && value.length <= 200 ? value : fail(`invalid ${name}`));
 
 /**
  * Checks `input` against `fields` ({name: [validator, required]}). Unknown
@@ -97,6 +99,37 @@ export const OPERATOR_ACTIONS = Object.freeze({
         : db.from('exchange_sources').insert({ source_id: source.id, strategy: input.strategy });
       return { exchange_source: checked(await write.select('source_id,strategy,active').single()) };
     } },
+  // Spec v5: publisher attestations (migration 190). Feature gated; the
+  // lead_sources operator trigger also records every change.
+  source_attestations: { write: false, feature: 'SOURCE_ATTESTATIONS_ENABLED', fields: {}, async run({ db, operatorTenant }) {
+    const list = rows(checked(await db.from('lead_sources').select(ATTESTATION_COLUMNS).eq('tenant_id', operatorTenant)
+      .in('type', SOURCE_TYPES).order('name')));
+    const campaigns = rows(checked(await db.from('ping_campaigns').select('id,tenant_id,name,require_source_attestations').order('name')));
+    return { sources: list.map(source => attestationView(source)), campaigns };
+  } },
+  source_attestation: { write: true, feature: 'SOURCE_ATTESTATIONS_ENABLED', fields: { source_id: [uuid, R],
+    onshore_operation: [bool, R], no_resale: [bool, R], consent_language_reviewed: [bool, R],
+    attestation_document_ref: [(value, name) => (value === null ? null : text200(value, name)), R], expires_at: [text, R] },
+  async run({ db, operatorTenant, audit, actor }, input) {
+    const source = await ownSource(db, operatorTenant, input.source_id);
+    const { patch, error } = checkAttestation(input, actor);
+    if (error) fail(error);
+    await audit({ op: 'source_attestation', target_type: 'lead_sources', target_id: source.id, result: 'authorized',
+      detail: { onshore_operation: patch.onshore_operation, no_resale: patch.no_resale, consent_language_reviewed: patch.consent_language_reviewed,
+        attestation_document_ref: patch.attestation_document_ref, expires_at: patch.attestation_expires_at } });
+    return { source: attestationView(checked(await db.from('lead_sources').update(patch).eq('tenant_id', operatorTenant)
+      .eq('id', source.id).select(ATTESTATION_COLUMNS).single())) };
+  } },
+  campaign_attestations: { write: true, feature: 'SOURCE_ATTESTATIONS_ENABLED', fields: { campaign_id: [uuid, R],
+    require_source_attestations: [bool, R] },
+  async run({ db, audit }, input) {
+    const campaign = checked(await db.from('ping_campaigns').select('id').eq('id', input.campaign_id).maybeSingle());
+    if (!campaign) fail('unknown campaign_id');
+    await audit({ op: 'campaign_attestations', target_type: 'ping_campaigns', target_id: campaign.id, result: 'authorized',
+      detail: { require_source_attestations: input.require_source_attestations } });
+    return { campaign: checked(await db.from('ping_campaigns').update({ require_source_attestations: input.require_source_attestations })
+      .eq('id', campaign.id).select('id,tenant_id,name,require_source_attestations').single()) };
+  } },
   campaigns: { write: false, fields: {}, async run({ db }) {
     return { campaigns: rows(checked(await db.from('ping_campaigns').select('id,tenant_id,name,channel,active,product_line')
       .order('name'))) };
