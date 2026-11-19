@@ -1320,6 +1320,7 @@ function ContactsWorkspace({ variant = "home", onStartCall = null, focusContact 
 
 // CRM routes share one workspace; the existing call log retains its controls.
 const ReshopList = lazyWithRetry(() => import('./ReshopList'));
+const ActivationTasks = lazyWithRetry(() => import('../gold/ActivationTasks.jsx'));
 export default function ContactsTab({ variant = "home", onStartCall = null }) {
   const {features={}}=useTenantConfig();
   const [location, setLocation] = useState(() => readCrmLocation(window.location));
@@ -1346,7 +1347,9 @@ export default function ContactsTab({ variant = "home", onStartCall = null }) {
       <button data-key-role="secondary" type="button" className={location.view === 'opportunities' ? 'is-active' : ''} aria-pressed={location.view === 'opportunities'} onClick={() => updateLocation('opportunities')}><BriefcaseBusiness size={14} aria-hidden="true" />Opportunities</button>
       <button data-key-role="secondary" type="button" className={location.view === 'followups' ? 'is-active' : ''} aria-pressed={location.view === 'followups'} onClick={() => updateLocation('followups')}><CalendarClock size={14} aria-hidden="true" />Follow-ups{dueToday > 0 && <span className="call-log-chip" aria-label={`${dueToday} follow-ups due today`}> {dueToday}</span>}</button>
       {features.RESHOP_LIST_ENABLED&&<button type="button" data-key-role="secondary" className={location.view==='reshop'?'is-active':''} aria-pressed={location.view==='reshop'} onClick={()=>updateLocation('reshop')}>Re-shop</button>}
+      {features.BENEFIT_ACTIVATION_ENABLED&&<button type="button" data-key-role="secondary" className={location.view==='activation'?'is-active':''} aria-pressed={location.view==='activation'} onClick={()=>updateLocation('activation')}>Activation</button>}
     </div>
+    {features.BENEFIT_ACTIVATION_ENABLED&&location.view==='activation'&&<CrmPanelBoundary label="Activation"><Suspense fallback={<div className="contacts-muted">Loading...</div>}><ActivationTasks onOpenContact={id=>updateLocation('contacts',id)}/></Suspense></CrmPanelBoundary>}
     {features.RESHOP_LIST_ENABLED&&location.view==='reshop'&&<CrmPanelBoundary label="Re-shop"><Suspense fallback={<div className="contacts-muted">Loading...</div>}><ReshopList onOpenContact={id=>updateLocation('contacts',id)}/></Suspense></CrmPanelBoundary>}
     <div hidden={location.view !== 'contacts'}>
       <CrmPanelBoundary label="Contacts" resetKey={location.contactId}>

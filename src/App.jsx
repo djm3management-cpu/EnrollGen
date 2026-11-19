@@ -66,6 +66,7 @@ const loadACAIntelligence = () => import("./components/ACAIntelligence");
 const PracticeCaller=lazyWithRetry(()=>import("./components/PracticeCaller"));
 const SupervisorFloor=lazyWithRetry(()=>import("./components/SupervisorFloor"));
 const ExchangeWorkspace=lazyWithRetry(()=>import("./components/exchange/ExchangeWorkspace.jsx"));
+const GoldStandardsWorkspace=lazyWithRetry(()=>import("./components/gold/GoldStandardsView.jsx"));
 const loadAgentDashboard = () => import("./components/AgentDashboard");
 const AgentDashboard = lazyWithRetry(loadAgentDashboard);
 const PostCallCoaching = lazyWithRetry(() => import("./components/callDetail/PostCallCoaching"));
@@ -537,6 +538,7 @@ function getTabsForMode(mode, features = {}, supervisorFloor = false, isAdmin = 
   if(features.SUPERVISOR_FLOOR_ENABLED&&supervisorFloor)tabs.push({id:"floor",label:"FLOOR"});
   if (features.POST_CALL_COACHING_ENABLED) tabs.push({ id: "coaching", label: "COACHING" });
   if(features.PING_PLATFORM_ENABLED&&isAdmin)tabs.push({id:"exchange",label:"EXCHANGE"});
+  if(features.GOLD_STANDARDS_METRICS_ENABLED&&isAdmin)tabs.push({id:"gold",label:"GOLD STANDARDS"});
   tabs.push({ id: "rts", label: "RTS" });
   if (features.DAILY_VERSE_ENABLED) tabs.push({ id: "verse", label: "DAILY VERSE" });
 
@@ -878,6 +880,9 @@ function AppShell({ currentUser = null }) {
       case "exchange":
         if(!features.PING_PLATFORM_ENABLED||!canAdmin)return null;
         return <LazyPanel><ExchangeWorkspace /></LazyPanel>;
+      case "gold":
+        if(!features.GOLD_STANDARDS_METRICS_ENABLED||!canAdmin)return null;
+        return <LazyPanel><GoldStandardsWorkspace /></LazyPanel>;
       case "rts":
         return (
           <LazyPanel>

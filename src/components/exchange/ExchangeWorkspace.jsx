@@ -4,6 +4,8 @@ import { useAppAuth } from '../../context/AuthContext';
 import { useExchangeRead, errorLine } from './exchangeUi.jsx';
 import { CampaignsPanel, ScorecardPanel, UsagePanel, RetentionPanel, ScreenerPanel } from './BuyerPanels.jsx';
 import { PublishersPanel, RoutesPanel, PlansPanel, NetworkPanel, ApiKeysPanel } from './OperatorPanels.jsx';
+import { SourcesPanel, AttestationsPanel } from './AttestationPanels.jsx';
+import { GoldStandardsView } from '../gold/GoldStandardsView.jsx';
 
 /** Sub tabs for this administrator. Operator tabs appear only when the server says this tenant is the operator. */
 export function exchangeTabs(context) {
@@ -12,10 +14,13 @@ export function exchangeTabs(context) {
   if (f.scorecard) tabs.push({ id: 'scorecard', label: 'Scorecard' }, { id: 'usage', label: 'Usage' });
   tabs.push({ id: 'retention', label: 'Retention' });
   if (f.screener) tabs.push({ id: 'screener', label: 'Screener' });
+  if (f.attestations === true) tabs.push({ id: 'sources', label: 'Sources' });
+  if (f.gold_standards === true) tabs.push({ id: 'gold', label: 'Gold Standards' });
   if (context?.operator === true) {
     tabs.push({ id: 'publishers', label: 'Publishers', operator: true }, { id: 'routes', label: 'Routes', operator: true },
       { id: 'plans', label: 'Plans', operator: true });
     if (f.scorecard) tabs.push({ id: 'network', label: 'Network', operator: true });
+    if (f.attestations === true) tabs.push({ id: 'attestations', label: 'Attestations', operator: true });
     tabs.push({ id: 'keys', label: 'API Keys', operator: true });
   }
   return tabs;
@@ -23,7 +28,10 @@ export function exchangeTabs(context) {
 
 const PANELS = { campaigns: CampaignsPanel, scorecard: ScorecardPanel, usage: UsagePanel, retention: RetentionPanel,
   screener: ScreenerPanel, publishers: PublishersPanel, routes: RoutesPanel, plans: PlansPanel, network: NetworkPanel,
-  keys: ApiKeysPanel };
+  keys: ApiKeysPanel,
+  // Wrapped so the panels resolve only when their feature tab renders.
+  sources: props => <SourcesPanel {...props} />, attestations: props => <AttestationsPanel {...props} />,
+  gold: props => <GoldStandardsView getToken={props.getToken} /> };
 
 export function ExchangeWorkspaceView({ getToken, initialTab = 'campaigns' }) {
   const { read, error } = useExchangeRead(getToken);

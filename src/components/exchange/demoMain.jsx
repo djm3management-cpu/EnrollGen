@@ -6,6 +6,7 @@ import '../../styles.css';
 import '../../styles/v3-overrides.css';
 import '../../styles/visual-refresh.css';
 import { ExchangeWorkspaceView } from './ExchangeWorkspace.jsx';
+import { ActivationTasksView } from '../gold/ActivationTasks.jsx';
 
 // Local demo entry for the exchange screens (ping-demo.html, dev server only;
 // not a build input). Renders nothing unless the demo switch is on.
@@ -17,6 +18,8 @@ if (import.meta.env.DEV && import.meta.env.VITE_PING_DEMO === '1') {
   document.documentElement.dataset.theme = theme;
   document.documentElement.classList.toggle('dark', theme === 'dark');
   ReactDOM.createRoot(root).render(<React.StrictMode>
-    <div className="top-panel-body exchange-demo-shell"><ExchangeWorkspaceView getToken={demoToken} initialTab={query.get('tab') || 'campaigns'} /></div>
+    <div className="top-panel-body exchange-demo-shell">{query.get('tab') === 'activation'
+      ? <ActivationTasksView getToken={demoToken} />
+      : <ExchangeWorkspaceView getToken={demoToken} initialTab={query.get('tab') || 'campaigns'} />}</div>
   </React.StrictMode>);
 }

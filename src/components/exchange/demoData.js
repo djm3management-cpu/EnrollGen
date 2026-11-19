@@ -2,9 +2,11 @@
 // number here is fictional; phone numbers use the 555 range. Loaded only by
 // exchangeApi.js under import.meta.env.DEV with VITE_PING_DEMO=1, never in a
 // production build.
+import { attestationView, attestationPatch } from '../../../telephony/src/ping/attestations.js';
+
 const TZ = 'America/Chicago';
-const DEMO_TENANT = 'd0000000-0000-4000-8000-000000000001';
-const TENANTS = [
+export const DEMO_TENANT = 'd0000000-0000-4000-8000-000000000001';
+export const TENANTS = [
   { id: DEMO_TENANT, name: 'Harborline Senior Benefits' },
   { id: 'd0000000-0000-4000-8000-000000000002', name: 'Cedar Ridge Insurance Group' },
   { id: 'd0000000-0000-4000-8000-000000000003', name: 'Bluewater Medicare Partners' },
@@ -39,6 +41,13 @@ const state = {
     { id: id(12), name: 'Summit Call Network', type: 'aggregator', active: true, sandbox: false, has_key: true, strategy: 'weighted_rotation', exchange_active: true, created_at: iso(45) },
     { id: id(13), name: 'Lakeshore Media Test', type: 'publisher', active: true, sandbox: true, has_key: true, strategy: 'highest_price', exchange_active: true, created_at: iso(5) },
   ],
+  // Publisher attestations (spec v5): current, expired and missing.
+  attestations: {
+    [id(11)]: { onshore_operation: true, no_resale: true, consent_language_reviewed: true, attestation_document_ref: 'NW-ATTEST-2026', attested_at: iso(40), attestation_expires_at: iso(-320) },
+    [id(12)]: { onshore_operation: true, no_resale: true, consent_language_reviewed: true, attestation_document_ref: 'SCN-ATTEST-2025', attested_at: iso(400), attestation_expires_at: iso(35) },
+    [id(13)]: { onshore_operation: true, no_resale: false, consent_language_reviewed: false, attestation_document_ref: null, attested_at: null, attestation_expires_at: null },
+  },
+  requireAttestations: { [id(1)]: true, [id(2)]: false, [id(3)]: true, [id(4)]: false, [id(5)]: false },
   routes: [
     { id: id(21), source_id: id(11), campaign_id: id(1), priority: 1, weight: 1, price_override: null, active: true, created_at: iso(50) },
     { id: id(22), source_id: id(11), campaign_id: id(4), priority: 2, weight: 1, price_override: 35, active: true, created_at: iso(50) },
@@ -121,6 +130,7 @@ const lines = () => [
 ];
 
 const fail = message => { throw new Error(message); };
+const sourceRow = x => ({ id: x.id, name: x.name, type: x.type, ...(state.attestations[x.id] || {}) });
 const own = c => c.tenant_id === DEMO_TENANT;
 const hex = n => Array.from({ length: n }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
@@ -130,7 +140,14 @@ export async function demoRequest(fn, action, params = {}) {
   const campaigns = () => state.campaigns.filter(own);
   if (fn === 'buyer') {
     switch (action) {
-      case 'context': return { operator: true, timezone: TZ, features: { scorecard: true, screener: true, retention: true, exchange: true } };
+      case 'context': return { operator: true, timezone: TZ, features: { scorecard: true, screener: true, retention: true, exchange: true,
+        attestations: true, gold_standards: true } };
+      case 'sources': {
+        const own = campaigns().map(c => c.id);
+        const ids = [...new Set(state.routes.filter(r => r.active && own.includes(r.campaign_id)).map(r => r.source_id))];
+        return { sources: state.sources.filter(x => ids.includes(x.id)).map(x => { const view = attestationView(sourceRow(x)); delete view.attestation_document_ref; return view; }),
+          campaigns: campaigns().map(c => ({ id: c.id, name: c.name, require_source_attestations: state.requireAttestations[c.id] === true })) };
+      }
       case 'campaigns': return { campaigns: campaigns() };
       case 'campaign_update': {
         const c = campaigns().find(x => x.id === params.id) || fail('not_found');
@@ -165,6 +182,18 @@ export async function demoRequest(fn, action, params = {}) {
   }
   switch (action) {
     case 'sources': return { sources: state.sources };
+    case 'source_attestations': return { sources: state.sources.map(x => attestationView(sourceRow(x))),
+      campaigns: state.campaigns.map(c => ({ id: c.id, tenant_id: c.tenant_id, name: c.name, require_source_attestations: state.requireAttestations[c.id] === true })) };
+    case 'source_attestation': {
+      const x = state.sources.find(v => v.id === params.source_id) || fail('unknown source_id');
+      state.attestations[x.id] = attestationPatch(params, 'demo_operator');
+      return { source: attestationView(sourceRow(x)) };
+    }
+    case 'campaign_attestations': {
+      const c = state.campaigns.find(v => v.id === params.campaign_id) || fail('unknown campaign_id');
+      state.requireAttestations[c.id] = params.require_source_attestations === true;
+      return { campaign: { id: c.id, tenant_id: c.tenant_id, name: c.name, require_source_attestations: state.requireAttestations[c.id] } };
+    }
     case 'source_create': {
       const source = { id: crypto.randomUUID(), name: params.name, type: params.type || 'publisher', active: true, sandbox: false,
         has_key: true, strategy: 'priority_waterfall', exchange_active: true, created_at: new Date().toISOString() };
