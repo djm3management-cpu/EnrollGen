@@ -158,6 +158,13 @@ export async function migrate(opts) {
       return { results, awaitingProvisioning: true };
     }
 
+    // Provisioning upserts tenants (name/org/display) and bumps updated_at;
+    // re-apply the OLD tenant row once more so a single run ends in the final state.
+    if (!opts.dryRun && (!only || only === 'tenants')) {
+      await newDb.query(`DELETE FROM migration_ledger.table_progress WHERE table_name='tenants'`);
+      await run(P.tableSpec('tenants', ctx));
+    }
+
     // 2. Scoring identity (Q5).
     const maps = await P.buildScoringMaps(oldDb, newDb);
     ctx.intentMap = maps.intentMap; ctx.itemMap = maps.itemMap;

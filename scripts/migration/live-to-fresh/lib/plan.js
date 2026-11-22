@@ -5,7 +5,7 @@
 import * as T from './transforms.js';
 import { reencryptObjects, isEnvelope } from './pii.js';
 import { quoteIdent } from './catalog.js';
-import { stringifyLossless, scalar } from './json.js';
+import { stringifyLossless } from './json.js';
 import * as ledger from './ledger.js';
 
 // Not migrated, with the reason shown in reports.
@@ -179,4 +179,3 @@ export function ghlAllowlistFrom(source) {
   return [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]);
 }
 
-export { scalar };

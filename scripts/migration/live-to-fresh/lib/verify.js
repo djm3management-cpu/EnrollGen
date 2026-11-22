@@ -93,8 +93,12 @@ export async function verify({ oldDb, newDb, codec, plan, sampleSize = 100, log 
 
   // 5. Embeddings.
   for (const t of ['transcript_chunks', 'cms_plan_embeddings_py2027']) {
-    const q = `SELECT count(embedding)::int AS n, min(vector_dims(embedding)) AS dmin, max(vector_dims(embedding)) AS dmax, md5(string_agg(id::text || ':' || embedding::text, ',' ORDER BY id)) AS h FROM public.${quoteIdent(t)}`;
-    const [o, n] = [(await oldDb.query(q)).rows[0], (await newDb.query(q)).rows[0]];
+    const key = quoteIdent(newPks.get(t)[0].name);
+    // Per-row md5 in SQL, combined here: one aggregated string would exceed 1 GB.
+    const q = `SELECT count(embedding)::int AS n, min(vector_dims(embedding)) AS dmin, max(vector_dims(embedding)) AS dmax FROM public.${quoteIdent(t)}`;
+    const rowsQ = `SELECT ${key}::text || ':' || md5(embedding::text) AS h FROM public.${quoteIdent(t)} WHERE embedding IS NOT NULL ORDER BY ${key}`;
+    const o = { ...(await oldDb.query(q)).rows[0], h: digest((await oldDb.query(rowsQ)).rows.map(r => r.h)) };
+    const n = { ...(await newDb.query(q)).rows[0], h: digest((await newDb.query(rowsQ)).rows.map(r => r.h)) };
     out.embeddings.push({ table: t, old: Number(o.n), new: Number(n.n), dims: `${n.dmin}..${n.dmax}`, identical: o.h === n.h && Number(o.n) === Number(n.n) });
   }
 

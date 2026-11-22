@@ -10,7 +10,7 @@
 // run never aborts on the first reject. Error text from the database is never
 // stored or printed, only SQLSTATE and constraint names.
 
-import { parseLossless, stringifyLossless, scalar } from './json.js';
+import { parseLossless, stringifyLossless, exactText } from './json.js';
 import { quoteIdent, retentionAnchors } from './catalog.js';
 import { retentionAnchorExpression } from './transforms.js';
 import * as ledger from './ledger.js';
@@ -18,7 +18,7 @@ import * as ledger from './ledger.js';
 export class InjectedFailure extends Error {}
 
 export function pkText(row, pk) {
-  return pk.map(c => String(scalar(row[c.name]))).join('|');
+  return pk.map(c => exactText(row[c.name])).join('|');
 }
 
 function safeReason(e) {
@@ -93,7 +93,8 @@ export class Copier {
         cursor || []);
       if (!res.rows.length) break;
       const rows = res.rows.map(r => parseLossless(r.j));
-      const nextCursor = orderPk.map(c => String(scalar(rows[rows.length - 1][c.name])));
+      const nextCursor = orderPk.map(c => exactText(rows[rows.length - 1][c.name]));
+      if (cursor && JSON.stringify(nextCursor) === JSON.stringify(cursor)) throw Error(`Cursor did not advance for ${table}`);
       totals.read += rows.length;
 
       // 1. Pure per-row mapping.
@@ -103,7 +104,11 @@ export class Copier {
         const out = spec.map ? spec.map(row, ctx) : { row };
         if (out.reject) { rejects.push({ pk: key, reason: out.reject }); continue; }
         for (const t of out.transform || []) transforms.push({ pk: key, kind: t.kind, detail: t.detail || {} });
-        mapped.push({ key, row: out.row });
+        // Skipped columns must not reach jsonb_populate_recordset at all: it
+        // parses every key whose name matches a NEW column, even when that
+        // column is not inserted (e.g. an OLD uuid id vs a NEW bigint identity).
+        const kept = spec.skipColumns ? Object.fromEntries(Object.entries(out.row).filter(([k]) => !spec.skipColumns.includes(k))) : out.row;
+        mapped.push({ key, row: kept });
       }
       // 2. Async batch hook (re-encryption, remaps that need lookups).
       if (spec.prepare && mapped.length) {

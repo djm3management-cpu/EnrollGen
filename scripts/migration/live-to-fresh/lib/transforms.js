@@ -3,7 +3,7 @@
 // entries that the engine records in migration_ledger.transforms. None of
 // these functions log, and none put row values into a reason or transform.
 
-import { scalar } from './json.js';
+import { exactText } from './json.js';
 
 const ok = (row, transform = []) => ({ row, transform });
 
@@ -88,7 +88,7 @@ export function remapColumns(row, maps) {
   for (const [column, map] of Object.entries(maps)) {
     const value = row[column];
     if (value === null || value === undefined) continue;
-    const mapped = map.get(String(scalar(value)));
+    const mapped = map.get(exactText(value));
     if (!mapped) return { reject: `unmapped_reference:${column}` };
     out[column] = mapped;
   }

@@ -20,3 +20,8 @@ export function isRawJSON(value) {
 export function scalar(value) {
   return isRawJSON(value) ? JSON.parse(JSON.stringify(value)) : value;
 }
+
+// Exact text of a scalar, preserving raw JSON numbers (no Number conversion).
+export function exactText(value) {
+  return isRawJSON(value) ? JSON.stringify(value) : String(value);
+}
