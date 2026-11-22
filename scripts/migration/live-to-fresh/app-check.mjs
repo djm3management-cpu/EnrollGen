@@ -43,7 +43,8 @@ results.counts = {
 
 // 4. One migrated call opens with its transcript and score.
 const pick = (await oldDb.query(`SELECT c.id::text FROM public.call_records c JOIN public.call_transcripts t ON t.id=c.transcript_id
-  JOIN public.compliance_scorecards s ON s.id=c.compliance_scorecard_id ORDER BY c.id LIMIT 1`)).rows[0];
+  JOIN public.compliance_scorecards s ON s.id=c.compliance_scorecard_id
+  WHERE EXISTS(SELECT 1 FROM public.scorecard_items i WHERE i.scorecard_id=s.id) AND length(t.transcript_text) > 0 ORDER BY c.id LIMIT 1`)).rows[0];
 if (pick) {
   const { data: call, error } = await api.from('call_records').select('id,transcript_id,compliance_scorecard_id,twilio_call_sid').eq('id', pick.id).single();
   if (error) throw Error('API call read failed');
