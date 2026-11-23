@@ -106,7 +106,11 @@ test('ordinary active agent: own calls, evidence, notes and assigned CRM; no pee
  await denied(q('SELECT decrypt_pii($1,$2)',[cb,A.id]));
  await denied(q('SELECT decrypt_pii($1,$2)',[ca,B.id]));
  assert.equal((await q('SELECT * FROM read_contact_details($1,$2)',[[ca,cb],A.id])).length,1);
- await denied(q('SELECT * FROM storage.objects'));
+ // Hosted Supabase keeps its own browser grants on storage.objects (hosted rehearsal B4,
+ // owner-approved): there the boundary is RLS with no browser policy, so the read returns
+ // 0 rows instead of a permission error. storage-access-boundary.test.js covers every verb.
+ if(pg.hosted)assert.equal((await q('SELECT * FROM storage.objects')).length,0);
+ else await denied(q('SELECT * FROM storage.objects'));
  const note=(await evidence('SELECT id FROM contact_notes'))[0];
  assert.equal((await q("SELECT id FROM update_evidence_contact_notes($1,'{\"body\":\"Owned edit\"}')",[note.id])).length,1);
  await zero('enrollment_intakes');await zero('vendor_controls');await zero('vendor_control_audit');
