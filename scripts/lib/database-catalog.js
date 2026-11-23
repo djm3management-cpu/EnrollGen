@@ -6,7 +6,7 @@ export const catalogQueries={
  columns:`SELECT n.nspname schema,c.relname relation,a.attname name,a.attnum position,format_type(a.atttypid,a.atttypmod) type,a.attnotnull not_null,a.attidentity identity,a.attgenerated generated,pg_get_expr(d.adbin,d.adrelid) default_expression
  FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid JOIN pg_namespace n ON n.oid=c.relnamespace LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
  WHERE n.nspname IN ${schemas} AND c.relkind IN ('r','p','v','m') AND a.attnum>0 AND NOT a.attisdropped ORDER BY 1,2,4`,
- policies:`SELECT schemaname schema,tablename relation,policyname name,permissive,roles,cmd,qual,with_check FROM pg_policies WHERE schemaname IN ${schemas} OR schemaname='storage' ORDER BY 1,2,3`,
+ policies:`SELECT schemaname schema,tablename relation,policyname name,permissive,roles::text[] roles,cmd,qual,with_check FROM pg_policies WHERE schemaname IN ${schemas} OR schemaname='storage' ORDER BY 1,2,3`,
  tableGrants:`SELECT table_schema schema,table_name relation,grantor,grantee,privilege_type privilege,is_grantable grantable FROM information_schema.table_privileges WHERE table_schema IN ${schemas} OR (table_schema='storage' AND table_name IN ('objects','buckets')) ORDER BY 1,2,3,4,5`,
  columnGrants:`SELECT n.nspname schema,c.relname relation,a.attname name,pg_get_userbyid(g.grantor) grantor,CASE WHEN g.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(g.grantee) END grantee,g.privilege_type privilege,g.is_grantable grantable
  FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid JOIN pg_namespace n ON n.oid=c.relnamespace CROSS JOIN LATERAL aclexplode(a.attacl) g
