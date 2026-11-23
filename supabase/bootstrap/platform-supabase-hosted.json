@@ -1,0 +1,936 @@
+{
+  "platform": "supabase-hosted",
+  "source": "Drift rows observed on the hosted rehearsal project after the fixed bootstrap (docs/migration/hosted-rehearsal-diagnosis.md, decisions 2 and 4). Exact rows only; any other difference fails the check.",
+  "accepted": [
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "anon",
+        "privilege": "DELETE",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "anon",
+        "privilege": "INSERT",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "anon",
+        "privilege": "SELECT",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "anon",
+        "privilege": "UPDATE",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "authenticated",
+        "privilege": "DELETE",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "authenticated",
+        "privilege": "INSERT",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "authenticated",
+        "privilege": "SELECT",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "authenticated",
+        "privilege": "UPDATE",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "DELETE",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "INSERT",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "REFERENCES",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "SELECT",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "TRIGGER",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "TRUNCATE",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "UPDATE",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "DELETE",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "INSERT",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "REFERENCES",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "SELECT",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "TRIGGER",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "TRUNCATE",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "UPDATE",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "anon",
+        "privilege": "DELETE",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "anon",
+        "privilege": "INSERT",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "anon",
+        "privilege": "SELECT",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "anon",
+        "privilege": "UPDATE",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "authenticated",
+        "privilege": "DELETE",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "authenticated",
+        "privilege": "INSERT",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "authenticated",
+        "privilege": "SELECT",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "authenticated",
+        "privilege": "UPDATE",
+        "grantable": "NO"
+      },
+      "reason": "Hosted Supabase grants browser roles SELECT/INSERT/UPDATE/DELETE on storage tables as supabase_storage_admin; postgres cannot revoke them (REVOKE is a no-op, GRANTED BY and SET ROLE are refused). Access is denied by platform RLS with no browser-applicable policy, asserted at install by seal.sql and proven by the hosted storage access test."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "DELETE",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "INSERT",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "REFERENCES",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "SELECT",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "TRIGGER",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "TRUNCATE",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "postgres",
+        "privilege": "UPDATE",
+        "grantable": "YES"
+      },
+      "reason": "Hosted storage tables are owned by supabase_storage_admin, which grants postgres its privileges WITH GRANT OPTION (replaces the owner rows below)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "DELETE",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "INSERT",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "REFERENCES",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "SELECT",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "TRIGGER",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "TRUNCATE",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "supabase_storage_admin",
+        "grantee": "service_role",
+        "privilege": "UPDATE",
+        "grantable": "NO"
+      },
+      "reason": "Platform grant of the server role by supabase_storage_admin, in addition to the expected postgres->service_role grant from seal.sql (which is present). service_role is the server key (BYPASSRLS)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "DELETE",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "INSERT",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "REFERENCES",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "SELECT",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "TRIGGER",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "TRUNCATE",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "buckets",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "UPDATE",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "DELETE",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "INSERT",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "REFERENCES",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "SELECT",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "TRIGGER",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "TRUNCATE",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B4-storage-grant",
+      "section": "tableGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "storage",
+        "relation": "objects",
+        "grantor": "postgres",
+        "grantee": "postgres",
+        "privilege": "UPDATE",
+        "grantable": "YES"
+      },
+      "reason": "Owner-implied grants in the baseline, where postgres owns the storage stand-in tables; on hosted postgres is not the owner (see the supabase_storage_admin->postgres rows)."
+    },
+    {
+      "category": "B6-default-acl",
+      "section": "defaults",
+      "change": "extra_or_changed",
+      "object": {
+        "owner": "postgres",
+        "schema": "public",
+        "type": "f",
+        "acl": "{postgres=X/postgres}"
+      },
+      "reason": "Per-schema postgres default ACL in public kept by the platform, after the bootstrap closed it to PUBLIC/anon/authenticated; no browser role appears."
+    },
+    {
+      "category": "B6-default-acl",
+      "section": "defaults",
+      "change": "extra_or_changed",
+      "object": {
+        "owner": "postgres",
+        "schema": "public",
+        "type": "r",
+        "acl": "{postgres=arwdDxtm/postgres,service_role=Dxtm/postgres}"
+      },
+      "reason": "Per-schema postgres default ACL in public kept by the platform, after the bootstrap closed it to PUBLIC/anon/authenticated; no browser role appears."
+    },
+    {
+      "category": "B6-default-acl",
+      "section": "defaults",
+      "change": "extra_or_changed",
+      "object": {
+        "owner": "postgres",
+        "schema": "public",
+        "type": "S",
+        "acl": "{postgres=rwU/postgres}"
+      },
+      "reason": "Per-schema postgres default ACL in public kept by the platform, after the bootstrap closed it to PUBLIC/anon/authenticated; no browser role appears."
+    },
+    {
+      "category": "B6-default-acl",
+      "section": "defaults",
+      "change": "extra_or_changed",
+      "object": {
+        "owner": "supabase_admin",
+        "schema": "public",
+        "type": "f",
+        "acl": "{postgres=X/supabase_admin,anon=X/supabase_admin,authenticated=X/supabase_admin,service_role=X/supabase_admin}"
+      },
+      "reason": "Platform default privileges for objects created by supabase_admin in public; postgres may not alter them (42501). The bootstrap creates no supabase_admin-owned object in public; any such object would show as owner drift in tables/routines."
+    },
+    {
+      "category": "B6-default-acl",
+      "section": "defaults",
+      "change": "extra_or_changed",
+      "object": {
+        "owner": "supabase_admin",
+        "schema": "public",
+        "type": "r",
+        "acl": "{postgres=arwdDxtm/supabase_admin,anon=arwdDxtm/supabase_admin,authenticated=arwdDxtm/supabase_admin,service_role=arwdDxtm/supabase_admin}"
+      },
+      "reason": "Platform default privileges for objects created by supabase_admin in public; postgres may not alter them (42501). The bootstrap creates no supabase_admin-owned object in public; any such object would show as owner drift in tables/routines."
+    },
+    {
+      "category": "B6-default-acl",
+      "section": "defaults",
+      "change": "extra_or_changed",
+      "object": {
+        "owner": "supabase_admin",
+        "schema": "public",
+        "type": "S",
+        "acl": "{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}"
+      },
+      "reason": "Platform default privileges for objects created by supabase_admin in public; postgres may not alter them (42501). The bootstrap creates no supabase_admin-owned object in public; any such object would show as owner drift in tables/routines."
+    },
+    {
+      "category": "B6-default-acl",
+      "section": "defaults",
+      "change": "missing_or_changed",
+      "object": {
+        "owner": "postgres",
+        "schema": null,
+        "type": "r",
+        "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres}"
+      },
+      "reason": "Baseline global postgres default granting service_role on future tables/sequences comes from the in-process stand-in; hosted has no global postgres defaults, so future objects are tighter (seal.sql grants service_role explicitly)."
+    },
+    {
+      "category": "B6-default-acl",
+      "section": "defaults",
+      "change": "missing_or_changed",
+      "object": {
+        "owner": "postgres",
+        "schema": null,
+        "type": "S",
+        "acl": "{postgres=rwU/postgres,service_role=rwU/postgres}"
+      },
+      "reason": "Baseline global postgres default granting service_role on future tables/sequences comes from the in-process stand-in; hosted has no global postgres defaults, so future objects are tighter (seal.sql grants service_role explicitly)."
+    },
+    {
+      "category": "B6-schema-usage",
+      "section": "schemaGrants",
+      "change": "extra_or_changed",
+      "object": {
+        "schema": "public",
+        "owner": "pg_database_owner",
+        "acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner,postgres=U/pg_database_owner,anon=U/pg_database_owner,authenticated=U/pg_database_owner,service_role=U/pg_database_owner}"
+      },
+      "reason": "Hosted grants postgres USAGE on public (pg_database_owner grantor); the remaining ACL is identical to the expected one."
+    },
+    {
+      "category": "B6-schema-usage",
+      "section": "schemaGrants",
+      "change": "missing_or_changed",
+      "object": {
+        "schema": "public",
+        "owner": "pg_database_owner",
+        "acl": "{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner,anon=U/pg_database_owner,authenticated=U/pg_database_owner,service_role=U/pg_database_owner}"
+      },
+      "reason": "Hosted grants postgres USAGE on public (pg_database_owner grantor); the remaining ACL is identical to the expected one."
+    }
+  ]
+}
