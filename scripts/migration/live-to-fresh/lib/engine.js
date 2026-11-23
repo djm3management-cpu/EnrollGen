@@ -7,7 +7,11 @@
 //         plus ledger progress/rejects/transforms in the same transaction.
 // A failed batch is retried row by row; a row that still fails becomes a
 // reject (table, old pk, reason code). Nothing is dropped silently and the
-// run never aborts on the first reject. Error text from the database is never
+// run never aborts on the first reject, except with stopOnReject (remote
+// targets): then any reject, or any failed batch write, stops the run before
+// the batch commits, with no row-by-row retry (each failed statement could
+// leave row values in the hosted server log). The cursor is not advanced, so
+// rerunning resumes at the same batch. Error text from the database is never
 // stored or printed, only SQLSTATE and constraint names.
 
 import { parseLossless, stringifyLossless, exactText } from './json.js';
@@ -16,6 +20,7 @@ import { retentionAnchorExpression } from './transforms.js';
 import * as ledger from './ledger.js';
 
 export class InjectedFailure extends Error {}
+export class RejectStop extends Error {}
 
 export function pkText(row, pk) {
   return pk.map(c => exactText(row[c.name])).join('|');
@@ -29,8 +34,8 @@ function safeReason(e) {
 }
 
 export class Copier {
-  constructor({ oldDb, newDb, oldCols, newCols, newPks, anchors, log = () => {}, batchSize = 500, dryRun = false, failAfterBatches = null }) {
-    Object.assign(this, { oldDb, newDb, oldCols, newCols, newPks, anchors, log, batchSize, dryRun, failAfterBatches });
+  constructor({ oldDb, newDb, oldCols, newCols, newPks, anchors, log = () => {}, batchSize = 500, dryRun = false, failAfterBatches = null, stopOnReject = false }) {
+    Object.assign(this, { oldDb, newDb, oldCols, newCols, newPks, anchors, log, batchSize, dryRun, failAfterBatches, stopOnReject });
     this.batches = 0;
   }
 
@@ -124,6 +129,9 @@ export class Copier {
         mapped = mapped.filter(m => { if (m.reject) { rejects.push({ pk: m.key, reason: m.reject }); return false; } return true; });
       }
 
+      if (this.stopOnReject && !this.dryRun && rejects.length) {
+        throw new RejectStop(`${table}: ${rejects.length} row(s) rejected (${[...new Set(rejects.map(r => r.reason))].join(', ')}); stopped before writing this batch`);
+      }
       if (this.dryRun) {
         totals.inserted += mapped.length; totals.rejected += rejects.length; totals.transformed += transforms.length;
         cursor = nextCursor; continue;
@@ -144,7 +152,9 @@ export class Copier {
       };
       try {
         inserted = await writeRows(mapped);
-      } catch {
+      } catch (e) {
+        if (e instanceof InjectedFailure) throw e;
+        if (this.stopOnReject) throw new RejectStop(`${table}: batch write failed with SQLSTATE ${e?.code || 'error'}; stopped before commit, no row-by-row retry`);
         inserted = 0;
         const okRows = [];
         for (const m of mapped) {

@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { Copier, InjectedFailure } from '../../scripts/migration/live-to-fresh/lib/engine.js';
+import { Copier, InjectedFailure, RejectStop } from '../../scripts/migration/live-to-fresh/lib/engine.js';
 import { ensureLedger, getProgress } from '../../scripts/migration/live-to-fresh/lib/ledger.js';
 import { PiiCodec } from '../../scripts/migration/live-to-fresh/lib/pii.js';
 import { tableSpec } from '../../scripts/migration/live-to-fresh/lib/plan.js';
@@ -139,4 +139,26 @@ test('a uuid id becomes a NEW identity through the id map, idempotently', async 
   const r2 = await (await Copier.create({ oldDb, newDb })).copyTable(tableSpec('agent_availability_log', ctx), ctx);
   assert.equal(r2.inserted, 0);
   assert.equal((await newDb.query(`SELECT count(*)::int AS n FROM agent_availability_log`)).rows[0].n, 4);
+});
+
+test('stopOnReject (remote targets) stops before writing a batch with any reject, and never retries row by row', async () => {
+  const { oldDb, newDb, ctx } = await setup({ contacts: 2 });
+  await (await Copier.create({ oldDb, newDb })).copyTable(tableSpec('contacts', ctx), ctx);
+  for (const [n, type, summary] of [[1, 'call', 'ok'], [2, 'fax', 'bad enum'], [3, 'note', 'fine']]) await oldDb.query(`INSERT INTO contact_activities VALUES ($1,$2,$3,$4,now())`, [activityId(n), contactId(1), type, summary]);
+  const strict = await Copier.create({ oldDb, newDb, batchSize: 10, stopOnReject: true });
+  await assert.rejects(strict.copyTable(tableSpec('contact_activities', ctx), ctx), e => e instanceof RejectStop && /contact_activities: 1 row\(s\) rejected \(invalid_enum:contact_activities\.type\)/.test(e.message));
+  assert.equal((await newDb.query(`SELECT count(*)::int AS n FROM contact_activities`)).rows[0].n, 0);
+  assert.equal((await newDb.query(`SELECT count(*)::int AS n FROM migration_ledger.rejects`)).rows[0].n, 0);
+  assert.equal(await getProgress(newDb, 'contact_activities'), null);
+
+  // A failing batch write (NOT NULL in NEW) stops after exactly one failed statement.
+  await oldDb.query(`DELETE FROM contact_activities WHERE id=$1`, [activityId(2)]);
+  await oldDb.query(`INSERT INTO contact_activities VALUES ($1,'note',NULL,now())`.replace('($1,', `($1,'${contactId(1)}',`), [activityId(4)]);
+  let inserts = 0;
+  const counting = { query: (sql, params) => { if (/INSERT INTO public\."?contact_activities"?\s/.test(sql)) inserts++; return newDb.query(sql, params); } };
+  const strict2 = await Copier.create({ oldDb, newDb: counting, batchSize: 10, stopOnReject: true });
+  await assert.rejects(strict2.copyTable(tableSpec('contact_activities', ctx), ctx), e => e instanceof RejectStop && /batch write failed with SQLSTATE 23502/.test(e.message));
+  assert.equal(inserts, 1);
+  assert.equal((await newDb.query(`SELECT count(*)::int AS n FROM contact_activities`)).rows[0].n, 0);
+  assert.equal(await getProgress(newDb, 'contact_activities'), null);
 });

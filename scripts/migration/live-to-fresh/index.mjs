@@ -15,7 +15,7 @@ import { homedir } from 'node:os';
 import pg from 'pg';
 import { parseArgs } from './lib/args.js';
 import { tableColumns, primaryKeys, foreignKeys, topoOrder, retentionAnchors, routineSource, routineHash, pgcryptoSchema, quoteIdent } from './lib/catalog.js';
-import { Copier } from './lib/engine.js';
+import { Copier, RejectStop } from './lib/engine.js';
 import * as ledger from './lib/ledger.js';
 import { PiiCodec } from './lib/pii.js';
 import * as P from './lib/plan.js';
@@ -26,9 +26,12 @@ import { parseLossless, stringifyLossless } from './lib/json.js';
 const WORKDIR = process.env.MIGRATION_WORKDIR || join(homedir(), 'enrollgen-migration');
 const say = msg => console.log(`[live-to-fresh] ${msg}`);
 
-async function connect(url) {
+async function connect(url, { remote = false } = {}) {
   const c = new pg.Client({ connectionString: url, application_name: 'enrollgen-live-to-fresh', connectionTimeoutMillis: 10000 });
   await c.connect();
+  // Hosted NEW: never echo a failing statement into the server log (bind values are
+  // already excluded by the platform's log_parameter_max_length_on_error=0).
+  if (remote) await c.query('SET log_min_error_statement = panic');
   return c;
 }
 
@@ -71,7 +74,7 @@ async function copySingletons(oldDb, newDb, dryRun) {
   return results;
 }
 
-async function sweepOrphans(newDb, tables, dryRun) {
+async function sweepOrphans(newDb, tables, dryRun, stopOnReject = false) {
   const fks = await foreignKeys(newDb), pks = await primaryKeys(newDb), set = new Set(tables), found = [];
   for (const fk of fks) {
     if (!set.has(fk.child)) continue;
@@ -82,6 +85,7 @@ async function sweepOrphans(newDb, tables, dryRun) {
     if (!rows.length) continue;
     found.push({ constraint: fk.name, table: fk.child, rows: rows.length });
     if (dryRun) continue;
+    if (stopOnReject) throw new RejectStop(`${fk.child}: ${rows.length} FK orphan(s) on ${fk.name}; stopped before moving them to the reject ledger`);
     await newDb.query('BEGIN');
     await newDb.query('SET LOCAL session_replication_role = replica');
     await ledger.recordRejects(newDb, fk.child, rows.map(r => ({ pk: r.k, reason: `fk_orphan:${fk.name}` })));
@@ -103,7 +107,7 @@ export async function migrate(opts) {
     await oldDb.end();
     return;
   }
-  const newDb = await connect(opts.new);
+  const newDb = await connect(opts.new, { remote: !!opts.remote });
   const mode = opts.verify ? 'verify' : opts.dryRun ? 'dry-run' : 'migrate';
   let runId = null;
   try {
@@ -131,7 +135,7 @@ export async function migrate(opts) {
     }
 
     if (!opts.dryRun) { await ledger.ensureLedger(newDb); runId = await ledger.startRun(newDb, mode); }
-    const copier = await Copier.create({ oldDb, newDb, batchSize: opts.batchSize, dryRun: opts.dryRun, log: () => {} });
+    const copier = await Copier.create({ oldDb, newDb, batchSize: opts.batchSize, dryRun: opts.dryRun, log: () => {}, stopOnReject: !!opts.remote });
     const ctx = { codec, newDb, oldDb, anchors: plan.anchors, ghlAllowlist: plan.ghlAllowlist };
     ctx.rosterClerkIds = new Set((await oldDb.query(`SELECT clerk_user_id FROM public.tenant_agents WHERE is_active AND clerk_user_id IS NOT NULL`)).rows.map(r => r.clerk_user_id));
     const results = [];
@@ -195,7 +199,7 @@ export async function migrate(opts) {
     for (const s of singletons) say(`singleton ${s.table}: carried ${s.carried.length} column(s), changed ${s.changed?.length ?? 0}, not carried ${s.notCarried.length}`);
 
     // 6. Post-load FK sweep (replica mode skips FK triggers).
-    const orphans = await sweepOrphans(newDb, plan.migrated, opts.dryRun);
+    const orphans = await sweepOrphans(newDb, plan.migrated, opts.dryRun, !!opts.remote);
     say(`foreign-key sweep: ${orphans.reduce((a, o) => a + o.rows, 0)} orphan row(s)`);
 
     // 7. Storage manifest (outside the repo).
