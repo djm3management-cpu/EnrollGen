@@ -73,3 +73,31 @@ REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.practice_sessions,pub
 
 -- Re-shop task/review mutations stay in the scoped transactional routine.
 REVOKE INSERT,UPDATE,TRUNCATE,REFERENCES,TRIGGER ON public.reshop_reviews FROM service_role;
+
+-- Storage boundary install assertion (hosted rehearsal B1/B4). On hosted Supabase the
+-- platform's own grants on storage.objects/buckets to anon/authenticated cannot be
+-- revoked by postgres, so browser access must be denied by row-level security with no
+-- browser-applicable policy. Fail the install unless that holds on every platform:
+-- privileges RLS does not govern are never held, RLS-governed ones only with RLS on,
+-- no storage policy applies to anon, authenticated or PUBLIC, and both buckets are private.
+DO $$ DECLARE t text; r text; p text; BEGIN
+ FOREACH t IN ARRAY ARRAY['storage.objects','storage.buckets'] LOOP
+  FOREACH r IN ARRAY ARRAY['anon','authenticated'] LOOP
+   FOREACH p IN ARRAY ARRAY['TRUNCATE','REFERENCES','TRIGGER','MAINTAIN'] LOOP
+    IF has_table_privilege(r,t,p) THEN RAISE EXCEPTION 'Storage boundary: % holds % on %',r,p,t; END IF;
+   END LOOP;
+   FOREACH p IN ARRAY ARRAY['SELECT','INSERT','UPDATE','DELETE'] LOOP
+    IF has_table_privilege(r,t,p) AND NOT (SELECT relrowsecurity FROM pg_class WHERE oid=t::regclass) THEN
+     RAISE EXCEPTION 'Storage boundary: % holds % on % without row-level security',r,p,t;
+    END IF;
+   END LOOP;
+  END LOOP;
+  IF EXISTS(SELECT 1 FROM pg_policy pol WHERE pol.polrelid=t::regclass
+   AND (0=ANY(pol.polroles) OR pol.polroles&&ARRAY['anon'::regrole::oid,'authenticated'::regrole::oid])) THEN
+   RAISE EXCEPTION 'Storage boundary: a policy on % applies to browser roles',t;
+  END IF;
+ END LOOP;
+ IF (SELECT count(*) FROM storage.buckets WHERE id IN ('call-recordings','message-media') AND NOT public)<>2 THEN
+  RAISE EXCEPTION 'Storage boundary: application buckets must exist and be private';
+ END IF;
+END $$;

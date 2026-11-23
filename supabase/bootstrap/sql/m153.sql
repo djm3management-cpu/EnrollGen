@@ -219,12 +219,16 @@ DO $$ DECLARE rel record; col record; readable boolean; BEGIN
 END $$;
 
 -- Source statement 15
+-- Reviewed hosted-platform guard (the only difference from migration 153): hosted
+-- Supabase owns storage.objects as supabase_storage_admin and already enables RLS,
+-- and postgres may not ALTER it. Enable only when RLS is off; that path still fails
+-- loudly where postgres is not the owner. seal.sql asserts the resulting boundary.
 DO $$ DECLARE pol record; col record; BEGIN
  IF to_regclass('storage.objects') IS NOT NULL THEN
   FOR pol IN SELECT policyname FROM pg_policies WHERE schemaname='storage' AND tablename='objects' LOOP
    EXECUTE format('DROP POLICY %I ON storage.objects',pol.policyname);
   END LOOP;
-  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+  IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid='storage.objects'::regclass) THEN ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY; END IF;
   REVOKE ALL ON storage.objects FROM PUBLIC,anon,authenticated;
   FOR col IN SELECT column_name FROM information_schema.columns WHERE table_schema='storage' AND table_name='objects' LOOP
    EXECUTE format('REVOKE ALL (%I) ON storage.objects FROM PUBLIC,anon,authenticated',col.column_name);

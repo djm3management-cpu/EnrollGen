@@ -21,6 +21,17 @@ const expected=JSON.parse(readFileSync(new URL('catalog.expected.json',bootstrap
 let pg;
 const q=(sql,args=[])=>pg.query(sql,args).then(r=>r.rows);
 const id=n=>`e0040000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+// Reviewed hosted-platform guards (docs/migration/hosted-rehearsal-diagnosis.md, B1).
+// Each is one exact text substitution inside one statement of a bootstrap copy.
+// Undoing them must reproduce the immutable original statements byte for byte.
+const reviewedPlatformGuards={'sql/m153.sql':[{statement:15,
+ original:'ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;',
+ guarded:"IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid='storage.objects'::regclass) THEN ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY; END IF;"}]};
+const undoPlatformGuards=(file,list)=>{
+ const guards=reviewedPlatformGuards[file]||[];
+ for(const g of guards)assert.equal(list.filter(s=>s.includes(g.guarded)).length,1,`${file}: guard must appear in exactly one statement`);
+ return list.map((s,i)=>{const g=guards.find(x=>x.statement===i+1);if(!g)return s;assert.equal(s.split(g.guarded).length,2,`${file} statement ${i+1}: guard must appear once`);return s.replace(g.guarded,()=>g.original);});
+};
 before(async()=>{pg=await freshDatabase();});
 after(async()=>{if(pg)await pg.close();});
 
@@ -34,12 +45,12 @@ test('manifest is checksummed, skips 143, preserves complete 150–156 and order
  for(let n=150;n<=156;n++){
   const actual=entries.find(e=>e.file===`sql/m${n}.sql`);
   const name=['150_deployment_feature_switches.sql','151_deployment_profile_roster.sql','152_protected_deployment_identity.sql','153_scoped_table_and_storage_access.sql','154_scoped_browser_routines.sql','155_owned_workspace_writes.sql','156_scoped_service_call_views.sql'][n-150];
-  const digest=sql=>createHash('sha256').update(JSON.stringify(statements(sql))).digest('hex');
-  assert.equal(digest(actual.sql),capturedHashes[name]);
+  const copy=undoPlatformGuards(actual.file,statements(actual.sql));
+  assert.equal(createHash('sha256').update(JSON.stringify(copy)).digest('hex'),capturedHashes[name]);
   // The repository still compares every statement with the immutable original.
   // The export contains only the bootstrap and captured comparison digests.
   const original=new URL('../supabase/migrations/'+name,import.meta.url);
-  if(existsSync(original))assert.deepEqual(statements(actual.sql),statements(readFileSync(original,'utf8')));
+  if(existsSync(original))assert.deepEqual(copy,statements(readFileSync(original,'utf8')));
  }
 });
 test('two independent EMPTY builds match the committed catalog, including all view bodies, grants and defaults',async()=>{
@@ -171,4 +182,28 @@ test('migration 159 cleans historical CRM snapshots while GHL is off and restore
  assert.equal((await q('SELECT attempts FROM ghl_enrollment_deliveries WHERE id=$1',[job.id]))[0].attempts,job.attempts);
  assert.deepEqual(await q("SELECT * FROM claim_compliance_upload('ghl')"),[]);
  await q("SELECT set_config('request.headers',$1,false)",[headers]);
+});
+
+test('hosted guard enables storage RLS when off, and the seal storage assertion rejects every browser-access path',async()=>{
+ const m153=statements(bootstrapEntries().find(e=>e.file==='sql/m153.sql').sql)[14];
+ const seal=statements(bootstrapEntries().find(e=>e.file==='sql/seal.sql').sql);
+ const assertion=seal.at(-1);
+ assert.match(assertion,/Storage boundary/);
+ assert.match(m153,/IF NOT \(SELECT relrowsecurity FROM pg_class WHERE oid='storage\.objects'::regclass\) THEN ALTER TABLE storage\.objects ENABLE ROW LEVEL SECURITY; END IF;/);
+ const rls=async()=>(await q("SELECT relrowsecurity r FROM pg_class WHERE oid='storage.objects'::regclass"))[0].r;
+ const inTransaction=async work=>{await pg.exec('BEGIN');try{await work();}finally{await pg.exec('ROLLBACK');}};
+ await pg.exec(assertion);
+ // Guard: RLS off -> the owner path still enables it.
+ await inTransaction(async()=>{await pg.exec('ALTER TABLE storage.objects DISABLE ROW LEVEL SECURITY');assert.equal(await rls(),false);await pg.exec(m153);assert.equal(await rls(),true);});
+ // Guard: RLS already on -> no ALTER, outcome unchanged.
+ await inTransaction(async()=>{assert.equal(await rls(),true);await pg.exec(m153);assert.equal(await rls(),true);});
+ const rejects=async(setup,pattern)=>inTransaction(async()=>{await pg.exec(setup);await assert.rejects(pg.exec(assertion),pattern);});
+ await rejects('CREATE POLICY synthetic_open ON storage.objects FOR SELECT TO authenticated USING(true)',/a policy on storage\.objects applies to browser roles/);
+ await rejects('CREATE POLICY synthetic_open ON storage.buckets FOR SELECT USING(true)',/a policy on storage\.buckets applies to browser roles/);
+ await rejects('GRANT TRUNCATE ON storage.objects TO anon',/anon holds TRUNCATE on storage\.objects/);
+ await rejects('ALTER TABLE storage.objects DISABLE ROW LEVEL SECURITY; GRANT SELECT ON storage.objects TO authenticated',/authenticated holds SELECT on storage\.objects without row-level security/);
+ await rejects('GRANT INSERT ON storage.buckets TO anon',/anon holds INSERT on storage\.buckets without row-level security/);
+ await rejects("UPDATE storage.buckets SET public=true WHERE id='message-media'",/buckets must exist and be private/);
+ // Platform shape (hosted): browser grants plus RLS with no browser policy is the accepted boundary.
+ await inTransaction(async()=>{await pg.exec('ALTER TABLE storage.buckets ENABLE ROW LEVEL SECURITY; GRANT SELECT,INSERT,UPDATE,DELETE ON storage.objects,storage.buckets TO anon,authenticated');await pg.exec(assertion);});
 });

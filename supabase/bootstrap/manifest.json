@@ -795,7 +795,7 @@
     {
       "file": "sql/m153.sql",
       "source": "Historical migration 153 (schema and approved neutral seed statements only)",
-      "sha256": "578d0110d72b66b4d51df781bb721132ff4fd1f63d1bc6d226e491e71d5eb54c"
+      "sha256": "e020da35c709b5f39a99a79f75d9ac039a809652a0858f603e8971c2ddd9f188"
     },
     {
       "file": "sql/m154.sql",
@@ -942,7 +942,7 @@
     {
       "file": "sql/seal.sql",
       "source": "Fresh-install baseline",
-      "sha256": "2e680a3828aeb7af574962e3e57b9c74873837215198d867017d88638f0a4549"
+      "sha256": "470653005c5c63f49a7e3862977209baf28c6537a231807abd01c627d1699fc0"
     }
   ],
   "exclusions": [
