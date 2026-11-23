@@ -1,6 +1,8 @@
-// Command-line parsing and the local-only connection guard.
-// Both databases must be on this machine. Anything else is refused before
-// a connection is attempted.
+// Command-line parsing and the connection guard.
+// OLD must be on this machine. NEW must be on this machine unless the explicit
+// --remote-host/--remote-ref opt-in names exactly one Supabase project (see
+// scripts/lib/remote-target.js). Anything else is refused before a connection.
+import { takeRemoteFlags, assertDatabaseTarget, refuseProduction } from '../../../lib/remote-target.js';
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 
@@ -15,8 +17,10 @@ export function assertLocalConnection(value, label) {
   return value;
 }
 
-export function parseArgs(argv) {
-  const out = { dryRun: false, verify: false, table: null, old: null, new: null, emitProvisioning: null, batchSize: 500, appOrigin: null, telephonyOrigin: null };
+export function parseArgs(input) {
+  refuseProduction(...input);
+  const { remote, rest: argv } = takeRemoteFlags(input);
+  const out = { dryRun: false, verify: false, table: null, old: null, new: null, emitProvisioning: null, batchSize: 500, appOrigin: null, telephonyOrigin: null, remote };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const next = () => { if (i + 1 >= argv.length) throw Error(`${a} needs a value`); return argv[++i]; };
@@ -35,8 +39,9 @@ export function parseArgs(argv) {
   assertLocalConnection(out.old, 'old');
   if (!out.emitProvisioning) {
     if (!out.new) throw Error('--new <url> is required');
-    assertLocalConnection(out.new, 'new');
-  } else if (out.new) assertLocalConnection(out.new, 'new');
+    assertDatabaseTarget(out.new, 'new', remote);
+  } else if (out.new) assertDatabaseTarget(out.new, 'new', remote);
+  if (remote && !out.new) throw Error('--remote-host/--remote-ref apply to --new only');
   if (out.dryRun && out.verify) throw Error('--dry-run and --verify are exclusive');
   if (!Number.isInteger(out.batchSize) || out.batchSize < 1 || out.batchSize > 5000) throw Error('--batch-size must be 1..5000');
   return out;

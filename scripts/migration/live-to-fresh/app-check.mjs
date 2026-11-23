@@ -1,15 +1,16 @@
 #!/usr/bin/env node
-// Post-migration application check against a local NEW stack, using the app's
+// Post-migration application check against NEW (local, or the one opted-in remote project), using the app's
 // own server code paths (no browser sign-in). Prints counts, ids and booleans.
 //
 //   DEPLOYMENT_PROFILE_JSON=... SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_SECRET_KEY=... \
 //   node scripts/migration/live-to-fresh/app-check.mjs --old <url> --new <url>
 import pg from 'pg';
 import { parseArgs } from './lib/args.js';
+import { assertSupabaseApiTarget } from '../../lib/remote-target.js';
 
 const opts = parseArgs(process.argv.slice(2));
-const apiUrl = new URL(process.env.SUPABASE_URL || '');
-if (!['127.0.0.1', 'localhost'].includes(apiUrl.hostname)) throw Error('SUPABASE_URL must be the local stack');
+// Local stack, or exactly the --remote-ref project when the remote opt-in is given.
+assertSupabaseApiTarget(process.env.SUPABASE_URL, opts.remote);
 const { createSupabaseClient, supabaseSecretKey } = await import('../../../integrations/supabase.js');
 const { verifyDeploymentConfiguration, rosterIdentity } = await import('../../../telephony/src/lib/deploymentRoster.js');
 
