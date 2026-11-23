@@ -12,7 +12,13 @@ export const fixtureRoster=roster.slice(0,4);
 export const T='e0000000-0000-4000-8000-000000000004';
 export const U=uuid(999);
 export async function buildAccessDatabase(){
- const pg=await freshDatabase({hostile:true});
+ // ACCESS_MATRIX_TARGET=hosted runs the same scenarios against an already
+ // bootstrapped hosted project inside one rolled-back transaction (see
+ // hostedAccessTarget.js). The hostile pre-150 grants cannot be injected there;
+ // the platform's own default grants to browser roles play that part.
+ const pg=process.env.ACCESS_MATRIX_TARGET==='hosted'
+  ?await (await import('./hostedAccessTarget.js')).hostedAccessDatabase()
+  :await freshDatabase({hostile:true});
  await pg.query('SELECT provision_deployment_roster($1,$2)',[JSON.stringify({...profile,tenantId:T}),JSON.stringify(fixtureRoster)]);
  return {pg,realTables:new Set((await pg.query("SELECT tablename FROM pg_tables WHERE schemaname='public'")).rows.map(r=>r.tablename))};
 }
