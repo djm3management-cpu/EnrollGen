@@ -7,6 +7,9 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
 GRANT USAGE ON SCHEMA extensions TO service_role,authenticated;
 REVOKE ALL ON ALL TABLES IN SCHEMA pii_vault FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA pii_vault FROM PUBLIC,anon,authenticated;
+-- Key metadata is reached only through the security-definer PII routines; no server
+-- grant is needed. Explicit so every platform ends equally tight (hosted rehearsal B5).
+REVOKE ALL ON pii_vault.encryption_keys FROM service_role;
 ALTER TABLE public.messages ADD CONSTRAINT messages_tenant_fk FOREIGN KEY(tenant_id) REFERENCES public.tenants(id);
 ALTER TABLE public.messages ADD CONSTRAINT messages_contact_fk FOREIGN KEY(contact_id) REFERENCES public.contacts(id);
 ALTER TABLE public.message_media ADD CONSTRAINT message_media_tenant_fk FOREIGN KEY(tenant_id) REFERENCES public.tenants(id);

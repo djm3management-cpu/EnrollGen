@@ -942,7 +942,7 @@
     {
       "file": "sql/seal.sql",
       "source": "Fresh-install baseline",
-      "sha256": "470653005c5c63f49a7e3862977209baf28c6537a231807abd01c627d1699fc0"
+      "sha256": "7111b0be50c06b3b04f3c094f5e990df567bf6cad1456735fac7baaddcd4edf1"
     }
   ],
   "exclusions": [

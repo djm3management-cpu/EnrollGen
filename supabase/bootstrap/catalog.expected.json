@@ -34561,62 +34561,6 @@
       "grantable": "YES"
     },
     {
-      "schema": "pii_vault",
-      "relation": "encryption_keys",
-      "grantor": "postgres",
-      "grantee": "service_role",
-      "privilege": "DELETE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "pii_vault",
-      "relation": "encryption_keys",
-      "grantor": "postgres",
-      "grantee": "service_role",
-      "privilege": "INSERT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "pii_vault",
-      "relation": "encryption_keys",
-      "grantor": "postgres",
-      "grantee": "service_role",
-      "privilege": "REFERENCES",
-      "grantable": "NO"
-    },
-    {
-      "schema": "pii_vault",
-      "relation": "encryption_keys",
-      "grantor": "postgres",
-      "grantee": "service_role",
-      "privilege": "SELECT",
-      "grantable": "NO"
-    },
-    {
-      "schema": "pii_vault",
-      "relation": "encryption_keys",
-      "grantor": "postgres",
-      "grantee": "service_role",
-      "privilege": "TRIGGER",
-      "grantable": "NO"
-    },
-    {
-      "schema": "pii_vault",
-      "relation": "encryption_keys",
-      "grantor": "postgres",
-      "grantee": "service_role",
-      "privilege": "TRUNCATE",
-      "grantable": "NO"
-    },
-    {
-      "schema": "pii_vault",
-      "relation": "encryption_keys",
-      "grantor": "postgres",
-      "grantee": "service_role",
-      "privilege": "UPDATE",
-      "grantable": "NO"
-    },
-    {
       "schema": "public",
       "relation": "access_review_reports",
       "grantor": "postgres",

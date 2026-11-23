@@ -207,3 +207,12 @@ test('hosted guard enables storage RLS when off, and the seal storage assertion 
  // Platform shape (hosted): browser grants plus RLS with no browser policy is the accepted boundary.
  await inTransaction(async()=>{await pg.exec('ALTER TABLE storage.buckets ENABLE ROW LEVEL SECURITY; GRANT SELECT,INSERT,UPDATE,DELETE ON storage.objects,storage.buckets TO anon,authenticated');await pg.exec(assertion);});
 });
+
+test('service_role has no grant on PII key metadata yet encrypts and decrypts through the security-definer routines',async()=>{
+ for(const privilege of ['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER'])assert.equal((await q("SELECT has_table_privilege('service_role','pii_vault.encryption_keys',$1) ok",[privilege]))[0].ok,false,privilege);
+ await pg.exec('SET ROLE service_role');
+ try{
+  await assert.rejects(q('SELECT * FROM pii_vault.encryption_keys'),e=>e.code==='42501');
+  assert.equal((await q("SELECT decrypt_pii_value(encrypt_pii_value('synthetic')) v"))[0].v,'synthetic');
+ }finally{await pg.exec('RESET ROLE');}
+});
